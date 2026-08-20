@@ -11,6 +11,7 @@ export default function DashboardContent() {
   const [checking, setChecking] = useState(true);
   const [noForfait, setNoForfait] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -19,6 +20,13 @@ export default function DashboardContent() {
         return;
       }
       setUser(session.user);
+
+      supabase
+        .from("admins")
+        .select("id")
+        .eq("email", session.user.email)
+        .maybeSingle()
+        .then(({ data }) => setIsAdmin(!!data));
 
       // Vérifie si ce compte a une entreprise liée, et si elle a un forfait actif.
       // Les comptes sans profil (comme un compte admin créé manuellement)
@@ -128,6 +136,11 @@ export default function DashboardContent() {
             </div>
           </div>
           <div className="dash-user-actions">
+            {isAdmin && (
+              <Link href="/admin" className="dash-settings-btn" title="Panneau admin">
+                🛡
+              </Link>
+            )}
             <Link href="/parametres" className="dash-settings-btn" title="Paramètres du compte">
               ⚙
             </Link>
