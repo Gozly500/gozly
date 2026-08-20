@@ -33,6 +33,9 @@ export default function ClientsSection() {
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [resetResult, setResetResult] = useState({});
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     load();
@@ -77,6 +80,26 @@ export default function ClientsSection() {
       email: row.email || "",
     });
     setResetResult((prev) => ({ ...prev, [row.entreprise.id]: null }));
+    setConfirmingDelete(false);
+    setDeleteConfirmText("");
+  }
+
+  async function handleDeleteClient(row) {
+    setDeleting(true);
+    const { ok, data } = await authFetch("/api/admin/delete-client", {
+      method: "POST",
+      body: JSON.stringify({ profilId: row.profil?.id || null, entrepriseId: row.entreprise.id }),
+    });
+    setDeleting(false);
+
+    if (!ok) {
+      setError(data.error || "La suppression a échoué.");
+      return;
+    }
+
+    setError(null);
+    setEditingId(null);
+    setRows((prev) => prev.filter((r) => r.entreprise.id !== row.entreprise.id));
   }
 
   async function handleSaveEdit(row) {
@@ -254,6 +277,54 @@ export default function ClientsSection() {
                     Nouveau mot de passe temporaire : <strong>{resetResult[row.entreprise.id]}</strong>
                     <br />
                     Transmets-le au client de vive voix — il ne sera plus affiché une fois cette page quittée.
+                  </div>
+                )}
+
+                <div className="settings-divider">Zone dangereuse</div>
+
+                {!confirmingDelete ? (
+                  <div className="danger-zone">
+                    <div>
+                      <h4>Supprimer ce compte</h4>
+                      <p>Efface définitivement le compte, l'entreprise et toutes ses données (planning, employés, etc).</p>
+                    </div>
+                    <button className="btn-danger" onClick={() => setConfirmingDelete(true)}>
+                      Supprimer le compte
+                    </button>
+                  </div>
+                ) : (
+                  <div className="danger-zone" style={{ flexDirection: "column", alignItems: "stretch", gap: "12px" }}>
+                    <div>
+                      <h4>Confirmer la suppression</h4>
+                      <p>
+                        Tape le nom de l'entreprise (<strong>{row.entreprise.nom}</strong>) pour confirmer. Cette
+                        action est irréversible.
+                      </p>
+                    </div>
+                    <input
+                      type="text"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder={row.entreprise.nom}
+                    />
+                    <div style={{ display: "flex", gap: "10px" }}>
+                      <button
+                        className="btn-danger"
+                        disabled={deleteConfirmText !== row.entreprise.nom || deleting}
+                        onClick={() => handleDeleteClient(row)}
+                      >
+                        {deleting ? "Suppression..." : "Confirmer la suppression définitive"}
+                      </button>
+                      <button
+                        className="admin-icon-btn"
+                        onClick={() => {
+                          setConfirmingDelete(false);
+                          setDeleteConfirmText("");
+                        }}
+                      >
+                        Annuler
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
