@@ -20,7 +20,12 @@ alter table profils add column if not exists telephone_perso text;
 alter table profils add column if not exists desactive boolean not null default false;
 
 -- Jusqu'ici on ne pouvait que créer/lire son profil et son entreprise,
--- jamais les modifier. Nécessaire pour que la page Paramètres fonctionne.
+-- jamais les modifier. Une policy RLS ne suffit pas : il faut aussi le
+-- droit UPDATE de base sur la table (accordé nulle part jusqu'ici, d'où
+-- les 403 Forbidden même avec la bonne policy en place).
+grant update on entreprises to authenticated;
+grant update on profils to authenticated;
+
 -- (drop policy if exists rend ce script rejouable sans erreur)
 drop policy if exists "Un utilisateur peut modifier son propre profil" on profils;
 create policy "Un utilisateur peut modifier son propre profil"
