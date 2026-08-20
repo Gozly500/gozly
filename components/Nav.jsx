@@ -50,7 +50,9 @@ export default function Nav() {
             Contact
           </Link>
         </div>
-        <div className="btn-navy">Se connecter</div>
+        <Link href="/login" className="btn-navy">
+          Se connecter
+        </Link>
       </div>
     </div>
   );
