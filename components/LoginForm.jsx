@@ -63,6 +63,12 @@ export default function LoginForm() {
             {error}
           </p>
         )}
+        <p style={{ color: "var(--text-dim)", textAlign: "center", marginTop: "18px", fontSize: "13.5px" }}>
+          Pas encore de compte?{" "}
+          <a href="/inscription" style={{ textDecoration: "underline", color: "#fff" }}>
+            Crée-en un
+          </a>
+        </p>
       </form>
     </div>
   );
