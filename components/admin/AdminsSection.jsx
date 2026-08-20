@@ -53,31 +53,21 @@ export default function AdminsSection({ currentEmail }) {
       <h2>Équipe admin</h2>
       <p className="panel-hint">Les courriels qui ont accès à ce panneau.</p>
 
-      <div className="admin-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Courriel</th>
-              <th>Depuis</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {admins.map((a) => (
-              <tr key={a.id}>
-                <td>{a.email}</td>
-                <td style={{ color: "var(--text-dim)" }}>
-                  {new Date(a.created_at).toLocaleDateString("fr-CA")}
-                </td>
-                <td style={{ textAlign: "right" }}>
-                  <button className="admin-remove-btn" onClick={() => handleRemove(a.id, a.email)}>
-                    Retirer
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="admin-list">
+        {admins.map((a) => (
+          <div className="admin-row" key={a.id}>
+            <div className="admin-row-main">
+              <div className="admin-row-title">{a.email}</div>
+              <div className="admin-row-sub">admin depuis le {new Date(a.created_at).toLocaleDateString("fr-CA")}</div>
+            </div>
+            <div className="admin-row-controls">
+              <button className="admin-icon-btn danger" onClick={() => handleRemove(a.id, a.email)}>
+                Retirer
+              </button>
+            </div>
+          </div>
+        ))}
+        {admins.length === 0 && <div className="admin-empty">Aucun admin.</div>}
       </div>
 
       <form className="admin-add-form" onSubmit={handleAdd}>

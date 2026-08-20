@@ -25,23 +25,38 @@ create table if not exists admins (
 
 grant select, insert, delete on admins to authenticated;
 
+-- Une policy RLS sur "admins" qui vérifie l'appartenance en interrogeant
+-- la table "admins" elle-même crée une boucle infinie (chaque lecture
+-- redéclenche la policy, qui relit la table, qui redéclenche la policy...).
+-- La solution standard : passer par une fonction "security definer", qui
+-- contourne RLS pour cette seule vérification interne.
+create or replace function is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (select 1 from admins a where a.email = auth.jwt() ->> 'email');
+$$;
+
 drop policy if exists "Les admins peuvent voir la liste des admins" on admins;
 create policy "Les admins peuvent voir la liste des admins"
 on admins for select
 to authenticated
-using (exists (select 1 from admins a where a.email = auth.jwt() ->> 'email'));
+using (is_admin());
 
 drop policy if exists "Les admins peuvent ajouter des admins" on admins;
 create policy "Les admins peuvent ajouter des admins"
 on admins for insert
 to authenticated
-with check (exists (select 1 from admins a where a.email = auth.jwt() ->> 'email'));
+with check (is_admin());
 
 drop policy if exists "Les admins peuvent retirer des admins" on admins;
 create policy "Les admins peuvent retirer des admins"
 on admins for delete
 to authenticated
-using (exists (select 1 from admins a where a.email = auth.jwt() ->> 'email'));
+using (is_admin());
 
 -- Un admin peut lire/modifier TOUTES les entreprises (en plus de la
 -- policy "sa propre entreprise" qui reste pour les clients normaux).
@@ -49,28 +64,28 @@ drop policy if exists "Les admins peuvent lire toutes les entreprises" on entrep
 create policy "Les admins peuvent lire toutes les entreprises"
 on entreprises for select
 to authenticated
-using (exists (select 1 from admins a where a.email = auth.jwt() ->> 'email'));
+using (is_admin());
 
 drop policy if exists "Les admins peuvent modifier toutes les entreprises" on entreprises;
 create policy "Les admins peuvent modifier toutes les entreprises"
 on entreprises for update
 to authenticated
-using (exists (select 1 from admins a where a.email = auth.jwt() ->> 'email'))
-with check (exists (select 1 from admins a where a.email = auth.jwt() ->> 'email'));
+using (is_admin())
+with check (is_admin());
 
 -- Même chose pour profils (voir/désactiver le compte d'un client).
 drop policy if exists "Les admins peuvent lire tous les profils" on profils;
 create policy "Les admins peuvent lire tous les profils"
 on profils for select
 to authenticated
-using (exists (select 1 from admins a where a.email = auth.jwt() ->> 'email'));
+using (is_admin());
 
 drop policy if exists "Les admins peuvent modifier tous les profils" on profils;
 create policy "Les admins peuvent modifier tous les profils"
 on profils for update
 to authenticated
-using (exists (select 1 from admins a where a.email = auth.jwt() ->> 'email'))
-with check (exists (select 1 from admins a where a.email = auth.jwt() ->> 'email'));
+using (is_admin())
+with check (is_admin());
 
 -- Seed : ton compte comme premier admin (remplace par ton courriel si
 -- ce n'est pas le bon).

@@ -69,7 +69,7 @@ export default function AdminContent() {
   }
 
   return (
-    <div className="wrap settings-wrap">
+    <div className="wrap settings-wrap admin-wrap">
       <nav className="settings-nav">
         {TABS.map((tab) => (
           <button
