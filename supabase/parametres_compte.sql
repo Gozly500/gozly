@@ -26,6 +26,12 @@ alter table profils add column if not exists desactive boolean not null default 
 grant update on entreprises to authenticated;
 grant update on profils to authenticated;
 
+-- Le webhook Stripe (/api/stripe/webhook) écrit dans la base sans session
+-- utilisateur, via la clé service_role - qui doit aussi recevoir ses
+-- propres droits de base sur ces deux tables.
+grant select, update on entreprises to service_role;
+grant select, update on profils to service_role;
+
 -- (drop policy if exists rend ce script rejouable sans erreur)
 drop policy if exists "Un utilisateur peut modifier son propre profil" on profils;
 create policy "Un utilisateur peut modifier son propre profil"
