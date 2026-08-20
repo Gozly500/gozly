@@ -25,6 +25,10 @@ create table if not exists admins (
 
 grant select, insert, delete on admins to authenticated;
 
+-- Pour la suppression réelle d'un compte client depuis le panneau admin.
+grant delete on entreprises to service_role;
+grant delete on profils to service_role;
+
 -- Une policy RLS sur "admins" qui vérifie l'appartenance en interrogeant
 -- la table "admins" elle-même crée une boucle infinie (chaque lecture
 -- redéclenche la policy, qui relit la table, qui redéclenche la policy...).
