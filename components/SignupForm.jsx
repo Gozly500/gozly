@@ -18,6 +18,7 @@ export default function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [forfait, setForfait] = useState("none");
+  const [forfaitOpen, setForfaitOpen] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -137,20 +138,34 @@ export default function SignupForm() {
 
         <div className="field">
           <label>Forfait</label>
-          <div className="forfait-choices">
-            {FORFAITS.map((f) => (
-              <label key={f.id} className={`forfait-choice${forfait === f.id ? " selected" : ""}`}>
-                <input
-                  type="radio"
-                  name="forfait"
-                  value={f.id}
-                  checked={forfait === f.id}
-                  onChange={() => setForfait(f.id)}
-                />
-                <span className="forfait-choice-label">{f.label}</span>
-                <span className="forfait-choice-detail">{f.detail}</span>
-              </label>
-            ))}
+          <div className="forfait-select-wrap">
+            <div
+              className={`forfait-select-trigger${forfaitOpen ? " open" : ""}`}
+              onClick={() => setForfaitOpen((v) => !v)}
+            >
+              <div>
+                <div className="fs-label">{FORFAITS.find((f) => f.id === forfait)?.label}</div>
+                <div className="fs-detail">{FORFAITS.find((f) => f.id === forfait)?.detail}</div>
+              </div>
+              <span className="fs-arrow">▾</span>
+            </div>
+            {forfaitOpen && (
+              <div className="forfait-select-options open">
+                {FORFAITS.map((f) => (
+                  <div
+                    key={f.id}
+                    className="forfait-option"
+                    onClick={() => {
+                      setForfait(f.id);
+                      setForfaitOpen(false);
+                    }}
+                  >
+                    <div className="fo-label">{f.label}</div>
+                    <div className="fo-detail">{f.detail}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

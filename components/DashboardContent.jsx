@@ -10,6 +10,7 @@ export default function DashboardContent() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
   const [noForfait, setNoForfait] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -70,7 +71,15 @@ export default function DashboardContent() {
 
   return (
     <div className="dash-layout">
-      <aside className="dash-sidebar">
+      <button
+        className={`dash-sidebar-tab${sidebarOpen ? " open" : ""}`}
+        onClick={() => setSidebarOpen((v) => !v)}
+        aria-label="Ouvrir le menu"
+      >
+        {sidebarOpen ? "‹" : "›"}
+      </button>
+
+      <aside className={`dash-sidebar${sidebarOpen ? " open" : ""}`}>
         <Link href="/" className="dash-sidebar-logo">
           <svg viewBox="0 0 1182 1182" xmlns="http://www.w3.org/2000/svg">
             <g transform="matrix(0.136019,0,0,0.136019,590.551181,590.551181)">
@@ -117,13 +126,15 @@ export default function DashboardContent() {
               <div className="dash-user-name">{displayName}</div>
               {displayName !== user?.email && <div className="dash-user-email">{user?.email}</div>}
             </div>
-            <button className="dash-settings-btn" title="Paramètres du compte">
+          </div>
+          <div className="dash-user-actions">
+            <Link href="/parametres" className="dash-settings-btn" title="Paramètres du compte">
               ⚙
+            </Link>
+            <button onClick={handleLogout} className="dash-logout-btn">
+              Déconnexion
             </button>
           </div>
-          <button onClick={handleLogout} className="dash-logout-btn">
-            Déconnexion
-          </button>
         </div>
       </aside>
 

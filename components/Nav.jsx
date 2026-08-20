@@ -1,10 +1,33 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Nav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    setAccountOpen(false);
+    setMobileOpen(false);
+    router.push("/login");
+  }
 
   return (
     <div className="navbar">
@@ -39,7 +62,7 @@ export default function Nav() {
             </svg>
           </span>
         </div>
-        <div className="nav-links">
+        <div className="nav-links desktop-only">
           <Link href="/" className={pathname === "/" ? "active" : ""}>
             Accueil
           </Link>
@@ -50,9 +73,73 @@ export default function Nav() {
             Contact
           </Link>
         </div>
-        <Link href="/login" className="btn-navy">
-          Se connecter
+
+        <div className="desktop-only">
+          {user ? (
+            <div className="account-wrap">
+              <button className="account-btn" onClick={() => setAccountOpen((v) => !v)}>
+                Mon compte ▾
+              </button>
+              {accountOpen && (
+                <div className="account-dropdown open">
+                  <Link href="/dashboard" onClick={() => setAccountOpen(false)}>
+                    Tableau de bord
+                  </Link>
+                  <Link href="/parametres" onClick={() => setAccountOpen(false)}>
+                    Paramètres
+                  </Link>
+                  <div className="divider"></div>
+                  <button className="logout" onClick={handleLogout}>
+                    Se déconnecter
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/login" className="btn-navy">
+              Se connecter
+            </Link>
+          )}
+        </div>
+
+        <button
+          className={`hamburger-btn mobile-only${mobileOpen ? " open" : ""}`}
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label="Menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+      <div className={`mobile-menu-panel${mobileOpen ? " open" : ""}`}>
+        <Link href="/" onClick={() => setMobileOpen(false)}>
+          Accueil
         </Link>
+        <Link href="/s-abonner" onClick={() => setMobileOpen(false)}>
+          S&apos;abonner
+        </Link>
+        <Link href="/contact" onClick={() => setMobileOpen(false)}>
+          Contact
+        </Link>
+        {user ? (
+          <>
+            <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
+              Tableau de bord
+            </Link>
+            <Link href="/parametres" onClick={() => setMobileOpen(false)}>
+              Paramètres
+            </Link>
+            <button onClick={handleLogout} className="mobile-logout">
+              Se déconnecter
+            </button>
+          </>
+        ) : (
+          <Link href="/login" onClick={() => setMobileOpen(false)}>
+            Se connecter
+          </Link>
+        )}
       </div>
     </div>
   );
