@@ -9,14 +9,37 @@ export default function DashboardContent() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
+  const [noForfait, setNoForfait] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         router.push("/login");
         return;
       }
       setUser(session.user);
+
+      // Vérifie si ce compte a une entreprise liée, et si elle a un forfait actif.
+      // Les comptes sans profil (comme un compte admin créé manuellement)
+      // ignorent simplement cette vérification.
+      const { data: profil } = await supabase
+        .from("profils")
+        .select("entreprise_id")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profil?.entreprise_id) {
+        const { data: entreprise } = await supabase
+          .from("entreprises")
+          .select("forfait")
+          .eq("id", profil.entreprise_id)
+          .maybeSingle();
+
+        if (entreprise && !entreprise.forfait) {
+          setNoForfait(true);
+        }
+      }
+
       setChecking(false);
     });
 
@@ -106,6 +129,15 @@ export default function DashboardContent() {
 
       <main className="dash-main">
         <div className="dash-main-inner">
+          {noForfait && (
+            <div className="dash-forfait-banner">
+              <span>Vous n'avez aucun forfait actif.</span>
+              <Link href="/s-abonner" className="dash-forfait-banner-btn">
+                Choisir un forfait →
+              </Link>
+            </div>
+          )}
+
           <header className="dash-hero-inline">
             <h1>Bienvenue{displayName ? `, ${displayName}` : ""}</h1>
             <p>Voici ton espace. Active un module pour commencer.</p>
