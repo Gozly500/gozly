@@ -49,12 +49,15 @@ export default function SignupForm() {
       return;
     }
 
-    // 2. Créer l'entreprise (forfait = null si aucun choisi)
-    const { data: entreprise, error: entrepriseError } = await supabase
-      .from("entreprises")
-      .insert({ nom: entrepriseName, forfait: forfait === "none" ? null : forfait })
-      .select()
-      .single();
+    // 2. Créer l'entreprise (on génère son identifiant nous-mêmes, pour ne
+    //    pas dépendre d'une relecture immédiate après l'écriture).
+    const entrepriseId = crypto.randomUUID();
+
+    const { error: entrepriseError } = await supabase.from("entreprises").insert({
+      id: entrepriseId,
+      nom: entrepriseName,
+      forfait: forfait === "none" ? null : forfait,
+    });
 
     if (entrepriseError) {
       setLoading(false);
@@ -65,7 +68,7 @@ export default function SignupForm() {
     // 3. Lier le compte à l'entreprise
     const { error: profilError } = await supabase.from("profils").insert({
       id: user.id,
-      entreprise_id: entreprise.id,
+      entreprise_id: entrepriseId,
       full_name: fullName,
     });
 
