@@ -54,6 +54,91 @@ body{margin:0;overflow-x:hidden;}
 .dash-hero p{color:var(--text-dim);font-size:16px;}
 .dash-modules{padding-bottom:100px;}
 
+.dash-layout{display:flex;min-height:100vh;}
+.dash-sidebar{
+    width:260px;flex-shrink:0;
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-right:1px solid rgba(255,255,255,0.12);
+    display:flex;flex-direction:column;
+    padding:26px 20px;
+    position:sticky;top:0;height:100vh;
+  }
+.dash-sidebar-logo{display:flex;align-items:center;gap:10px;margin-bottom:44px;padding-left:4px;}
+.dash-sidebar-logo svg{width:32px;height:32px;flex-shrink:0;}
+.dash-sidebar-logo span{font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px;color:#fff;}
+.dash-nav{display:flex;flex-direction:column;gap:4px;flex:1;overflow-y:auto;}
+.dash-nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 14px;border-radius:12px;
+    color:var(--text-dim);font-size:14.5px;font-weight:500;
+    cursor:pointer;transition:background .2s ease,color .2s ease;
+  }
+.dash-nav-item.active{background:rgba(255,255,255,0.10);color:#fff;}
+.dash-nav-item.disabled{opacity:.45;cursor:default;}
+.dash-nav-item:not(.disabled):hover{background:rgba(255,255,255,0.06);color:#fff;}
+.dash-nav-label{
+    font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--text-dim);opacity:.55;margin:22px 0 8px 14px;font-weight:600;
+  }
+.dash-sidebar-user{border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;margin-top:16px;}
+.dash-user-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px;}
+.dash-settings-btn{
+    width:30px;height:30px;flex-shrink:0;border-radius:9px;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);
+    color:var(--text-dim);font-size:14px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:background .2s ease,color .2s ease;
+  }
+.dash-settings-btn:hover{background:rgba(255,255,255,0.16);color:#fff;}
+.dash-user-name{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px;word-break:break-word;}
+.dash-user-email{font-size:12px;color:var(--text-dim);word-break:break-all;}
+.dash-logout-btn{
+    width:100%;padding:9px;border-radius:10px;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);
+    color:#fff;font-size:13px;font-weight:500;cursor:pointer;
+    transition:background .2s ease;
+  }
+.dash-logout-btn:hover{background:rgba(255,255,255,0.14);}
+
+.dash-main{flex:1;min-width:0;}
+.dash-main-inner{padding:56px 48px;max-width:960px;}
+.dash-hero-inline{margin-bottom:36px;}
+.dash-hero-inline h1{font-size:clamp(26px,3.5vw,36px);margin-bottom:8px;}
+.dash-hero-inline p{color:var(--text-dim);font-size:15.5px;}
+
+.dash-modules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:18px;}
+.dash-module-card{
+    aspect-ratio:1;border-radius:20px;
+    background:rgba(255,255,255,0.05);
+    border:1px dashed rgba(255,255,255,0.22);
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;color:var(--text-dim);cursor:pointer;
+    transition:background .2s ease,transform .2s ease,border-color .2s ease;
+  }
+.dash-module-card:hover{
+    background:rgba(255,255,255,0.09);
+    border-color:rgba(255,255,255,0.4);
+    transform:translateY(-3px);
+  }
+
+@media(max-width:820px){
+    .dash-layout{flex-direction:column;}
+    .dash-sidebar{
+      width:100%;height:auto;position:relative;
+      flex-direction:row;align-items:center;flex-wrap:wrap;gap:16px;
+      padding:16px 20px;
+    }
+    .dash-sidebar-logo{margin-bottom:0;}
+    .dash-nav{flex-direction:row;overflow-x:auto;flex:none;width:100%;order:3;}
+    .dash-nav-label{display:none;}
+    .dash-sidebar-user{border-top:none;margin-top:0;padding-top:0;order:2;margin-left:auto;
+      display:flex;align-items:center;gap:10px;}
+    .dash-user-email{display:none;}
+    .dash-user-name{margin-bottom:0;}
+    .dash-logout-btn{width:auto;padding:8px 16px;}
+    .dash-main-inner{padding:40px 20px;}
+  }
+
 h1,h2,h3,.brand{font-family:'Fredoka',sans-serif;font-weight:600;letter-spacing:-0.01em;}
 
 a{color:inherit;text-decoration:none;}
