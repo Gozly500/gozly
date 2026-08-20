@@ -1,7 +1,7 @@
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import SettingsForm from "@/components/SettingsForm";
+import SettingsContent from "@/components/SettingsContent";
 
 export const metadata = {
   title: "Gozly - Paramètres",
@@ -16,14 +16,12 @@ export default function SettingsPage() {
       <header className="page-hero">
         <div className="wrap">
           <h1>Paramètres du compte</h1>
-          <p>Modifie tes informations personnelles.</p>
+          <p>Gère ton compte, ton entreprise et ton abonnement.</p>
         </div>
       </header>
 
-      <section id="settings-form">
-        <div className="wrap login-wrap">
-          <SettingsForm />
-        </div>
+      <section id="settings-content">
+        <SettingsContent />
       </section>
 
       <Footer />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -11,17 +11,36 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("desactive") === "1") {
+      setError("Ce compte a été désactivé.");
+    }
+  }, []);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      setLoading(false);
+      setError("Courriel ou mot de passe incorrect.");
+      return;
+    }
+
+    const { data: profil } = await supabase
+      .from("profils")
+      .select("desactive")
+      .eq("id", data.user.id)
+      .maybeSingle();
 
     setLoading(false);
 
-    if (error) {
-      setError("Courriel ou mot de passe incorrect.");
+    if (profil?.desactive) {
+      await supabase.auth.signOut();
+      setError("Ce compte a été désactivé. Contacte-nous si c'est une erreur.");
       return;
     }
 
