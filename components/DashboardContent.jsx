@@ -42,6 +42,9 @@ export default function DashboardContent() {
     );
   }
 
+  const displayName =
+    user?.user_metadata?.full_name || user?.user_metadata?.entreprise || user?.email;
+
   return (
     <>
       <div className="dash-topbar">
@@ -57,7 +60,7 @@ export default function DashboardContent() {
 
       <header className="dash-hero">
         <div className="wrap">
-          <h1>Bienvenue{user?.email ? `, ${user.email}` : ""}</h1>
+          <h1>Bienvenue{displayName ? `, ${displayName}` : ""}</h1>
           <p>Voici ton espace. Active un module pour commencer.</p>
         </div>
       </header>
