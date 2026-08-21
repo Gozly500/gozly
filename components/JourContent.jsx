@@ -71,6 +71,7 @@ export default function JourContent({ date }) {
         userEmail={user?.email}
         isAdmin={isAdmin}
         onLogout={handleLogout}
+        entrepriseId={entrepriseId}
       />
 
       <main className="dash-main">

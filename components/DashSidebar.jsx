@@ -1,10 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
+import { MODULES } from "@/lib/modules";
+import ModulesModal from "@/components/ModulesModal";
 
-export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout }) {
+export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout, entrepriseId }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [actifs, setActifs] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!entrepriseId) return;
+    loadActifs();
+  }, [entrepriseId]);
+
+  async function loadActifs() {
+    const { data } = await supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId);
+    setActifs((data || []).map((m) => m.module));
+  }
+
+  const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
 
   return (
     <>
@@ -52,19 +69,25 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
             <span>▦</span> Tableau de bord
           </Link>
           <div className="dash-nav-label">Modules</div>
-          <Link
-            href="/dashboard/planning"
-            className={`dash-nav-item${active === "planning" ? " active" : ""}`}
-          >
-            <img src="/icone-planning.svg" alt="" className="dash-nav-icon" /> Planning
-          </Link>
-          {(active === "planning" || active === "categories") && (
-            <Link
-              href="/dashboard/planning/categories"
-              className={`dash-nav-item dash-nav-sub${active === "categories" ? " active" : ""}`}
-            >
-              <span>▤</span> Catégories
-            </Link>
+          {modulesActifs.map((mod) => (
+            <div key={mod.id}>
+              <Link href={mod.href} className={`dash-nav-item${active === mod.id ? " active" : ""}`}>
+                <img src={mod.image} alt="" className="dash-nav-icon" /> {mod.nom}
+              </Link>
+              {mod.id === "planning" && (active === "planning" || active === "categories") && (
+                <Link
+                  href="/dashboard/planning/categories"
+                  className={`dash-nav-item dash-nav-sub${active === "categories" ? " active" : ""}`}
+                >
+                  <span>▤</span> Catégories
+                </Link>
+              )}
+            </div>
+          ))}
+          {entrepriseId && (
+            <button className="dash-nav-item dash-nav-manage" onClick={() => setModalOpen(true)}>
+              <span>+</span> Gérer les modules
+            </button>
           )}
         </nav>
 
@@ -90,6 +113,14 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           </div>
         </div>
       </aside>
+
+      {modalOpen && (
+        <ModulesModal
+          entrepriseId={entrepriseId}
+          onClose={() => setModalOpen(false)}
+          onChange={loadActifs}
+        />
+      )}
     </>
   );
 }

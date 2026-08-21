@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import DashSidebar from "@/components/DashSidebar";
+import ModulesModal from "@/components/ModulesModal";
+import { MODULES, limiteModules } from "@/lib/modules";
 
 export default function DashboardContent() {
   const router = useRouter();
@@ -12,6 +14,10 @@ export default function DashboardContent() {
   const [checking, setChecking] = useState(true);
   const [noForfait, setNoForfait] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [entrepriseId, setEntrepriseId] = useState(null);
+  const [forfait, setForfait] = useState(null);
+  const [actifs, setActifs] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -38,15 +44,20 @@ export default function DashboardContent() {
         .maybeSingle();
 
       if (profil?.entreprise_id) {
+        setEntrepriseId(profil.entreprise_id);
+
         const { data: entreprise } = await supabase
           .from("entreprises")
           .select("forfait")
           .eq("id", profil.entreprise_id)
           .maybeSingle();
 
-        if (entreprise && !entreprise.forfait) {
-          setNoForfait(true);
+        if (entreprise) {
+          setForfait(entreprise.forfait);
+          if (!entreprise.forfait) setNoForfait(true);
         }
+
+        loadActifs(profil.entreprise_id);
       }
 
       setChecking(false);
@@ -60,6 +71,11 @@ export default function DashboardContent() {
 
     return () => listener.subscription.unsubscribe();
   }, [router]);
+
+  async function loadActifs(eid) {
+    const { data } = await supabase.from("modules_actifs").select("module").eq("entreprise_id", eid);
+    setActifs((data || []).map((m) => m.module));
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -77,6 +93,10 @@ export default function DashboardContent() {
   const displayName =
     user?.user_metadata?.full_name || user?.user_metadata?.entreprise || user?.email;
 
+  const limite = limiteModules(forfait);
+  const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
+  const placeholders = Math.max(0, Math.min(limite === Infinity ? 4 : limite, 4) - modulesActifs.length);
+
   return (
     <div className="dash-layout">
       <DashSidebar
@@ -85,6 +105,7 @@ export default function DashboardContent() {
         userEmail={user?.email}
         isAdmin={isAdmin}
         onLogout={handleLogout}
+        entrepriseId={entrepriseId}
       />
 
       <main className="dash-main">
@@ -104,15 +125,27 @@ export default function DashboardContent() {
           </header>
 
           <div className="dash-modules-grid">
-            <Link href="/dashboard/planning" className="dash-module-card active" title="Planning">
-              <img src="/icone-planning.svg" alt="Planning" className="dash-module-image" />
-            </Link>
-            <div className="dash-module-card">+</div>
-            <div className="dash-module-card">+</div>
-            <div className="dash-module-card">+</div>
+            {modulesActifs.map((mod) => (
+              <Link key={mod.id} href={mod.href} className="dash-module-card active" title={mod.nom}>
+                <img src={mod.image} alt={mod.nom} className="dash-module-image" />
+              </Link>
+            ))}
+            {Array.from({ length: placeholders }).map((_, i) => (
+              <div key={i} className="dash-module-card" onClick={() => setModalOpen(true)}>
+                +
+              </div>
+            ))}
           </div>
         </div>
       </main>
+
+      {modalOpen && (
+        <ModulesModal
+          entrepriseId={entrepriseId}
+          onClose={() => setModalOpen(false)}
+          onChange={() => loadActifs(entrepriseId)}
+        />
+      )}
     </div>
   );
 }

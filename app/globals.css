@@ -187,6 +187,46 @@ button:hover{background:rgba(255,255,255,0.15);}
 .dash-module-image{width:100%;height:100%;object-fit:cover;border-radius:19px;display:block;}
 .dash-nav-icon{width:18px;height:18px;border-radius:5px;flex-shrink:0;display:block;}
 
+.dash-nav-manage{
+    width:100%;text-align:left;background:none;border:1px dashed rgba(255,255,255,0.22);
+    margin-top:2px;font-family:'Inter',sans-serif;
+  }
+.dash-nav-manage:hover{background:rgba(255,255,255,0.06);color:#fff;}
+
+/* ============ Popup de gestion des modules ============ */
+.modal-overlay{
+    position:fixed;inset:0;z-index:80;
+    background:rgba(5,5,20,0.6);backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+.modal-card{
+    width:100%;max-width:440px;max-height:80vh;overflow-y:auto;
+    background:rgba(30,25,70,0.97);backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.16);border-radius:24px;
+    padding:28px 26px;box-shadow:0 30px 60px -15px rgba(0,0,0,0.5);
+  }
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.modal-head h3{font-size:19px;}
+
+.modules-picker-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:14px;margin-top:18px;
+  }
+.modules-picker-tile{
+    position:relative;aspect-ratio:1;border-radius:18px;overflow:hidden;padding:0;
+    border:2px solid transparent;background:rgba(255,255,255,0.05);
+    transition:transform .2s ease,border-color .2s ease;
+  }
+.modules-picker-tile img{width:100%;height:100%;object-fit:cover;display:block;}
+.modules-picker-tile:hover:not(:disabled){transform:translateY(-2px);}
+.modules-picker-tile.active{border-color:#7ee787;}
+.modules-picker-tile.disabled{opacity:.4;cursor:not-allowed;}
+.modules-picker-check{
+    position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;
+    background:#2b7a3a;color:#fff;font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,0.4);
+  }
+
 .dash-sidebar-tab{
     display:none;
     position:fixed;top:50%;left:0;transform:translateY(-50%);z-index:60;

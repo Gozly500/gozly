@@ -100,6 +100,7 @@ export default function PlanningContent() {
         userEmail={user?.email}
         isAdmin={isAdmin}
         onLogout={handleLogout}
+        entrepriseId={entrepriseId}
       />
 
       <main className="dash-main">
