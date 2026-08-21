@@ -104,6 +104,9 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
 
+  const monRole = membres.find((m) => m.user_id === userId)?.role;
+  const jeSuisProprietaire = monRole === "proprietaire";
+
   return (
     <div>
       <h2>Équipe</h2>
@@ -118,9 +121,11 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
               <div className="admin-row-sub">{m.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
             </div>
             <div className="admin-row-controls">
-              <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
-                {m.user_id === userId ? "Quitter" : "Retirer"}
-              </button>
+              {(m.user_id === userId || jeSuisProprietaire) && (
+                <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
+                  {m.user_id === userId ? "Quitter" : "Retirer"}
+                </button>
+              )}
             </div>
           </div>
         ))}
