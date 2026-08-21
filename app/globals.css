@@ -185,7 +185,6 @@ button:hover{background:rgba(255,255,255,0.15);}
     text-decoration:none;color:var(--text);
   }
 .dash-module-image{width:100%;height:100%;object-fit:cover;border-radius:19px;display:block;}
-.dash-nav-icon{width:18px;height:18px;border-radius:5px;flex-shrink:0;display:block;}
 
 .dash-nav-manage{
     width:100%;text-align:left;background:none;border:1px dashed rgba(255,255,255,0.22);

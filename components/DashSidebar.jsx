@@ -72,7 +72,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           {modulesActifs.map((mod) => (
             <div key={mod.id}>
               <Link href={mod.href} className={`dash-nav-item${active === mod.id ? " active" : ""}`}>
-                <img src={mod.image} alt="" className="dash-nav-icon" /> {mod.nom}
+                <span>{mod.icon}</span> {mod.nom}
               </Link>
               {mod.id === "planning" && (active === "planning" || active === "categories") && (
                 <Link
