@@ -56,7 +56,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
             href="/dashboard/planning"
             className={`dash-nav-item${active === "planning" ? " active" : ""}`}
           >
-            <span>◷</span> Planning
+            <img src="/icone-planning.svg" alt="" className="dash-nav-icon" /> Planning
           </Link>
           {(active === "planning" || active === "categories") && (
             <Link

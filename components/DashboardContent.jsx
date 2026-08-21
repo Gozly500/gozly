@@ -105,7 +105,7 @@ export default function DashboardContent() {
 
           <div className="dash-modules-grid">
             <Link href="/dashboard/planning" className="dash-module-card active">
-              <span className="dash-module-icon">◷</span>
+              <img src="/icone-planning.svg" alt="" className="dash-module-icon" />
               <span className="dash-module-name">Planning</span>
             </Link>
             <div className="dash-module-card">+</div>
