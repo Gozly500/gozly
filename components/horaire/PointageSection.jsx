@@ -25,15 +25,20 @@ export default function PointageSection({ entrepriseId }) {
         autoplay: true,
         path: "/animations/pointage-succes.json",
       });
-      anim.addEventListener("complete", () => setShowSuccess(false));
+      // L'animation dure ~2.8s, plus courte que le délai d'affichage voulu
+      // (4s) - on la laisse simplement se terminer sans rien effacer, c'est
+      // le minuteur ci-dessous qui décide quand tout disparaît.
     });
 
-    const fallback = setTimeout(() => setShowSuccess(false), 3500);
+    const minuteur = setTimeout(() => {
+      setShowSuccess(false);
+      setMessage(null);
+    }, 4000);
 
     return () => {
       cancelled = true;
       anim?.destroy();
-      clearTimeout(fallback);
+      clearTimeout(minuteur);
     };
   }, [showSuccess]);
 
