@@ -1086,8 +1086,7 @@ input.planning-date-picker{
 .horaire-employee-pill:active{cursor:grabbing;}
 
 .horaire-grid{
-    flex:1;min-width:0;display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));
-    gap:10px;overflow-x:auto;
+    flex:1;min-width:0;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;
   }
 .horaire-col{
     background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
