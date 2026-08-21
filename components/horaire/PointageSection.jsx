@@ -1,12 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function PointageSection({ entrepriseId }) {
   const [nip, setNip] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const lottieRef = useRef(null);
+
+  useEffect(() => {
+    if (!showSuccess || !lottieRef.current) return;
+
+    let anim;
+    let cancelled = false;
+
+    import("lottie-web").then(({ default: lottie }) => {
+      if (cancelled || !lottieRef.current) return;
+      anim = lottie.loadAnimation({
+        container: lottieRef.current,
+        renderer: "svg",
+        loop: false,
+        autoplay: true,
+        path: "/animations/pointage-succes.json",
+      });
+      anim.addEventListener("complete", () => setShowSuccess(false));
+    });
+
+    const fallback = setTimeout(() => setShowSuccess(false), 3500);
+
+    return () => {
+      cancelled = true;
+      anim?.destroy();
+      clearTimeout(fallback);
+    };
+  }, [showSuccess]);
 
   function pressDigit(d) {
     if (busy || nip.length >= 4) return;
@@ -65,6 +94,7 @@ export default function PointageSection({ entrepriseId }) {
     });
     setNip("");
     setBusy(false);
+    setShowSuccess(true);
   }
 
   return (
@@ -73,34 +103,43 @@ export default function PointageSection({ entrepriseId }) {
       <p className="panel-hint">Entre ton NIP pour enregistrer ton arrivée ou ton départ.</p>
 
       <div className="pointage-kiosk">
-        <div className="pointage-dots">
-          {[0, 1, 2, 3].map((i) => (
-            <span key={i} className={`pointage-dot${nip.length > i ? " filled" : ""}`}></span>
-          ))}
-        </div>
+        {showSuccess ? (
+          <div className="pointage-success">
+            <div ref={lottieRef} className="pointage-lottie"></div>
+            {message && <p className="settings-msg ok">{message.text}</p>}
+          </div>
+        ) : (
+          <>
+            <div className="pointage-dots">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className={`pointage-dot${nip.length > i ? " filled" : ""}`}></span>
+              ))}
+            </div>
 
-        {message && <p className={`settings-msg ${message.type}`} style={{ textAlign: "center" }}>{message.text}</p>}
+            {message && (
+              <p className={`settings-msg ${message.type}`} style={{ textAlign: "center" }}>
+                {message.text}
+              </p>
+            )}
 
-        <div className="pointage-keypad">
-          {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
-            <button key={d} className="pointage-key" onClick={() => pressDigit(d)} disabled={busy}>
-              {d}
-            </button>
-          ))}
-          <button className="pointage-key" onClick={pressClear} disabled={busy}>
-            Effacer
-          </button>
-          <button className="pointage-key" onClick={() => pressDigit("0")} disabled={busy}>
-            0
-          </button>
-          <button
-            className="pointage-key confirm"
-            onClick={handleConfirm}
-            disabled={busy || nip.length !== 4}
-          >
-            ✓
-          </button>
-        </div>
+            <div className="pointage-keypad">
+              {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+                <button key={d} className="pointage-key" onClick={() => pressDigit(d)} disabled={busy}>
+                  {d}
+                </button>
+              ))}
+              <button className="pointage-key" onClick={pressClear} disabled={busy}>
+                Effacer
+              </button>
+              <button className="pointage-key" onClick={() => pressDigit("0")} disabled={busy}>
+                0
+              </button>
+              <button className="pointage-key confirm" onClick={handleConfirm} disabled={busy || nip.length !== 4}>
+                ✓
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
