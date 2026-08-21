@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function EquipeSection({ entrepriseId, userId }) {
+export default function EquipeSection({ entrepriseId, userId, onLeft }) {
   const [loading, setLoading] = useState(true);
   const [membres, setMembres] = useState([]);
   const [invitations, setInvitations] = useState([]);
@@ -22,10 +22,10 @@ export default function EquipeSection({ entrepriseId, userId }) {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
-    const [membresRes, invitationsRes] = await Promise.all([
+    const [membresResRaw, invitationsRes] = await Promise.all([
       fetch(`/api/team/members?entrepriseId=${entrepriseId}`, {
         headers: { Authorization: `Bearer ${token}` },
-      }).then((r) => r.json()),
+      }),
       supabase
         .from("invitations")
         .select("*")
@@ -34,7 +34,15 @@ export default function EquipeSection({ entrepriseId, userId }) {
         .order("created_at", { ascending: false }),
     ]);
 
-    setMembres(membresRes.membres || []);
+    const membresRes = await membresResRaw.json();
+
+    if (!membresResRaw.ok) {
+      setError(membresRes.error || "Impossible de charger l'équipe.");
+      setMembres([]);
+    } else {
+      setMembres(membresRes.membres || []);
+    }
+
     setInvitations(invitationsRes.data || []);
     setLoading(false);
   }
@@ -71,11 +79,24 @@ export default function EquipeSection({ entrepriseId, userId }) {
   }
 
   async function handleRemoveMembre(membre) {
-    if (membre.user_id === userId) {
-      setError("Tu ne peux pas te retirer toi-même de l'équipe.");
+    const estMoi = membre.user_id === userId;
+
+    if (estMoi && !window.confirm("Quitter ce dashboard ? Tu perdras l'accès immédiatement.")) {
       return;
     }
-    await supabase.from("membres").delete().eq("id", membre.id);
+
+    const { error } = await supabase.from("membres").delete().eq("id", membre.id);
+
+    if (error) {
+      setError("L'opération a échoué : " + error.message);
+      return;
+    }
+
+    if (estMoi) {
+      onLeft?.();
+      return;
+    }
+
     load();
   }
 
@@ -97,11 +118,9 @@ export default function EquipeSection({ entrepriseId, userId }) {
               <div className="admin-row-sub">{m.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
             </div>
             <div className="admin-row-controls">
-              {m.user_id !== userId && (
-                <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
-                  Retirer
-                </button>
-              )}
+              <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
+                {m.user_id === userId ? "Quitter" : "Retirer"}
+              </button>
             </div>
           </div>
         ))}

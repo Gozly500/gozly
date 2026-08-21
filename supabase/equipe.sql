@@ -17,6 +17,7 @@ create table if not exists membres (
 
 alter table membres enable row level security;
 grant select, insert, update, delete on membres to authenticated;
+grant select on membres to service_role;
 
 -- Fonctions security definer (même piège de récursion infinie RLS que
 -- pour "admins" - on le contourne dès le départ ici).

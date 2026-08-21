@@ -85,7 +85,7 @@ export default function EquipeContent() {
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
           ) : (
-            <EquipeSection entrepriseId={entrepriseId} userId={user?.id} />
+            <EquipeSection entrepriseId={entrepriseId} userId={user?.id} onLeft={() => router.push("/dashboards")} />
           )}
         </div>
       </main>

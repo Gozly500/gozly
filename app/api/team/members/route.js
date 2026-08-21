@@ -29,7 +29,14 @@ export async function GET(request) {
   const serviceClient = getServiceClient();
   if (!serviceClient) return NextResponse.json({ error: "Configuration serveur incomplète." }, { status: 500 });
 
-  const { data: membres } = await serviceClient.from("membres").select("*").eq("entreprise_id", entrepriseId);
+  const { data: membres, error: membresError } = await serviceClient
+    .from("membres")
+    .select("*")
+    .eq("entreprise_id", entrepriseId);
+
+  if (membresError) {
+    return NextResponse.json({ error: "Erreur : " + membresError.message }, { status: 500 });
+  }
 
   const { data: usersPage } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
   const emailById = new Map((usersPage?.users || []).map((u) => [u.id, u.email]));
