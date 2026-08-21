@@ -67,7 +67,7 @@ export default function PointageSection({ entrepriseId }) {
       return;
     }
 
-    const { data: dernier } = await supabase
+    const { data: dernier, error: lectureError } = await supabase
       .from("pointages")
       .select("type")
       .eq("employe_id", employe.id)
@@ -75,13 +75,27 @@ export default function PointageSection({ entrepriseId }) {
       .limit(1)
       .maybeSingle();
 
+    if (lectureError) {
+      setMessage({ type: "err", text: "Erreur : " + lectureError.message });
+      setNip("");
+      setBusy(false);
+      return;
+    }
+
     const prochainType = dernier?.type === "arrivee" ? "depart" : "arrivee";
 
-    await supabase.from("pointages").insert({
+    const { error: insertError } = await supabase.from("pointages").insert({
       entreprise_id: entrepriseId,
       employe_id: employe.id,
       type: prochainType,
     });
+
+    if (insertError) {
+      setMessage({ type: "err", text: "Erreur : " + insertError.message });
+      setNip("");
+      setBusy(false);
+      return;
+    }
 
     const heure = new Date().toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
 
