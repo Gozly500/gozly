@@ -36,6 +36,27 @@ body{margin:0;overflow-x:hidden;}
       linear-gradient(180deg, #05051c 0%, #10104a 30%, #2b2a9e 65%, #4b3fd6 100%);
   }
 
+/* Style par défaut pour tout champ de saisie du site, même en dehors
+   d'un .field (ex: formulaires rapides du panneau admin/planning) -
+   .field input applique ensuite un padding/largeur spécifique par-dessus. */
+input[type="text"],input[type="email"],input[type="password"],input[type="tel"],
+input[type="date"],input[type="time"],input[type="number"],input[type="search"],
+textarea,select{
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--text);
+    padding:10px 14px;border-radius:14px;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.16);
+    outline:none;transition:border-color .2s ease,background .2s ease;
+  }
+input[type="text"]:focus,input[type="email"]:focus,input[type="password"]:focus,
+input[type="tel"]:focus,input[type="date"]:focus,input[type="time"]:focus,
+input[type="number"]:focus,input[type="search"]:focus,textarea:focus,select:focus{
+    border-color:rgba(255,255,255,0.4);
+  }
+input[type="text"]::placeholder,input[type="email"]::placeholder,input[type="tel"]::placeholder,
+input[type="search"]::placeholder,textarea::placeholder{
+    color:var(--text-dim);
+  }
+
 .wrap{max-width:1180px;margin:0 auto;padding:0 32px;position:relative;z-index:1;}
 
 .login-wrap{max-width:420px;padding-top:20px;}
@@ -939,7 +960,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 
 .dash-nav-sub{padding-left:38px;font-size:13px;}
 
-.planning-date-picker{
+input.planning-date-picker{
     position:absolute;top:calc(100% + 8px);right:0;z-index:20;
     background:rgba(30,25,70,0.97);backdrop-filter:blur(20px);
     border:1px solid rgba(255,255,255,0.16);border-radius:14px;
