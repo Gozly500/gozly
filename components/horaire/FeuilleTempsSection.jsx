@@ -52,9 +52,9 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       .from("pointages")
       .select("*")
       .eq("entreprise_id", entrepriseId)
-      .gte("horodatage", weekStart.toISOString())
-      .lt("horodatage", weekEnd.toISOString())
-      .order("horodatage", { ascending: true });
+      .gte("entree", weekStart.toISOString())
+      .lt("entree", weekEnd.toISOString())
+      .order("entree", { ascending: true });
 
     setEmployes(employesData || []);
     setPointages(pointagesData || []);
@@ -62,23 +62,12 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   }
 
   function sessionsPour(employeId) {
-    const points = pointages.filter((p) => p.employe_id === employeId);
-    const sessions = [];
-    let arrivee = null;
-
-    for (const p of points) {
-      if (p.type === "arrivee") {
-        arrivee = p;
-      } else if (p.type === "depart" && arrivee) {
-        const minutes = (new Date(p.horodatage) - new Date(arrivee.horodatage)) / 60000;
-        sessions.push({ debut: arrivee.horodatage, fin: p.horodatage, minutes });
-        arrivee = null;
-      }
-    }
-    if (arrivee) {
-      sessions.push({ debut: arrivee.horodatage, fin: null, minutes: (Date.now() - new Date(arrivee.horodatage)) / 60000 });
-    }
-    return sessions;
+    return pointages
+      .filter((p) => p.employe_id === employeId)
+      .map((p) => {
+        const fin = p.sortie ? new Date(p.sortie) : new Date();
+        return { debut: p.entree, fin: p.sortie, minutes: (fin - new Date(p.entree)) / 60000 };
+      });
   }
 
   const lignes = employes.flatMap((emp) =>

@@ -48,16 +48,9 @@ to authenticated
 using (is_admin())
 with check (is_admin());
 
--- Pointages (arrivée/départ horodatés par employé).
-create table if not exists pointages (
-  id uuid primary key default gen_random_uuid(),
-  entreprise_id uuid not null references entreprises(id) on delete cascade,
-  employe_id uuid not null references employes(id) on delete cascade,
-  type text not null check (type in ('arrivee','depart')),
-  horodatage timestamptz not null default now(),
-  created_at timestamptz not null default now()
-);
-
+-- Pointages : la table existait déjà (colonnes entree/sortie - un quart =
+-- une ligne, sortie NULL tant que l'employé n'a pas encore pointé son
+-- départ). On ne fait qu'y ajouter les permissions manquantes.
 alter table pointages enable row level security;
 grant select, insert, update, delete on pointages to authenticated;
 

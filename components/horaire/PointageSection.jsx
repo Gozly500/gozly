@@ -67,11 +67,15 @@ export default function PointageSection({ entrepriseId }) {
       return;
     }
 
-    const { data: dernier, error: lectureError } = await supabase
+    // Un quart "ouvert" (entree posée, sortie pas encore posée) = l'employé
+    // est actuellement au travail. On le termine plutôt que d'en créer un
+    // nouveau.
+    const { data: enCours, error: lectureError } = await supabase
       .from("pointages")
-      .select("type")
+      .select("id")
       .eq("employe_id", employe.id)
-      .order("horodatage", { ascending: false })
+      .is("sortie", null)
+      .order("entree", { ascending: false })
       .limit(1)
       .maybeSingle();
 
@@ -82,19 +86,29 @@ export default function PointageSection({ entrepriseId }) {
       return;
     }
 
-    const prochainType = dernier?.type === "arrivee" ? "depart" : "arrivee";
+    const maintenant = new Date().toISOString();
+    let prochainType;
 
-    const { error: insertError } = await supabase.from("pointages").insert({
-      entreprise_id: entrepriseId,
-      employe_id: employe.id,
-      type: prochainType,
-    });
-
-    if (insertError) {
-      setMessage({ type: "err", text: "Erreur : " + insertError.message });
-      setNip("");
-      setBusy(false);
-      return;
+    if (enCours) {
+      const { error: updateError } = await supabase.from("pointages").update({ sortie: maintenant }).eq("id", enCours.id);
+      if (updateError) {
+        setMessage({ type: "err", text: "Erreur : " + updateError.message });
+        setNip("");
+        setBusy(false);
+        return;
+      }
+      prochainType = "depart";
+    } else {
+      const { error: insertError } = await supabase
+        .from("pointages")
+        .insert({ entreprise_id: entrepriseId, employe_id: employe.id, entree: maintenant });
+      if (insertError) {
+        setMessage({ type: "err", text: "Erreur : " + insertError.message });
+        setNip("");
+        setBusy(false);
+        return;
+      }
+      prochainType = "arrivee";
     }
 
     const heure = new Date().toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
