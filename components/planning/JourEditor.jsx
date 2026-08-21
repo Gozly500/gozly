@@ -73,8 +73,15 @@ export default function JourEditor({ entrepriseId, date }) {
 
   return (
     <div>
-      <h2 style={{ textTransform: "capitalize" }}>{dateLabel}</h2>
-      <p className="panel-hint">Les tâches à faire ce jour-là, par catégorie.</p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+        <div>
+          <h2 style={{ textTransform: "capitalize" }}>{dateLabel}</h2>
+          <p className="panel-hint">Les tâches à faire ce jour-là, par catégorie.</p>
+        </div>
+        <Link href="/dashboard/planning" className="submit-btn" style={{ textDecoration: "none" }}>
+          ✓ Terminé
+        </Link>
+      </div>
 
       {categories.length === 0 ? (
         <p style={{ color: "var(--text-dim)" }}>

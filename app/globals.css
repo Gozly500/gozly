@@ -57,6 +57,17 @@ input[type="search"]::placeholder,textarea::placeholder{
     color:var(--text-dim);
   }
 
+/* Style par défaut pour tout bouton du site qui n'a pas déjà sa propre
+   classe (.submit-btn, .btn-small, .admin-icon-btn, ...) - celles-ci
+   restent prioritaires grâce à la spécificité des classes CSS. */
+button{
+    font-family:'Inter',sans-serif;cursor:pointer;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);
+    color:var(--text);border-radius:30px;padding:9px 18px;font-size:13.5px;font-weight:600;
+    transition:background .2s ease,color .2s ease;
+  }
+button:hover{background:rgba(255,255,255,0.15);}
+
 .wrap{max-width:1180px;margin:0 auto;padding:0 32px;position:relative;z-index:1;}
 
 .login-wrap{max-width:420px;padding-top:20px;}
