@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import DashSidebar from "@/components/DashSidebar";
 import HoraireSection from "@/components/horaire/HoraireSection";
-import PointageSection from "@/components/horaire/PointageSection";
 import FeuilleTempsSection from "@/components/horaire/FeuilleTempsSection";
 import { supabase } from "@/lib/supabaseClient";
 
 const TABS = [
   { id: "horaire", label: "Horaire", icon: "🗓" },
-  { id: "pointage", label: "Pointage", icon: "🕒" },
   { id: "feuille", label: "Feuille de temps", icon: "🧾" },
 ];
 
@@ -85,9 +84,17 @@ export default function HoraireContent() {
 
       <main className="dash-main">
         <div className="dash-main-inner">
-          <header className="dash-hero-inline">
-            <h1>Horaire & Pointage</h1>
-            <p>Planifie qui travaille quand, et suis les heures réelles.</p>
+          <header
+            className="dash-hero-inline"
+            style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}
+          >
+            <div>
+              <h1>Horaire & Pointage</h1>
+              <p>Planifie qui travaille quand, et suis les heures réelles.</p>
+            </div>
+            <Link href="/dashboard/pointage" target="_blank" className="admin-icon-btn">
+              🖥 Ouvrir l'écran de pointage
+            </Link>
           </header>
 
           {!entrepriseId ? (
@@ -108,7 +115,6 @@ export default function HoraireContent() {
               </div>
 
               {activeTab === "horaire" && <HoraireSection entrepriseId={entrepriseId} />}
-              {activeTab === "pointage" && <PointageSection entrepriseId={entrepriseId} />}
               {activeTab === "feuille" && <FeuilleTempsSection entrepriseId={entrepriseId} />}
             </>
           )}

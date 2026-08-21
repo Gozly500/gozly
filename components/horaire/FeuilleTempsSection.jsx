@@ -18,10 +18,14 @@ function addDays(date, n) {
   return d;
 }
 
-function formatDuree(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  return `${h}h${m.toString().padStart(2, "0")}`;
+function heuresDecimal(minutes) {
+  return (minutes / 60).toFixed(2);
+}
+
+function csvEscape(value) {
+  const str = String(value ?? "");
+  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  return str;
 }
 
 export default function FeuilleTempsSection({ entrepriseId }) {
@@ -77,6 +81,32 @@ export default function FeuilleTempsSection({ entrepriseId }) {
     return sessions;
   }
 
+  const lignes = employes.flatMap((emp) =>
+    sessionsPour(emp.id).map((s) => ({ employe: emp.nom, ...s }))
+  );
+
+  function handleExport() {
+    const header = ["Employe", "Date", "Debut", "Fin", "Heures"];
+    const rows = lignes.map((l) => [
+      l.employe,
+      new Date(l.debut).toLocaleDateString("fr-CA"),
+      new Date(l.debut).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }),
+      l.fin ? new Date(l.fin).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }) : "",
+      heuresDecimal(l.minutes),
+    ]);
+
+    const csv = [header, ...rows].map((r) => r.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `feuille-de-temps-${weekStart.toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${addDays(
     weekStart,
     6
@@ -94,47 +124,47 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         </button>
       </div>
 
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "14px" }}>
+        <button className="submit-btn" onClick={handleExport} disabled={lignes.length === 0}>
+          ⬇ Exporter en CSV
+        </button>
+      </div>
+
       {loading ? (
         <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
-      ) : employes.length === 0 ? (
-        <p style={{ color: "var(--text-dim)" }}>Aucun employé pour l'instant.</p>
+      ) : lignes.length === 0 ? (
+        <p style={{ color: "var(--text-dim)" }}>Aucun pointage cette semaine.</p>
       ) : (
-        <div className="planning-days">
-          {employes.map((emp) => {
-            const sessions = sessionsPour(emp.id);
-            const total = sessions.reduce((sum, s) => sum + s.minutes, 0);
-
-            return (
-              <div className="planning-day" key={emp.id}>
-                <div className="planning-day-head">
-                  <span className="planning-day-title">{emp.nom}</span>
-                  <span className="planning-day-date">{formatDuree(total)} cette semaine</span>
-                </div>
-
-                {sessions.map((s, i) => (
-                  <div className="planning-quart" key={i}>
-                    <div>
-                      <div className="planning-quart-employe">
-                        {new Date(s.debut).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "short" })}
-                      </div>
-                      <div className="planning-quart-heures">
-                        {new Date(s.debut).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })} -{" "}
-                        {s.fin
-                          ? new Date(s.fin).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })
-                          : "en cours"}
-                        {" · "}
-                        {formatDuree(s.minutes)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {sessions.length === 0 && <p style={{ color: "var(--text-dim)", fontSize: "13px" }}>Aucun pointage.</p>}
-              </div>
-            );
-          })}
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Employé</th>
+                <th>Date</th>
+                <th>Début</th>
+                <th>Fin</th>
+                <th>Heures</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lignes.map((l, i) => (
+                <tr key={i}>
+                  <td>{l.employe}</td>
+                  <td>{new Date(l.debut).toLocaleDateString("fr-CA")}</td>
+                  <td>{new Date(l.debut).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</td>
+                  <td>{l.fin ? new Date(l.fin).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }) : "en cours"}</td>
+                  <td>{heuresDecimal(l.minutes)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
+
+      <p className="section-hint" style={{ marginTop: "14px" }}>
+        Le CSV contient une ligne par quart pointé (employé, date, heures). Si Sage 50 attend des colonnes
+        différentes, tu peux ajuster le mappage directement dans son assistant d'importation.
+      </p>
     </div>
   );
 }
