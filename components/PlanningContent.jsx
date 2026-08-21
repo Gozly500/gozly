@@ -14,6 +14,7 @@ export default function PlanningContent() {
   const [days, setDays] = useState([]);
   const [loadingDays, setLoadingDays] = useState(true);
   const [pickingDate, setPickingDate] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(null);
 
   useEffect(() => {
     let ignore = false;
@@ -80,6 +81,12 @@ export default function PlanningContent() {
   function handlePickDate(e) {
     const date = e.target.value;
     if (date) router.push(`/dashboard/planning/${date}`);
+  }
+
+  async function handleDeleteDay(date) {
+    await supabase.from("taches").delete().eq("entreprise_id", entrepriseId).eq("date", date);
+    setConfirmingDelete(null);
+    setDays((prev) => prev.filter((d) => d.date !== date));
   }
 
   if (checking) {
@@ -151,6 +158,20 @@ export default function PlanningContent() {
                     <button className="admin-icon-btn" onClick={() => router.push(`/dashboard/planning/${day.date}`)}>
                       Modifier
                     </button>
+                    {confirmingDelete === day.date ? (
+                      <>
+                        <button className="btn-danger" onClick={() => handleDeleteDay(day.date)}>
+                          Confirmer
+                        </button>
+                        <button className="admin-icon-btn" onClick={() => setConfirmingDelete(null)}>
+                          Annuler
+                        </button>
+                      </>
+                    ) : (
+                      <button className="admin-icon-btn danger" onClick={() => setConfirmingDelete(day.date)}>
+                        Supprimer
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
