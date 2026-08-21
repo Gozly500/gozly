@@ -5,15 +5,18 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
+import { listerMesEntreprises } from "@/lib/entreprise";
 
 export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout, entrepriseId }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [actifs, setActifs] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [plusieursEntreprises, setPlusieursEntreprises] = useState(false);
 
   useEffect(() => {
     if (!entrepriseId) return;
     loadActifs();
+    listerMesEntreprises(supabase).then((list) => setPlusieursEntreprises(list.length > 1));
   }, [entrepriseId]);
 
   async function loadActifs() {
@@ -94,6 +97,9 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           <Link href="/dashboard/entreprise/employes" className={`dash-nav-item${active === "employes" ? " active" : ""}`}>
             <span>👤</span> Employés
           </Link>
+          <Link href="/dashboard/entreprise/equipe" className={`dash-nav-item${active === "equipe" ? " active" : ""}`}>
+            <span>🤝</span> Équipe
+          </Link>
         </nav>
 
         <div className="dash-sidebar-user">
@@ -116,6 +122,11 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
               Déconnexion
             </button>
           </div>
+          {plusieursEntreprises && (
+            <Link href="/dashboards" className="dash-switch-link">
+              ⇄ Changer de dashboard
+            </Link>
+          )}
         </div>
       </aside>
 

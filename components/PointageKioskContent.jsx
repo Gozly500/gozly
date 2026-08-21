@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import PointageSection from "@/components/horaire/PointageSection";
+import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
 export default function PointageKioskContent() {
   const router = useRouter();
@@ -20,21 +21,22 @@ export default function PointageKioskContent() {
         return;
       }
 
-      const { data: profil } = await supabase
-        .from("profils")
-        .select("entreprise_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
+      const { entrepriseId: eid, besoinChoix, invitationsEnAttente } = await resoudreEntrepriseActive(supabase);
       if (ignore) return;
 
-      if (profil?.entreprise_id) {
-        setEntrepriseId(profil.entreprise_id);
-        const { data: entreprise } = await supabase
-          .from("entreprises")
-          .select("nom")
-          .eq("id", profil.entreprise_id)
-          .maybeSingle();
+      if (invitationsEnAttente > 0) {
+        router.push("/invitations");
+        return;
+      }
+
+      if (besoinChoix) {
+        router.push("/dashboards");
+        return;
+      }
+
+      if (eid) {
+        setEntrepriseId(eid);
+        const { data: entreprise } = await supabase.from("entreprises").select("nom").eq("id", eid).maybeSingle();
         if (!ignore) setEntrepriseNom(entreprise?.nom || "");
       }
 

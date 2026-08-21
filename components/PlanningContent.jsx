@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
 import { supabase } from "@/lib/supabaseClient";
+import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
 export default function PlanningContent() {
   const router = useRouter();
@@ -34,14 +35,19 @@ export default function PlanningContent() {
         .maybeSingle()
         .then(({ data }) => setIsAdmin(!!data));
 
-      const { data: profil } = await supabase
-        .from("profils")
-        .select("entreprise_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
+      const { entrepriseId: eid, besoinChoix, invitationsEnAttente } = await resoudreEntrepriseActive(supabase);
       if (ignore) return;
-      const eid = profil?.entreprise_id || null;
+
+      if (invitationsEnAttente > 0) {
+        router.push("/invitations");
+        return;
+      }
+
+      if (besoinChoix) {
+        router.push("/dashboards");
+        return;
+      }
+
       setEntrepriseId(eid);
       setChecking(false);
 

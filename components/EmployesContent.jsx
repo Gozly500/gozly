@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
 import EmployesSection from "@/components/entreprise/EmployesSection";
 import { supabase } from "@/lib/supabaseClient";
+import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
 export default function EmployesContent() {
   const router = useRouter();
@@ -31,16 +32,21 @@ export default function EmployesContent() {
         .maybeSingle()
         .then(({ data }) => setIsAdmin(!!data));
 
-      const { data: profil } = await supabase
-        .from("profils")
-        .select("entreprise_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      const { entrepriseId: eid, besoinChoix, invitationsEnAttente } = await resoudreEntrepriseActive(supabase);
+      if (ignore) return;
 
-      if (!ignore) {
-        setEntrepriseId(profil?.entreprise_id || null);
-        setChecking(false);
+      if (invitationsEnAttente > 0) {
+        router.push("/invitations");
+        return;
       }
+
+      if (besoinChoix) {
+        router.push("/dashboards");
+        return;
+      }
+
+      setEntrepriseId(eid);
+      setChecking(false);
     });
 
     return () => {

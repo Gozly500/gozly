@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import DashSidebar from "@/components/DashSidebar";
 import ModulesModal from "@/components/ModulesModal";
 import { MODULES, limiteModules } from "@/lib/modules";
+import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
 export default function DashboardContent() {
   const router = useRouter();
@@ -34,22 +35,29 @@ export default function DashboardContent() {
         .maybeSingle()
         .then(({ data }) => setIsAdmin(!!data));
 
-      // Vérifie si ce compte a une entreprise liée, et si elle a un forfait actif.
-      // Les comptes sans profil (comme un compte admin créé manuellement)
-      // ignorent simplement cette vérification.
-      const { data: profil } = await supabase
-        .from("profils")
-        .select("entreprise_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      // Un compte peut appartenir à plusieurs entreprises (équipe). On
+      // résout celle qui est active pour cette session ; si plusieurs sont
+      // possibles et qu'aucune n'est encore choisie, on renvoie vers le
+      // sélecteur de dashboard.
+      const { entrepriseId: eid, besoinChoix, invitationsEnAttente } = await resoudreEntrepriseActive(supabase);
 
-      if (profil?.entreprise_id) {
-        setEntrepriseId(profil.entreprise_id);
+      if (invitationsEnAttente > 0) {
+        router.push("/invitations");
+        return;
+      }
+
+      if (besoinChoix) {
+        router.push("/dashboards");
+        return;
+      }
+
+      if (eid) {
+        setEntrepriseId(eid);
 
         const { data: entreprise } = await supabase
           .from("entreprises")
           .select("forfait")
-          .eq("id", profil.entreprise_id)
+          .eq("id", eid)
           .maybeSingle();
 
         if (entreprise) {
@@ -57,7 +65,7 @@ export default function DashboardContent() {
           if (!entreprise.forfait) setNoForfait(true);
         }
 
-        loadActifs(profil.entreprise_id);
+        loadActifs(eid);
       }
 
       setChecking(false);

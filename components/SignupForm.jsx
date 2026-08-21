@@ -50,8 +50,35 @@ export default function SignupForm() {
       return;
     }
 
-    // 2. Créer l'entreprise (on génère son identifiant nous-mêmes, pour ne
-    //    pas dépendre d'une relecture immédiate après l'écriture).
+    // 2. Ce courriel a-t-il été invité à rejoindre une entreprise
+    //    existante ? Si oui, on ne crée pas de nouvelle entreprise - la
+    //    personne rejoindra celle qui l'a invitée en acceptant.
+    const { data: invitationsEnAttente } = await supabase
+      .from("invitations")
+      .select("id")
+      .eq("email", email)
+      .eq("statut", "en_attente")
+      .limit(1);
+
+    if (invitationsEnAttente && invitationsEnAttente.length > 0) {
+      const { error: profilError } = await supabase.from("profils").insert({
+        id: user.id,
+        full_name: fullName,
+      });
+
+      setLoading(false);
+
+      if (profilError) {
+        setError("Ton compte est créé, mais une erreur est survenue. Contacte-nous.");
+        return;
+      }
+
+      router.push("/invitations");
+      return;
+    }
+
+    // 3. Sinon, créer sa propre entreprise (on génère son identifiant
+    //    nous-mêmes, pour ne pas dépendre d'une relecture immédiate).
     const entrepriseId = crypto.randomUUID();
 
     const { error: entrepriseError } = await supabase.from("entreprises").insert({
@@ -66,16 +93,26 @@ export default function SignupForm() {
       return;
     }
 
-    // 3. Lier le compte à l'entreprise
+    // 4. Lier le compte à l'entreprise (profil + adhésion propriétaire)
     const { error: profilError } = await supabase.from("profils").insert({
       id: user.id,
       entreprise_id: entrepriseId,
       full_name: fullName,
     });
 
+    if (profilError) {
+      setLoading(false);
+      setError("Ton compte est créé, mais le lien avec l'entreprise a échoué. Contacte-nous.");
+      return;
+    }
+
+    const { error: membreError } = await supabase
+      .from("membres")
+      .insert({ entreprise_id: entrepriseId, user_id: user.id, role: "proprietaire" });
+
     setLoading(false);
 
-    if (profilError) {
+    if (membreError) {
       setError("Ton compte est créé, mais le lien avec l'entreprise a échoué. Contacte-nous.");
       return;
     }

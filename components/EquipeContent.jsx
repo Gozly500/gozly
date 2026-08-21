@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
-import JourEditor from "@/components/planning/JourEditor";
+import EquipeSection from "@/components/entreprise/EquipeSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
-export default function JourContent({ date }) {
+export default function EquipeContent() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
@@ -72,7 +72,7 @@ export default function JourContent({ date }) {
   return (
     <div className="dash-layout">
       <DashSidebar
-        active="planning"
+        active="equipe"
         displayName={displayName}
         userEmail={user?.email}
         isAdmin={isAdmin}
@@ -85,7 +85,7 @@ export default function JourContent({ date }) {
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
           ) : (
-            <JourEditor entrepriseId={entrepriseId} date={date} />
+            <EquipeSection entrepriseId={entrepriseId} userId={user?.id} />
           )}
         </div>
       </main>
