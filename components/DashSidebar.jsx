@@ -89,6 +89,11 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
               <span>+</span> Gérer les modules
             </button>
           )}
+
+          <div className="dash-nav-label">Entreprise</div>
+          <Link href="/dashboard/entreprise/employes" className={`dash-nav-item${active === "employes" ? " active" : ""}`}>
+            <span>👤</span> Employés
+          </Link>
         </nav>
 
         <div className="dash-sidebar-user">
