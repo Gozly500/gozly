@@ -8,9 +8,12 @@ export default function EmployesSection({ entrepriseId }) {
   const [loading, setLoading] = useState(true);
   const [nom, setNom] = useState("");
   const [role, setRole] = useState("");
+  const [nip, setNip] = useState("");
+  const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editNom, setEditNom] = useState("");
   const [editRole, setEditRole] = useState("");
+  const [editNip, setEditNip] = useState("");
 
   useEffect(() => {
     load();
@@ -30,10 +33,20 @@ export default function EmployesSection({ entrepriseId }) {
   async function handleAdd(e) {
     e.preventDefault();
     if (!nom.trim()) return;
+    setError(null);
 
-    await supabase.from("employes").insert({ entreprise_id: entrepriseId, nom: nom.trim(), role: role.trim() || null });
+    const { error } = await supabase
+      .from("employes")
+      .insert({ entreprise_id: entrepriseId, nom: nom.trim(), role: role.trim() || null, nip: nip.trim() || null });
+
+    if (error) {
+      setError(error.code === "23505" ? "Ce NIP est déjà utilisé par un autre employé." : "L'ajout a échoué.");
+      return;
+    }
+
     setNom("");
     setRole("");
+    setNip("");
     load();
   }
 
@@ -41,11 +54,24 @@ export default function EmployesSection({ entrepriseId }) {
     setEditingId(emp.id);
     setEditNom(emp.nom);
     setEditRole(emp.role || "");
+    setEditNip(emp.nip || "");
+    setError(null);
   }
 
   async function handleSaveEdit(id) {
     if (!editNom.trim()) return;
-    await supabase.from("employes").update({ nom: editNom.trim(), role: editRole.trim() || null }).eq("id", id);
+    setError(null);
+
+    const { error } = await supabase
+      .from("employes")
+      .update({ nom: editNom.trim(), role: editRole.trim() || null, nip: editNip.trim() || null })
+      .eq("id", id);
+
+    if (error) {
+      setError(error.code === "23505" ? "Ce NIP est déjà utilisé par un autre employé." : "La mise à jour a échoué.");
+      return;
+    }
+
     setEditingId(null);
     load();
   }
@@ -63,8 +89,9 @@ export default function EmployesSection({ entrepriseId }) {
     <div>
       <h2>Employés</h2>
       <p className="panel-hint">La fiche de tes employés, partagée par tous les modules qui en ont besoin.</p>
+      {error && <p className="settings-msg err">{error}</p>}
 
-      <div className="admin-list" style={{ marginBottom: "20px", maxWidth: "560px" }}>
+      <div className="admin-list" style={{ marginBottom: "20px", maxWidth: "640px" }}>
         {employes.map((emp) => (
           <div className="admin-row" key={emp.id}>
             {editingId === emp.id ? (
@@ -80,11 +107,23 @@ export default function EmployesSection({ entrepriseId }) {
                     placeholder="Rôle (optionnel)"
                   />
                 </div>
+                <div className="field" style={{ marginBottom: 0, maxWidth: "110px" }}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={editNip}
+                    onChange={(e) => setEditNip(e.target.value.replace(/\D/g, ""))}
+                    placeholder="NIP"
+                  />
+                </div>
               </div>
             ) : (
               <div className="admin-row-main">
                 <div className="admin-row-title">{emp.nom}</div>
-                {emp.role && <div className="admin-row-sub">{emp.role}</div>}
+                <div className="admin-row-sub">
+                  {emp.role || "Aucun rôle"} {emp.nip ? `· NIP ${emp.nip}` : "· Aucun NIP"}
+                </div>
               </div>
             )}
 
@@ -114,7 +153,7 @@ export default function EmployesSection({ entrepriseId }) {
         {employes.length === 0 && <div className="admin-empty">Aucun employé pour l'instant.</div>}
       </div>
 
-      <form className="field-row" onSubmit={handleAdd} style={{ maxWidth: "560px", alignItems: "flex-end" }}>
+      <form className="field-row" onSubmit={handleAdd} style={{ maxWidth: "640px", alignItems: "flex-end" }}>
         <div className="field">
           <label>Nom</label>
           <input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom de l'employé" required />
@@ -122,6 +161,17 @@ export default function EmployesSection({ entrepriseId }) {
         <div className="field">
           <label>Rôle (optionnel)</label>
           <input type="text" value={role} onChange={(e) => setRole(e.target.value)} placeholder="Ex: cuisinier" />
+        </div>
+        <div className="field" style={{ maxWidth: "110px" }}>
+          <label>NIP (optionnel)</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={4}
+            value={nip}
+            onChange={(e) => setNip(e.target.value.replace(/\D/g, ""))}
+            placeholder="1234"
+          />
         </div>
         <div className="field" style={{ flex: "0 0 auto" }}>
           <button type="submit" className="btn-small">

@@ -89,7 +89,14 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
                     disabled={busyId === mod.id || bloque}
                     title={bloque ? "Limite de modules atteinte pour ton forfait" : mod.nom}
                   >
-                    <img src={mod.image} alt={mod.nom} />
+                    {mod.image ? (
+                      <img src={mod.image} alt={mod.nom} />
+                    ) : (
+                      <div className="modules-picker-fallback">
+                        <span>{mod.icon}</span>
+                        <small>{mod.nom}</small>
+                      </div>
+                    )}
                     {estActif && <span className="modules-picker-check">✓</span>}
                   </button>
                 );

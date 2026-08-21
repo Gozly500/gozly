@@ -126,8 +126,20 @@ export default function DashboardContent() {
 
           <div className="dash-modules-grid">
             {modulesActifs.map((mod) => (
-              <Link key={mod.id} href={mod.href} className="dash-module-card active" title={mod.nom}>
-                <img src={mod.image} alt={mod.nom} className="dash-module-image" />
+              <Link
+                key={mod.id}
+                href={mod.href}
+                className={`dash-module-card active${mod.image ? "" : " fallback"}`}
+                title={mod.nom}
+              >
+                {mod.image ? (
+                  <img src={mod.image} alt={mod.nom} className="dash-module-image" />
+                ) : (
+                  <>
+                    <span className="dash-module-emoji">{mod.icon}</span>
+                    <span className="dash-module-name">{mod.nom}</span>
+                  </>
+                )}
               </Link>
             ))}
             {Array.from({ length: placeholders }).map((_, i) => (
