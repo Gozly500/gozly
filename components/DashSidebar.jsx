@@ -52,9 +52,20 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
             <span>▦</span> Tableau de bord
           </Link>
           <div className="dash-nav-label">Modules</div>
-          <Link href="/dashboard/planning" className={`dash-nav-item${active === "planning" ? " active" : ""}`}>
+          <Link
+            href="/dashboard/planning"
+            className={`dash-nav-item${active === "planning" ? " active" : ""}`}
+          >
             <span>◷</span> Planning
           </Link>
+          {(active === "planning" || active === "categories") && (
+            <Link
+              href="/dashboard/planning/categories"
+              className={`dash-nav-item dash-nav-sub${active === "categories" ? " active" : ""}`}
+            >
+              <span>▤</span> Catégories
+            </Link>
+          )}
         </nav>
 
         <div className="dash-sidebar-user">

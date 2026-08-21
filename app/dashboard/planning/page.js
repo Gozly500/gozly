@@ -5,5 +5,9 @@ export const metadata = {
 };
 
 export default function PlanningPage() {
-  return <PlanningContent />;
+  return (
+    <div className="page page-default">
+      <PlanningContent />
+    </div>
+  );
 }

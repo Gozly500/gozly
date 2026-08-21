@@ -3,14 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
-import EmployesSection from "@/components/planning/EmployesSection";
-import HoraireSection from "@/components/planning/HoraireSection";
 import { supabase } from "@/lib/supabaseClient";
-
-const TABS = [
-  { id: "horaire", label: "Horaire", icon: "◷" },
-  { id: "employes", label: "Employés", icon: "👤" },
-];
 
 export default function PlanningContent() {
   const router = useRouter();
@@ -18,7 +11,9 @@ export default function PlanningContent() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [entrepriseId, setEntrepriseId] = useState(null);
-  const [activeTab, setActiveTab] = useState("horaire");
+  const [days, setDays] = useState([]);
+  const [loadingDays, setLoadingDays] = useState(true);
+  const [pickingDate, setPickingDate] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -44,10 +39,12 @@ export default function PlanningContent() {
         .eq("id", session.user.id)
         .maybeSingle();
 
-      if (!ignore) {
-        setEntrepriseId(profil?.entreprise_id || null);
-        setChecking(false);
-      }
+      if (ignore) return;
+      const eid = profil?.entreprise_id || null;
+      setEntrepriseId(eid);
+      setChecking(false);
+
+      if (eid) loadDays(eid);
     });
 
     return () => {
@@ -55,9 +52,34 @@ export default function PlanningContent() {
     };
   }, [router]);
 
+  async function loadDays(eid) {
+    setLoadingDays(true);
+    const { data } = await supabase.from("taches").select("date, terminee").eq("entreprise_id", eid);
+
+    const byDate = new Map();
+    (data || []).forEach((t) => {
+      const entry = byDate.get(t.date) || { total: 0, faites: 0 };
+      entry.total += 1;
+      if (t.terminee) entry.faites += 1;
+      byDate.set(t.date, entry);
+    });
+
+    const list = [...byDate.entries()]
+      .map(([date, stats]) => ({ date, ...stats }))
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+    setDays(list);
+    setLoadingDays(false);
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/login");
+  }
+
+  function handlePickDate(e) {
+    const date = e.target.value;
+    if (date) router.push(`/dashboard/planning/${date}`);
   }
 
   if (checking) {
@@ -69,25 +91,6 @@ export default function PlanningContent() {
   }
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.entreprise || user?.email;
-
-  if (!entrepriseId) {
-    return (
-      <div className="dash-layout">
-        <DashSidebar
-          active="planning"
-          displayName={displayName}
-          userEmail={user?.email}
-          isAdmin={isAdmin}
-          onLogout={handleLogout}
-        />
-        <main className="dash-main">
-          <div className="dash-main-inner">
-            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="dash-layout">
@@ -101,26 +104,60 @@ export default function PlanningContent() {
 
       <main className="dash-main">
         <div className="dash-main-inner">
-          <header className="dash-hero-inline">
-            <h1>Planning</h1>
-            <p>Gère tes employés et ton horaire de la semaine.</p>
+          <header className="dash-hero-inline" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
+            <div>
+              <h1>Planning</h1>
+              <p>Les journées de tâches déjà créées.</p>
+            </div>
+            <div style={{ position: "relative" }}>
+              <button className="submit-btn" onClick={() => setPickingDate((v) => !v)}>
+                + Nouvelle journée
+              </button>
+              {pickingDate && (
+                <input
+                  type="date"
+                  autoFocus
+                  className="planning-date-picker"
+                  onChange={handlePickDate}
+                  onBlur={() => setPickingDate(false)}
+                />
+              )}
+            </div>
           </header>
 
-          <div className="settings-nav" style={{ flexDirection: "row", marginBottom: "28px", width: "fit-content" }}>
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <span className="icon">{tab.icon}</span> {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {activeTab === "horaire" && <HoraireSection entrepriseId={entrepriseId} />}
-          {activeTab === "employes" && <EmployesSection entrepriseId={entrepriseId} />}
+          {!entrepriseId ? (
+            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+          ) : loadingDays ? (
+            <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+          ) : (
+            <div className="admin-list">
+              {days.map((day) => (
+                <div className="admin-row" key={day.date}>
+                  <div className="admin-row-main">
+                    <div className="admin-row-title" style={{ textTransform: "capitalize" }}>
+                      {new Date(day.date + "T00:00:00").toLocaleDateString("fr-CA", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </div>
+                    <div className="admin-row-sub">
+                      {day.faites}/{day.total} tâche{day.total > 1 ? "s" : ""} terminée{day.faites > 1 ? "s" : ""}
+                    </div>
+                  </div>
+                  <div className="admin-row-controls">
+                    <button className="admin-icon-btn" onClick={() => router.push(`/dashboard/planning/${day.date}`)}>
+                      Modifier
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {days.length === 0 && (
+                <div className="admin-empty">Aucune journée créée. Clique "Nouvelle journée" pour commencer.</div>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>

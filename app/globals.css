@@ -936,3 +936,21 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 .planning-quart-employe{font-weight:600;font-size:13.5px;}
 .planning-quart-heures{color:var(--text-dim);font-size:12.5px;}
 .planning-quart-actions{display:flex;gap:6px;}
+
+.dash-nav-sub{padding-left:38px;font-size:13px;}
+
+.planning-date-picker{
+    position:absolute;top:calc(100% + 8px);right:0;z-index:20;
+    background:rgba(30,25,70,0.97);backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.16);border-radius:14px;
+    padding:10px 14px;color:#fff;font-size:14px;
+  }
+
+.planning-tache{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 14px;border-radius:12px;background:rgba(255,255,255,0.05);
+    margin-bottom:8px;cursor:pointer;
+  }
+.planning-tache input[type="checkbox"]{width:18px;height:18px;accent-color:var(--violet);flex-shrink:0;cursor:pointer;}
+.planning-tache-texte{flex:1;font-size:14px;}
+.planning-tache-texte.done{color:var(--text-dim);text-decoration:line-through;}
