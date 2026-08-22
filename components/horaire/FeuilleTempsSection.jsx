@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
+import { SERVICES_PAIE } from "@/lib/servicesPaie";
 
 function getMonday(date) {
   const d = new Date(date);
@@ -42,12 +43,6 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
-const SERVICES_PAIE = [
-  { id: "nethris", label: "Nethris", disponible: true },
-  { id: "dayforce", label: "Dayforce", disponible: false },
-  { id: "quickbooks", label: "QuickBooks", disponible: false },
-];
-
 // <input type="datetime-local"> veut "AAAA-MM-JJTHH:MM" en heure locale.
 function toDatetimeLocal(iso) {
   if (!iso) return "";
@@ -66,6 +61,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [modal, setModal] = useState(null); // { pointageId, employeNom, entree, sortie }
   const [saving, setSaving] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [nethrisConnecte, setNethrisConnecte] = useState(false);
 
   const weekEnd = addDays(weekStart, 7);
 
@@ -77,6 +73,21 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       .order("created_at", { ascending: true })
       .then(({ data }) => setEmplacements(data || []));
   }, [entrepriseId]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      try {
+        const res = await fetch("/api/paie/nethris/statut", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await res.json();
+        setNethrisConnecte(!!data.connecte);
+      } catch {
+        setNethrisConnecte(false);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     load();
@@ -220,6 +231,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                 >
                   {s.label}
                   {!s.disponible && " (bientôt disponible)"}
+                  {s.id === "nethris" && s.disponible && nethrisConnecte && " 🔌"}
                 </button>
               ))}
             </div>
