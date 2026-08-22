@@ -31,13 +31,17 @@ async function resoudreNoms(service, messages, employeIdCourant) {
     userIds.length > 0 ? service.from("profils").select("id, full_name").in("id", userIds) : Promise.resolve({ data: [] }),
   ]);
 
+  function expediteurNom(m) {
+    if (m.employe_id) return employes?.find((e) => e.id === m.employe_id)?.nom || "Employé";
+    if (m.user_id) return profils?.find((p) => p.id === m.user_id)?.full_name || "Administration";
+    return "Compte supprimé";
+  }
+
   return messages.map((m) => ({
     id: m.id,
     contenu: m.contenu,
     createdAt: m.created_at,
-    expediteurNom: m.employe_id
-      ? employes?.find((e) => e.id === m.employe_id)?.nom || "Employé"
-      : profils?.find((p) => p.id === m.user_id)?.full_name || "Administration",
+    expediteurNom: expediteurNom(m),
     deMoi: m.employe_id === employeIdCourant,
   }));
 }

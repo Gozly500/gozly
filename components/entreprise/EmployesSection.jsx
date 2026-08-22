@@ -18,6 +18,8 @@ export default function EmployesSection({ entrepriseId }) {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(FORM_VIDE);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null); // { emp, quartsCount, messagesCount }
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     load();
@@ -145,8 +147,20 @@ export default function EmployesSection({ entrepriseId }) {
     load();
   }
 
-  async function handleDelete(id) {
-    await supabase.from("employes").delete().eq("id", id);
+  async function openConfirmDelete(emp) {
+    const [{ count: quartsCount }, { count: messagesCount }] = await Promise.all([
+      supabase.from("planning_quarts").select("id", { count: "exact", head: true }).eq("employe_id", emp.id),
+      supabase.from("messages").select("id", { count: "exact", head: true }).eq("employe_id", emp.id),
+    ]);
+    setConfirmDelete({ emp, quartsCount: quartsCount || 0, messagesCount: messagesCount || 0 });
+  }
+
+  async function handleConfirmDelete() {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    await supabase.from("employes").delete().eq("id", confirmDelete.emp.id);
+    setDeleting(false);
+    setConfirmDelete(null);
     load();
   }
 
@@ -212,7 +226,7 @@ export default function EmployesSection({ entrepriseId }) {
                 <button className="admin-icon-btn" onClick={() => openEdit(emp)}>
                   Modifier
                 </button>
-                <button className="admin-icon-btn danger" onClick={() => handleDelete(emp.id)}>
+                <button className="admin-icon-btn danger" onClick={() => openConfirmDelete(emp)}>
                   Retirer
                 </button>
               </div>
@@ -331,6 +345,42 @@ export default function EmployesSection({ entrepriseId }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => !deleting && setConfirmDelete(null)}>
+          <div className="modal-card" style={{ maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Retirer {confirmDelete.emp.nom} ?</h3>
+              <button className="admin-icon-btn" onClick={() => setConfirmDelete(null)} disabled={deleting}>
+                Fermer
+              </button>
+            </div>
+
+            <p className="section-hint" style={{ marginBottom: "14px" }}>
+              Cette action est irréversible. En plus de sa fiche, ça supprimera aussi :
+            </p>
+
+            <ul style={{ margin: "0 0 18px", paddingLeft: "20px", fontSize: "13.5px", color: "var(--text-dim)" }}>
+              <li>
+                {confirmDelete.quartsCount > 0
+                  ? `🗓 ${confirmDelete.quartsCount} quart${confirmDelete.quartsCount > 1 ? "s" : ""} de travail assigné${confirmDelete.quartsCount > 1 ? "s" : ""}`
+                  : "🗓 Aucun quart de travail assigné"}
+              </li>
+              <li>
+                {confirmDelete.messagesCount > 0
+                  ? `💬 ${confirmDelete.messagesCount} message${confirmDelete.messagesCount > 1 ? "s" : ""} (fil d'équipe et conversations privées)`
+                  : "💬 Aucun message dans les discussions"}
+              </li>
+            </ul>
+
+            <div className="admin-edit-actions">
+              <button type="button" className="admin-icon-btn danger" onClick={handleConfirmDelete} disabled={deleting}>
+                {deleting ? "Suppression..." : "Confirmer la suppression"}
+              </button>
+            </div>
           </div>
         </div>
       )}

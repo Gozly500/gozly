@@ -37,11 +37,16 @@ create table if not exists conversation_participants (
 create table if not exists messages (
   id uuid primary key default gen_random_uuid(),
   conversation_id uuid not null references conversations(id) on delete cascade,
-  employe_id uuid references employes(id) on delete set null,
+  -- Supprimer un employé supprime aussi ses messages (pas de trace
+  -- orpheline conservée indéfiniment - même logique que pointages.employe_id).
+  employe_id uuid references employes(id) on delete cascade,
   user_id uuid references auth.users(id) on delete set null,
   contenu text not null,
   created_at timestamptz not null default now(),
-  check ((employe_id is not null) <> (user_id is not null))
+  -- "au plus un des deux" plutôt que "exactement un" : couvre le cas
+  -- (rare) où le compte auth.users d'un admin est supprimé, auquel cas
+  -- user_id passe à NULL via ON DELETE SET NULL ci-dessus.
+  constraint messages_employe_ou_user_check check (not (employe_id is not null and user_id is not null))
 );
 
 create index if not exists messages_conversation_created on messages (conversation_id, created_at);

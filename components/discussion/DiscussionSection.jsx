@@ -155,8 +155,13 @@ export default function DiscussionSection({ entrepriseId, userId }) {
 
   function nomExpediteur(m) {
     if (m.user_id === userId) return "Toi";
-    if (m.employe_id) return conversationActive?.type === "equipe" ? employes.find((e) => e.id === m.employe_id)?.nom || "Employé" : conversationActive?.titre;
-    return conversationActive?.type === "equipe" ? "Administration" : conversationActive?.titre;
+    if (m.employe_id) {
+      return conversationActive?.type === "equipe" ? employes.find((e) => e.id === m.employe_id)?.nom || "Employé" : conversationActive?.titre;
+    }
+    if (m.user_id) {
+      return conversationActive?.type === "equipe" ? "Administration" : conversationActive?.titre;
+    }
+    return "Compte supprimé";
   }
 
   const conversationActive = conversations.find((c) => c.id === activeId);

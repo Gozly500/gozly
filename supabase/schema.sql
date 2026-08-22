@@ -34,7 +34,9 @@ create table if not exists employes (
 create table if not exists planning_quarts (
   id uuid primary key default gen_random_uuid(),
   entreprise_id uuid not null references entreprises(id) on delete cascade,
-  employe_id uuid references employes(id) on delete set null,
+  -- Supprimer un employé supprime aussi ses quarts assignés (pas de
+  -- trace orpheline conservée indéfiniment - même logique que pointages.employe_id).
+  employe_id uuid references employes(id) on delete cascade,
   date date not null,
   heure_debut time not null,
   heure_fin time not null,
