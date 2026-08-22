@@ -1103,7 +1103,28 @@ input.planning-date-picker{
   }
 @media(max-width:480px){.emplacement-checks{grid-template-columns:1fr;}}
 
-.emplacement-select{min-width:220px;margin-bottom:20px;}
+.emplacement-select-wrap{position:relative;width:fit-content;min-width:220px;margin-bottom:20px;}
+.emplacement-select-trigger{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:10px 16px;border-radius:30px;cursor:pointer;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);
+    font-size:13.5px;font-weight:600;color:#fff;
+  }
+.emplacement-select-trigger:hover{background:rgba(255,255,255,0.14);}
+.emplacement-select-trigger .fs-arrow{transition:transform .2s ease;color:var(--text-dim);}
+.emplacement-select-trigger.open .fs-arrow{transform:rotate(180deg);}
+.emplacement-select-options{
+    position:absolute;top:calc(100% + 8px);left:0;min-width:100%;z-index:20;
+    background:rgba(30,25,70,0.97);backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,0.16);border-radius:16px;padding:6px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.4);
+  }
+.emplacement-select-option{
+    padding:10px 14px;border-radius:10px;cursor:pointer;
+    font-size:13.5px;font-weight:600;color:#fff;white-space:nowrap;
+  }
+.emplacement-select-option:hover{background:rgba(255,255,255,0.08);}
+.emplacement-select-option.active{background:rgba(122,63,224,0.25);}
 
 /* Cases à cocher stylées (emplacements du popup employé, tâches du
    planning) - remplace l'apparence par défaut du navigateur. */
