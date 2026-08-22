@@ -81,6 +81,13 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
   async function handleRemoveMembre(membre) {
     const estMoi = membre.user_id === userId;
 
+    if (estMoi && membre.role === "proprietaire") {
+      setError(
+        "Un propriétaire ne peut pas quitter son propre dashboard. Passe par \"Supprimer mon compte\" dans Paramètres si tu ne veux plus t'en occuper."
+      );
+      return;
+    }
+
     if (estMoi && !window.confirm("Quitter ce dashboard ? Tu perdras l'accès immédiatement.")) {
       return;
     }
@@ -121,11 +128,17 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
               <div className="admin-row-sub">{m.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
             </div>
             <div className="admin-row-controls">
-              {(m.user_id === userId || jeSuisProprietaire) && (
-                <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
-                  {m.user_id === userId ? "Quitter" : "Retirer"}
-                </button>
-              )}
+              {m.user_id === userId
+                ? m.role !== "proprietaire" && (
+                    <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
+                      Quitter
+                    </button>
+                  )
+                : jeSuisProprietaire && (
+                    <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
+                      Retirer
+                    </button>
+                  )}
             </div>
           </div>
         ))}
