@@ -2,7 +2,7 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="100%" height="100%" viewBox="0 0 1182 1182" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
     <rect x="0" y="0" width="1181.102" height="1181.102" style="fill:url(#_Linear1);"/>
-    <g transform="matrix(0.095608,0,0,0.095608,590.551181,590.551181)">
+    <g transform="matrix(0.076667,0,0,0.076667,590.551181,590.551181)">
         <g transform="matrix(1,0,0,1,-4341.666667,-4341.666667)">
             <g transform="matrix(1.736113,0,0,-1.736113,0,8680.555554)">
                 <path d="M1330,4463C1251,4450 1107,4405 1035,4371C755,4240 546,4005 447,3709C407,3590 397,3500 402,3319C407,3180 411,3141 434,3065C502,2837 637,2636 820,2490L875,2447L878,2481C889,2610 939,2805 1000,2954C1144,3309 1421,3624 1755,3812C1919,3905 2178,3996 2332,4014C2388,4021 2389,4022 2378,4043C2359,4081 2208,4224 2136,4273C2007,4363 1857,4427 1710,4454C1634,4469 1396,4474 1330,4463Z" style="fill:white;fill-rule:nonzero;"/>
