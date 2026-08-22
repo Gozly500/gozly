@@ -82,16 +82,24 @@ export default function DiscussionEmploye() {
 
   async function demarrerConversation(collegueId, nom) {
     setPickerOpen(false);
-    const res = await employeFetch("/api/employe-app/chat/conversations/directe", {
-      method: "POST",
-      body: JSON.stringify({ avecEmployeId: collegueId }),
-    });
-    const data = await res.json();
-    if (data.conversationId) {
+    setErreur(null);
+    try {
+      const res = await employeFetch("/api/employe-app/chat/conversations/directe", {
+        method: "POST",
+        body: JSON.stringify({ avecEmployeId: collegueId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.conversationId) {
+        setErreur(data.error || "Impossible de démarrer cette conversation.");
+        return;
+      }
       await chargerConversations();
       setActiveId(data.conversationId);
       setActiveTitre(nom);
       setVue("thread");
+    } catch (err) {
+      console.error("Erreur création conversation:", err);
+      setErreur("Impossible de démarrer cette conversation.");
     }
   }
 
@@ -99,12 +107,13 @@ export default function DiscussionEmploye() {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
 
-  if (erreur) {
+  if (erreur && conversations.length === 0) {
     return <p className="settings-msg err">{erreur}</p>;
   }
 
   return (
     <div className="moi-discussion">
+      {erreur && <p className="settings-msg err" style={{ margin: "0 0 10px" }}>{erreur}</p>}
       <div className="chat-layout">
         <div className={`chat-conv-list${vue === "thread" ? " hidden-mobile" : ""}`}>
           <div className="chat-conv-list-head">

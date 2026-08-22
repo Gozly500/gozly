@@ -140,12 +140,15 @@ export default function DiscussionSection({ entrepriseId, userId }) {
 
   async function ouvrirConversationAvec(employeId) {
     setPickerOpen(false);
-    const conversationId = await getOrCreateDirecteConversation(
-      supabase,
-      entrepriseId,
-      { userId },
-      { employeId }
-    );
+    setErreur(null);
+    let conversationId;
+    try {
+      conversationId = await getOrCreateDirecteConversation(supabase, entrepriseId, { userId }, { employeId });
+    } catch (err) {
+      console.error("Erreur création conversation:", err);
+      setErreur(err?.message || "Impossible de démarrer cette conversation.");
+      return;
+    }
     await chargerConversations();
     setActiveId(conversationId);
   }
@@ -162,7 +165,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
 
-  if (erreur) {
+  if (erreur && conversations.length === 0) {
     return <p className="settings-msg err">{erreur}</p>;
   }
 
@@ -170,6 +173,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     <div>
       <h2>Discussion</h2>
       <p className="panel-hint">Le fil d'équipe et tes conversations privées avec les employés.</p>
+      {erreur && <p className="settings-msg err">{erreur}</p>}
 
       <div className="chat-layout">
         <div className="chat-conv-list">
