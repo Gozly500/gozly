@@ -95,6 +95,9 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           <Link href="/dashboard" className={`dash-nav-item${active === "dashboard" ? " active" : ""}`}>
             <span>▦</span> Tableau de bord
           </Link>
+          <Link href="/dashboard/discussion" className={`dash-nav-item${active === "discussion" ? " active" : ""}`}>
+            <span>💬</span> Discussion
+          </Link>
           <div className="dash-nav-label">Modules</div>
           {modulesActifs.map((mod) => (
             <div key={mod.id}>

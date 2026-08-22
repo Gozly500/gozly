@@ -6,7 +6,7 @@ import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeA
 
 const ONGLETS = [
   { id: "horaire", label: "Horaire", icon: "🗓", href: "/moi/horaire" },
-  { id: "bientot", label: "Bientôt", icon: "💬", href: null },
+  { id: "discussion", label: "Discussion", icon: "💬", href: "/moi/discussion" },
 ];
 
 export default function MoiShell({ children }) {
