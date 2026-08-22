@@ -10,6 +10,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const [messages, setMessages] = useState([]);
   const [texte, setTexte] = useState("");
   const [employes, setEmployes] = useState([]);
+  const [employeIdsEnDiscussion, setEmployeIdsEnDiscussion] = useState(new Set());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
@@ -70,6 +71,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
 
     const employeIds = autresParticipants.filter((p) => p.employe_id).map((p) => p.employe_id);
     const userIds = autresParticipants.filter((p) => p.user_id).map((p) => p.user_id);
+    setEmployeIdsEnDiscussion(new Set(employeIds));
 
     const [{ data: employesAutres }, { data: profilsAutres }] = await Promise.all([
       employeIds.length > 0 ? supabase.from("employes").select("id, nom").in("id", employeIds) : Promise.resolve({ data: [] }),
@@ -165,14 +167,16 @@ export default function DiscussionSection({ entrepriseId, userId }) {
           {pickerOpen && (
             <div className="chat-picker">
               <div className="chat-section-label">Démarrer avec...</div>
-              {employes.length === 0 ? (
-                <p className="chat-empty">Aucun employé.</p>
+              {employes.filter((e) => !employeIdsEnDiscussion.has(e.id)).length === 0 ? (
+                <p className="chat-empty">Tu discutes déjà avec tout le monde.</p>
               ) : (
-                employes.map((e) => (
-                  <button key={e.id} type="button" className="chat-conv-item" onClick={() => ouvrirConversationAvec(e.id)}>
-                    {e.nom}
-                  </button>
-                ))
+                employes
+                  .filter((e) => !employeIdsEnDiscussion.has(e.id))
+                  .map((e) => (
+                    <button key={e.id} type="button" className="chat-conv-item" onClick={() => ouvrirConversationAvec(e.id)}>
+                      {e.nom}
+                    </button>
+                  ))
               )}
             </div>
           )}
