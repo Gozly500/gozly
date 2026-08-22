@@ -51,6 +51,33 @@ create table if not exists messages (
 
 create index if not exists messages_conversation_created on messages (conversation_id, created_at);
 
+-- Une conversation "directe" n'a de sens qu'à deux - si un participant en
+-- est retiré (ex: employé supprimé) et qu'il en reste moins de deux, la
+-- conversation entière (et ses messages) est nettoyée plutôt que de
+-- laisser un fil orphelin affiché "Conversation" chez l'autre personne.
+-- Ne touche jamais le fil "equipe" (participation implicite).
+create or replace function nettoyer_conversation_directe_orpheline()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from conversations
+  where id = old.conversation_id
+  and type = 'directe'
+  and (select count(*) from conversation_participants where conversation_id = old.conversation_id) < 2;
+
+  return old;
+end;
+$$;
+
+drop trigger if exists trg_nettoyer_conversation_directe on conversation_participants;
+create trigger trg_nettoyer_conversation_directe
+after delete on conversation_participants
+for each row
+execute function nettoyer_conversation_directe_orpheline();
+
 alter table conversations enable row level security;
 alter table conversation_participants enable row level security;
 alter table messages enable row level security;
