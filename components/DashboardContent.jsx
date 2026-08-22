@@ -6,7 +6,11 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import DashSidebar from "@/components/DashSidebar";
 import ModulesModal from "@/components/ModulesModal";
-import { MODULES, limiteModules } from "@/lib/modules";
+import WidgetCard from "@/components/dashboard/WidgetCard";
+import RaccourcisWidget from "@/components/dashboard/RaccourcisWidget";
+import PlanningJourWidget from "@/components/dashboard/PlanningJourWidget";
+import HoraireJourWidget from "@/components/dashboard/HoraireJourWidget";
+import { WIDGETS, fusionnerConfigWidgets } from "@/lib/dashboardWidgets";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
 export default function DashboardContent() {
@@ -19,6 +23,10 @@ export default function DashboardContent() {
   const [forfait, setForfait] = useState(null);
   const [actifs, setActifs] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [widgetConfig, setWidgetConfig] = useState([]);
+  const [editMode, setEditMode] = useState(false);
+  const [draggedId, setDraggedId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -56,13 +64,14 @@ export default function DashboardContent() {
 
         const { data: entreprise } = await supabase
           .from("entreprises")
-          .select("forfait")
+          .select("forfait, dashboard_widgets")
           .eq("id", eid)
           .maybeSingle();
 
         if (entreprise) {
           setForfait(entreprise.forfait);
           if (!entreprise.forfait) setNoForfait(true);
+          setWidgetConfig(fusionnerConfigWidgets(entreprise.dashboard_widgets));
         }
 
         loadActifs(eid);
@@ -90,6 +99,35 @@ export default function DashboardContent() {
     router.push("/login");
   }
 
+  function persisterConfig(config) {
+    if (!entrepriseId) return;
+    supabase.from("entreprises").update({ dashboard_widgets: config }).eq("id", entrepriseId);
+  }
+
+  function handleToggleVisible(id) {
+    setWidgetConfig((cur) => {
+      const config = cur.map((w) => (w.id === id ? { ...w, visible: !w.visible } : w));
+      persisterConfig(config);
+      return config;
+    });
+  }
+
+  function handleDrop(targetId) {
+    setWidgetConfig((cur) => {
+      if (!draggedId || draggedId === targetId) return cur;
+      const fromIndex = cur.findIndex((w) => w.id === draggedId);
+      const toIndex = cur.findIndex((w) => w.id === targetId);
+      if (fromIndex === -1 || toIndex === -1) return cur;
+      const config = [...cur];
+      const [moved] = config.splice(fromIndex, 1);
+      config.splice(toIndex, 0, moved);
+      persisterConfig(config);
+      return config;
+    });
+    setDraggedId(null);
+    setDragOverId(null);
+  }
+
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
@@ -101,9 +139,27 @@ export default function DashboardContent() {
   const displayName =
     user?.user_metadata?.full_name || user?.user_metadata?.entreprise || user?.email;
 
-  const limite = limiteModules(forfait);
-  const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
-  const placeholders = Math.max(0, Math.min(limite === Infinity ? 4 : limite, 4) - modulesActifs.length);
+  const widgetsEligibles = widgetConfig.filter((w) => {
+    const meta = WIDGETS.find((m) => m.id === w.id);
+    return meta && (meta.moduleId === null || actifs.includes(meta.moduleId));
+  });
+  const widgetsAffiches = editMode ? widgetsEligibles : widgetsEligibles.filter((w) => w.visible);
+
+  function renderContenuWidget(id) {
+    if (id === "raccourcis") {
+      return (
+        <RaccourcisWidget
+          actifs={actifs}
+          forfait={forfait}
+          editMode={editMode}
+          onOuvrirModules={() => setModalOpen(true)}
+        />
+      );
+    }
+    if (id === "planning-jour") return <PlanningJourWidget entrepriseId={entrepriseId} />;
+    if (id === "horaire-jour") return <HoraireJourWidget entrepriseId={entrepriseId} />;
+    return null;
+  }
 
   return (
     <div className="dash-layout">
@@ -127,34 +183,53 @@ export default function DashboardContent() {
             </div>
           )}
 
-          <header className="dash-hero-inline">
-            <h1>Bienvenue{displayName ? `, ${displayName}` : ""}</h1>
-            <p>Voici ton espace. Active un module pour commencer.</p>
+          <header
+            className="dash-hero-inline"
+            style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}
+          >
+            <div>
+              <h1>Bienvenue{displayName ? `, ${displayName}` : ""}</h1>
+              <p>Voici ton espace. Active un module pour commencer.</p>
+            </div>
+            <button
+              type="button"
+              className={`admin-icon-btn dash-edit-btn${editMode ? " active" : ""}`}
+              onClick={() => setEditMode((v) => !v)}
+              title={editMode ? "Terminer la modification" : "Modifier le tableau de bord"}
+            >
+              ✏️
+            </button>
           </header>
 
-          <div className="dash-modules-grid">
-            {modulesActifs.map((mod) => (
-              <Link
-                key={mod.id}
-                href={mod.href}
-                className={`dash-module-card active${mod.image ? "" : " fallback"}`}
-                title={mod.nom}
-              >
-                {mod.image ? (
-                  <img src={mod.image} alt={mod.nom} className="dash-module-image" />
-                ) : (
-                  <>
-                    <span className="dash-module-emoji">{mod.icon}</span>
-                    <span className="dash-module-name">{mod.nom}</span>
-                  </>
-                )}
-              </Link>
-            ))}
-            {Array.from({ length: placeholders }).map((_, i) => (
-              <div key={i} className="dash-module-card" onClick={() => setModalOpen(true)}>
-                +
-              </div>
-            ))}
+          <div className="dash-widgets-stack">
+            {widgetsAffiches.map((w) => {
+              const meta = WIDGETS.find((m) => m.id === w.id);
+              return (
+                <WidgetCard
+                  key={w.id}
+                  title={meta.nom}
+                  editMode={editMode}
+                  visible={w.visible}
+                  onToggleVisible={() => handleToggleVisible(w.id)}
+                  dragOver={dragOverId === w.id}
+                  onDragStart={() => setDraggedId(w.id)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOverId(w.id);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleDrop(w.id);
+                  }}
+                  onDragEnd={() => {
+                    setDraggedId(null);
+                    setDragOverId(null);
+                  }}
+                >
+                  {renderContenuWidget(w.id)}
+                </WidgetCard>
+              );
+            })}
           </div>
         </div>
       </main>
