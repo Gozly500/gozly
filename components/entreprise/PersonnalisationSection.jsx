@@ -3,9 +3,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
+const OPTIONS_PREMIER_JOUR = [
+  { id: "lundi", label: "Lundi" },
+  { id: "dimanche", label: "Dimanche" },
+];
+
 export default function PersonnalisationSection({ entrepriseId }) {
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
+  const [premierJourOpen, setPremierJourOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -26,6 +32,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   }
 
   async function handleChangePremierJour(value) {
+    setPremierJourOpen(false);
     setPremierJourSemaine(value);
     setSaving(true);
     setMsg(null);
@@ -59,14 +66,26 @@ export default function PersonnalisationSection({ entrepriseId }) {
           <p className="section-hint">Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps.</p>
           <div className="field" style={{ maxWidth: "220px" }}>
             <label>Premier jour de la semaine</label>
-            <select
-              value={premierJourSemaine}
-              onChange={(e) => handleChangePremierJour(e.target.value)}
-              disabled={saving}
-            >
-              <option value="lundi">Lundi</option>
-              <option value="dimanche">Dimanche</option>
-            </select>
+            <div className="forfait-select-wrap">
+              <div
+                className={`forfait-select-trigger${premierJourOpen ? " open" : ""}`}
+                onClick={() => !saving && setPremierJourOpen((v) => !v)}
+              >
+                <div className="fs-label">
+                  {OPTIONS_PREMIER_JOUR.find((o) => o.id === premierJourSemaine)?.label}
+                </div>
+                <span className="fs-arrow">▾</span>
+              </div>
+              {premierJourOpen && (
+                <div className="forfait-select-options open">
+                  {OPTIONS_PREMIER_JOUR.map((o) => (
+                    <div key={o.id} className="forfait-option" onClick={() => handleChangePremierJour(o.id)}>
+                      <div className="fo-label">{o.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
