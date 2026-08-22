@@ -32,13 +32,24 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
   const [employes, setEmployes] = useState([]);
   const [pointages, setPointages] = useState([]);
+  const [emplacements, setEmplacements] = useState([]);
+  const [emplacementId, setEmplacementId] = useState(null); // null = toutes
   const [loading, setLoading] = useState(true);
 
   const weekEnd = addDays(weekStart, 7);
 
   useEffect(() => {
+    supabase
+      .from("emplacements")
+      .select("*")
+      .eq("entreprise_id", entrepriseId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => setEmplacements(data || []));
+  }, [entrepriseId]);
+
+  useEffect(() => {
     load();
-  }, [entrepriseId, weekStart]);
+  }, [entrepriseId, weekStart, emplacementId]);
 
   async function load() {
     setLoading(true);
@@ -48,13 +59,17 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       .eq("entreprise_id", entrepriseId)
       .order("nom", { ascending: true });
 
-    const { data: pointagesData } = await supabase
+    let pointagesQuery = supabase
       .from("pointages")
       .select("*")
       .eq("entreprise_id", entrepriseId)
       .gte("entree", weekStart.toISOString())
       .lt("entree", weekEnd.toISOString())
       .order("entree", { ascending: true });
+
+    if (emplacementId) pointagesQuery = pointagesQuery.eq("emplacement_id", emplacementId);
+
+    const { data: pointagesData } = await pointagesQuery;
 
     setEmployes(employesData || []);
     setPointages(pointagesData || []);
@@ -103,6 +118,23 @@ export default function FeuilleTempsSection({ entrepriseId }) {
 
   return (
     <div>
+      {emplacements.length > 1 && (
+        <div className="emplacement-tabs">
+          <button className={`emplacement-tab${!emplacementId ? " active" : ""}`} onClick={() => setEmplacementId(null)}>
+            Toutes
+          </button>
+          {emplacements.map((e) => (
+            <button
+              key={e.id}
+              className={`emplacement-tab${emplacementId === e.id ? " active" : ""}`}
+              onClick={() => setEmplacementId(e.id)}
+            >
+              📍 {e.nom}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
           ‹ Semaine précédente

@@ -28,6 +28,8 @@ export default function HoraireSection({ entrepriseId }) {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
   const [employes, setEmployes] = useState([]);
   const [quarts, setQuarts] = useState([]);
+  const [emplacements, setEmplacements] = useState([]);
+  const [emplacementId, setEmplacementId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dragOverDate, setDragOverDate] = useState(null);
   const [modal, setModal] = useState(null); // { date, employeId, quartId, heureDebut, heureFin }
@@ -36,8 +38,20 @@ export default function HoraireSection({ entrepriseId }) {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   useEffect(() => {
+    supabase
+      .from("emplacements")
+      .select("*")
+      .eq("entreprise_id", entrepriseId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        setEmplacements(data || []);
+        if (data && data.length > 0) setEmplacementId((cur) => cur || data[0].id);
+      });
+  }, [entrepriseId]);
+
+  useEffect(() => {
     load();
-  }, [entrepriseId, weekStart]);
+  }, [entrepriseId, weekStart, emplacementId]);
 
   async function load() {
     setLoading(true);
@@ -47,13 +61,17 @@ export default function HoraireSection({ entrepriseId }) {
       .eq("entreprise_id", entrepriseId)
       .order("nom", { ascending: true });
 
-    const { data: quartsData } = await supabase
+    let quartsQuery = supabase
       .from("planning_quarts")
       .select("*")
       .eq("entreprise_id", entrepriseId)
       .gte("date", toISODate(weekStart))
       .lte("date", toISODate(weekEnd))
       .order("heure_debut", { ascending: true });
+
+    quartsQuery = emplacements.length > 0 ? quartsQuery.eq("emplacement_id", emplacementId) : quartsQuery;
+
+    const { data: quartsData } = await quartsQuery;
 
     setEmployes(employesData || []);
     setQuarts(quartsData || []);
@@ -102,6 +120,7 @@ export default function HoraireSection({ entrepriseId }) {
         date: modal.date,
         heure_debut: modal.heureDebut,
         heure_fin: modal.heureFin,
+        emplacement_id: emplacementId,
       });
     }
 
@@ -123,6 +142,20 @@ export default function HoraireSection({ entrepriseId }) {
 
   return (
     <div>
+      {emplacements.length > 1 && (
+        <div className="emplacement-tabs">
+          {emplacements.map((e) => (
+            <button
+              key={e.id}
+              className={`emplacement-tab${emplacementId === e.id ? " active" : ""}`}
+              onClick={() => setEmplacementId(e.id)}
+            >
+              📍 {e.nom}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
           ‹ Semaine précédente

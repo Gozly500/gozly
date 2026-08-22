@@ -8,7 +8,37 @@ export default function PointageSection({ entrepriseId }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [emplacements, setEmplacements] = useState([]);
+  const [emplacementId, setEmplacementId] = useState(null);
+  const [emplacementsLoaded, setEmplacementsLoaded] = useState(false);
   const lottieRef = useRef(null);
+
+  const storageKey = `gozly_emplacement_id_${entrepriseId}`;
+
+  useEffect(() => {
+    supabase
+      .from("emplacements")
+      .select("*")
+      .eq("entreprise_id", entrepriseId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        const list = data || [];
+        setEmplacements(list);
+
+        if (list.length > 0) {
+          const saved = typeof window !== "undefined" ? window.localStorage.getItem(storageKey) : null;
+          if (saved && list.some((e) => e.id === saved)) {
+            setEmplacementId(saved);
+          }
+        }
+        setEmplacementsLoaded(true);
+      });
+  }, [entrepriseId]);
+
+  function choisirEmplacement(id) {
+    setEmplacementId(id);
+    if (typeof window !== "undefined") window.localStorage.setItem(storageKey, id);
+  }
 
   useEffect(() => {
     if (!showSuccess || !lottieRef.current) return;
@@ -106,7 +136,7 @@ export default function PointageSection({ entrepriseId }) {
     } else {
       const { error: insertError } = await supabase
         .from("pointages")
-        .insert({ entreprise_id: entrepriseId, employe_id: employe.id, entree: maintenant });
+        .insert({ entreprise_id: entrepriseId, employe_id: employe.id, entree: maintenant, emplacement_id: emplacementId });
       if (insertError) {
         setMessage({ type: "err", text: "Erreur : " + insertError.message });
         setNip("");
@@ -128,6 +158,28 @@ export default function PointageSection({ entrepriseId }) {
     setNip("");
     setBusy(false);
     setShowSuccess(true);
+  }
+
+  if (emplacementsLoaded && emplacements.length > 1 && !emplacementId) {
+    return (
+      <div>
+        <h2>Quel emplacement ?</h2>
+        <p className="panel-hint">Choisis la succursale de cette tablette (mémorisé pour la prochaine fois).</p>
+        <div className="modules-picker-grid" style={{ maxWidth: "360px", margin: "0 auto" }}>
+          {emplacements.map((e) => (
+            <button
+              key={e.id}
+              className="dashboard-picker-card"
+              onClick={() => choisirEmplacement(e.id)}
+              style={{ aspectRatio: "auto" }}
+            >
+              <div className="dashboard-picker-logo">📍</div>
+              <div className="dashboard-picker-nom">{e.nom}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (

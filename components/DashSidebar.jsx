@@ -100,6 +100,12 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           <Link href="/dashboard/entreprise/equipe" className={`dash-nav-item${active === "equipe" ? " active" : ""}`}>
             <span>🤝</span> Équipe
           </Link>
+          <Link
+            href="/dashboard/entreprise/emplacements"
+            className={`dash-nav-item${active === "emplacements" ? " active" : ""}`}
+          >
+            <span>📍</span> Emplacements
+          </Link>
         </nav>
 
         <div className="dash-sidebar-user">

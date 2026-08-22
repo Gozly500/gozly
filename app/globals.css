@@ -1086,6 +1086,15 @@ input.planning-date-picker{
   }
 .dash-switch-link:hover{color:#fff;text-decoration:underline;}
 
+/* ============ Onglets d'emplacement (succursales) ============ */
+.emplacement-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.emplacement-tab{
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.16);
+    color:var(--text-dim);padding:8px 16px;border-radius:30px;font-size:13px;font-weight:600;
+  }
+.emplacement-tab:hover{background:rgba(255,255,255,0.12);color:#fff;}
+.emplacement-tab.active{background:rgba(122,63,224,0.3);border-color:rgba(122,63,224,0.6);color:#fff;}
+
 /* ============ Tableau (feuille de temps, etc.) ============ */
 .admin-table-wrap{
     overflow-x:auto;border-radius:20px;border:1px solid rgba(255,255,255,0.12);
