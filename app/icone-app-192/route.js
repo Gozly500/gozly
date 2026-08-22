@@ -1,8 +1,11 @@
 import { ImageResponse } from "next/og";
-
-export const runtime = "edge";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
 export async function GET() {
+  const svg = await readFile(join(process.cwd(), "public", "gozly-logo.svg"), "utf8");
+  const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
@@ -12,10 +15,11 @@ export async function GET() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #221f8a 0%, #6b2bc4 100%)",
+          background: "linear-gradient(135deg, #0d0d3f 0%, #221f8a 45%, #6b2bc4 100%)",
         }}
       >
-        <span style={{ fontSize: 100, fontWeight: 800, color: "#fff", fontFamily: "sans-serif" }}>G</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={dataUri} width={130} height={130} alt="" />
       </div>
     ),
     { width: 192, height: 192 }
