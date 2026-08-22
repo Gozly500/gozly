@@ -54,6 +54,26 @@ grant select, insert on conversations to authenticated;
 grant select, insert on conversation_participants to authenticated;
 grant select, insert on messages to authenticated;
 
+-- Vérifie "auth.uid() participe à cette conversation" sans repasser par les
+-- RLS de conversation_participants (security definer = contourne les RLS,
+-- même technique que est_membre() dans equipe.sql) - une policy qui
+-- interrogerait conversation_participants directement se redéclencherait
+-- elle-même en boucle infinie.
+create or replace function est_participant_direct(p_conversation_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists(
+    select 1 from conversation_participants
+    where conversation_id = p_conversation_id and user_id = auth.uid()
+  );
+$$;
+
+grant execute on function est_participant_direct(uuid) to authenticated;
+
 -- conversations
 drop policy if exists "Voir les conversations de son entreprise" on conversations;
 create policy "Voir les conversations de son entreprise"
@@ -61,10 +81,7 @@ on conversations for select
 to authenticated
 using (
   (type = 'equipe' and est_membre(entreprise_id))
-  or (type = 'directe' and exists (
-    select 1 from conversation_participants cp
-    where cp.conversation_id = conversations.id and cp.user_id = auth.uid()
-  ))
+  or (type = 'directe' and est_participant_direct(id))
 );
 
 drop policy if exists "Creer une conversation pour son entreprise" on conversations;
@@ -84,10 +101,7 @@ using (
     where c.id = conversation_participants.conversation_id
     and (
       (c.type = 'equipe' and est_membre(c.entreprise_id))
-      or (c.type = 'directe' and exists (
-        select 1 from conversation_participants cp2
-        where cp2.conversation_id = c.id and cp2.user_id = auth.uid()
-      ))
+      or (c.type = 'directe' and est_participant_direct(c.id))
     )
   )
 );
@@ -111,10 +125,7 @@ using (
     where c.id = messages.conversation_id
     and (
       (c.type = 'equipe' and est_membre(c.entreprise_id))
-      or (c.type = 'directe' and exists (
-        select 1 from conversation_participants cp
-        where cp.conversation_id = c.id and cp.user_id = auth.uid()
-      ))
+      or (c.type = 'directe' and est_participant_direct(c.id))
     )
   )
 );
@@ -130,10 +141,7 @@ with check (
     where c.id = messages.conversation_id
     and (
       (c.type = 'equipe' and est_membre(c.entreprise_id))
-      or (c.type = 'directe' and exists (
-        select 1 from conversation_participants cp
-        where cp.conversation_id = c.id and cp.user_id = auth.uid()
-      ))
+      or (c.type = 'directe' and est_participant_direct(c.id))
     )
   )
 );
