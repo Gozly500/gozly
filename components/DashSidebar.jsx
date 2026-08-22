@@ -130,6 +130,12 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           >
             <span>📍</span> Emplacements
           </Link>
+          <Link
+            href="/dashboard/entreprise/integrations"
+            className={`dash-nav-item${active === "integrations" ? " active" : ""}`}
+          >
+            <span>🔌</span> Intégrations
+          </Link>
         </nav>
 
         <div className="dash-sidebar-user">

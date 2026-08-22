@@ -60,7 +60,7 @@ export async function POST(request) {
     .maybeSingle();
 
   if (!connexion) {
-    return NextResponse.json({ error: "Nethris n'est pas connecté. Va dans Paramètres → Intégrations." }, { status: 400 });
+    return NextResponse.json({ error: "Nethris n'est pas connecté. Va dans Entreprise → Intégrations." }, { status: 400 });
   }
 
   const debut = new Date(weekStart);

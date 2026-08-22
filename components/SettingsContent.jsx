@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import InformationsSection from "@/components/settings/InformationsSection";
 import AbonnementSection from "@/components/settings/AbonnementSection";
-import IntegrationsSection from "@/components/settings/IntegrationsSection";
 import ActiviteSection from "@/components/settings/ActiviteSection";
 import GestionSection from "@/components/settings/GestionSection";
 
 const TABS = [
   { id: "informations", label: "Informations", icon: "👤" },
   { id: "abonnement", label: "Abonnement", icon: "💳" },
-  { id: "integrations", label: "Intégrations", icon: "🔌" },
   { id: "activite", label: "Activité du compte", icon: "🕒" },
   { id: "gestion", label: "Gestion du compte", icon: "⚙" },
 ];
@@ -96,7 +94,6 @@ export default function SettingsContent() {
           />
         )}
         {activeTab === "abonnement" && <AbonnementSection entreprise={entreprise} />}
-        {activeTab === "integrations" && <IntegrationsSection />}
         {activeTab === "activite" && <ActiviteSection user={user} />}
         {activeTab === "gestion" && <GestionSection user={user} profil={profil} router={router} />}
       </div>
