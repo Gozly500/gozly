@@ -43,8 +43,7 @@ export default function ConnexionEmploye() {
       const data = await res.json();
 
       if (!res.ok) {
-        const debugText = data.debug ? ` [debug: ${JSON.stringify(data.debug)}]` : "";
-        setMessage({ type: "err", text: (data.error || "Connexion impossible.") + debugText });
+        setMessage({ type: "err", text: data.error || "Connexion impossible." });
         setNip("");
         setBusy(false);
         return;
