@@ -19,7 +19,7 @@ export async function GET() {
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={dataUri} width={440} height={440} alt="" />
+        <img src={dataUri} width={502} height={502} alt="" />
       </div>
     ),
     { width: 512, height: 512 }
