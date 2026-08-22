@@ -3,16 +3,27 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
+import EmployesSection from "@/components/entreprise/EmployesSection";
+import EquipeSection from "@/components/entreprise/EquipeSection";
 import EmplacementsSection from "@/components/entreprise/EmplacementsSection";
+import IntegrationsSection from "@/components/settings/IntegrationsSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
-export default function EmplacementsContent() {
+const TABS = [
+  { id: "employes", label: "Employés", icon: "👤" },
+  { id: "equipe", label: "Équipe", icon: "🤝" },
+  { id: "emplacements", label: "Emplacements", icon: "📍" },
+  { id: "integrations", label: "Intégrations", icon: "🔌" },
+];
+
+export default function EntrepriseParametresContent() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [entrepriseId, setEntrepriseId] = useState(null);
+  const [activeTab, setActiveTab] = useState("employes");
 
   useEffect(() => {
     let ignore = false;
@@ -72,7 +83,7 @@ export default function EmplacementsContent() {
   return (
     <div className="dash-layout">
       <DashSidebar
-        active="emplacements"
+        active="entreprise"
         displayName={displayName}
         userEmail={user?.email}
         isAdmin={isAdmin}
@@ -85,7 +96,29 @@ export default function EmplacementsContent() {
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
           ) : (
-            <EmplacementsSection entrepriseId={entrepriseId} />
+            <div className="settings-wrap" style={{ maxWidth: "none", padding: 0 }}>
+              <nav className="settings-nav">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    <span className="icon">{tab.icon}</span> {tab.label}
+                  </button>
+                ))}
+              </nav>
+
+              <div className="settings-panel">
+                {activeTab === "employes" && <EmployesSection entrepriseId={entrepriseId} />}
+                {activeTab === "equipe" && (
+                  <EquipeSection entrepriseId={entrepriseId} userId={user?.id} onLeft={() => router.push("/dashboards")} />
+                )}
+                {activeTab === "emplacements" && <EmplacementsSection entrepriseId={entrepriseId} />}
+                {activeTab === "integrations" && <IntegrationsSection />}
+              </div>
+            </div>
           )}
         </div>
       </main>

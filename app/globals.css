@@ -855,6 +855,27 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
     border-radius:20px;padding:26px 28px;
   }
 
+/* ============ Liste déroulante des services (Intégrations) ============ */
+.integration-list{margin-top:26px;display:flex;flex-direction:column;gap:10px;}
+.integration-item{
+    border:1px solid rgba(255,255,255,0.14);border-radius:16px;
+    background:rgba(255,255,255,0.04);overflow:hidden;
+  }
+.integration-header{
+    display:flex;align-items:center;justify-content:space-between;width:100%;
+    padding:16px 20px;background:none;border:none;cursor:pointer;text-align:left;
+  }
+.integration-header:not(.disabled):hover{background:rgba(255,255,255,0.05);}
+.integration-header.disabled{cursor:default;}
+.integration-header .ih-label{
+    font-weight:600;font-size:15px;color:#fff;display:flex;align-items:center;gap:10px;
+  }
+.integration-header.disabled .ih-label{color:var(--text-dim);}
+.integration-header .ih-hint{font-size:12.5px;color:var(--text-dim);}
+.integration-header .ih-arrow{transition:transform .2s ease;color:var(--text-dim);font-size:13px;}
+.integration-header.open .ih-arrow{transform:rotate(180deg);}
+.integration-body{padding:4px 20px 22px;border-top:1px solid rgba(255,255,255,0.1);margin-top:4px;}
+
 .avatar-upload{display:flex;align-items:center;gap:18px;margin-bottom:8px;}
 .avatar-preview{
     width:84px;height:84px;border-radius:22px;overflow:hidden;flex-shrink:0;
