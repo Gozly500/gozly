@@ -8,10 +8,17 @@ const OPTIONS_PREMIER_JOUR = [
   { id: "dimanche", label: "Dimanche" },
 ];
 
+const OPTIONS_APPROBATION_ECHANGES = [
+  { id: "manuelle", label: "Manuelle (tu dois approuver)" },
+  { id: "automatique", label: "Automatique" },
+];
+
 export default function PersonnalisationSection({ entrepriseId }) {
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
   const [premierJourOpen, setPremierJourOpen] = useState(false);
+  const [approbationEchanges, setApprobationEchanges] = useState("manuelle");
+  const [approbationOpen, setApprobationOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -24,10 +31,11 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setLoading(true);
     const [{ data: actifsData }, { data: entrepriseData }] = await Promise.all([
       supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId),
-      supabase.from("entreprises").select("premier_jour_semaine").eq("id", entrepriseId).maybeSingle(),
+      supabase.from("entreprises").select("premier_jour_semaine, auto_approuver_echanges").eq("id", entrepriseId).maybeSingle(),
     ]);
     setModulesActifs((actifsData || []).map((m) => m.module));
     setPremierJourSemaine(entrepriseData?.premier_jour_semaine || "lundi");
+    setApprobationEchanges(entrepriseData?.auto_approuver_echanges ? "automatique" : "manuelle");
     setLoading(false);
   }
 
@@ -38,6 +46,21 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setMsg(null);
 
     const { error } = await supabase.from("entreprises").update({ premier_jour_semaine: value }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+  }
+
+  async function handleChangeApprobation(value) {
+    setApprobationOpen(false);
+    setApprobationEchanges(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ auto_approuver_echanges: value === "automatique" })
+      .eq("id", entrepriseId);
 
     setSaving(false);
     setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
@@ -80,6 +103,33 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 <div className="forfait-select-options open">
                   {OPTIONS_PREMIER_JOUR.map((o) => (
                     <div key={o.id} className="forfait-option" onClick={() => handleChangePremierJour(o.id)}>
+                      <div className="fo-label">{o.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <p className="section-hint" style={{ marginTop: "18px" }}>
+            Quand un employé accepte de prendre le quart d'un collègue, faut-il approuver l'échange toi-même ?
+          </p>
+          <div className="field" style={{ maxWidth: "260px" }}>
+            <label>Approbation des échanges de quart</label>
+            <div className="forfait-select-wrap">
+              <div
+                className={`forfait-select-trigger${approbationOpen ? " open" : ""}`}
+                onClick={() => !saving && setApprobationOpen((v) => !v)}
+              >
+                <div className="fs-label">
+                  {OPTIONS_APPROBATION_ECHANGES.find((o) => o.id === approbationEchanges)?.label}
+                </div>
+                <span className="fs-arrow">▾</span>
+              </div>
+              {approbationOpen && (
+                <div className="forfait-select-options open">
+                  {OPTIONS_APPROBATION_ECHANGES.map((o) => (
+                    <div key={o.id} className="forfait-option" onClick={() => handleChangeApprobation(o.id)}>
                       <div className="fo-label">{o.label}</div>
                     </div>
                   ))}

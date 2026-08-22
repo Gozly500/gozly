@@ -6,12 +6,14 @@ import Link from "next/link";
 import DashSidebar from "@/components/DashSidebar";
 import HoraireSection from "@/components/horaire/HoraireSection";
 import FeuilleTempsSection from "@/components/horaire/FeuilleTempsSection";
+import DemandesSection from "@/components/entreprise/DemandesSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
 const TABS = [
   { id: "horaire", label: "Horaire", icon: "🗓" },
   { id: "feuille", label: "Feuille de temps", icon: "🧾" },
+  { id: "demandes", label: "Demandes", icon: "📝" },
 ];
 
 export default function HoraireContent() {
@@ -122,6 +124,7 @@ export default function HoraireContent() {
 
               {activeTab === "horaire" && <HoraireSection entrepriseId={entrepriseId} />}
               {activeTab === "feuille" && <FeuilleTempsSection entrepriseId={entrepriseId} />}
+              {activeTab === "demandes" && <DemandesSection entrepriseId={entrepriseId} />}
             </>
           )}
         </div>
