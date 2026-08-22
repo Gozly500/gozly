@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 import DashSidebar from "@/components/DashSidebar";
 import ModulesModal from "@/components/ModulesModal";
 import WidgetCard from "@/components/dashboard/WidgetCard";
+import WidgetPalette from "@/components/dashboard/WidgetPalette";
+import DropSlot from "@/components/dashboard/DropSlot";
 import RaccourcisWidget from "@/components/dashboard/RaccourcisWidget";
 import PlanningJourWidget from "@/components/dashboard/PlanningJourWidget";
 import HoraireJourWidget from "@/components/dashboard/HoraireJourWidget";
@@ -26,7 +28,7 @@ export default function DashboardContent() {
   const [widgetConfig, setWidgetConfig] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
-  const [dragOverId, setDragOverId] = useState(null);
+  const [dragOverSlot, setDragOverSlot] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -104,28 +106,38 @@ export default function DashboardContent() {
     supabase.from("entreprises").update({ dashboard_widgets: config }).eq("id", entrepriseId);
   }
 
-  function handleToggleVisible(id) {
+  function handleRemove(id) {
     setWidgetConfig((cur) => {
-      const config = cur.map((w) => (w.id === id ? { ...w, visible: !w.visible } : w));
+      const config = cur.map((w) => (w.id === id ? { ...w, visible: false } : w));
       persisterConfig(config);
       return config;
     });
   }
 
-  function handleDrop(targetId) {
+  // Insère (ou déplace) le widget `id` à la position `indexParmiPlaces`
+  // parmi les widgets actuellement visibles - utilisé aussi bien pour
+  // ajouter un widget depuis la palette que pour réordonner la grille.
+  function handleDropSurSlot(indexParmiPlaces) {
+    if (!draggedId) return;
     setWidgetConfig((cur) => {
-      if (!draggedId || draggedId === targetId) return cur;
-      const fromIndex = cur.findIndex((w) => w.id === draggedId);
-      const toIndex = cur.findIndex((w) => w.id === targetId);
-      if (fromIndex === -1 || toIndex === -1) return cur;
-      const config = [...cur];
-      const [moved] = config.splice(fromIndex, 1);
-      config.splice(toIndex, 0, moved);
+      const sansWidget = cur.filter((w) => w.id !== draggedId);
+      const widget = { id: draggedId, visible: true };
+      const placesVisibles = sansWidget.filter((w) => w.visible);
+
+      let config;
+      if (indexParmiPlaces >= placesVisibles.length) {
+        config = [...sansWidget, widget];
+      } else {
+        const idCible = placesVisibles[indexParmiPlaces].id;
+        const posCible = sansWidget.findIndex((w) => w.id === idCible);
+        config = [...sansWidget.slice(0, posCible), widget, ...sansWidget.slice(posCible)];
+      }
+
       persisterConfig(config);
       return config;
     });
     setDraggedId(null);
-    setDragOverId(null);
+    setDragOverSlot(null);
   }
 
   if (checking) {
@@ -143,7 +155,10 @@ export default function DashboardContent() {
     const meta = WIDGETS.find((m) => m.id === w.id);
     return meta && (meta.moduleId === null || actifs.includes(meta.moduleId));
   });
-  const widgetsAffiches = editMode ? widgetsEligibles : widgetsEligibles.filter((w) => w.visible);
+  const widgetsPlaces = widgetsEligibles.filter((w) => w.visible);
+  const widgetsPalette = widgetsEligibles
+    .filter((w) => !w.visible)
+    .map((w) => ({ id: w.id, nom: WIDGETS.find((m) => m.id === w.id)?.nom || w.id }));
 
   function renderContenuWidget(id) {
     if (id === "raccourcis") {
@@ -201,35 +216,62 @@ export default function DashboardContent() {
             </button>
           </header>
 
-          <div className="dash-widgets-stack">
-            {widgetsAffiches.map((w) => {
-              const meta = WIDGETS.find((m) => m.id === w.id);
-              return (
-                <WidgetCard
-                  key={w.id}
-                  title={meta.nom}
-                  editMode={editMode}
-                  visible={w.visible}
-                  onToggleVisible={() => handleToggleVisible(w.id)}
-                  dragOver={dragOverId === w.id}
-                  onDragStart={() => setDraggedId(w.id)}
+          <div className={editMode ? "dash-edit-layout" : undefined}>
+            <div className="dash-widgets-grid">
+              {editMode && draggedId && (
+                <DropSlot
+                  dragOver={dragOverSlot === 0}
                   onDragOver={(e) => {
                     e.preventDefault();
-                    setDragOverId(w.id);
+                    setDragOverSlot(0);
                   }}
                   onDrop={(e) => {
                     e.preventDefault();
-                    handleDrop(w.id);
+                    handleDropSurSlot(0);
                   }}
-                  onDragEnd={() => {
-                    setDraggedId(null);
-                    setDragOverId(null);
-                  }}
-                >
-                  {renderContenuWidget(w.id)}
-                </WidgetCard>
-              );
-            })}
+                />
+              )}
+              {widgetsPlaces.map((w, i) => {
+                const meta = WIDGETS.find((m) => m.id === w.id);
+                return (
+                  <div key={w.id} style={{ display: "contents" }}>
+                    <WidgetCard
+                      title={meta.nom}
+                      taille={meta.taille}
+                      editMode={editMode}
+                      onRemove={() => handleRemove(w.id)}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", w.id);
+                        setDraggedId(w.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggedId(null);
+                        setDragOverSlot(null);
+                      }}
+                    >
+                      {renderContenuWidget(w.id)}
+                    </WidgetCard>
+                    {editMode && draggedId && (
+                      <DropSlot
+                        dragOver={dragOverSlot === i + 1}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOverSlot(i + 1);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          handleDropSurSlot(i + 1);
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {editMode && (
+              <WidgetPalette widgets={widgetsPalette} onDragStart={setDraggedId} />
+            )}
           </div>
         </div>
       </main>
