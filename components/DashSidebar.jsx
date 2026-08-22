@@ -98,6 +98,12 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           <Link href="/dashboard/discussion" className={`dash-nav-item${active === "discussion" ? " active" : ""}`}>
             <span>💬</span> Discussion
           </Link>
+          <Link href="/dashboard/entreprise/employes" className={`dash-nav-item${active === "employes" ? " active" : ""}`}>
+            <span>👤</span> Employés
+          </Link>
+          <Link href="/dashboard/entreprise/parametres" className={`dash-nav-item${active === "entreprise" ? " active" : ""}`}>
+            <span>⚙</span> Paramètres
+          </Link>
           <div className="dash-nav-label">Modules</div>
           {modulesActifs.map((mod) => (
             <div key={mod.id}>
@@ -119,14 +125,6 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
               <span>+</span> Gérer les modules
             </button>
           )}
-
-          <div className="dash-nav-label">Gestion</div>
-          <Link href="/dashboard/entreprise/employes" className={`dash-nav-item${active === "employes" ? " active" : ""}`}>
-            <span>👤</span> Employés
-          </Link>
-          <Link href="/dashboard/entreprise/parametres" className={`dash-nav-item${active === "entreprise" ? " active" : ""}`}>
-            <span>⚙</span> Paramètres
-          </Link>
         </nav>
 
         <div className="dash-sidebar-user">
