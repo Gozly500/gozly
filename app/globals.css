@@ -1095,6 +1095,14 @@ input.planning-date-picker{
 .emplacement-tab:hover{background:rgba(255,255,255,0.12);color:#fff;}
 .emplacement-tab.active{background:rgba(122,63,224,0.3);border-color:rgba(122,63,224,0.6);color:#fff;}
 
+.emplacement-checks{display:flex;flex-direction:column;gap:8px;}
+.emplacement-check{
+    display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+    font-size:13.5px;cursor:pointer;
+  }
+.emplacement-check input{width:16px;height:16px;accent-color:var(--violet);}
+
 /* ============ Bannière "mode admin" (vue du dashboard d'un client) ============ */
 .impersonation-banner{
     display:flex;align-items:center;justify-content:space-between;gap:10px;

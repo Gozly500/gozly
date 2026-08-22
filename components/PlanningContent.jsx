@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
 import { supabase } from "@/lib/supabaseClient";
-import { resoudreEntrepriseActive } from "@/lib/entreprise";
+import { resoudreEntrepriseActive, getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 
 export default function PlanningContent() {
   const router = useRouter();
@@ -16,6 +16,13 @@ export default function PlanningContent() {
   const [loadingDays, setLoadingDays] = useState(true);
   const [pickingDate, setPickingDate] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(null);
+  const [emplacements, setEmplacements] = useState([]);
+  const [emplacementId, setEmplacementIdState] = useState(null);
+
+  function setEmplacementId(id) {
+    setEmplacementIdState(id);
+    if (entrepriseId) setEmplacementSelectionne(entrepriseId, id);
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -51,7 +58,26 @@ export default function PlanningContent() {
       setEntrepriseId(eid);
       setChecking(false);
 
-      if (eid) loadDays(eid);
+      if (eid) {
+        const { data: emplacementsData } = await supabase
+          .from("emplacements")
+          .select("*")
+          .eq("entreprise_id", eid)
+          .order("created_at", { ascending: true });
+
+        const list = emplacementsData || [];
+        setEmplacements(list);
+
+        let selected = null;
+        if (list.length > 0) {
+          const saved = getEmplacementSelectionne(eid);
+          selected = saved && list.some((e) => e.id === saved) ? saved : list[0].id;
+          setEmplacementIdState(selected);
+          setEmplacementSelectionne(eid, selected);
+        }
+
+        loadDays(eid, list.length > 0 ? selected : null);
+      }
     });
 
     return () => {
@@ -59,9 +85,11 @@ export default function PlanningContent() {
     };
   }, [router]);
 
-  async function loadDays(eid) {
+  async function loadDays(eid, filtreEmplacementId) {
     setLoadingDays(true);
-    const { data } = await supabase.from("taches").select("date, terminee").eq("entreprise_id", eid);
+    let query = supabase.from("taches").select("date, terminee").eq("entreprise_id", eid);
+    if (filtreEmplacementId) query = query.eq("emplacement_id", filtreEmplacementId);
+    const { data } = await query;
 
     const byDate = new Map();
     (data || []).forEach((t) => {
@@ -89,8 +117,15 @@ export default function PlanningContent() {
     if (date) router.push(`/dashboard/planning/${date}`);
   }
 
+  function handleChangeEmplacement(id) {
+    setEmplacementId(id);
+    loadDays(entrepriseId, id);
+  }
+
   async function handleDeleteDay(date) {
-    await supabase.from("taches").delete().eq("entreprise_id", entrepriseId).eq("date", date);
+    let query = supabase.from("taches").delete().eq("entreprise_id", entrepriseId).eq("date", date);
+    if (emplacementId) query = query.eq("emplacement_id", emplacementId);
+    await query;
     setConfirmingDelete(null);
     setDays((prev) => prev.filter((d) => d.date !== date));
   }
@@ -138,6 +173,20 @@ export default function PlanningContent() {
               )}
             </div>
           </header>
+
+          {emplacements.length > 1 && (
+            <div className="emplacement-tabs">
+              {emplacements.map((e) => (
+                <button
+                  key={e.id}
+                  className={`emplacement-tab${emplacementId === e.id ? " active" : ""}`}
+                  onClick={() => handleChangeEmplacement(e.id)}
+                >
+                  📍 {e.nom}
+                </button>
+              ))}
+            </div>
+          )}
 
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>

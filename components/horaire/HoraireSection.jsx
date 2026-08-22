@@ -27,6 +27,7 @@ function addDays(date, n) {
 export default function HoraireSection({ entrepriseId }) {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
   const [employes, setEmployes] = useState([]);
+  const [associations, setAssociations] = useState([]);
   const [quarts, setQuarts] = useState([]);
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementId] = useState(null);
@@ -73,6 +74,16 @@ export default function HoraireSection({ entrepriseId }) {
 
     const { data: quartsData } = await quartsQuery;
 
+    if (employesData && employesData.length > 0) {
+      const { data: assocData } = await supabase
+        .from("employe_emplacements")
+        .select("*")
+        .in("employe_id", employesData.map((e) => e.id));
+      setAssociations(assocData || []);
+    } else {
+      setAssociations([]);
+    }
+
     setEmployes(employesData || []);
     setQuarts(quartsData || []);
     setLoading(false);
@@ -81,6 +92,17 @@ export default function HoraireSection({ entrepriseId }) {
   function employeNom(id) {
     return employes.find((e) => e.id === id)?.nom || "Employé retiré";
   }
+
+  // Un employé sans aucun emplacement assigné est considéré disponible
+  // partout. Un employé avec des emplacements assignés n'apparaît que
+  // dans ceux-là.
+  const employesVisibles =
+    emplacements.length === 0 || !emplacementId
+      ? employes
+      : employes.filter((emp) => {
+          const assignes = associations.filter((a) => a.employe_id === emp.id).map((a) => a.emplacement_id);
+          return assignes.length === 0 || assignes.includes(emplacementId);
+        });
 
   function handleDrop(e, dateISO) {
     e.preventDefault();
@@ -91,7 +113,13 @@ export default function HoraireSection({ entrepriseId }) {
   }
 
   function openAddViaButton(dateISO) {
-    setModal({ date: dateISO, employeId: employes[0]?.id || "", quartId: null, heureDebut: "09:00", heureFin: "17:00" });
+    setModal({
+      date: dateISO,
+      employeId: employesVisibles[0]?.id || "",
+      quartId: null,
+      heureDebut: "09:00",
+      heureFin: "17:00",
+    });
   }
 
   function openEdit(quart) {
@@ -172,6 +200,8 @@ export default function HoraireSection({ entrepriseId }) {
         <p style={{ color: "var(--text-dim)" }}>
           Ajoute d'abord des employés dans Entreprise → Employés pour pouvoir les placer dans l'horaire.
         </p>
+      ) : employesVisibles.length === 0 ? (
+        <p style={{ color: "var(--text-dim)" }}>Aucun employé assigné à cet emplacement pour l'instant.</p>
       ) : (
         <>
           <p className="section-hint" style={{ marginBottom: "14px" }}>
@@ -179,7 +209,7 @@ export default function HoraireSection({ entrepriseId }) {
           </p>
           <div className="horaire-layout">
             <div className="horaire-employees">
-              {employes.map((emp) => (
+              {employesVisibles.map((emp) => (
                 <div
                   key={emp.id}
                   className="horaire-employee-pill"
@@ -251,7 +281,10 @@ export default function HoraireSection({ entrepriseId }) {
                     value={modal.employeId}
                     onChange={(e) => setModal((m) => ({ ...m, employeId: e.target.value }))}
                   >
-                    {employes.map((emp) => (
+                    {(employesVisibles.some((e) => e.id === modal.employeId)
+                      ? employesVisibles
+                      : [...employesVisibles, employes.find((e) => e.id === modal.employeId)].filter(Boolean)
+                    ).map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.nom}
                       </option>

@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 
 export default function JourEditor({ entrepriseId, date }) {
   const [categories, setCategories] = useState([]);
   const [taches, setTaches] = useState([]);
+  const [emplacements, setEmplacements] = useState([]);
+  const [emplacementId, setEmplacementIdState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [addingFor, setAddingFor] = useState(null);
   const [texte, setTexte] = useState("");
@@ -15,24 +18,39 @@ export default function JourEditor({ entrepriseId, date }) {
     load();
   }, [entrepriseId, date]);
 
+  function changerEmplacement(id) {
+    setEmplacementIdState(id);
+    setEmplacementSelectionne(entrepriseId, id);
+    loadTaches(id);
+  }
+
   async function load() {
     setLoading(true);
-    const { data: categoriesData } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("entreprise_id", entrepriseId)
-      .order("created_at", { ascending: true });
+    const [categoriesRes, emplacementsRes] = await Promise.all([
+      supabase.from("categories").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
+      supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
+    ]);
 
-    const { data: tachesData } = await supabase
-      .from("taches")
-      .select("*")
-      .eq("entreprise_id", entrepriseId)
-      .eq("date", date)
-      .order("created_at", { ascending: true });
+    setCategories(categoriesRes.data || []);
+    const list = emplacementsRes.data || [];
+    setEmplacements(list);
 
-    setCategories(categoriesData || []);
-    setTaches(tachesData || []);
+    let selected = null;
+    if (list.length > 0) {
+      const saved = getEmplacementSelectionne(entrepriseId);
+      selected = saved && list.some((e) => e.id === saved) ? saved : list[0].id;
+      setEmplacementIdState(selected);
+    }
+
+    await loadTaches(selected);
     setLoading(false);
+  }
+
+  async function loadTaches(filtreEmplacementId) {
+    let query = supabase.from("taches").select("*").eq("entreprise_id", entrepriseId).eq("date", date);
+    if (filtreEmplacementId) query = query.eq("emplacement_id", filtreEmplacementId);
+    const { data } = await query.order("created_at", { ascending: true });
+    setTaches(data || []);
   }
 
   async function handleAdd(categorieId, e) {
@@ -44,10 +62,11 @@ export default function JourEditor({ entrepriseId, date }) {
       categorie_id: categorieId,
       date,
       texte: texte.trim(),
+      emplacement_id: emplacementId,
     });
     setTexte("");
     setAddingFor(null);
-    load();
+    loadTaches(emplacementId);
   }
 
   async function handleToggle(tache) {
@@ -57,7 +76,7 @@ export default function JourEditor({ entrepriseId, date }) {
 
   async function handleDelete(id) {
     await supabase.from("taches").delete().eq("id", id);
-    load();
+    loadTaches(emplacementId);
   }
 
   const dateLabel = new Date(date + "T00:00:00").toLocaleDateString("fr-CA", {
@@ -82,6 +101,20 @@ export default function JourEditor({ entrepriseId, date }) {
           ✓ Terminé
         </Link>
       </div>
+
+      {emplacements.length > 1 && (
+        <div className="emplacement-tabs">
+          {emplacements.map((e) => (
+            <button
+              key={e.id}
+              className={`emplacement-tab${emplacementId === e.id ? " active" : ""}`}
+              onClick={() => changerEmplacement(e.id)}
+            >
+              📍 {e.nom}
+            </button>
+          ))}
+        </div>
+      )}
 
       {categories.length === 0 ? (
         <p style={{ color: "var(--text-dim)" }}>
