@@ -1,17 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { MODULES, limiteModules } from "@/lib/modules";
+import { MODULES } from "@/lib/modules";
 
-export default function RaccourcisWidget({ actifs, forfait, editMode, onOuvrirModules }) {
-  const limite = limiteModules(forfait);
+// Pur raccourci d'affichage - l'activation/désactivation des modules se
+// fait uniquement via "Gérer les modules" dans la barre latérale
+// (DashSidebar.jsx), jamais depuis ce widget.
+export default function RaccourcisWidget({ actifs }) {
   const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
-  const placeholders = editMode
-    ? Math.max(0, Math.min(limite === Infinity ? 4 : limite, 4) - modulesActifs.length)
-    : 0;
 
-  if (modulesActifs.length === 0 && placeholders === 0) {
-    return <p className="widget-card-empty">Aucun module actif. Passe en mode édition pour en activer.</p>;
+  if (modulesActifs.length === 0) {
+    return <p className="widget-card-empty">Aucun module actif. Utilise "Gérer les modules" dans le menu pour en activer.</p>;
   }
 
   return (
@@ -32,11 +31,6 @@ export default function RaccourcisWidget({ actifs, forfait, editMode, onOuvrirMo
             </>
           )}
         </Link>
-      ))}
-      {Array.from({ length: placeholders }).map((_, i) => (
-        <div key={i} className="dash-module-card" onClick={onOuvrirModules}>
-          +
-        </div>
       ))}
     </div>
   );

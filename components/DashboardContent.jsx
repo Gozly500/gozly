@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import DashSidebar from "@/components/DashSidebar";
-import ModulesModal from "@/components/ModulesModal";
 import WidgetCard from "@/components/dashboard/WidgetCard";
 import WidgetPalette from "@/components/dashboard/WidgetPalette";
 import DropSlot from "@/components/dashboard/DropSlot";
@@ -24,7 +23,6 @@ export default function DashboardContent() {
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [forfait, setForfait] = useState(null);
   const [actifs, setActifs] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
   const [widgetConfig, setWidgetConfig] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
@@ -161,16 +159,7 @@ export default function DashboardContent() {
     .map((w) => ({ id: w.id, nom: WIDGETS.find((m) => m.id === w.id)?.nom || w.id }));
 
   function renderContenuWidget(id) {
-    if (id === "raccourcis") {
-      return (
-        <RaccourcisWidget
-          actifs={actifs}
-          forfait={forfait}
-          editMode={editMode}
-          onOuvrirModules={() => setModalOpen(true)}
-        />
-      );
-    }
+    if (id === "raccourcis") return <RaccourcisWidget actifs={actifs} />;
     if (id === "planning-jour") return <PlanningJourWidget entrepriseId={entrepriseId} />;
     if (id === "horaire-jour") return <HoraireJourWidget entrepriseId={entrepriseId} />;
     return null;
@@ -188,7 +177,7 @@ export default function DashboardContent() {
       />
 
       <main className="dash-main">
-        <div className="dash-main-inner">
+        <div className="dash-main-inner dash-main-wide">
           {noForfait && (
             <div className="dash-forfait-banner">
               <span>Vous n'avez aucun forfait actif.</span>
@@ -275,14 +264,6 @@ export default function DashboardContent() {
           </div>
         </div>
       </main>
-
-      {modalOpen && (
-        <ModulesModal
-          entrepriseId={entrepriseId}
-          onClose={() => setModalOpen(false)}
-          onChange={() => loadActifs(entrepriseId)}
-        />
-      )}
     </div>
   );
 }

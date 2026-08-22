@@ -149,6 +149,7 @@ button:hover{background:rgba(255,255,255,0.15);}
 
 .dash-main{flex:1;min-width:0;}
 .dash-main-inner{padding:56px 48px;max-width:960px;}
+.dash-main-inner.dash-main-wide{max-width:1400px;}
 .dash-hero-inline{margin-bottom:36px;}
 .dash-hero-inline h1{font-size:clamp(26px,3.5vw,36px);margin-bottom:8px;}
 .dash-hero-inline p{color:var(--text-dim);font-size:15.5px;}
@@ -1247,11 +1248,11 @@ input.planning-date-picker{
 .widget-palette-tile:active{cursor:grabbing;}
 
 .widget-drop-slot{
-    grid-column:span 1;border-radius:16px;min-height:52px;
+    grid-column:1/-1;border-radius:12px;min-height:14px;
     border:2px dashed rgba(255,255,255,0.18);
-    transition:border-color .15s ease,background .15s ease;
+    transition:border-color .15s ease,background .15s ease,min-height .15s ease;
   }
-.widget-drop-slot.drag-over{border-color:rgba(122,63,224,0.8);background:rgba(122,63,224,0.14);}
+.widget-drop-slot.drag-over{min-height:60px;border-color:rgba(122,63,224,0.8);background:rgba(122,63,224,0.14);}
 
 /* ============ Horaire (calendrier glisser-déposer) ============ */
 .horaire-layout{display:flex;gap:24px;align-items:flex-start;}
