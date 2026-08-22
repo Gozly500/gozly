@@ -14,17 +14,20 @@ export async function POST(request) {
     return NextResponse.json({ error: "La connexion n'est pas encore configurée." }, { status: 501 });
   }
 
-  const { data: entreprise } = await service
+  const { data: entreprise, error: entrepriseError } = await service
     .from("entreprises")
     .select("id, nom")
     .eq("code_acces", codeAcces.trim().toUpperCase())
     .maybeSingle();
 
   if (!entreprise) {
-    return NextResponse.json({ error: "Code d'entreprise introuvable." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Code d'entreprise introuvable.", debug: { codeRecu: codeAcces.trim().toUpperCase(), entrepriseError } },
+      { status: 401 }
+    );
   }
 
-  const { data: employe } = await service
+  const { data: employe, error: employeError } = await service
     .from("employes")
     .select("id, nom")
     .eq("entreprise_id", entreprise.id)
@@ -32,7 +35,13 @@ export async function POST(request) {
     .maybeSingle();
 
   if (!employe) {
-    return NextResponse.json({ error: "NIP incorrect." }, { status: 401 });
+    return NextResponse.json(
+      {
+        error: "NIP incorrect.",
+        debug: { entrepriseId: entreprise.id, nipRecu: nip.trim(), employeError },
+      },
+      { status: 401 }
+    );
   }
 
   const token = genererToken();
