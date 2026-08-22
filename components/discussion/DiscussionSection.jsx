@@ -13,6 +13,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const [employeIdsEnDiscussion, setEmployeIdsEnDiscussion] = useState(new Set());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState(null);
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -39,6 +40,17 @@ export default function DiscussionSection({ entrepriseId, userId }) {
 
   async function chargerConversations() {
     setLoading(true);
+    setErreur(null);
+    try {
+      await chargerConversationsImpl();
+    } catch (err) {
+      console.error("Erreur chargement conversations:", err);
+      setErreur(err?.message || "Le chargement des conversations a échoué.");
+    }
+    setLoading(false);
+  }
+
+  async function chargerConversationsImpl() {
     const equipeId = await getOrCreateEquipeConversation(supabase, entrepriseId);
 
     const { data: mesParticipations } = await supabase
@@ -103,7 +115,6 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     ].sort((a, b) => new Date(b.dernierMessageDate || 0) - new Date(a.dernierMessageDate || 0));
 
     setConversations(liste);
-    setLoading(false);
     setActiveId((cur) => cur || equipeId);
   }
 
@@ -149,6 +160,10 @@ export default function DiscussionSection({ entrepriseId, userId }) {
 
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+  }
+
+  if (erreur) {
+    return <p className="settings-msg err">{erreur}</p>;
   }
 
   return (

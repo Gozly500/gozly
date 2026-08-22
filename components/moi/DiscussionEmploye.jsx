@@ -12,6 +12,7 @@ export default function DiscussionEmploye() {
   const [collegues, setCollegues] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState(null);
   const [vue, setVue] = useState("liste"); // "liste" | "thread"
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
@@ -37,9 +38,19 @@ export default function DiscussionEmploye() {
 
   async function chargerConversations() {
     setLoading(true);
-    const res = await employeFetch("/api/employe-app/chat/conversations");
-    const data = await res.json();
-    setConversations(data.conversations || []);
+    setErreur(null);
+    try {
+      const res = await employeFetch("/api/employe-app/chat/conversations");
+      const data = await res.json();
+      if (!res.ok) {
+        setErreur(data.error || "Le chargement des conversations a échoué.");
+      } else {
+        setConversations(data.conversations || []);
+      }
+    } catch (err) {
+      console.error("Erreur chargement conversations:", err);
+      setErreur("Le chargement des conversations a échoué.");
+    }
     setLoading(false);
   }
 
@@ -86,6 +97,10 @@ export default function DiscussionEmploye() {
 
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+  }
+
+  if (erreur) {
+    return <p className="settings-msg err">{erreur}</p>;
   }
 
   return (
