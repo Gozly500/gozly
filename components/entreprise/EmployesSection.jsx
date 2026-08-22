@@ -11,6 +11,8 @@ export default function EmployesSection({ entrepriseId }) {
   const [associations, setAssociations] = useState([]); // { employe_id, emplacement_id }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [codeAcces, setCodeAcces] = useState(null);
+  const [codeCopie, setCodeCopie] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -19,7 +21,20 @@ export default function EmployesSection({ entrepriseId }) {
 
   useEffect(() => {
     load();
+    supabase
+      .from("entreprises")
+      .select("code_acces")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => setCodeAcces(data?.code_acces || null));
   }, [entrepriseId]);
+
+  function copierCode() {
+    if (!codeAcces) return;
+    navigator.clipboard?.writeText(codeAcces);
+    setCodeCopie(true);
+    setTimeout(() => setCodeCopie(false), 1500);
+  }
 
   async function load() {
     setLoading(true);
@@ -161,6 +176,21 @@ export default function EmployesSection({ entrepriseId }) {
           + Ajouter un employé
         </button>
       </div>
+
+      {codeAcces && (
+        <div className="admin-list" style={{ maxWidth: "640px", marginBottom: "24px", padding: "16px 20px" }}>
+          <p className="section-hint" style={{ marginBottom: "8px" }}>
+            Code d'accès de l'app "Gozly Équipe" — chaque employé l'utilise avec son NIP pour voir son horaire sur son
+            téléphone.
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span style={{ fontSize: "20px", fontWeight: 700, letterSpacing: "0.12em" }}>{codeAcces}</span>
+            <button type="button" className="admin-icon-btn" onClick={copierCode}>
+              {codeCopie ? "Copié !" : "Copier"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="admin-list" style={{ maxWidth: "640px" }}>
         {employes.map((emp) => {
