@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import DashSidebar from "@/components/DashSidebar";
+import EmplacementSelect from "@/components/EmplacementSelect";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive, getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 
@@ -158,35 +160,28 @@ export default function PlanningContent() {
               <h1>Planning</h1>
               <p>Les journées de tâches déjà créées.</p>
             </div>
-            <div style={{ position: "relative" }}>
-              <button className="submit-btn" onClick={() => setPickingDate((v) => !v)}>
-                + Nouvelle journée
-              </button>
-              {pickingDate && (
-                <input
-                  type="date"
-                  autoFocus
-                  className="planning-date-picker"
-                  onChange={handlePickDate}
-                  onBlur={() => setPickingDate(false)}
-                />
-              )}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Link href="/dashboard/planning-kiosk" target="_blank" className="admin-icon-btn">
+                🖥 Ouvrir le kiosque
+              </Link>
+              <div style={{ position: "relative" }}>
+                <button className="submit-btn" onClick={() => setPickingDate((v) => !v)}>
+                  + Nouvelle journée
+                </button>
+                {pickingDate && (
+                  <input
+                    type="date"
+                    autoFocus
+                    className="planning-date-picker"
+                    onChange={handlePickDate}
+                    onBlur={() => setPickingDate(false)}
+                  />
+                )}
+              </div>
             </div>
           </header>
 
-          {emplacements.length > 1 && (
-            <div className="emplacement-tabs">
-              {emplacements.map((e) => (
-                <button
-                  key={e.id}
-                  className={`emplacement-tab${emplacementId === e.id ? " active" : ""}`}
-                  onClick={() => handleChangeEmplacement(e.id)}
-                >
-                  📍 {e.nom}
-                </button>
-              ))}
-            </div>
-          )}
+          <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={handleChangeEmplacement} />
 
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>

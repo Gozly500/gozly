@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
+import EmplacementSelect from "@/components/EmplacementSelect";
 
 export default function JourEditor({ entrepriseId, date }) {
   const [categories, setCategories] = useState([]);
@@ -102,19 +103,7 @@ export default function JourEditor({ entrepriseId, date }) {
         </Link>
       </div>
 
-      {emplacements.length > 1 && (
-        <div className="emplacement-tabs">
-          {emplacements.map((e) => (
-            <button
-              key={e.id}
-              className={`emplacement-tab${emplacementId === e.id ? " active" : ""}`}
-              onClick={() => changerEmplacement(e.id)}
-            >
-              📍 {e.nom}
-            </button>
-          ))}
-        </div>
-      )}
+      <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={changerEmplacement} />
 
       {categories.length === 0 ? (
         <p style={{ color: "var(--text-dim)" }}>

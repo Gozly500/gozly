@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import EmplacementSelect from "@/components/EmplacementSelect";
 
 function getMonday(date) {
   const d = new Date(date);
@@ -28,6 +29,14 @@ function csvEscape(value) {
   return str;
 }
 
+// <input type="datetime-local"> veut "AAAA-MM-JJTHH:MM" en heure locale.
+function toDatetimeLocal(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function FeuilleTempsSection({ entrepriseId }) {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
   const [employes, setEmployes] = useState([]);
@@ -35,6 +44,8 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementId] = useState(null); // null = toutes
   const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null); // { pointageId, employeNom, entree, sortie }
+  const [saving, setSaving] = useState(false);
 
   const weekEnd = addDays(weekStart, 7);
 
@@ -81,13 +92,39 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       .filter((p) => p.employe_id === employeId)
       .map((p) => {
         const fin = p.sortie ? new Date(p.sortie) : new Date();
-        return { debut: p.entree, fin: p.sortie, minutes: (fin - new Date(p.entree)) / 60000 };
+        return { pointageId: p.id, debut: p.entree, fin: p.sortie, minutes: (fin - new Date(p.entree)) / 60000 };
       });
   }
 
   const lignes = employes.flatMap((emp) =>
     sessionsPour(emp.id).map((s) => ({ employe: emp.nom, ...s }))
   );
+
+  function openEdit(ligne) {
+    setModal({
+      pointageId: ligne.pointageId,
+      employeNom: ligne.employe,
+      entree: toDatetimeLocal(ligne.debut),
+      sortie: toDatetimeLocal(ligne.fin),
+    });
+  }
+
+  async function handleSaveModal(e) {
+    e.preventDefault();
+    setSaving(true);
+
+    await supabase
+      .from("pointages")
+      .update({
+        entree: new Date(modal.entree).toISOString(),
+        sortie: modal.sortie ? new Date(modal.sortie).toISOString() : null,
+      })
+      .eq("id", modal.pointageId);
+
+    setSaving(false);
+    setModal(null);
+    load();
+  }
 
   function handleExport() {
     const header = ["Employe", "Date", "Debut", "Fin", "Heures"];
@@ -118,22 +155,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
 
   return (
     <div>
-      {emplacements.length > 1 && (
-        <div className="emplacement-tabs">
-          <button className={`emplacement-tab${!emplacementId ? " active" : ""}`} onClick={() => setEmplacementId(null)}>
-            Toutes
-          </button>
-          {emplacements.map((e) => (
-            <button
-              key={e.id}
-              className={`emplacement-tab${emplacementId === e.id ? " active" : ""}`}
-              onClick={() => setEmplacementId(e.id)}
-            >
-              📍 {e.nom}
-            </button>
-          ))}
-        </div>
-      )}
+      <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={setEmplacementId} includeToutes />
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
@@ -165,6 +187,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                 <th>Début</th>
                 <th>Fin</th>
                 <th>Heures</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -175,6 +198,11 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                   <td>{new Date(l.debut).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</td>
                   <td>{l.fin ? new Date(l.fin).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }) : "en cours"}</td>
                   <td>{heuresDecimal(l.minutes)}</td>
+                  <td>
+                    <button className="admin-icon-btn" onClick={() => openEdit(l)}>
+                      Modifier
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -186,6 +214,44 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         Le CSV contient une ligne par quart pointé (employé, date, heures). Si Sage 50 attend des colonnes
         différentes, tu peux ajuster le mappage directement dans son assistant d'importation.
       </p>
+
+      {modal && (
+        <div className="modal-overlay" onClick={() => setModal(null)}>
+          <div className="modal-card" style={{ maxWidth: "360px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Corriger le pointage</h3>
+              <button className="admin-icon-btn" onClick={() => setModal(null)}>
+                Fermer
+              </button>
+            </div>
+            <p className="section-hint" style={{ marginBottom: "14px" }}>{modal.employeNom}</p>
+            <form onSubmit={handleSaveModal}>
+              <div className="field">
+                <label>Arrivée</label>
+                <input
+                  type="datetime-local"
+                  value={modal.entree}
+                  onChange={(e) => setModal((m) => ({ ...m, entree: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label>Départ (laisser vide si toujours en cours)</label>
+                <input
+                  type="datetime-local"
+                  value={modal.sortie}
+                  onChange={(e) => setModal((m) => ({ ...m, sortie: e.target.value }))}
+                />
+              </div>
+              <div className="admin-edit-actions">
+                <button type="submit" className="submit-btn" disabled={saving}>
+                  {saving ? "Enregistrement..." : "Enregistrer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

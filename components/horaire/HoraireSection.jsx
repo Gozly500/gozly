@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import EmplacementSelect from "@/components/EmplacementSelect";
 
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
@@ -170,19 +171,7 @@ export default function HoraireSection({ entrepriseId }) {
 
   return (
     <div>
-      {emplacements.length > 1 && (
-        <div className="emplacement-tabs">
-          {emplacements.map((e) => (
-            <button
-              key={e.id}
-              className={`emplacement-tab${emplacementId === e.id ? " active" : ""}`}
-              onClick={() => setEmplacementId(e.id)}
-            >
-              📍 {e.nom}
-            </button>
-          ))}
-        </div>
-      )}
+      <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={setEmplacementId} />
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
