@@ -141,10 +141,21 @@ export default function EmployesSection({ entrepriseId }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "16px",
+          flexWrap: "wrap",
+          marginBottom: "24px",
+        }}
+      >
         <div>
           <h2>Employés</h2>
-          <p className="panel-hint">La fiche de tes employés, partagée par tous les modules qui en ont besoin.</p>
+          <p className="panel-hint" style={{ marginBottom: 0 }}>
+            La fiche de tes employés, partagée par tous les modules qui en ont besoin.
+          </p>
         </div>
         <button className="submit-btn" onClick={openAdd}>
           + Ajouter un employé

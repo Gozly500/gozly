@@ -837,7 +837,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 
 .settings-panel{flex:1;min-width:0;text-align:left;}
 .settings-panel h2{font-size:22px;margin-bottom:6px;}
-.settings-panel .panel-hint{color:var(--text-dim);font-size:14px;margin-bottom:30px;}
+.panel-hint{color:var(--text-dim);font-size:14px;margin-top:6px;margin-bottom:30px;}
 
 .settings-section{margin-bottom:34px;}
 .settings-section h3{font-size:15.5px;font-weight:600;margin-bottom:2px;}

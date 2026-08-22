@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
+import { getDebutSemaine, addDays } from "@/lib/semaine";
 
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
@@ -10,23 +11,8 @@ function toISODate(date) {
   return date.toISOString().slice(0, 10);
 }
 
-function getMonday(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function addDays(date, n) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + n);
-  return d;
-}
-
 export default function HoraireSection({ entrepriseId }) {
-  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
+  const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
   const [employes, setEmployes] = useState([]);
   const [associations, setAssociations] = useState([]);
   const [quarts, setQuarts] = useState([]);
@@ -48,6 +34,18 @@ export default function HoraireSection({ entrepriseId }) {
       .then(({ data }) => {
         setEmplacements(data || []);
         if (data && data.length > 0) setEmplacementId((cur) => cur || data[0].id);
+      });
+  }, [entrepriseId]);
+
+  useEffect(() => {
+    supabase
+      .from("entreprises")
+      .select("premier_jour_semaine")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => {
+        const dimanche = data?.premier_jour_semaine === "dimanche";
+        setWeekStart((w) => getDebutSemaine(addDays(w, 3), dimanche));
       });
   }, [entrepriseId]);
 

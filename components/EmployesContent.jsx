@@ -3,27 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
-import EquipeSection from "@/components/entreprise/EquipeSection";
-import EmplacementsSection from "@/components/entreprise/EmplacementsSection";
-import PersonnalisationSection from "@/components/entreprise/PersonnalisationSection";
-import IntegrationsSection from "@/components/settings/IntegrationsSection";
+import EmployesSection from "@/components/entreprise/EmployesSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
-const TABS = [
-  { id: "equipe", label: "Équipe", icon: "🤝" },
-  { id: "emplacements", label: "Emplacements", icon: "📍" },
-  { id: "personnalisation", label: "Personnalisation", icon: "🎨" },
-  { id: "integrations", label: "Intégrations", icon: "🔌" },
-];
-
-export default function EntrepriseParametresContent() {
+export default function EmployesContent() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [entrepriseId, setEntrepriseId] = useState(null);
-  const [activeTab, setActiveTab] = useState("equipe");
 
   useEffect(() => {
     let ignore = false;
@@ -83,7 +72,7 @@ export default function EntrepriseParametresContent() {
   return (
     <div className="dash-layout">
       <DashSidebar
-        active="entreprise"
+        active="employes"
         displayName={displayName}
         userEmail={user?.email}
         isAdmin={isAdmin}
@@ -96,29 +85,7 @@ export default function EntrepriseParametresContent() {
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
           ) : (
-            <div className="settings-wrap" style={{ maxWidth: "none", padding: 0 }}>
-              <nav className="settings-nav">
-                {TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    <span className="icon">{tab.icon}</span> {tab.label}
-                  </button>
-                ))}
-              </nav>
-
-              <div className="settings-panel">
-                {activeTab === "equipe" && (
-                  <EquipeSection entrepriseId={entrepriseId} userId={user?.id} onLeft={() => router.push("/dashboards")} />
-                )}
-                {activeTab === "emplacements" && <EmplacementsSection entrepriseId={entrepriseId} />}
-                {activeTab === "personnalisation" && <PersonnalisationSection entrepriseId={entrepriseId} />}
-                {activeTab === "integrations" && <IntegrationsSection />}
-              </div>
-            </div>
+            <EmployesSection entrepriseId={entrepriseId} />
           )}
         </div>
       </main>

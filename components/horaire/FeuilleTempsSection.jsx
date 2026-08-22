@@ -4,21 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { SERVICES_PAIE } from "@/lib/servicesPaie";
-
-function getMonday(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function addDays(date, n) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + n);
-  return d;
-}
+import { getDebutSemaine, addDays } from "@/lib/semaine";
 
 function heuresDecimal(minutes) {
   return (minutes / 60).toFixed(2);
@@ -52,7 +38,7 @@ function toDatetimeLocal(iso) {
 }
 
 export default function FeuilleTempsSection({ entrepriseId }) {
-  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
+  const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
   const [employes, setEmployes] = useState([]);
   const [pointages, setPointages] = useState([]);
   const [emplacements, setEmplacements] = useState([]);
@@ -72,6 +58,18 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       .eq("entreprise_id", entrepriseId)
       .order("created_at", { ascending: true })
       .then(({ data }) => setEmplacements(data || []));
+  }, [entrepriseId]);
+
+  useEffect(() => {
+    supabase
+      .from("entreprises")
+      .select("premier_jour_semaine")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => {
+        const dimanche = data?.premier_jour_semaine === "dimanche";
+        setWeekStart((w) => getDebutSemaine(addDays(w, 3), dimanche));
+      });
   }, [entrepriseId]);
 
   useEffect(() => {
