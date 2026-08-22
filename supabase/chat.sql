@@ -106,13 +106,27 @@ using (
   )
 );
 
+-- Résout l'entreprise d'une conversation sans passer par les RLS de
+-- "conversations" (security definer) : une conversation "directe" toute
+-- neuve n'a encore aucun participant, donc sa propre policy de lecture
+-- la cacherait sinon et bloquerait l'ajout du tout premier participant.
+create or replace function entreprise_de_conversation(p_conversation_id uuid)
+returns uuid
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select entreprise_id from conversations where id = p_conversation_id;
+$$;
+
+grant execute on function entreprise_de_conversation(uuid) to authenticated;
+
 drop policy if exists "Ajouter des participants a une conversation de son entreprise" on conversation_participants;
 create policy "Ajouter des participants a une conversation de son entreprise"
 on conversation_participants for insert
 to authenticated
-with check (
-  exists (select 1 from conversations c where c.id = conversation_participants.conversation_id and est_membre(c.entreprise_id))
-);
+with check (est_membre(entreprise_de_conversation(conversation_id)));
 
 -- messages
 drop policy if exists "Voir les messages des conversations accessibles" on messages;
