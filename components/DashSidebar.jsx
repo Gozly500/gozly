@@ -2,22 +2,36 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
-import { listerMesEntreprises } from "@/lib/entreprise";
+import { listerMesEntreprises, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 
 export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout, entrepriseId }) {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [actifs, setActifs] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [plusieursEntreprises, setPlusieursEntreprises] = useState(false);
+  const [impersonation, setImpersonationState] = useState(null);
+
+  useEffect(() => {
+    setImpersonationState(getImpersonation());
+  }, [entrepriseId]);
 
   useEffect(() => {
     if (!entrepriseId) return;
     loadActifs();
-    listerMesEntreprises(supabase).then((list) => setPlusieursEntreprises(list.length > 1));
-  }, [entrepriseId]);
+    if (!impersonation) {
+      listerMesEntreprises(supabase).then((list) => setPlusieursEntreprises(list.length > 1));
+    }
+  }, [entrepriseId, impersonation]);
+
+  function quitterImpersonation() {
+    arreterImpersonation();
+    router.push("/admin");
+  }
 
   async function loadActifs() {
     const { data } = await supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId);
@@ -66,6 +80,16 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           </svg>
           <span>Gozly</span>
         </Link>
+
+        {impersonation && (
+          <div className="impersonation-banner">
+            <div>
+              <strong>Mode admin</strong>
+              <div>{impersonation.nom}</div>
+            </div>
+            <button onClick={quitterImpersonation}>Quitter</button>
+          </div>
+        )}
 
         <nav className="dash-nav">
           <Link href="/dashboard" className={`dash-nav-item${active === "dashboard" ? " active" : ""}`}>

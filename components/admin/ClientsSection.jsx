@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { demarrerImpersonation } from "@/lib/entreprise";
 
 const FORFAITS = [
   { id: "", label: "Aucun forfait" },
@@ -26,6 +28,7 @@ async function authFetch(path, options = {}) {
 }
 
 export default function ClientsSection() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const [error, setError] = useState(null);
@@ -191,6 +194,15 @@ export default function ClientsSection() {
                   onClick={() => (editingId === row.entreprise.id ? setEditingId(null) : startEdit(row))}
                 >
                   {editingId === row.entreprise.id ? "Fermer" : "Modifier"}
+                </button>
+                <button
+                  className="admin-icon-btn"
+                  onClick={() => {
+                    demarrerImpersonation(row.entreprise.id, row.entreprise.nom);
+                    router.push("/dashboard");
+                  }}
+                >
+                  Voir le dashboard
                 </button>
               </div>
             </div>
