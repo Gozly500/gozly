@@ -99,7 +99,8 @@ export default function DiscussionEmploye() {
             </button>
           </div>
           {pickerOpen && (
-            <div style={{ padding: "8px" }}>
+            <div className="chat-picker">
+              <div className="chat-section-label">Démarrer avec...</div>
               {collegues.length === 0 ? (
                 <p className="chat-empty">Aucun collègue pour l'instant.</p>
               ) : (
@@ -116,6 +117,7 @@ export default function DiscussionEmploye() {
               )}
             </div>
           )}
+          <div className="chat-section-label">Conversations</div>
           {conversations.map((c) => (
             <button
               key={c.id}
@@ -152,8 +154,8 @@ export default function DiscussionEmploye() {
             </div>
             <form className="chat-compose" onSubmit={handleEnvoyer}>
               <input type="text" value={texte} onChange={(e) => setTexte(e.target.value)} placeholder="Écrire un message..." />
-              <button type="submit" className="submit-btn">
-                Envoyer
+              <button type="submit" className="chat-send-btn" disabled={!texte.trim()} aria-label="Envoyer">
+                ➤
               </button>
             </form>
           </div>
