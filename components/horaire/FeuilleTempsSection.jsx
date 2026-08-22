@@ -29,6 +29,25 @@ function csvEscape(value) {
   return str;
 }
 
+function downloadCsv(filename, rows) {
+  const csv = rows.map((r) => r.map(csvEscape).join(",")).join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const SERVICES_PAIE = [
+  { id: "nethris", label: "Nethris", disponible: true },
+  { id: "dayforce", label: "Dayforce", disponible: false },
+  { id: "quickbooks", label: "QuickBooks", disponible: false },
+];
+
 // <input type="datetime-local"> veut "AAAA-MM-JJTHH:MM" en heure locale.
 function toDatetimeLocal(iso) {
   if (!iso) return "";
@@ -46,6 +65,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null); // { pointageId, employeNom, entree, sortie }
   const [saving, setSaving] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const weekEnd = addDays(weekStart, 7);
 
@@ -126,26 +146,38 @@ export default function FeuilleTempsSection({ entrepriseId }) {
     load();
   }
 
-  function handleExport() {
-    const header = ["Employe", "Date", "Debut", "Fin", "Heures"];
-    const rows = lignes.map((l) => [
-      l.employe,
-      new Date(l.debut).toLocaleDateString("fr-CA"),
-      new Date(l.debut).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }),
-      l.fin ? new Date(l.fin).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }) : "",
-      heuresDecimal(l.minutes),
-    ]);
+  // Nethris importe les heures par semaine, par employé, réparties sur des
+  // codes de gain (1 = heures régulières, 43 = heures supplémentaires par
+  // défaut - à ajuster si ton entreprise utilise d'autres codes dans Nethris).
+  function handleExportNethris() {
+    setExportOpen(false);
 
-    const csv = [header, ...rows].map((r) => r.map(csvEscape).join(",")).join("\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `feuille-de-temps-${weekStart.toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const totauxParEmploye = employes.map((emp) => {
+      const minutes = sessionsPour(emp.id).reduce((sum, s) => sum + s.minutes, 0);
+      return { employe: emp, heures: minutes / 60 };
+    }).filter((t) => t.heures > 0);
+
+    const semaineDu = weekStart.toLocaleDateString("fr-CA");
+    const header = [
+      "Numero d'employe",
+      "Nom de l'employe",
+      "Semaine du",
+      "Code 1 - Heures regulieres",
+      "Code 43 - Heures supplementaires",
+    ];
+    const rows = totauxParEmploye.map(({ employe, heures }) => {
+      const regulieres = Math.min(heures, 40);
+      const supplementaires = Math.max(0, heures - 40);
+      return [
+        employe.numero_paie || "",
+        employe.nom,
+        semaineDu,
+        regulieres.toFixed(2),
+        supplementaires.toFixed(2),
+      ];
+    });
+
+    downloadCsv(`nethris-heures-${weekStart.toISOString().slice(0, 10)}.csv`, [header, ...rows]);
   }
 
   const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${addDays(
@@ -168,9 +200,31 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "14px" }}>
-        <button className="submit-btn" onClick={handleExport} disabled={lignes.length === 0}>
-          ⬇ Exporter en CSV
-        </button>
+        <div className="account-wrap">
+          <button
+            className="submit-btn"
+            onClick={() => setExportOpen((v) => !v)}
+            disabled={lignes.length === 0}
+          >
+            ⬇ Exporter ▾
+          </button>
+          {exportOpen && (
+            <div className="account-dropdown open">
+              {SERVICES_PAIE.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="menu-item"
+                  disabled={!s.disponible}
+                  onClick={s.id === "nethris" ? handleExportNethris : undefined}
+                >
+                  {s.label}
+                  {!s.disponible && " (bientôt disponible)"}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -211,8 +265,10 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       )}
 
       <p className="section-hint" style={{ marginTop: "14px" }}>
-        Le CSV contient une ligne par quart pointé (employé, date, heures). Si Sage 50 attend des colonnes
-        différentes, tu peux ajuster le mappage directement dans son assistant d'importation.
+        L'export Nethris contient une ligne par employé pour la semaine affichée (heures régulières et
+        supplémentaires séparées, au-delà de 40h/semaine). Renseigne le numéro d'employé de chacun dans
+        Entreprise → Employés pour qu'il corresponde à sa fiche dans Nethris, et vérifie que les codes de
+        gain (1 et 43 par défaut) correspondent à ta configuration Nethris avant l'importation.
       </p>
 
       {modal && (

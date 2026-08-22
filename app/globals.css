@@ -780,13 +780,14 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
     border:1px solid rgba(255,255,255,0.16);border-radius:16px;
     padding:8px;z-index:70;box-shadow:0 20px 40px rgba(0,0,0,0.4);
   }
-.account-dropdown a,.account-dropdown button.logout{
+.account-dropdown a,.account-dropdown button.logout,.account-dropdown button.menu-item{
     display:block;width:100%;text-align:left;padding:10px 14px;border-radius:10px;
     color:var(--text-dim);font-size:13.5px;background:none;border:none;cursor:pointer;
   }
-.account-dropdown a:hover,.account-dropdown button.logout:hover{background:rgba(255,255,255,0.08);color:#fff;}
+.account-dropdown a:hover,.account-dropdown button.logout:hover,.account-dropdown button.menu-item:not(:disabled):hover{background:rgba(255,255,255,0.08);color:#fff;}
 .account-dropdown .divider{height:1px;background:rgba(255,255,255,0.1);margin:6px 4px;}
 .account-dropdown button.logout{color:#ff9494;}
+.account-dropdown button.menu-item:disabled{color:rgba(255,255,255,0.3);cursor:default;}
 
 @media(max-width:760px){
     .desktop-only{display:none;}

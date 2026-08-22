@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-const FORM_VIDE = { nom: "", role: "", telephone: "", courriel: "", nip: "", emplacementIds: [] };
+const FORM_VIDE = { nom: "", role: "", telephone: "", courriel: "", nip: "", numeroPaie: "", emplacementIds: [] };
 
 export default function EmployesSection({ entrepriseId }) {
   const [employes, setEmployes] = useState([]);
@@ -64,6 +64,7 @@ export default function EmployesSection({ entrepriseId }) {
       telephone: emp.telephone || "",
       courriel: emp.courriel || "",
       nip: emp.nip || "",
+      numeroPaie: emp.numero_paie || "",
       emplacementIds: emplacementsDe(emp.id),
     });
     setError(null);
@@ -91,6 +92,7 @@ export default function EmployesSection({ entrepriseId }) {
       telephone: form.telephone.trim() || null,
       courriel: form.courriel.trim() || null,
       nip: form.nip.trim() || null,
+      numero_paie: form.numeroPaie.trim() || null,
     };
 
     let employeId = editingId;
@@ -159,7 +161,9 @@ export default function EmployesSection({ entrepriseId }) {
               <div className="admin-row-main">
                 <div className="admin-row-title">{emp.nom}</div>
                 <div className="admin-row-sub">
-                  {[emp.role, emp.telephone, emp.courriel].filter(Boolean).join(" · ") || "Aucune info de contact"}
+                  {[emp.role, emp.telephone, emp.courriel, emp.numero_paie && `# paie: ${emp.numero_paie}`]
+                    .filter(Boolean)
+                    .join(" · ") || "Aucune info de contact"}
                   {empEmplacements.length > 0 && ` · 📍 ${empEmplacements.join(", ")}`}
                 </div>
               </div>
@@ -231,17 +235,31 @@ export default function EmployesSection({ entrepriseId }) {
                 </div>
               </div>
 
-              <div className="field" style={{ maxWidth: "140px" }}>
-                <label>NIP (optionnel)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={form.nip}
-                  onChange={(e) => setForm((f) => ({ ...f, nip: e.target.value.replace(/\D/g, "") }))}
-                  placeholder="1234"
-                />
+              <div className="field-row">
+                <div className="field" style={{ maxWidth: "140px" }}>
+                  <label>NIP (optionnel)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={form.nip}
+                    onChange={(e) => setForm((f) => ({ ...f, nip: e.target.value.replace(/\D/g, "") }))}
+                    placeholder="1234"
+                  />
+                </div>
+                <div className="field">
+                  <label>Numéro d'employé - paie (optionnel)</label>
+                  <input
+                    type="text"
+                    value={form.numeroPaie}
+                    onChange={(e) => setForm((f) => ({ ...f, numeroPaie: e.target.value }))}
+                    placeholder="Ex: 42 (numéro dans Nethris)"
+                  />
+                </div>
               </div>
+              <p className="section-hint" style={{ marginTop: "-8px", marginBottom: "14px" }}>
+                Utilisé pour faire correspondre l'employé lors de l'exportation vers un service de paie (Nethris, etc.).
+              </p>
 
               {emplacements.length > 0 && (
                 <div className="field">
