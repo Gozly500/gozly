@@ -9,14 +9,14 @@ export async function GET(request) {
   }
 
   const service = getServiceClient();
-  const { data: entreprise } = await service
-    .from("entreprises")
-    .select("nom, premier_jour_semaine")
-    .eq("id", employe.entreprise_id)
-    .maybeSingle();
+  const [{ data: entreprise }, { data: modules }] = await Promise.all([
+    service.from("entreprises").select("nom, premier_jour_semaine").eq("id", employe.entreprise_id).maybeSingle(),
+    service.from("modules_actifs").select("module").eq("entreprise_id", employe.entreprise_id),
+  ]);
 
   return NextResponse.json({
     employe: { id: employe.id, nom: employe.nom },
     entreprise: { nom: entreprise?.nom || "", premierJourSemaine: entreprise?.premier_jour_semaine || "lundi" },
+    modulesActifs: (modules || []).map((m) => m.module),
   });
 }

@@ -7,6 +7,7 @@ import { IconHoraire, IconDiscussion } from "@/components/icons/GozlyIcons";
 
 const ONGLETS = [
   { id: "horaire", label: "Horaire", Icone: IconHoraire, href: "/moi/horaire" },
+  { id: "taches", label: "Tâches", icon: "✅", href: "/moi/taches", module: "planning" },
   { id: "demandes", label: "Demandes", icon: "📝", href: "/moi/demandes" },
   { id: "discussion", label: "Discussion", Icone: IconDiscussion, href: "/moi/discussion" },
 ];
@@ -49,6 +50,10 @@ export default function MoiShell({ children }) {
     );
   }
 
+  const modulesActifs = moi?.modulesActifs || [];
+  const onglets = ONGLETS.filter((o) => !o.module || modulesActifs.includes(o.module));
+  const estDiscussion = pathname === "/moi/discussion";
+
   return (
     <div className="moi-shell">
       <header className="moi-header">
@@ -61,10 +66,10 @@ export default function MoiShell({ children }) {
         </button>
       </header>
 
-      <main className="moi-main">{children}</main>
+      <main className={`moi-main${estDiscussion ? " moi-main-chat" : ""}`}>{children}</main>
 
       <nav className="moi-tabbar">
-        {ONGLETS.map((o) => (
+        {onglets.map((o) => (
           <button
             key={o.id}
             type="button"
