@@ -121,7 +121,7 @@ button:hover{background:rgba(255,255,255,0.15);}
     cursor:pointer;transition:background .2s ease,color .2s ease;
   }
 .dash-nav-item.active{background:rgba(255,255,255,0.10);color:#fff;}
-.gozly-icon{width:16px;height:16px;flex-shrink:0;}
+.gozly-icon{width:16px;height:16px;flex-shrink:0;vertical-align:middle;}
 .dash-nav-item.disabled{opacity:.45;cursor:default;}
 .dash-nav-item:not(.disabled):hover{background:rgba(255,255,255,0.06);color:#fff;}
 .dash-nav-label{
@@ -193,6 +193,14 @@ button:hover{background:rgba(255,255,255,0.15);}
 .dash-module-image{width:100%;height:100%;object-fit:cover;border-radius:19px;display:block;}
 .dash-module-emoji{font-size:30px;}
 .dash-module-name{font-size:13px;font-weight:600;text-align:center;}
+
+.dash-module-tile{display:flex;flex-direction:column;gap:8px;}
+.dash-module-tile.edit-hidden .dash-module-card{opacity:.4;}
+.dash-module-toggle{
+    width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);
+    color:var(--text-dim);border-radius:20px;padding:6px 10px;font-size:12px;
+  }
+.dash-module-toggle.on{color:#7ee787;border-color:rgba(126,231,135,0.4);}
 
 .dash-nav-manage{
     width:100%;text-align:left;background:none;border:1px dashed rgba(255,255,255,0.22);

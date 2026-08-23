@@ -25,6 +25,7 @@ export default function DashboardContent() {
   const [forfait, setForfait] = useState(null);
   const [actifs, setActifs] = useState([]);
   const [widgetConfig, setWidgetConfig] = useState([]);
+  const [modulesCaches, setModulesCaches] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverSlot, setDragOverSlot] = useState(null);
@@ -65,7 +66,7 @@ export default function DashboardContent() {
 
         const { data: entreprise } = await supabase
           .from("entreprises")
-          .select("forfait, dashboard_widgets")
+          .select("forfait, dashboard_widgets, raccourcis_modules_caches")
           .eq("id", eid)
           .maybeSingle();
 
@@ -73,6 +74,7 @@ export default function DashboardContent() {
           setForfait(entreprise.forfait);
           if (!entreprise.forfait) setNoForfait(true);
           setWidgetConfig(fusionnerConfigWidgets(entreprise.dashboard_widgets));
+          setModulesCaches(entreprise.raccourcis_modules_caches || []);
         }
 
         loadActifs(eid);
@@ -103,6 +105,16 @@ export default function DashboardContent() {
   function persisterConfig(config) {
     if (!entrepriseId) return;
     supabase.from("entreprises").update({ dashboard_widgets: config }).eq("id", entrepriseId);
+  }
+
+  function handleToggleModuleCache(moduleId) {
+    setModulesCaches((cur) => {
+      const nouveau = cur.includes(moduleId) ? cur.filter((id) => id !== moduleId) : [...cur, moduleId];
+      if (entrepriseId) {
+        supabase.from("entreprises").update({ raccourcis_modules_caches: nouveau }).eq("id", entrepriseId);
+      }
+      return nouveau;
+    });
   }
 
   function handleRemove(id) {
@@ -160,7 +172,16 @@ export default function DashboardContent() {
     .map((w) => ({ id: w.id, nom: WIDGETS.find((m) => m.id === w.id)?.nom || w.id }));
 
   function renderContenuWidget(id) {
-    if (id === "raccourcis") return <RaccourcisWidget actifs={actifs} />;
+    if (id === "raccourcis") {
+      return (
+        <RaccourcisWidget
+          actifs={actifs}
+          editMode={editMode}
+          modulesCaches={modulesCaches}
+          onToggleModule={handleToggleModuleCache}
+        />
+      );
+    }
     if (id === "planning-jour") return <PlanningJourWidget entrepriseId={entrepriseId} />;
     if (id === "horaire-jour") return <HoraireJourWidget entrepriseId={entrepriseId} />;
     return null;
