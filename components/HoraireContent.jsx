@@ -9,10 +9,11 @@ import FeuilleTempsSection from "@/components/horaire/FeuilleTempsSection";
 import DemandesSection from "@/components/entreprise/DemandesSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
+import { IconHoraire, IconFeuilleTemps } from "@/components/icons/GozlyIcons";
 
 const TABS = [
-  { id: "horaire", label: "Horaire", icon: "🗓" },
-  { id: "feuille", label: "Feuille de temps", icon: "🧾" },
+  { id: "horaire", label: "Horaire", Icone: IconHoraire },
+  { id: "feuille", label: "Feuille de temps", Icone: IconFeuilleTemps },
   { id: "demandes", label: "Demandes", icon: "📝" },
 ];
 
@@ -117,7 +118,7 @@ export default function HoraireContent() {
                     className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
                     onClick={() => setActiveTab(tab.id)}
                   >
-                    <span className="icon">{tab.icon}</span> {tab.label}
+                    <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
                   </button>
                 ))}
               </div>

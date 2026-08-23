@@ -147,7 +147,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
               </Link>
             )}
             <Link href="/parametres" className="dash-settings-btn" title="Paramètres du compte">
-              ⚙
+              <IconParametres className="gozly-icon" />
             </Link>
             <button onClick={onLogout} className="dash-logout-btn">
               Déconnexion
