@@ -26,6 +26,11 @@ export default function HoraireContent() {
   const [activeTab, setActiveTab] = useState("horaire");
 
   useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab) setActiveTab(tab);
+  }, []);
+
+  useEffect(() => {
     let ignore = false;
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
