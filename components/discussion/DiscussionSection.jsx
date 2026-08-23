@@ -125,9 +125,6 @@ export default function DiscussionSection({ entrepriseId, userId }) {
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true });
     setMessages(data || []);
-    await supabase
-      .from("conversation_lectures")
-      .upsert({ conversation_id: conversationId, user_id: userId, dernier_lu_a: new Date().toISOString() }, { onConflict: "conversation_id,user_id" });
   }
 
   async function handleEnvoyer(e) {

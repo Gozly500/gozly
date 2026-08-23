@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
-import NotificationBell from "@/components/NotificationBell";
 import { listerMesEntreprises, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { IconTableauDeBord, IconDiscussion, IconEmployes, IconParametres, IconPlanning, IconHoraire } from "@/components/icons/GozlyIcons";
 
@@ -55,7 +54,6 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
       </button>
 
       <aside className={`dash-sidebar${sidebarOpen ? " open" : ""}`}>
-        <div className="dash-sidebar-logo-row">
         <Link href="/" className="dash-sidebar-logo">
           <svg viewBox="0 0 1182 1182" xmlns="http://www.w3.org/2000/svg">
             <g transform="matrix(0.136019,0,0,0.136019,590.551181,590.551181)">
@@ -85,8 +83,6 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           </svg>
           <span>Gozly</span>
         </Link>
-        <NotificationBell entrepriseId={entrepriseId} />
-        </div>
 
         {impersonation && (
           <div className="impersonation-banner">

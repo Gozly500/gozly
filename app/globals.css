@@ -110,8 +110,7 @@ button:hover{background:rgba(255,255,255,0.15);}
     padding:26px 20px;
     position:sticky;top:0;height:100vh;
   }
-.dash-sidebar-logo-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:44px;}
-.dash-sidebar-logo{display:flex;align-items:center;gap:10px;padding-left:4px;}
+.dash-sidebar-logo{display:flex;align-items:center;gap:10px;margin-bottom:44px;padding-left:4px;}
 .dash-sidebar-logo svg{width:32px;height:32px;flex-shrink:0;}
 .dash-sidebar-logo span{font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px;color:#fff;}
 .dash-nav{display:flex;flex-direction:column;gap:4px;flex:1;overflow-y:auto;}
@@ -130,15 +129,6 @@ button:hover{background:rgba(255,255,255,0.15);}
     color:var(--text-dim);opacity:.55;margin:22px 0 8px 14px;font-weight:600;
   }
 .dash-sidebar-user{border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;margin-top:16px;}
-
-.notif-bell-wrap{position:relative;}
-.notif-bell-btn{position:relative;background:none;border:none;cursor:pointer;font-size:18px;opacity:.85;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;}
-.notif-bell-btn:hover{background:rgba(255,255,255,0.08);opacity:1;}
-.notif-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#ff5050;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;}
-.notif-dropdown{position:absolute;top:40px;left:0;width:260px;background:rgba(20,18,40,0.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:50;}
-.notif-dropdown-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;color:#fff;text-decoration:none;font-size:13.5px;}
-.notif-dropdown-item:hover{background:rgba(255,255,255,0.06);}
-.notif-dropdown-empty{padding:16px;text-align:center;color:var(--text-dim);font-size:13px;}
 .dash-user-header{margin-bottom:12px;}
 .dash-user-name{font-size:14px;font-weight:600;color:#fff;margin-bottom:2px;word-break:break-word;}
 .dash-user-email{font-size:12px;color:var(--text-dim);word-break:break-all;}
