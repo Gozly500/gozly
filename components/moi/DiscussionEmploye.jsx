@@ -118,29 +118,7 @@ export default function DiscussionEmploye() {
         <div className={`chat-conv-list${vue === "thread" ? " hidden-mobile" : ""}`}>
           <div className="chat-conv-list-head">
             <strong style={{ fontSize: "13px" }}>Discussion</strong>
-            <button type="button" className="admin-icon-btn" onClick={() => setPickerOpen((v) => !v)}>
-              + Nouveau
-            </button>
           </div>
-          {pickerOpen && (
-            <div className="chat-picker">
-              <div className="chat-section-label">Démarrer avec...</div>
-              {collegues.length === 0 ? (
-                <p className="chat-empty">Aucun collègue pour l'instant.</p>
-              ) : (
-                collegues.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className="chat-conv-item"
-                    onClick={() => demarrerConversation(c.id, c.nom)}
-                  >
-                    {c.nom}
-                  </button>
-                ))
-              )}
-            </div>
-          )}
           <div className="chat-section-label">Conversations</div>
           {conversations.map((c) => (
             <button
@@ -185,6 +163,39 @@ export default function DiscussionEmploye() {
           </div>
         )}
       </div>
+
+      {vue === "liste" && (
+        <button type="button" className="moi-discussion-add-btn" onClick={() => setPickerOpen(true)}>
+          + Ajouter
+        </button>
+      )}
+
+      {pickerOpen && (
+        <div className="modal-overlay" onClick={() => setPickerOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Démarrer avec...</h3>
+              <button className="admin-icon-btn" onClick={() => setPickerOpen(false)}>
+                Fermer
+              </button>
+            </div>
+            {collegues.length === 0 ? (
+              <p className="chat-empty">Aucun collègue pour l'instant.</p>
+            ) : (
+              <div className="moi-picker-list">
+                {collegues.map((c) => (
+                  <div className="moi-picker-row" key={c.id}>
+                    <span>{c.nom}</span>
+                    <button type="button" className="admin-icon-btn" onClick={() => demarrerConversation(c.id, c.nom)}>
+                      Ajouter
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

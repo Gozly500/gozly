@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
+import { IconHoraire, IconDiscussion } from "@/components/icons/GozlyIcons";
 
 const ONGLETS = [
-  { id: "horaire", label: "Horaire", icon: "🗓", href: "/moi/horaire" },
+  { id: "horaire", label: "Horaire", Icone: IconHoraire, href: "/moi/horaire" },
   { id: "demandes", label: "Demandes", icon: "📝", href: "/moi/demandes" },
-  { id: "discussion", label: "Discussion", icon: "💬", href: "/moi/discussion" },
+  { id: "discussion", label: "Discussion", Icone: IconDiscussion, href: "/moi/discussion" },
 ];
 
 export default function MoiShell({ children }) {
@@ -71,7 +72,7 @@ export default function MoiShell({ children }) {
             onClick={() => o.href && router.push(o.href)}
             disabled={!o.href}
           >
-            <span className="moi-tab-icon">{o.icon}</span>
+            <span className="moi-tab-icon">{o.Icone ? <o.Icone className="gozly-icon" /> : o.icon}</span>
             <span>{o.label}</span>
           </button>
         ))}

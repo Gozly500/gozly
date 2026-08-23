@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { IconCrayon } from "@/components/icons/GozlyIcons";
 import { supabase } from "@/lib/supabaseClient";
 import DashSidebar from "@/components/DashSidebar";
 import WidgetCard from "@/components/dashboard/WidgetCard";
@@ -201,7 +202,7 @@ export default function DashboardContent() {
               onClick={() => setEditMode((v) => !v)}
               title={editMode ? "Terminer la modification" : "Modifier le tableau de bord"}
             >
-              ✏️
+              <IconCrayon className="gozly-icon" />
             </button>
           </header>
 

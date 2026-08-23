@@ -7,6 +7,9 @@ import { supabase } from "@/lib/supabaseClient";
 import { MODULES } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
 import { listerMesEntreprises, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
+import { IconTableauDeBord, IconDiscussion, IconEmployes, IconParametres, IconPlanning, IconHoraire } from "@/components/icons/GozlyIcons";
+
+const ICONES_MODULES = { planning: IconPlanning, horaire: IconHoraire };
 
 export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout, entrepriseId }) {
   const router = useRouter();
@@ -93,22 +96,24 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
 
         <nav className="dash-nav">
           <Link href="/dashboard" className={`dash-nav-item${active === "dashboard" ? " active" : ""}`}>
-            <span>▦</span> Tableau de bord
+            <IconTableauDeBord className="gozly-icon" /> Tableau de bord
           </Link>
           <Link href="/dashboard/discussion" className={`dash-nav-item${active === "discussion" ? " active" : ""}`}>
-            <span>💬</span> Discussion
+            <IconDiscussion className="gozly-icon" /> Discussion
           </Link>
           <Link href="/dashboard/entreprise/employes" className={`dash-nav-item${active === "employes" ? " active" : ""}`}>
-            <span>👤</span> Employés
+            <IconEmployes className="gozly-icon" /> Employés
           </Link>
           <Link href="/dashboard/entreprise/parametres" className={`dash-nav-item${active === "entreprise" ? " active" : ""}`}>
-            <span>⚙</span> Paramètres
+            <IconParametres className="gozly-icon" /> Paramètres
           </Link>
           <div className="dash-nav-label">Modules</div>
-          {modulesActifs.map((mod) => (
+          {modulesActifs.map((mod) => {
+            const IconeModule = ICONES_MODULES[mod.id];
+            return (
             <div key={mod.id}>
               <Link href={mod.href} className={`dash-nav-item${active === mod.id ? " active" : ""}`}>
-                <span>{mod.icon}</span> {mod.nom}
+                {IconeModule ? <IconeModule className="gozly-icon" /> : <span>{mod.icon}</span>} {mod.nom}
               </Link>
               {mod.id === "planning" && (active === "planning" || active === "categories") && (
                 <Link
@@ -119,7 +124,8 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
                 </Link>
               )}
             </div>
-          ))}
+            );
+          })}
           {entrepriseId && (
             <button className="dash-nav-item dash-nav-manage" onClick={() => setModalOpen(true)}>
               <span>+</span> Gérer les modules
