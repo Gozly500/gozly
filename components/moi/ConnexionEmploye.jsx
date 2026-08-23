@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { employeFetch, setEmployeToken } from "@/lib/employeAuth";
+import InstallerApp from "@/components/moi/InstallerApp";
 
 export default function ConnexionEmploye() {
   const router = useRouter();
@@ -80,6 +81,7 @@ export default function ConnexionEmploye() {
             Continuer
           </button>
         </form>
+        <InstallerApp />
       </div>
     );
   }
