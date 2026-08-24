@@ -24,6 +24,7 @@ export default function VentesSection({ entrepriseId }) {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(FORM_VIDE);
   const [saving, setSaving] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false);
 
   const weekEnd = addDays(weekStart, 7);
 
@@ -59,6 +60,7 @@ export default function VentesSection({ entrepriseId }) {
   function openAdd() {
     setEditingId(null);
     setForm({ ...FORM_VIDE, date: new Date().toISOString().slice(0, 10) });
+    setSourceOpen(false);
     setModalOpen(true);
   }
 
@@ -70,6 +72,7 @@ export default function VentesSection({ entrepriseId }) {
       date: vente.date,
       description: vente.description || "",
     });
+    setSourceOpen(false);
     setModalOpen(true);
   }
 
@@ -220,13 +223,31 @@ export default function VentesSection({ entrepriseId }) {
               <div className="field-row">
                 <div className="field">
                   <label>Source</label>
-                  <select value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}>
-                    {SOURCES_VENTE.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="emplacement-select-wrap" style={{ minWidth: 0 }}>
+                    <div
+                      className={`emplacement-select-trigger${sourceOpen ? " open" : ""}`}
+                      onClick={() => setSourceOpen((v) => !v)}
+                    >
+                      <span>{labelSource(form.source)}</span>
+                      <span className="fs-arrow">▾</span>
+                    </div>
+                    {sourceOpen && (
+                      <div className="emplacement-select-options">
+                        {SOURCES_VENTE.map((s) => (
+                          <div
+                            key={s.id}
+                            className={`emplacement-select-option${s.id === form.source ? " active" : ""}`}
+                            onClick={() => {
+                              setForm((f) => ({ ...f, source: s.id }));
+                              setSourceOpen(false);
+                            }}
+                          >
+                            {s.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="field">
                   <label>Montant</label>
