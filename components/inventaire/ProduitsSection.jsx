@@ -15,8 +15,10 @@ export default function ProduitsSection({ entrepriseId }) {
   const [produits, setProduits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [wixConnecte, setWixConnecte] = useState(false);
+  const [wixPushAuto, setWixPushAuto] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState(null);
+  const [pushingId, setPushingId] = useState(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -31,7 +33,31 @@ export default function ProduitsSection({ entrepriseId }) {
         .then((data) => setWixConnecte(!!data.connecte))
         .catch(() => setWixConnecte(false))
     );
+    supabase
+      .from("entreprises")
+      .select("wix_push_auto")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => setWixPushAuto(!!data?.wix_push_auto));
   }, [entrepriseId]);
+
+  async function pousserVersWix(produitId) {
+    setPushingId(produitId);
+    try {
+      const res = await fetch("/api/inventaire/pousser-wix", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify({ produitId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSyncMsg({ type: "err", text: data.error || "L'envoi vers Wix a échoué." });
+      }
+    } catch {
+      setSyncMsg({ type: "err", text: "L'envoi vers Wix a échoué." });
+    }
+    setPushingId(null);
+  }
 
   async function handleSyncWix() {
     setSyncing(true);
@@ -95,6 +121,8 @@ export default function ProduitsSection({ entrepriseId }) {
 
     if (editingId) {
       await supabase.from("produits_inventaire").update({ ...valeurs, updated_at: new Date().toISOString() }).eq("id", editingId);
+      const produit = produits.find((p) => p.id === editingId);
+      if (wixPushAuto && produit?.source === "wix") pousserVersWix(editingId);
     } else {
       await supabase.from("produits_inventaire").insert({ entreprise_id: entrepriseId, ...valeurs });
     }
@@ -161,6 +189,11 @@ export default function ProduitsSection({ entrepriseId }) {
                 </div>
               </div>
               <div className="admin-row-controls">
+                {p.source === "wix" && (
+                  <button className="admin-icon-btn" onClick={() => pousserVersWix(p.id)} disabled={pushingId === p.id}>
+                    {pushingId === p.id ? "..." : "🔌 Pousser vers Wix"}
+                  </button>
+                )}
                 <button className="admin-icon-btn" onClick={() => openEdit(p)}>
                   Modifier
                 </button>
