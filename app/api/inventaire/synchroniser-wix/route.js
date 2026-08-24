@@ -47,15 +47,22 @@ export async function POST(request) {
     return NextResponse.json({ error: "La lecture de l'inventaire Wix a échoué." }, { status: 502 });
   }
 
-  const lignes = items.map((item) => ({
-    entreprise_id: entreprise.id,
-    source: "wix",
-    source_id: item.id,
-    nom: item.product?.name || "Produit Wix",
-    sku: item.product?.variantSku || null,
-    quantite: typeof item.quantity === "number" ? item.quantity : item.inStock ? 9999 : 0,
-    updated_at: new Date().toISOString(),
-  }));
+  const lignes = items.map((item) => {
+    // Catalog V1 (obtenirInventaireWix) intègre déjà le nom de la variante
+    // dans product.name ; Catalog V3 le renvoie séparément (variantName).
+    const nomBase = item.product?.name || "Produit Wix";
+    const nom = item.product?.variantName ? `${nomBase} — ${item.product.variantName}` : nomBase;
+
+    return {
+      entreprise_id: entreprise.id,
+      source: "wix",
+      source_id: item.id,
+      nom,
+      sku: item.product?.variantSku || null,
+      quantite: typeof item.quantity === "number" ? item.quantity : item.inStock ? 9999 : 0,
+      updated_at: new Date().toISOString(),
+    };
+  });
 
   if (lignes.length > 0) {
     const { error } = await service.from("produits_inventaire").upsert(lignes, { onConflict: "entreprise_id,source,source_id" });
