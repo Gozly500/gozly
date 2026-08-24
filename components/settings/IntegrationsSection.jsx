@@ -117,10 +117,18 @@ export default function IntegrationsSection() {
             )}
 
             {statut === "en_attente" && (
-              <p className="section-hint">
-                En attente de la fin de l'installation sur Wix... Reviens ici une fois l'installation
-                terminée, cette page se met à jour automatiquement.
-              </p>
+              <>
+                <p className="section-hint">
+                  En attente de la fin de l'installation sur Wix... Reviens ici une fois l'installation
+                  terminée, cette page se met à jour automatiquement.
+                </p>
+                <button type="button" className="admin-icon-btn" onClick={handleConnecter} disabled={busy}>
+                  {busy ? "..." : "Réessayer / ouvrir le lien à nouveau"}
+                </button>
+                <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
+                  Annuler
+                </button>
+              </>
             )}
 
             {statut === "connecte" && (
