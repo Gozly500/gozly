@@ -25,6 +25,7 @@ export default function IntegrationsSection() {
       const res = await fetch("/api/wix/statut", { headers: await authHeaders() });
       const data = await res.json();
       setStatut(data.connecte ? "connecte" : data.enAttente ? "en_attente" : "deconnecte");
+      if (data.enAttente) demarrerSurveillance();
     } catch {
       setStatut("deconnecte");
     }
