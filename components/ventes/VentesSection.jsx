@@ -151,31 +151,29 @@ export default function VentesSection({ entrepriseId }) {
 
       {loading ? (
         <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+      ) : ventes.length === 0 ? (
+        <div className="admin-list" style={{ maxWidth: "700px" }}>
+          <div className="admin-empty">Aucune vente cette semaine.</div>
+        </div>
       ) : (
         <>
           <div className="admin-list" style={{ maxWidth: "500px", marginBottom: "24px" }}>
-            {totauxParSource.length === 0 ? (
-              <div className="admin-empty">Aucune vente cette semaine.</div>
-            ) : (
-              <>
-                {totauxParSource.map((s) => (
-                  <div className="admin-row" key={s.id}>
-                    <div className="admin-row-main">
-                      <div className="admin-row-title">{s.label}</div>
-                    </div>
-                    <div className="admin-row-controls">{formatMontant(s.total)}</div>
-                  </div>
-                ))}
-                <div className="admin-row">
-                  <div className="admin-row-main">
-                    <div className="admin-row-title">Total</div>
-                  </div>
-                  <div className="admin-row-controls" style={{ fontWeight: 700 }}>
-                    {formatMontant(totalGeneral)}
-                  </div>
+            {totauxParSource.map((s) => (
+              <div className="admin-row" key={s.id}>
+                <div className="admin-row-main">
+                  <div className="admin-row-title">{s.label}</div>
                 </div>
-              </>
-            )}
+                <div className="admin-row-controls">{formatMontant(s.total)}</div>
+              </div>
+            ))}
+            <div className="admin-row">
+              <div className="admin-row-main">
+                <div className="admin-row-title">Total</div>
+              </div>
+              <div className="admin-row-controls" style={{ fontWeight: 700 }}>
+                {formatMontant(totalGeneral)}
+              </div>
+            </div>
           </div>
 
           <div className="admin-list" style={{ maxWidth: "700px" }}>
@@ -204,7 +202,6 @@ export default function VentesSection({ entrepriseId }) {
                 </div>
               </div>
             ))}
-            {ventes.length === 0 && <div className="admin-empty">Aucune vente cette semaine.</div>}
           </div>
         </>
       )}
