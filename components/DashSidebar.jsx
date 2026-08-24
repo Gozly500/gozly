@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { MODULES } from "@/lib/modules";
+import { MODULES, limiteModules } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
+import ForfaitBloqueModal from "@/components/ForfaitBloqueModal";
 import { listerMesEntreprises, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { IconTableauDeBord, IconDiscussion, IconEmployes, IconParametres, IconPlanning, IconHoraire } from "@/components/icons/GozlyIcons";
 
@@ -15,6 +16,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [actifs, setActifs] = useState([]);
+  const [forfait, setForfait] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [plusieursEntreprises, setPlusieursEntreprises] = useState(false);
   const [impersonation, setImpersonationState] = useState(null);
@@ -37,11 +39,17 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
   }
 
   async function loadActifs() {
-    const { data } = await supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId);
-    setActifs((data || []).map((m) => m.module));
+    const [{ data: modules }, { data: entreprise }] = await Promise.all([
+      supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId),
+      supabase.from("entreprises").select("forfait").eq("id", entrepriseId).maybeSingle(),
+    ]);
+    setActifs((modules || []).map((m) => m.module));
+    setForfait(entreprise?.forfait || null);
   }
 
   const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
+  const limite = limiteModules(forfait);
+  const forfaitDepasse = actifs.length > limite;
 
   return (
     <>
@@ -161,10 +169,20 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
         </div>
       </aside>
 
-      {modalOpen && (
+      {modalOpen && !forfaitDepasse && (
         <ModulesModal
           entrepriseId={entrepriseId}
           onClose={() => setModalOpen(false)}
+          onChange={loadActifs}
+        />
+      )}
+
+      {forfaitDepasse && (
+        <ForfaitBloqueModal
+          entrepriseId={entrepriseId}
+          actifs={actifs}
+          forfait={forfait}
+          limite={limite}
           onChange={loadActifs}
         />
       )}

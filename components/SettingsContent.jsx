@@ -24,6 +24,11 @@ export default function SettingsContent() {
   const [activeTab, setActiveTab] = useState("informations");
 
   useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (TABS.some((t) => t.id === tab)) setActiveTab(tab);
+  }, []);
+
+  useEffect(() => {
     let ignore = false;
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
