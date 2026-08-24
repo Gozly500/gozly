@@ -29,7 +29,7 @@ export async function POST(request) {
     return NextResponse.json({ ok: true });
   }
 
-  const { data: enAttente } = await service
+  const { data: enAttente, error } = await service
     .from("wix_connexions")
     .select("id")
     .eq("statut", "en_attente")
@@ -38,7 +38,9 @@ export async function POST(request) {
     .limit(1)
     .maybeSingle();
 
-  if (enAttente) {
+  if (error) {
+    console.error("Erreur lecture wix_connexions (table absente ? voir supabase/wix_connexions.sql):", error.message);
+  } else if (enAttente) {
     await service.from("wix_connexions").update({ instance_id: instanceId, statut: "connecte" }).eq("id", enAttente.id);
   } else {
     console.warn("Webhook Wix reçu (instanceId " + instanceId + ") sans ligne en_attente correspondante.");
