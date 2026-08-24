@@ -13,12 +13,19 @@ const OPTIONS_APPROBATION_ECHANGES = [
   { id: "automatique", label: "Automatique" },
 ];
 
+const OPTIONS_PUSH_WIX = [
+  { id: "manuel", label: "Manuel (bouton Synchroniser)" },
+  { id: "automatique", label: "Automatique à chaque changement" },
+];
+
 export default function PersonnalisationSection({ entrepriseId }) {
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
   const [premierJourOpen, setPremierJourOpen] = useState(false);
   const [approbationEchanges, setApprobationEchanges] = useState("manuelle");
   const [approbationOpen, setApprobationOpen] = useState(false);
+  const [pushWix, setPushWix] = useState("manuel");
+  const [pushWixOpen, setPushWixOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -31,11 +38,16 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setLoading(true);
     const [{ data: actifsData }, { data: entrepriseData }] = await Promise.all([
       supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId),
-      supabase.from("entreprises").select("premier_jour_semaine, auto_approuver_echanges").eq("id", entrepriseId).maybeSingle(),
+      supabase
+        .from("entreprises")
+        .select("premier_jour_semaine, auto_approuver_echanges, wix_push_auto")
+        .eq("id", entrepriseId)
+        .maybeSingle(),
     ]);
     setModulesActifs((actifsData || []).map((m) => m.module));
     setPremierJourSemaine(entrepriseData?.premier_jour_semaine || "lundi");
     setApprobationEchanges(entrepriseData?.auto_approuver_echanges ? "automatique" : "manuelle");
+    setPushWix(entrepriseData?.wix_push_auto ? "automatique" : "manuel");
     setLoading(false);
   }
 
@@ -66,11 +78,24 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
   }
 
+  async function handleChangePushWix(value) {
+    setPushWixOpen(false);
+    setPushWix(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase.from("entreprises").update({ wix_push_auto: value === "automatique" }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+  }
+
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
 
   const horaireActif = modulesActifs.includes("horaire");
+  const inventaireActif = modulesActifs.includes("inventaire");
 
   return (
     <div>
@@ -79,11 +104,13 @@ export default function PersonnalisationSection({ entrepriseId }) {
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
-      {!horaireActif ? (
+      {!horaireActif && !inventaireActif ? (
         <p className="section-hint">
           Active un module (ex: Horaire &amp; Pointage) pour voir apparaître ici ses options de personnalisation.
         </p>
       ) : (
+        <>
+      {horaireActif && (
         <div className="settings-section">
           <h3>Horaire &amp; Pointage</h3>
           <p className="section-hint">Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps.</p>
@@ -138,6 +165,40 @@ export default function PersonnalisationSection({ entrepriseId }) {
             </div>
           </div>
         </div>
+      )}
+
+      {inventaireActif && (
+        <div className="settings-section">
+          <h3>Inventaire</h3>
+          <p className="section-hint">
+            Une fois Wix connecté (Entreprise → Intégrations), faut-il pousser tes produits Gozly vers Wix
+            automatiquement à chaque ajout/modification/suppression, ou seulement quand tu cliques
+            "Synchroniser" ?
+          </p>
+          <div className="field" style={{ maxWidth: "300px" }}>
+            <label>Synchronisation vers Wix</label>
+            <div className="forfait-select-wrap">
+              <div
+                className={`forfait-select-trigger${pushWixOpen ? " open" : ""}`}
+                onClick={() => !saving && setPushWixOpen((v) => !v)}
+              >
+                <div className="fs-label">{OPTIONS_PUSH_WIX.find((o) => o.id === pushWix)?.label}</div>
+                <span className="fs-arrow">▾</span>
+              </div>
+              {pushWixOpen && (
+                <div className="forfait-select-options open">
+                  {OPTIONS_PUSH_WIX.map((o) => (
+                    <div key={o.id} className="forfait-option" onClick={() => handleChangePushWix(o.id)}>
+                      <div className="fo-label">{o.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+        </>
       )}
     </div>
   );
