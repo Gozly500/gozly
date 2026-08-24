@@ -16,7 +16,12 @@
 
 html{scroll-behavior:smooth;scroll-padding-top:100px;}
 
-body{margin:0;overflow-x:hidden;}
+/* Fond sombre par défaut sur <body> - garantit qu'AUCUNE page (surtout
+   le tableau de bord, qui n'utilise pas .page-default) ne montre jamais
+   le blanc du navigateur, même une page vide sans contenu pour le
+   masquer. .page-default (pages publiques) applique son propre dégradé
+   par-dessus et le cache complètement - aucun changement visuel là. */
+body{margin:0;overflow-x:hidden;background:var(--navy);color:var(--text);font-family:'Inter',sans-serif;}
 
 .page{
     font-family:'Inter',sans-serif;
