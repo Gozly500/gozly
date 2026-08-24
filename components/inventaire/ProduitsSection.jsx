@@ -5,9 +5,18 @@ import { supabase } from "@/lib/supabaseClient";
 
 const FORM_VIDE = { nom: "", sku: "", quantite: "", seuilAlerte: "", notes: "" };
 
+async function authHeaders() {
+  const { data } = await supabase.auth.getSession();
+  const token = data?.session?.access_token;
+  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+}
+
 export default function ProduitsSection({ entrepriseId }) {
   const [produits, setProduits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [wixConnecte, setWixConnecte] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -16,7 +25,31 @@ export default function ProduitsSection({ entrepriseId }) {
 
   useEffect(() => {
     load();
+    authHeaders().then((headers) =>
+      fetch("/api/wix/statut", { headers })
+        .then((res) => res.json())
+        .then((data) => setWixConnecte(!!data.connecte))
+        .catch(() => setWixConnecte(false))
+    );
   }, [entrepriseId]);
+
+  async function handleSyncWix() {
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch("/api/inventaire/synchroniser-wix", { method: "POST", headers: await authHeaders() });
+      const data = await res.json();
+      if (!res.ok) {
+        setSyncMsg({ type: "err", text: data.error || "La synchronisation a échoué." });
+      } else {
+        setSyncMsg({ type: "ok", text: `${data.count} produit(s) synchronisé(s) depuis Wix.` });
+        load();
+      }
+    } catch {
+      setSyncMsg({ type: "err", text: "La synchronisation a échoué." });
+    }
+    setSyncing(false);
+  }
 
   async function load() {
     setLoading(true);
@@ -98,10 +131,19 @@ export default function ProduitsSection({ entrepriseId }) {
             Tes produits, leurs quantités en stock et leur seuil d'alerte.
           </p>
         </div>
-        <button className="submit-btn" onClick={openAdd}>
-          + Ajouter un produit
-        </button>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          {wixConnecte && (
+            <button className="admin-icon-btn" onClick={handleSyncWix} disabled={syncing}>
+              {syncing ? "Synchronisation..." : "🔌 Synchroniser Wix"}
+            </button>
+          )}
+          <button className="submit-btn" onClick={openAdd}>
+            + Ajouter un produit
+          </button>
+        </div>
       </div>
+
+      {syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
 
       <div className="admin-list" style={{ maxWidth: "700px" }}>
         {produits.map((p) => {
@@ -110,7 +152,7 @@ export default function ProduitsSection({ entrepriseId }) {
             <div className="admin-row" key={p.id}>
               <div className="admin-row-main">
                 <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
-                  {p.nom} {enAlerte && "⚠️"}
+                  {p.nom} {p.source === "wix" && "🔌"} {enAlerte && "⚠️"}
                 </div>
                 <div className="admin-row-sub">
                   {p.sku && `SKU: ${p.sku} · `}
