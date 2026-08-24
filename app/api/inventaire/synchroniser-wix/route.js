@@ -65,5 +65,13 @@ export async function POST(request) {
     }
   }
 
+  // Retire les produits Wix qui ne sont plus revenus dans cette
+  // synchronisation (supprimés sur Wix, ou - comme lors du changement de
+  // format des source_id - l'ancienne ligne devenue orpheline).
+  const sourceIdsActuels = lignes.map((l) => l.source_id);
+  let requeteNettoyage = service.from("produits_inventaire").delete().eq("entreprise_id", entreprise.id).eq("source", "wix");
+  requeteNettoyage = sourceIdsActuels.length > 0 ? requeteNettoyage.not("source_id", "in", `(${sourceIdsActuels.join(",")})`) : requeteNettoyage;
+  await requeteNettoyage;
+
   return NextResponse.json({ ok: true, count: lignes.length });
 }
