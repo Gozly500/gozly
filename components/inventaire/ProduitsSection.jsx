@@ -173,7 +173,7 @@ export default function ProduitsSection({ entrepriseId }) {
 
       {syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
 
-      <div className="admin-list" style={{ maxWidth: "700px" }}>
+      <div className="admin-list" style={{ maxWidth: "900px" }}>
         {produits.map((p) => {
           const enAlerte = p.quantite <= p.seuil_alerte;
           return (
