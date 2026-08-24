@@ -107,8 +107,8 @@ export default function IntegrationsSection() {
             {statut === "deconnecte" && (
               <>
                 <p className="section-hint">
-                  Connecte le compte Wix de ton client pour lire l'inventaire de sa boutique Wix Stores
-                  directement dans Gozly.
+                  Connecte ton compte Wix pour lire l'inventaire de ta boutique Wix Stores directement dans
+                  Gozly.
                 </p>
                 <button type="button" className="submit-btn" onClick={handleConnecter} disabled={busy}>
                   {busy ? "..." : "Connecter Wix"}
@@ -133,7 +133,7 @@ export default function IntegrationsSection() {
 
             {statut === "connecte" && (
               <>
-                <p className="section-hint">L'inventaire Wix de ton client est connecté.</p>
+                <p className="section-hint">Ton inventaire Wix est connecté.</p>
                 <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
                   {busy ? "..." : "Déconnecter"}
                 </button>
