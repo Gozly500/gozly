@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { SERVICES_PAIE } from "@/lib/servicesPaie";
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession();
@@ -11,170 +10,129 @@ async function authHeaders() {
 }
 
 export default function IntegrationsSection() {
-  const [connecte, setConnecte] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [openId, setOpenId] = useState(null);
-  const [form, setForm] = useState({ codeEntreprise: "", codeUtilisateur: "", motDePasse: "" });
-  const [saving, setSaving] = useState(false);
+  const [statut, setStatut] = useState("chargement"); // "chargement" | "deconnecte" | "en_attente" | "connecte"
+  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
+  const pollRef = useRef(null);
 
   useEffect(() => {
-    load();
+    charger();
+    return () => clearInterval(pollRef.current);
   }, []);
 
-  async function load() {
-    setChecking(true);
+  async function charger() {
     try {
-      const res = await fetch("/api/paie/nethris/statut", { headers: await authHeaders() });
+      const res = await fetch("/api/wix/statut", { headers: await authHeaders() });
       const data = await res.json();
-      setConnecte(!!data.connecte);
+      setStatut(data.connecte ? "connecte" : data.enAttente ? "en_attente" : "deconnecte");
+      if (data.enAttente) demarrerSurveillance();
     } catch {
-      setConnecte(false);
+      setStatut("deconnecte");
     }
-    setChecking(false);
   }
 
-  function toggle(id) {
-    setOpenId((cur) => (cur === id ? null : id));
-    setMsg(null);
+  function demarrerSurveillance() {
+    clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      const res = await fetch("/api/wix/statut", { headers: await authHeaders() });
+      const data = await res.json();
+      if (data.connecte) {
+        setStatut("connecte");
+        clearInterval(pollRef.current);
+      }
+    }, 4000);
   }
 
-  async function handleConnecter(e) {
-    e.preventDefault();
-    setSaving(true);
+  async function handleConnecter() {
+    setBusy(true);
     setMsg(null);
 
     try {
-      const res = await fetch("/api/paie/nethris/connecter", {
-        method: "POST",
-        headers: await authHeaders(),
-        body: JSON.stringify(form),
-      });
+      const res = await fetch("/api/wix/connecter", { method: "POST", headers: await authHeaders() });
       const data = await res.json();
 
-      if (!res.ok) {
+      if (!res.ok || !data.lienInstallation) {
         setMsg({ type: "err", text: data.error || "La connexion a échoué." });
-        setSaving(false);
+        setBusy(false);
         return;
       }
 
-      setConnecte(true);
-      setForm({ codeEntreprise: "", codeUtilisateur: "", motDePasse: "" });
-      setMsg({ type: "ok", text: "Nethris est connecté." });
+      window.open(data.lienInstallation, "_blank", "noopener,noreferrer");
+      setStatut("en_attente");
+      demarrerSurveillance();
     } catch {
       setMsg({ type: "err", text: "La connexion a échoué." });
     }
-    setSaving(false);
+    setBusy(false);
   }
 
   async function handleDeconnecter() {
-    setSaving(true);
+    setBusy(true);
     setMsg(null);
+    clearInterval(pollRef.current);
 
     try {
-      await fetch("/api/paie/nethris/deconnecter", { method: "POST", headers: await authHeaders() });
-      setConnecte(false);
-      setMsg({ type: "ok", text: "Nethris est déconnecté." });
+      await fetch("/api/wix/deconnecter", { method: "POST", headers: await authHeaders() });
+      setStatut("deconnecte");
+      setMsg({ type: "ok", text: "Wix est déconnecté." });
     } catch {
       setMsg({ type: "err", text: "La déconnexion a échoué." });
     }
-    setSaving(false);
+    setBusy(false);
   }
 
   return (
     <div>
       <h2>Intégrations</h2>
-      <p className="panel-hint">Connecte tes services de paie pour préparer l'exportation automatique des heures.</p>
+      <p className="panel-hint">Connecte des services externes pour synchroniser leurs données avec Gozly.</p>
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
       <div className="integration-list">
-        {SERVICES_PAIE.map((s) => {
-          const isOpen = openId === s.id && s.disponible;
-          return (
-            <div className="integration-item" key={s.id}>
-              <button
-                type="button"
-                className={`integration-header${!s.disponible ? " disabled" : ""}${isOpen ? " open" : ""}`}
-                onClick={() => s.disponible && toggle(s.id)}
-                disabled={!s.disponible}
-              >
-                <span className="ih-label">
-                  {s.label}
-                  {s.id === "nethris" && s.disponible && connecte && (
-                    <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
-                      🔌 Connecté
-                    </span>
-                  )}
+        <div className="integration-item">
+          <div className="integration-header open">
+            <span className="ih-label">
+              Wix — Inventaire
+              {statut === "connecte" && (
+                <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
+                  🔌 Connecté
                 </span>
-                {s.disponible ? <span className="ih-arrow">▾</span> : <span className="ih-hint">Bientôt disponible</span>}
-              </button>
-
-              {isOpen && s.id === "nethris" && (
-                <div className="integration-body">
-                  {checking ? (
-                    <p className="section-hint">Vérification du statut...</p>
-                  ) : connecte ? (
-                    <>
-                      <p className="section-hint">
-                        L'envoi automatique des heures est en préparation - en attendant, exporte le CSV Nethris
-                        depuis la Feuille de temps.
-                      </p>
-                      <button
-                        type="button"
-                        className="admin-icon-btn danger"
-                        onClick={handleDeconnecter}
-                        disabled={saving}
-                      >
-                        {saving ? "..." : "Déconnecter"}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <p className="section-hint">
-                        Dans Nethris : Configuration → connecteur API, puis Administration → Company Options →
-                        User management pour créer un utilisateur de type "service". Ça te donne les 3
-                        identifiants ci-dessous.
-                      </p>
-                      <form onSubmit={handleConnecter} style={{ maxWidth: "360px" }}>
-                        <div className="field">
-                          <label>Code d'entreprise</label>
-                          <input
-                            type="text"
-                            value={form.codeEntreprise}
-                            onChange={(e) => setForm((f) => ({ ...f, codeEntreprise: e.target.value }))}
-                            required
-                          />
-                        </div>
-                        <div className="field">
-                          <label>Code utilisateur</label>
-                          <input
-                            type="text"
-                            value={form.codeUtilisateur}
-                            onChange={(e) => setForm((f) => ({ ...f, codeUtilisateur: e.target.value }))}
-                            required
-                          />
-                        </div>
-                        <div className="field">
-                          <label>Mot de passe</label>
-                          <input
-                            type="password"
-                            value={form.motDePasse}
-                            onChange={(e) => setForm((f) => ({ ...f, motDePasse: e.target.value }))}
-                            required
-                          />
-                        </div>
-                        <button type="submit" className="submit-btn" disabled={saving}>
-                          {saving ? "Connexion..." : "Connecter"}
-                        </button>
-                      </form>
-                    </>
-                  )}
-                </div>
               )}
-            </div>
-          );
-        })}
+            </span>
+          </div>
+
+          <div className="integration-body">
+            {statut === "chargement" && <p className="section-hint">Vérification du statut...</p>}
+
+            {statut === "deconnecte" && (
+              <>
+                <p className="section-hint">
+                  Connecte le compte Wix de ton client pour lire l'inventaire de sa boutique Wix Stores
+                  directement dans Gozly.
+                </p>
+                <button type="button" className="submit-btn" onClick={handleConnecter} disabled={busy}>
+                  {busy ? "..." : "Connecter Wix"}
+                </button>
+              </>
+            )}
+
+            {statut === "en_attente" && (
+              <p className="section-hint">
+                En attente de la fin de l'installation sur Wix... Reviens ici une fois l'installation
+                terminée, cette page se met à jour automatiquement.
+              </p>
+            )}
+
+            {statut === "connecte" && (
+              <>
+                <p className="section-hint">L'inventaire Wix de ton client est connecté.</p>
+                <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
+                  {busy ? "..." : "Déconnecter"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

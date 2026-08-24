@@ -6,6 +6,7 @@ import DashSidebar from "@/components/DashSidebar";
 import EquipeSection from "@/components/entreprise/EquipeSection";
 import EmplacementsSection from "@/components/entreprise/EmplacementsSection";
 import PersonnalisationSection from "@/components/entreprise/PersonnalisationSection";
+import IntegrationsSection from "@/components/settings/IntegrationsSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
@@ -13,6 +14,7 @@ const TABS = [
   { id: "equipe", label: "Équipe", icon: "🤝" },
   { id: "emplacements", label: "Emplacements", icon: "📍" },
   { id: "personnalisation", label: "Personnalisation", icon: "🎨" },
+  { id: "integrations", label: "Intégrations", icon: "🔌" },
 ];
 
 export default function EntrepriseParametresContent() {
@@ -114,6 +116,7 @@ export default function EntrepriseParametresContent() {
                 )}
                 {activeTab === "emplacements" && <EmplacementsSection entrepriseId={entrepriseId} />}
                 {activeTab === "personnalisation" && <PersonnalisationSection entrepriseId={entrepriseId} />}
+                {activeTab === "integrations" && <IntegrationsSection />}
               </div>
             </div>
           )}
