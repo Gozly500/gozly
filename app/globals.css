@@ -1305,6 +1305,7 @@ input.planning-date-picker{
 .horaire-chip:hover{background:rgba(255,255,255,0.14);}
 .horaire-chip-nom{font-weight:600;}
 .horaire-chip-heures{color:var(--text-dim);font-size:11px;}
+.horaire-chip-poste{color:var(--text-dim);font-size:11px;font-style:italic;margin-top:1px;}
 
 .horaire-col-add{
     width:100%;background:none;border:1px dashed rgba(255,255,255,0.2);
@@ -1321,6 +1322,25 @@ input.planning-date-picker{
 .kiosk-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
 .kiosk-inner{width:100%;max-width:420px;text-align:center;}
 .kiosk-entreprise{color:var(--text-dim);font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+
+/* ============ Écran kiosque (liste à préparer - Inventaire) ============ */
+.kiosk-reappro-list{display:flex;flex-direction:column;gap:10px;margin-top:18px;text-align:left;}
+.kiosk-reappro-item{
+    display:flex;align-items:center;gap:14px;width:100%;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);
+    border-radius:14px;padding:16px 18px;cursor:pointer;transition:background .15s ease;
+    color:#fff;font-size:16px;text-align:left;
+  }
+.kiosk-reappro-item:hover:not(:disabled){background:rgba(255,255,255,0.14);}
+.kiosk-reappro-item:disabled{opacity:.4;}
+.kiosk-reappro-check{
+    flex-shrink:0;width:26px;height:26px;border-radius:50%;
+    border:2px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;
+    font-size:14px;color:transparent;
+  }
+.kiosk-reappro-item:hover:not(:disabled) .kiosk-reappro-check{color:#7ee787;border-color:#7ee787;}
+.kiosk-reappro-nom{flex:1;font-weight:600;}
+.kiosk-reappro-qte{color:var(--text-dim);font-size:14px;flex-shrink:0;}
 
 /* ============ App mobile employé (/moi) ============ */
 /* min-height:100vh d'abord (support universel), puis 100dvh par-dessus

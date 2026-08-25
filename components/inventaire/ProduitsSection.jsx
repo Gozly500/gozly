@@ -155,7 +155,7 @@ export default function ProduitsSection({ entrepriseId }) {
         }}
       >
         <div>
-          <h2>Inventaire</h2>
+          <h2>Produits</h2>
           <p className="panel-hint" style={{ marginBottom: 0 }}>
             Tes produits, leurs quantités en stock et leur seuil d'alerte.
           </p>

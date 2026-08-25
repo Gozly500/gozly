@@ -108,7 +108,7 @@ export default function HoraireSection({ entrepriseId }) {
     setDragOverDate(null);
     const employeId = e.dataTransfer.getData("text/plain");
     if (!employeId) return;
-    setModal({ date: dateISO, employeId, quartId: null, heureDebut: "09:00", heureFin: "17:00" });
+    setModal({ date: dateISO, employeId, quartId: null, heureDebut: "09:00", heureFin: "17:00", poste: "" });
   }
 
   function openAddViaButton(dateISO) {
@@ -118,6 +118,7 @@ export default function HoraireSection({ entrepriseId }) {
       quartId: null,
       heureDebut: "09:00",
       heureFin: "17:00",
+      poste: "",
     });
   }
 
@@ -128,6 +129,7 @@ export default function HoraireSection({ entrepriseId }) {
       quartId: quart.id,
       heureDebut: quart.heure_debut.slice(0, 5),
       heureFin: quart.heure_fin.slice(0, 5),
+      poste: quart.poste || "",
     });
   }
 
@@ -135,10 +137,12 @@ export default function HoraireSection({ entrepriseId }) {
     e.preventDefault();
     if (!modal.employeId) return;
 
+    const poste = modal.poste?.trim() || null;
+
     if (modal.quartId) {
       await supabase
         .from("planning_quarts")
-        .update({ employe_id: modal.employeId, heure_debut: modal.heureDebut, heure_fin: modal.heureFin })
+        .update({ employe_id: modal.employeId, heure_debut: modal.heureDebut, heure_fin: modal.heureFin, poste })
         .eq("id", modal.quartId);
     } else {
       await supabase.from("planning_quarts").insert({
@@ -147,6 +151,7 @@ export default function HoraireSection({ entrepriseId }) {
         date: modal.date,
         heure_debut: modal.heureDebut,
         heure_fin: modal.heureFin,
+        poste,
         emplacement_id: emplacementId,
       });
     }
@@ -235,6 +240,7 @@ export default function HoraireSection({ entrepriseId }) {
                         <div className="horaire-chip-heures">
                           {q.heure_debut.slice(0, 5)} - {q.heure_fin.slice(0, 5)}
                         </div>
+                        {q.poste && <div className="horaire-chip-poste">{q.poste}</div>}
                       </div>
                     ))}
 
@@ -300,6 +306,15 @@ export default function HoraireSection({ entrepriseId }) {
                     required
                   />
                 </div>
+              </div>
+              <div className="field">
+                <label>Poste (optionnel)</label>
+                <input
+                  type="text"
+                  value={modal.poste}
+                  onChange={(e) => setModal((m) => ({ ...m, poste: e.target.value }))}
+                  placeholder="Ex: Machine 3, Cuisine, Caisse..."
+                />
               </div>
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn">
