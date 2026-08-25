@@ -8,9 +8,17 @@ import { MODULES, limiteModules } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
 import ForfaitBloqueModal from "@/components/ForfaitBloqueModal";
 import { listerMesEntreprises, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
-import { IconTableauDeBord, IconDiscussion, IconEmployes, IconParametres, IconPlanning, IconHoraire } from "@/components/icons/GozlyIcons";
+import {
+  IconTableauDeBord,
+  IconDiscussion,
+  IconEmployes,
+  IconParametres,
+  IconPlanning,
+  IconHoraire,
+  IconInventaire,
+} from "@/components/icons/GozlyIcons";
 
-const ICONES_MODULES = { planning: IconPlanning, horaire: IconHoraire };
+const ICONES_MODULES = { planning: IconPlanning, horaire: IconHoraire, inventaire: IconInventaire };
 
 export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout, entrepriseId }) {
   const router = useRouter();

@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
-import { IconHoraire, IconDiscussion } from "@/components/icons/GozlyIcons";
+import { IconHoraire, IconDiscussion, IconDemande } from "@/components/icons/GozlyIcons";
 
 const ONGLETS = [
   { id: "horaire", label: "Horaire", Icone: IconHoraire, href: "/moi/horaire" },
   { id: "taches", label: "Tâches", icon: "✅", href: "/moi/taches", module: "planning" },
-  { id: "demandes", label: "Demandes", icon: "📝", href: "/moi/demandes" },
+  { id: "demandes", label: "Demandes", Icone: IconDemande, href: "/moi/demandes" },
   { id: "discussion", label: "Discussion", Icone: IconDiscussion, href: "/moi/discussion" },
 ];
 

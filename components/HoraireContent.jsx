@@ -9,12 +9,12 @@ import FeuilleTempsSection from "@/components/horaire/FeuilleTempsSection";
 import DemandesSection from "@/components/entreprise/DemandesSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
-import { IconHoraire, IconFeuilleTemps } from "@/components/icons/GozlyIcons";
+import { IconHoraire, IconFeuilleTemps, IconDemande } from "@/components/icons/GozlyIcons";
 
 const TABS = [
   { id: "horaire", label: "Horaire", Icone: IconHoraire },
   { id: "feuille", label: "Feuille de temps", Icone: IconFeuilleTemps },
-  { id: "demandes", label: "Demandes", icon: "📝" },
+  { id: "demandes", label: "Demandes", Icone: IconDemande },
 ];
 
 export default function HoraireContent() {

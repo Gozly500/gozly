@@ -9,10 +9,11 @@ import PersonnalisationSection from "@/components/entreprise/PersonnalisationSec
 import IntegrationsSection from "@/components/settings/IntegrationsSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
+import { IconEquipe, IconEmplacement } from "@/components/icons/GozlyIcons";
 
 const TABS = [
-  { id: "equipe", label: "Équipe", icon: "🤝" },
-  { id: "emplacements", label: "Emplacements", icon: "📍" },
+  { id: "equipe", label: "Équipe", Icone: IconEquipe },
+  { id: "emplacements", label: "Emplacements", Icone: IconEmplacement },
   { id: "personnalisation", label: "Personnalisation", icon: "🎨" },
   { id: "integrations", label: "Intégrations", icon: "🔌" },
 ];
@@ -105,7 +106,7 @@ export default function EntrepriseParametresContent() {
                     className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
                     onClick={() => setActiveTab(tab.id)}
                   >
-                    <span className="icon">{tab.icon}</span> {tab.label}
+                    <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
                   </button>
                 ))}
               </nav>
