@@ -67,7 +67,7 @@ export function IconParametres(props) {
 
 export function IconPlanning(props) {
   return (
-    <svg viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g transform="matrix(1.045802,0,0,1.061086,-37.113162,84.121339)">
         <path d="M66.479,211.502L66.479,151.346C66.479,109.541 100.915,75.602 143.33,75.602L883.85,75.602C926.265,75.602 960.701,109.541 960.701,151.346L960.701,211.502L66.479,211.502Z" />
       </g>
@@ -86,7 +86,7 @@ export function IconPlanning(props) {
 
 export function IconHoraire(props) {
   return (
-    <svg viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g transform="matrix(4.683628,0,0,4.683628,-1661.685572,-1296.782121)">
         <path d="M461.541,283.798C516.64,283.798 561.373,328.532 561.373,383.63C561.373,438.729 516.64,483.462 461.541,483.462C406.442,483.462 361.709,438.729 361.709,383.63C361.709,328.532 406.442,283.798 461.541,283.798ZM452.645,383.63C452.645,383.623 452.645,301.398 452.645,301.398C452.645,296.488 456.631,292.501 461.541,292.501C466.451,292.501 470.437,296.488 470.437,301.398L470.437,378.568L507.973,400.872C512.194,403.38 513.585,408.843 511.077,413.064C508.569,417.285 503.106,418.676 498.885,416.168C498.885,416.168 457.003,391.282 456.996,391.278C455.621,390.461 454.546,389.33 453.809,388.03C453.068,386.732 452.645,385.23 452.645,383.63Z" />
       </g>
@@ -96,7 +96,7 @@ export function IconHoraire(props) {
 
 export function IconInventaire(props) {
   return (
-    <svg viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g transform="matrix(1.958502,0,0,1.958502,-673.73625,-329.250539)">
         <path d="M604.586,662.488C604.586,665.812 606.368,668.88 609.254,670.527C612.141,672.174 615.688,672.147 618.549,670.456C657.372,647.513 765.973,583.334 800.011,563.219C806.418,559.433 810.348,552.544 810.348,545.102L810.348,332.778C810.348,329.389 808.568,326.249 805.659,324.509C802.75,322.77 799.141,322.687 796.156,324.29C753.796,347.039 629.851,413.6 607.921,425.377C605.867,426.48 604.586,428.623 604.586,430.955L604.586,662.488Z" />
       </g>
@@ -112,7 +112,7 @@ export function IconInventaire(props) {
 
 export function IconEmplacement(props) {
   return (
-    <svg viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g transform="matrix(1,0,0,1,3.490463,-36.559371)">
         <path d="M725.785,528.04L267.234,528.04C243.998,487.794 231.765,442.141 231.765,395.668C231.765,249.552 350.393,130.924 496.51,130.924C642.626,130.924 761.254,249.552 761.254,395.668C761.254,442.141 749.021,487.794 725.785,528.04ZM496.599,298.173C546.282,298.173 586.618,338.509 586.618,388.192C586.618,437.875 546.282,478.212 496.599,478.212C446.916,478.212 406.58,437.875 406.58,388.192C406.58,338.509 446.916,298.173 496.599,298.173Z" />
       </g>
@@ -125,7 +125,7 @@ export function IconEmplacement(props) {
 
 export function IconEquipe(props) {
   return (
-    <svg viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g transform="matrix(1.266755,0,0,1.266755,-185.18085,-337.521276)">
         <path d="M566.247,891.75L210.073,891.75C192.025,864.899 182.523,834.441 182.523,803.437C182.523,705.954 274.666,626.811 388.16,626.811C501.654,626.811 593.797,705.954 593.797,803.437C593.797,834.441 584.295,864.899 566.247,891.75Z" />
       </g>
@@ -147,7 +147,7 @@ export function IconEquipe(props) {
 
 export function IconDemande(props) {
   return (
-    <svg viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g transform="matrix(1.383624,0,0,1.383624,-296.574361,-119.883683)">
         <path d="M809.224,751.986L342.208,751.986C318.543,721.763 306.085,687.479 306.085,652.581C306.085,542.854 426.902,453.77 575.716,453.77C724.53,453.77 845.347,542.854 845.347,652.581C845.347,687.479 832.889,721.763 809.224,751.986Z" />
       </g>
@@ -199,7 +199,7 @@ export function IconFeuilleTemps(props) {
 
 export function IconCrayon(props) {
   return (
-    <svg viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
       <g transform="matrix(1,0,0,1,-75.900031,142.917287)">
         <g transform="matrix(1.211777,0.851721,-0.851721,1.211777,472.928814,-662.158542)">
           <path d="M353.291,739.135C352.684,736.115 352.382,733.03 352.396,729.926L354.35,307.943L527.661,307.943L526.674,739.135L353.291,739.135Z" />
