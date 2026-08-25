@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { IconIntegration } from "@/components/icons/GozlyIcons";
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession();
@@ -95,7 +96,7 @@ export default function IntegrationsSection() {
               Wix — Inventaire
               {statut === "connecte" && (
                 <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
-                  🔌 Connecté
+                  <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} /> Connecté
                 </span>
               )}
             </span>

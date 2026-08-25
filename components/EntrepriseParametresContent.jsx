@@ -9,13 +9,13 @@ import PersonnalisationSection from "@/components/entreprise/PersonnalisationSec
 import IntegrationsSection from "@/components/settings/IntegrationsSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
-import { IconEquipe, IconEmplacement } from "@/components/icons/GozlyIcons";
+import { IconEquipe, IconEmplacement, IconIntegration } from "@/components/icons/GozlyIcons";
 
 const TABS = [
   { id: "equipe", label: "Équipe", Icone: IconEquipe },
   { id: "emplacements", label: "Emplacements", Icone: IconEmplacement },
   { id: "personnalisation", label: "Personnalisation", icon: "🎨" },
-  { id: "integrations", label: "Intégrations", icon: "🔌" },
+  { id: "integrations", label: "Intégrations", Icone: IconIntegration },
 ];
 
 export default function EntrepriseParametresContent() {

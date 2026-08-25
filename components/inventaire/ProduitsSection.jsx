@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { IconIntegration } from "@/components/icons/GozlyIcons";
 
 const FORM_VIDE = { nom: "", sku: "", quantite: "", seuilAlerte: "", notes: "" };
 
@@ -162,7 +163,7 @@ export default function ProduitsSection({ entrepriseId }) {
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           {wixConnecte && (
             <button className="admin-icon-btn" onClick={handleSyncWix} disabled={syncing}>
-              {syncing ? "Synchronisation..." : "🔌 Synchroniser Wix"}
+              {syncing ? "Synchronisation..." : <><IconIntegration className="gozly-icon" /> Synchroniser Wix</>}
             </button>
           )}
           <button className="submit-btn" onClick={openAdd}>
@@ -180,7 +181,7 @@ export default function ProduitsSection({ entrepriseId }) {
             <div className="admin-row" key={p.id}>
               <div className="admin-row-main">
                 <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
-                  {p.nom} {p.source === "wix" && "🔌"} {enAlerte && "⚠️"}
+                  {p.nom} {p.source === "wix" && <IconIntegration className="gozly-icon" />} {enAlerte && "⚠️"}
                 </div>
                 <div className="admin-row-sub">
                   {p.sku && `SKU: ${p.sku} · `}
@@ -191,7 +192,7 @@ export default function ProduitsSection({ entrepriseId }) {
               <div className="admin-row-controls">
                 {p.source === "wix" && (
                   <button className="admin-icon-btn" onClick={() => pousserVersWix(p.id)} disabled={pushingId === p.id}>
-                    {pushingId === p.id ? "..." : "🔌 Pousser vers Wix"}
+                    {pushingId === p.id ? "..." : <><IconIntegration className="gozly-icon" /> Pousser vers Wix</>}
                   </button>
                 )}
                 <button className="admin-icon-btn" onClick={() => openEdit(p)}>

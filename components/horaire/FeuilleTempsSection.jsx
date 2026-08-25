@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { SERVICES_PAIE } from "@/lib/servicesPaie";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
+import { IconIntegration } from "@/components/icons/GozlyIcons";
 
 function heuresDecimal(minutes) {
   return (minutes / 60).toFixed(2);
@@ -229,7 +230,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                 >
                   {s.label}
                   {!s.disponible && " (bientôt disponible)"}
-                  {s.id === "nethris" && s.disponible && nethrisConnecte && " 🔌"}
+                  {s.id === "nethris" && s.disponible && nethrisConnecte && <IconIntegration className="gozly-icon" />}
                 </button>
               ))}
             </div>
