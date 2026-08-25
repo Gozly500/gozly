@@ -13,6 +13,11 @@ const OPTIONS_APPROBATION_ECHANGES = [
   { id: "automatique", label: "Automatique" },
 ];
 
+const OPTIONS_CALCUL_POINTAGE = [
+  { id: "reel", label: "Heure réelle de pointage" },
+  { id: "horaire", label: "Heure prévue à l'horaire" },
+];
+
 const OPTIONS_PUSH_WIX = [
   { id: "manuel", label: "Manuel (bouton Synchroniser)" },
   { id: "automatique", label: "Automatique à chaque changement" },
@@ -24,6 +29,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [premierJourOpen, setPremierJourOpen] = useState(false);
   const [approbationEchanges, setApprobationEchanges] = useState("manuelle");
   const [approbationOpen, setApprobationOpen] = useState(false);
+  const [calculPointage, setCalculPointage] = useState("reel");
+  const [calculPointageOpen, setCalculPointageOpen] = useState(false);
   const [pushWix, setPushWix] = useState("manuel");
   const [pushWixOpen, setPushWixOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -40,7 +47,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId),
       supabase
         .from("entreprises")
-        .select("premier_jour_semaine, auto_approuver_echanges, wix_push_auto")
+        .select("premier_jour_semaine, auto_approuver_echanges, wix_push_auto, pointage_calcul_mode")
         .eq("id", entrepriseId)
         .maybeSingle(),
     ]);
@@ -48,6 +55,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setPremierJourSemaine(entrepriseData?.premier_jour_semaine || "lundi");
     setApprobationEchanges(entrepriseData?.auto_approuver_echanges ? "automatique" : "manuelle");
     setPushWix(entrepriseData?.wix_push_auto ? "automatique" : "manuel");
+    setCalculPointage(entrepriseData?.pointage_calcul_mode || "reel");
     setLoading(false);
   }
 
@@ -73,6 +81,18 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .from("entreprises")
       .update({ auto_approuver_echanges: value === "automatique" })
       .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+  }
+
+  async function handleChangeCalculPointage(value) {
+    setCalculPointageOpen(false);
+    setCalculPointage(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase.from("entreprises").update({ pointage_calcul_mode: value }).eq("id", entrepriseId);
 
     setSaving(false);
     setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
@@ -157,6 +177,36 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 <div className="forfait-select-options open">
                   {OPTIONS_APPROBATION_ECHANGES.map((o) => (
                     <div key={o.id} className="forfait-option" onClick={() => handleChangeApprobation(o.id)}>
+                      <div className="fo-label">{o.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <p className="section-hint" style={{ marginTop: "18px" }}>
+            Quand un employé pointe son arrivée, faut-il compter les heures à partir de l'heure réelle de
+            pointage, ou seulement à partir de l'heure prévue à son quart (s'il pointe en avance) ? S'il
+            pointe en retard ou qu'aucun quart n'est planifié ce jour-là, l'heure réelle est toujours
+            utilisée.
+          </p>
+          <div className="field" style={{ maxWidth: "260px" }}>
+            <label>Calcul des heures de pointage</label>
+            <div className="forfait-select-wrap">
+              <div
+                className={`forfait-select-trigger${calculPointageOpen ? " open" : ""}`}
+                onClick={() => !saving && setCalculPointageOpen((v) => !v)}
+              >
+                <div className="fs-label">
+                  {OPTIONS_CALCUL_POINTAGE.find((o) => o.id === calculPointage)?.label}
+                </div>
+                <span className="fs-arrow">▾</span>
+              </div>
+              {calculPointageOpen && (
+                <div className="forfait-select-options open">
+                  {OPTIONS_CALCUL_POINTAGE.map((o) => (
+                    <div key={o.id} className="forfait-option" onClick={() => handleChangeCalculPointage(o.id)}>
                       <div className="fo-label">{o.label}</div>
                     </div>
                   ))}

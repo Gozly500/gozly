@@ -38,10 +38,26 @@ function toDatetimeLocal(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function dateStr(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Combine une date ("AAAA-MM-JJ") et une heure ("HH:MM:SS") de planning_quarts
+// en Date locale, pour la comparer à l'heure réelle de pointage.
+function combineDateHeure(date, heure) {
+  const [h, m] = heure.split(":").map(Number);
+  const d = new Date(`${date}T00:00:00`);
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
 export default function FeuilleTempsSection({ entrepriseId }) {
   const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
   const [employes, setEmployes] = useState([]);
   const [pointages, setPointages] = useState([]);
+  const [quarts, setQuarts] = useState([]);
+  const [calculPointage, setCalculPointage] = useState("reel");
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementId] = useState(null); // null = toutes
   const [loading, setLoading] = useState(true);
@@ -64,12 +80,13 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   useEffect(() => {
     supabase
       .from("entreprises")
-      .select("premier_jour_semaine")
+      .select("premier_jour_semaine, pointage_calcul_mode")
       .eq("id", entrepriseId)
       .maybeSingle()
       .then(({ data }) => {
         const dimanche = data?.premier_jour_semaine === "dimanche";
         setWeekStart((w) => getDebutSemaine(addDays(w, 3), dimanche));
+        setCalculPointage(data?.pointage_calcul_mode || "reel");
       });
   }, [entrepriseId]);
 
@@ -112,17 +129,46 @@ export default function FeuilleTempsSection({ entrepriseId }) {
 
     const { data: pointagesData } = await pointagesQuery;
 
+    const { data: quartsData } = await supabase
+      .from("planning_quarts")
+      .select("*")
+      .eq("entreprise_id", entrepriseId)
+      .gte("date", dateStr(weekStart))
+      .lt("date", dateStr(weekEnd));
+
     setEmployes(employesData || []);
     setPointages(pointagesData || []);
+    setQuarts(quartsData || []);
     setLoading(false);
+  }
+
+  // En mode "horaire", si l'employé pointe avant l'heure prévue à son quart,
+  // le calcul des heures part de l'heure prévue plutôt que de l'heure réelle
+  // de pointage. S'il pointe en retard (ou qu'aucun quart n'est planifié ce
+  // jour-là pour lui), l'heure réelle de pointage est toujours utilisée.
+  function debutEffectif(pointage) {
+    const entree = new Date(pointage.entree);
+    if (calculPointage !== "horaire") return entree;
+
+    const quart = quarts.find(
+      (q) => q.employe_id === pointage.employe_id && q.date === dateStr(entree)
+    );
+    if (!quart) return entree;
+
+    const prevu = combineDateHeure(quart.date, quart.heure_debut);
+    return entree < prevu ? prevu : entree;
   }
 
   function sessionsPour(employeId) {
     return pointages
       .filter((p) => p.employe_id === employeId)
       .map((p) => {
+        // "debut" reste l'heure réelle de pointage (affichage, édition) -
+        // seul le calcul des minutes tient compte de l'heure prévue à
+        // l'horaire quand le mode "horaire" est actif.
         const fin = p.sortie ? new Date(p.sortie) : new Date();
-        return { pointageId: p.id, debut: p.entree, fin: p.sortie, minutes: (fin - new Date(p.entree)) / 60000 };
+        const debutCalcul = debutEffectif(p);
+        return { pointageId: p.id, debut: p.entree, fin: p.sortie, minutes: (fin - debutCalcul) / 60000 };
       });
   }
 
