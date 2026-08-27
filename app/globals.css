@@ -10,6 +10,26 @@
     --text-dim: rgba(242,240,255,0.72);
     --glass: rgba(255,255,255,0.08);
     --glass-border: rgba(255,255,255,0.18);
+    --glow: rgba(122,63,224,0.4);
+  }
+
+/* Thèmes du tableau de bord (Paramètres du compte > Apparence) - le
+   [data-theme] est posé sur <html> uniquement dans app/dashboard/layout.js,
+   donc le site public (marketing, /parametres) garde toujours le dégradé
+   Gozly par défaut ci-dessus. */
+[data-theme="vert"]{
+    --navy: #04140f;
+    --indigo: #0a3d2c;
+    --violet: #22b573;
+    --purple: #0f6b46;
+    --glow: rgba(34,181,115,0.35);
+  }
+[data-theme="sombre"]{
+    --navy: #0a0a0d;
+    --indigo: #18181e;
+    --violet: #5b7cfa;
+    --purple: #232329;
+    --glow: rgba(91,124,250,0.22);
   }
 
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -32,7 +52,7 @@ body{margin:0;overflow-x:hidden;background:var(--navy);color:var(--text);font-fa
 
 .page-default{
     background:
-      radial-gradient(ellipse 900px 700px at 75% 60%, rgba(122,63,224,0.4), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 75% 60%, var(--glow), transparent 60%),
       linear-gradient(135deg, var(--navy) 0%, var(--indigo) 45%, var(--purple) 100%);
   }
 
@@ -698,7 +718,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 
 .submit-btn{
     width:auto;display:inline-block;padding:10px 28px;color:#fff;border-radius:30px;font-weight:600;font-size:14px;text-align:center;
-    background:linear-gradient(160deg,#2a2a8f,#191960);border:1px solid rgba(255,255,255,0.18);
+    background:linear-gradient(160deg, var(--indigo), var(--navy));border:1px solid rgba(255,255,255,0.18);
     box-shadow:0 4px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
     cursor:pointer;
   }
@@ -867,6 +887,22 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
     font-weight:600;text-transform:uppercase;letter-spacing:.06em;
   }
 .settings-divider::before,.settings-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.12);}
+
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.theme-choice{
+    display:flex;align-items:center;gap:12px;text-align:left;
+    padding:14px 16px;border-radius:16px;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.14);
+    cursor:pointer;transition:background .2s ease,border-color .2s ease;
+  }
+.theme-choice:hover{background:rgba(255,255,255,0.08);}
+.theme-choice.selected{background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.4);}
+.theme-choice:disabled{opacity:.6;cursor:default;}
+.theme-swatch{width:38px;height:38px;border-radius:12px;flex-shrink:0;border:1px solid rgba(255,255,255,0.2);}
+.theme-choice-text{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;}
+.theme-choice-text strong{font-size:14px;font-weight:600;}
+.theme-choice-text span{font-size:12.5px;color:var(--text-dim);}
+.theme-check{font-size:16px;color:#fff;flex-shrink:0;}
 
 .settings-card{
     background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
@@ -1425,7 +1461,7 @@ input.planning-date-picker{
 .chat-send-btn{
     flex-shrink:0;width:40px;height:40px;border-radius:50%;padding:0;
     display:flex;align-items:center;justify-content:center;font-size:16px;
-    background:linear-gradient(160deg,#2a2a8f,#191960);border:1px solid rgba(255,255,255,0.18);color:#fff;
+    background:linear-gradient(160deg, var(--indigo), var(--navy));border:1px solid rgba(255,255,255,0.18);color:#fff;
   }
 .chat-send-btn:disabled{opacity:.4;}
 .chat-empty{color:var(--text-dim);font-size:13.5px;padding:24px;text-align:center;}

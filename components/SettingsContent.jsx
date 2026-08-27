@@ -6,11 +6,13 @@ import { supabase } from "@/lib/supabaseClient";
 import InformationsSection from "@/components/settings/InformationsSection";
 import AbonnementSection from "@/components/settings/AbonnementSection";
 import ActiviteSection from "@/components/settings/ActiviteSection";
+import AppearanceSection from "@/components/settings/AppearanceSection";
 import GestionSection from "@/components/settings/GestionSection";
 
 const TABS = [
   { id: "informations", label: "Informations", icon: "👤" },
   { id: "abonnement", label: "Abonnement", icon: "💳" },
+  { id: "apparence", label: "Apparence", icon: "🎨" },
   { id: "activite", label: "Activité du compte", icon: "🕒" },
   { id: "gestion", label: "Gestion du compte", icon: "⚙" },
 ];
@@ -99,6 +101,7 @@ export default function SettingsContent() {
           />
         )}
         {activeTab === "abonnement" && <AbonnementSection entreprise={entreprise} />}
+        {activeTab === "apparence" && <AppearanceSection profil={profil} setProfil={setProfil} />}
         {activeTab === "activite" && <ActiviteSection user={user} />}
         {activeTab === "gestion" && <GestionSection user={user} profil={profil} router={router} />}
       </div>
