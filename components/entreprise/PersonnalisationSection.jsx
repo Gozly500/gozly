@@ -23,6 +23,11 @@ const OPTIONS_PUSH_WIX = [
   { id: "automatique", label: "Automatique à chaque changement" },
 ];
 
+const OPTIONS_VISIBILITE_FEUILLE_TEMPS = [
+  { id: "manuelle", label: "Manuelle (tu dois approuver chaque semaine)" },
+  { id: "automatique", label: "Automatique (toujours visible, aucune approbation requise)" },
+];
+
 export default function PersonnalisationSection({ entrepriseId }) {
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
@@ -33,6 +38,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [calculPointageOpen, setCalculPointageOpen] = useState(false);
   const [pushWix, setPushWix] = useState("manuel");
   const [pushWixOpen, setPushWixOpen] = useState(false);
+  const [visibiliteFeuilleTemps, setVisibiliteFeuilleTemps] = useState("manuelle");
+  const [visibiliteFeuilleTempsOpen, setVisibiliteFeuilleTempsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -47,7 +54,9 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId),
       supabase
         .from("entreprises")
-        .select("premier_jour_semaine, auto_approuver_echanges, wix_push_auto, pointage_calcul_mode")
+        .select(
+          "premier_jour_semaine, auto_approuver_echanges, wix_push_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation"
+        )
         .eq("id", entrepriseId)
         .maybeSingle(),
     ]);
@@ -56,6 +65,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setApprobationEchanges(entrepriseData?.auto_approuver_echanges ? "automatique" : "manuelle");
     setPushWix(entrepriseData?.wix_push_auto ? "automatique" : "manuel");
     setCalculPointage(entrepriseData?.pointage_calcul_mode || "reel");
+    setVisibiliteFeuilleTemps(entrepriseData?.feuille_temps_visible_sans_approbation ? "automatique" : "manuelle");
     setLoading(false);
   }
 
@@ -105,6 +115,21 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setMsg(null);
 
     const { error } = await supabase.from("entreprises").update({ wix_push_auto: value === "automatique" }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+  }
+
+  async function handleChangeVisibiliteFeuilleTemps(value) {
+    setVisibiliteFeuilleTempsOpen(false);
+    setVisibiliteFeuilleTemps(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ feuille_temps_visible_sans_approbation: value === "automatique" })
+      .eq("id", entrepriseId);
 
     setSaving(false);
     setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
@@ -207,6 +232,35 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 <div className="forfait-select-options open">
                   {OPTIONS_CALCUL_POINTAGE.map((o) => (
                     <div key={o.id} className="forfait-option" onClick={() => handleChangeCalculPointage(o.id)}>
+                      <div className="fo-label">{o.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <p className="section-hint" style={{ marginTop: "18px" }}>
+            Les membres qui n'ont accès qu'en lecture à la feuille de temps (ex: comptable) doivent-ils
+            attendre ton approbation pour voir une semaine, ou la voient-ils automatiquement dès qu'elle
+            existe ?
+          </p>
+          <div className="field" style={{ maxWidth: "320px" }}>
+            <label>Visibilité de la feuille de temps</label>
+            <div className="forfait-select-wrap">
+              <div
+                className={`forfait-select-trigger${visibiliteFeuilleTempsOpen ? " open" : ""}`}
+                onClick={() => !saving && setVisibiliteFeuilleTempsOpen((v) => !v)}
+              >
+                <div className="fs-label">
+                  {OPTIONS_VISIBILITE_FEUILLE_TEMPS.find((o) => o.id === visibiliteFeuilleTemps)?.label}
+                </div>
+                <span className="fs-arrow">▾</span>
+              </div>
+              {visibiliteFeuilleTempsOpen && (
+                <div className="forfait-select-options open">
+                  {OPTIONS_VISIBILITE_FEUILLE_TEMPS.map((o) => (
+                    <div key={o.id} className="forfait-option" onClick={() => handleChangeVisibiliteFeuilleTemps(o.id)}>
                       <div className="fo-label">{o.label}</div>
                     </div>
                   ))}

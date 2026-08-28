@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import EmplacementSelect from "@/components/EmplacementSelect";
+import { permissionsParModule, MODULES_PERMISSIONS } from "@/lib/permissions";
 
 export default function EquipeSection({ entrepriseId, userId, onLeft }) {
   const [loading, setLoading] = useState(true);
   const [membres, setMembres] = useState([]);
   const [invitations, setInvitations] = useState([]);
+  const [emplacements, setEmplacements] = useState([]);
   const [email, setEmail] = useState("");
   const [error, setError] = useState(null);
   const [inviting, setInviting] = useState(false);
+  const [ouverts, setOuverts] = useState(() => new Set());
 
   useEffect(() => {
     load();
@@ -22,7 +26,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
-    const [membresResRaw, invitationsRes] = await Promise.all([
+    const [membresResRaw, invitationsRes, emplacementsRes] = await Promise.all([
       fetch(`/api/team/members?entrepriseId=${entrepriseId}`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
@@ -32,6 +36,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
         .eq("entreprise_id", entrepriseId)
         .eq("statut", "en_attente")
         .order("created_at", { ascending: false }),
+      supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
     ]);
 
     const membresRes = await membresResRaw.json();
@@ -44,7 +49,34 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
     }
 
     setInvitations(invitationsRes.data || []);
+    setEmplacements(emplacementsRes.data || []);
     setLoading(false);
+  }
+
+  function toggleOuvert(membreId) {
+    setOuverts((prev) => {
+      const next = new Set(prev);
+      if (next.has(membreId)) next.delete(membreId);
+      else next.add(membreId);
+      return next;
+    });
+  }
+
+  async function handleTogglePermission(membre, permissionId, checked) {
+    if (checked) {
+      await supabase.from("membre_permissions").insert({ membre_id: membre.id, permission: permissionId, emplacement_id: null });
+    } else {
+      await supabase.from("membre_permissions").delete().eq("membre_id", membre.id).eq("permission", permissionId);
+    }
+    load();
+  }
+
+  async function handleChangePermissionScope(membre, permissionId, emplacementId) {
+    await supabase.from("membre_permissions").delete().eq("membre_id", membre.id).eq("permission", permissionId);
+    await supabase
+      .from("membre_permissions")
+      .insert({ membre_id: membre.id, permission: permissionId, emplacement_id: emplacementId });
+    load();
   }
 
   async function handleInvite(e) {
@@ -122,24 +154,73 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
 
       <div className="admin-list" style={{ marginBottom: "24px", maxWidth: "560px" }}>
         {membres.map((m) => (
-          <div className="admin-row" key={m.id}>
-            <div className="admin-row-main">
-              <div className="admin-row-title">{m.email}</div>
-              <div className="admin-row-sub">{m.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
+          <div key={m.id}>
+            <div className="admin-row">
+              <div className="admin-row-main">
+                <div className="admin-row-title">{m.email}</div>
+                <div className="admin-row-sub">{m.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
+              </div>
+              <div className="admin-row-controls">
+                {jeSuisProprietaire && m.role !== "proprietaire" && (
+                  <button className="admin-icon-btn" onClick={() => toggleOuvert(m.id)}>
+                    Permissions {ouverts.has(m.id) ? "▴" : "▾"}
+                  </button>
+                )}
+                {m.user_id === userId
+                  ? m.role !== "proprietaire" && (
+                      <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
+                        Quitter
+                      </button>
+                    )
+                  : jeSuisProprietaire && (
+                      <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
+                        Retirer
+                      </button>
+                    )}
+              </div>
             </div>
-            <div className="admin-row-controls">
-              {m.user_id === userId
-                ? m.role !== "proprietaire" && (
-                    <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
-                      Quitter
-                    </button>
-                  )
-                : jeSuisProprietaire && (
-                    <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
-                      Retirer
-                    </button>
-                  )}
-            </div>
+
+            {jeSuisProprietaire && m.role !== "proprietaire" && ouverts.has(m.id) && (
+              <div className="settings-section" style={{ marginTop: "-8px", marginBottom: "14px" }}>
+                {Object.entries(permissionsParModule()).map(([module, perms]) => (
+                  <div key={module} style={{ marginBottom: "10px" }}>
+                    <h4 style={{ fontSize: "12.5px", color: "var(--text-dim)", marginBottom: "8px" }}>
+                      {MODULES_PERMISSIONS[module] || module}
+                    </h4>
+                    {perms.map((p) => {
+                      const rows = (m.permissions || []).filter((mp) => mp.permission === p.id);
+                      const checked = rows.length > 0;
+                      const emplacementId = rows[0]?.emplacement_id ?? null;
+                      return (
+                        <div key={p.id} style={{ marginBottom: "10px" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => handleTogglePermission(m, p.id, e.target.checked)}
+                            />
+                            <span>
+                              <strong style={{ fontSize: "13.5px" }}>{p.label}</strong>
+                              <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>{p.description}</div>
+                            </span>
+                          </label>
+                          {checked && emplacements.length > 1 && (
+                            <div style={{ marginTop: "6px", marginLeft: "26px", maxWidth: "260px" }}>
+                              <EmplacementSelect
+                                emplacements={emplacements}
+                                value={emplacementId}
+                                onChange={(id) => handleChangePermissionScope(m, p.id, id)}
+                                includeToutes
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

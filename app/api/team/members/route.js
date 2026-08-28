@@ -41,7 +41,21 @@ export async function GET(request) {
   const { data: usersPage } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
   const emailById = new Map((usersPage?.users || []).map((u) => [u.id, u.email]));
 
-  const rows = (membres || []).map((m) => ({ ...m, email: emailById.get(m.user_id) || m.user_id }));
+  const membreIds = (membres || []).map((m) => m.id);
+  const { data: permissions } = membreIds.length
+    ? await serviceClient.from("membre_permissions").select("*").in("membre_id", membreIds)
+    : { data: [] };
+  const permissionsParMembre = new Map();
+  for (const p of permissions || []) {
+    if (!permissionsParMembre.has(p.membre_id)) permissionsParMembre.set(p.membre_id, []);
+    permissionsParMembre.get(p.membre_id).push(p);
+  }
+
+  const rows = (membres || []).map((m) => ({
+    ...m,
+    email: emailById.get(m.user_id) || m.user_id,
+    permissions: permissionsParMembre.get(m.id) || [],
+  }));
 
   return NextResponse.json({ membres: rows });
 }

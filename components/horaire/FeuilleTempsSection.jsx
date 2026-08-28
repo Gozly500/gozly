@@ -6,6 +6,7 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 import { SERVICES_PAIE } from "@/lib/servicesPaie";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
+import { PERMISSIONS } from "@/lib/permissions";
 
 function heuresDecimal(minutes) {
   return (minutes / 60).toFixed(2);
@@ -65,8 +66,15 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [saving, setSaving] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [nethrisConnecte, setNethrisConnecte] = useState(false);
+  const [mesPermissions, setMesPermissions] = useState([]);
+  const [autoVisible, setAutoVisible] = useState(false);
+  const [semainesApprouvees, setSemainesApprouvees] = useState([]);
+  const [approving, setApproving] = useState(false);
 
   const weekEnd = addDays(weekStart, 7);
+  const peutGerer = mesPermissions.includes("gerer_feuille_temps");
+  const peutApprouver = mesPermissions.includes("approuver_feuille_temps");
+  const seulementVoir = mesPermissions.includes("voir_feuille_temps") && !peutGerer && !peutApprouver;
 
   useEffect(() => {
     supabase
@@ -80,15 +88,70 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   useEffect(() => {
     supabase
       .from("entreprises")
-      .select("premier_jour_semaine, pointage_calcul_mode")
+      .select("premier_jour_semaine, pointage_calcul_mode, feuille_temps_visible_sans_approbation")
       .eq("id", entrepriseId)
       .maybeSingle()
       .then(({ data }) => {
         const dimanche = data?.premier_jour_semaine === "dimanche";
         setWeekStart((w) => getDebutSemaine(addDays(w, 3), dimanche));
         setCalculPointage(data?.pointage_calcul_mode || "reel");
+        setAutoVisible(!!data?.feuille_temps_visible_sans_approbation);
       });
   }, [entrepriseId]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const { data: membre } = await supabase
+        .from("membres")
+        .select("id, role")
+        .eq("entreprise_id", entrepriseId)
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (!membre) return;
+      if (membre.role === "proprietaire") {
+        setMesPermissions(PERMISSIONS.map((p) => p.id));
+        return;
+      }
+      const { data: perms } = await supabase.from("membre_permissions").select("permission").eq("membre_id", membre.id);
+      setMesPermissions((perms || []).map((p) => p.permission));
+    });
+  }, [entrepriseId]);
+
+  useEffect(() => {
+    loadApprobations();
+  }, [entrepriseId, weekStart]);
+
+  async function loadApprobations() {
+    const { data } = await supabase
+      .from("feuille_temps_semaines")
+      .select("*")
+      .eq("entreprise_id", entrepriseId)
+      .eq("semaine_debut", dateStr(weekStart));
+    setSemainesApprouvees(data || []);
+  }
+
+  async function handleApprouverSemaine(targetEmplacementId) {
+    setApproving(true);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    await supabase.from("feuille_temps_semaines").insert({
+      entreprise_id: entrepriseId,
+      emplacement_id: targetEmplacementId,
+      semaine_debut: dateStr(weekStart),
+      approuve_par: session?.user?.id,
+    });
+    await loadApprobations();
+    setApproving(false);
+  }
+
+  async function handleDesapprouverSemaine(row) {
+    setApproving(true);
+    await supabase.from("feuille_temps_semaines").delete().eq("id", row.id);
+    await loadApprobations();
+    setApproving(false);
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -255,6 +318,60 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         </button>
       </div>
 
+      {peutApprouver && (
+        <div className="settings-section" style={{ marginBottom: "14px" }}>
+          {emplacements.length <= 1 ? (
+            <div className="switch-row">
+              <div className="switch-row-text">
+                <h4>{semainesApprouvees.some((s) => s.emplacement_id === null) ? "Semaine approuvée" : "Semaine pas encore approuvée"}</h4>
+                <p>
+                  Les membres en lecture seule (ex: comptable) ne voient que les semaines approuvées
+                  {autoVisible && " - le mode automatique est actif dans Personnalisation, donc tout est visible sans approbation"}.
+                </p>
+              </div>
+              {semainesApprouvees.some((s) => s.emplacement_id === null) ? (
+                <button
+                  className="admin-icon-btn"
+                  onClick={() => handleDesapprouverSemaine(semainesApprouvees.find((s) => s.emplacement_id === null))}
+                  disabled={approving}
+                >
+                  Retirer l'approbation
+                </button>
+              ) : (
+                <button className="btn-small" onClick={() => handleApprouverSemaine(null)} disabled={approving}>
+                  Approuver cette semaine
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <h3>Approbation par succursale</h3>
+              <p className="section-hint">Semaine du {weekLabel}.</p>
+              {emplacements.map((e) => {
+                const row = semainesApprouvees.find((s) => s.emplacement_id === e.id);
+                return (
+                  <div className="switch-row" key={e.id}>
+                    <div className="switch-row-text">
+                      <h4>{e.nom}</h4>
+                      <p>{row ? "Approuvée" : "Pas encore approuvée"}</p>
+                    </div>
+                    {row ? (
+                      <button className="admin-icon-btn" onClick={() => handleDesapprouverSemaine(row)} disabled={approving}>
+                        Retirer
+                      </button>
+                    ) : (
+                      <button className="btn-small" onClick={() => handleApprouverSemaine(e.id)} disabled={approving}>
+                        Approuver
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </div>
+      )}
+
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "14px" }}>
         <div className="account-wrap">
           <button
@@ -287,7 +404,11 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       {loading ? (
         <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
       ) : lignes.length === 0 ? (
-        <p style={{ color: "var(--text-dim)" }}>Aucun pointage cette semaine.</p>
+        <p style={{ color: "var(--text-dim)" }}>
+          {seulementVoir && !autoVisible
+            ? "Rien à afficher : cette semaine n'a pas encore été approuvée, ou il n'y a aucun pointage."
+            : "Aucun pointage cette semaine."}
+        </p>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -310,9 +431,11 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                   <td>{l.fin ? new Date(l.fin).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }) : "en cours"}</td>
                   <td>{heuresDecimal(l.minutes)}</td>
                   <td>
-                    <button className="admin-icon-btn" onClick={() => openEdit(l)}>
-                      Modifier
-                    </button>
+                    {peutGerer && (
+                      <button className="admin-icon-btn" onClick={() => openEdit(l)}>
+                        Modifier
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

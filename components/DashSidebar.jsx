@@ -8,6 +8,7 @@ import { MODULES, limiteModules } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
 import ForfaitBloqueModal from "@/components/ForfaitBloqueModal";
 import { listerMesEntreprises, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
+import { PERMISSIONS } from "@/lib/permissions";
 import {
   IconTableauDeBord,
   IconDiscussion,
@@ -29,6 +30,9 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
   const [modalOpen, setModalOpen] = useState(false);
   const [plusieursEntreprises, setPlusieursEntreprises] = useState(false);
   const [impersonation, setImpersonationState] = useState(null);
+  // null = pas encore chargé (ou propriétaire/admin) - aucune restriction
+  // cosmétique appliquée dans ce cas. La vraie barrière reste les policies RLS.
+  const [mesPermissions, setMesPermissions] = useState(null);
 
   useEffect(() => {
     setImpersonationState(getImpersonation());
@@ -41,6 +45,28 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
       listerMesEntreprises(supabase).then((list) => setPlusieursEntreprises(list.length > 1));
     }
   }, [entrepriseId, impersonation]);
+
+  useEffect(() => {
+    if (!entrepriseId) return;
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const { data: membre } = await supabase
+        .from("membres")
+        .select("id, role")
+        .eq("entreprise_id", entrepriseId)
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (!membre || membre.role === "proprietaire") {
+        setMesPermissions(null);
+        return;
+      }
+      const { data: perms } = await supabase.from("membre_permissions").select("permission").eq("membre_id", membre.id);
+      setMesPermissions((perms || []).map((p) => p.permission));
+    });
+  }, [entrepriseId]);
+
+  const permissionsHoraire = PERMISSIONS.filter((p) => p.module === "horaire").map((p) => p.id);
+  const peutVoirHoraire = !mesPermissions || permissionsHoraire.some((p) => mesPermissions.includes(p));
 
   function quitterImpersonation() {
     arreterImpersonation();
@@ -125,7 +151,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
             <IconParametres className="gozly-icon" /> Paramètres
           </Link>
           <div className="dash-nav-label">Modules</div>
-          {modulesActifs.map((mod) => {
+          {modulesActifs.filter((mod) => mod.id !== "horaire" || peutVoirHoraire).map((mod) => {
             const IconeModule = ICONES_MODULES[mod.id];
             return (
             <div key={mod.id}>

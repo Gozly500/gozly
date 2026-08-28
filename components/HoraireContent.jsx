@@ -11,6 +11,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconHoraire, IconFeuilleTemps, IconDemande } from "@/components/icons/GozlyIcons";
 
+const PERMISSIONS_FEUILLE = ["voir_feuille_temps", "gerer_feuille_temps", "approuver_feuille_temps"];
+
 const TABS = [
   { id: "horaire", label: "Horaire", Icone: IconHoraire },
   { id: "feuille", label: "Feuille de temps", Icone: IconFeuilleTemps },
@@ -24,6 +26,8 @@ export default function HoraireContent() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [activeTab, setActiveTab] = useState("horaire");
+  // null = illimité (propriétaire, ou pas encore chargé)
+  const [mesPermissions, setMesPermissions] = useState(null);
 
   useEffect(() => {
     let ignore = false;
@@ -64,6 +68,35 @@ export default function HoraireContent() {
       ignore = true;
     };
   }, [router]);
+
+  useEffect(() => {
+    if (!entrepriseId || !user) return;
+    supabase
+      .from("membres")
+      .select("id, role")
+      .eq("entreprise_id", entrepriseId)
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(async ({ data: membre }) => {
+        if (!membre || membre.role === "proprietaire") {
+          setMesPermissions(null);
+          return;
+        }
+        const { data: perms } = await supabase.from("membre_permissions").select("permission").eq("membre_id", membre.id);
+        setMesPermissions((perms || []).map((p) => p.permission));
+      });
+  }, [entrepriseId, user]);
+
+  const peutGererHoraire = !mesPermissions || mesPermissions.includes("gerer_horaire");
+  const peutVoirFeuille = !mesPermissions || PERMISSIONS_FEUILLE.some((p) => mesPermissions.includes(p));
+  const tabsVisibles = TABS.filter((t) => (t.id === "horaire" ? peutGererHoraire : t.id === "feuille" ? peutVoirFeuille : true));
+
+  useEffect(() => {
+    if (tabsVisibles.length > 0 && !tabsVisibles.some((t) => t.id === activeTab)) {
+      setActiveTab(tabsVisibles[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peutGererHoraire, peutVoirFeuille]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -111,7 +144,7 @@ export default function HoraireContent() {
           ) : (
             <>
               <div className="settings-nav" style={{ flexDirection: "row", marginBottom: "28px", width: "fit-content" }}>
-                {TABS.map((tab) => (
+                {tabsVisibles.map((tab) => (
                   <button
                     key={tab.id}
                     type="button"
