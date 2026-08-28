@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
+import { PERIODES } from "@/lib/temperature";
 
 export default function TemperatureEmploye() {
   const [equipements, setEquipements] = useState([]);
   const [relevesDuJour, setRelevesDuJour] = useState([]);
+  const [creneau, setCreneau] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const [equipementId, setEquipementId] = useState("");
-  const [temperature, setTemperature] = useState("");
-  const [note, setNote] = useState("");
+  const [drafts, setDrafts] = useState({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
 
@@ -24,31 +23,58 @@ export default function TemperatureEmploye() {
     const data = await res.json();
     setEquipements(data.equipements || []);
     setRelevesDuJour(data.relevesDuJour || []);
+    setCreneau(data.creneauActuel || null);
+
+    const seed = {};
+    for (const r of data.relevesDuJour || []) {
+      if (r.periode === data.creneauActuel?.periode) seed[r.equipement_id] = String(r.temperature);
+    }
+    setDrafts(seed);
     setLoading(false);
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (!equipementId || temperature === "") return;
+  function releveExistant(equipementId, periode) {
+    return relevesDuJour.find((r) => r.equipement_id === equipementId && r.periode === periode);
+  }
 
+  function estModifie() {
+    return equipements.some((eq) => {
+      const existant = releveExistant(eq.id, creneau?.periode);
+      const draftValue = drafts[eq.id] ?? "";
+      const existantValue = existant ? String(existant.temperature) : "";
+      return draftValue !== existantValue;
+    });
+  }
+
+  async function handleSave() {
     setSaving(true);
     setMsg(null);
 
-    const res = await employeFetch("/api/employe-app/temperature", {
-      method: "POST",
-      body: JSON.stringify({ equipementId, temperature, note }),
+    const aEnvoyer = equipements.filter((eq) => {
+      const existant = releveExistant(eq.id, creneau?.periode);
+      const draftValue = drafts[eq.id] ?? "";
+      const existantValue = existant ? String(existant.temperature) : "";
+      return draftValue !== "" && draftValue !== existantValue;
     });
+
+    const resultats = await Promise.all(
+      aEnvoyer.map((eq) =>
+        employeFetch("/api/employe-app/temperature", {
+          method: "POST",
+          body: JSON.stringify({ equipementId: eq.id, temperature: drafts[eq.id] }),
+        })
+      )
+    );
 
     setSaving(false);
 
-    if (!res.ok) {
-      setMsg({ type: "err", text: "L'enregistrement a échoué. Réessaie." });
+    if (resultats.some((r) => !r.ok)) {
+      setMsg({ type: "err", text: "Certains relevés n'ont pas pu être enregistrés. Réessaie." });
+      charger();
       return;
     }
 
-    setTemperature("");
-    setNote("");
-    setMsg({ type: "ok", text: "Relevé enregistré !" });
+    setMsg({ type: "ok", text: "Relevés enregistrés !" });
     setTimeout(() => setMsg(null), 3000);
     charger();
   }
@@ -57,75 +83,70 @@ export default function TemperatureEmploye() {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
 
+  if (equipements.length === 0) {
+    return (
+      <div>
+        <h2>Températures</h2>
+        <p className="chat-empty">Aucun équipement à relever pour l'instant.</p>
+      </div>
+    );
+  }
+
+  const periodeLabel = PERIODES.find((p) => p.id === creneau?.periode)?.label || "";
+  const autrePeriode = creneau?.periode === "am" ? "pm" : "am";
+
+  const categories = [];
+  const parCategorie = new Map();
+  for (const eq of equipements) {
+    const cle = eq.categorie?.id || "sans-categorie";
+    if (!parCategorie.has(cle)) {
+      parCategorie.set(cle, []);
+      categories.push({ id: cle, nom: eq.categorie?.nom || "Autres" });
+    }
+    parCategorie.get(cle).push(eq);
+  }
+
   return (
     <div>
       <h2>Températures</h2>
-      <p className="panel-hint">Note la température des frigos/congélateurs.</p>
+      <p className="panel-hint">Créneau actuel : {periodeLabel}. Une fenêtre manquée ne revient pas - inutile de la rattraper.</p>
 
-      {equipements.length === 0 ? (
-        <p className="chat-empty">Aucun équipement à relever pour l'instant.</p>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <div className="field">
-            <label>Équipement</label>
-            <select value={equipementId} onChange={(e) => setEquipementId(e.target.value)} required>
-              <option value="">Choisir...</option>
-              {equipements.map((eq) => (
-                <option key={eq.id} value={eq.id}>
-                  {eq.nom}
-                </option>
-              ))}
-            </select>
+      {categories.map((cat) => (
+        <div className="planning-day" key={cat.id} style={{ marginBottom: "14px" }}>
+          <div className="planning-day-head">
+            <span className="planning-day-title">{cat.nom}</span>
           </div>
-          <div className="field">
-            <label>Température (°C)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={temperature}
-              onChange={(e) => setTemperature(e.target.value)}
-              required
-            />
-          </div>
-          <div className="field">
-            <label>Note (optionnel)</label>
-            <input type="text" placeholder="Action corrective si hors norme" value={note} onChange={(e) => setNote(e.target.value)} />
-          </div>
-          <div className="submit-wrap">
-            <button type="submit" className="submit-btn" disabled={saving}>
-              {saving ? "Enregistrement..." : "Enregistrer"}
-            </button>
-          </div>
-          {msg && (
-            <p className={`settings-msg ${msg.type}`} style={{ textAlign: "center" }}>
-              {msg.text}
-            </p>
-          )}
-        </form>
-      )}
-
-      {relevesDuJour.length > 0 && (
-        <>
-          <div className="settings-divider">Relevés d'aujourd'hui</div>
-          <div className="admin-list" style={{ marginBottom: "20px" }}>
-            {relevesDuJour.map((r) => {
-              const eq = equipements.find((e) => e.id === r.equipement_id);
-              return (
-                <div className="admin-row" key={r.id}>
-                  <div className="admin-row-main">
-                    <div className="admin-row-title">
-                      {eq?.nom || "?"} - {r.conforme ? "✓" : "⚠️"} {r.temperature}°C
-                    </div>
-                    <div className="admin-row-sub">
-                      {r.releve_par} ·{" "}
-                      {new Date(r.created_at).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}
-                    </div>
-                  </div>
+          {parCategorie.get(cat.id).map((eq) => {
+            const autreReleve = releveExistant(eq.id, autrePeriode);
+            return (
+              <div key={eq.id} className="field-row" style={{ padding: "10px 14px", alignItems: "center", margin: 0 }}>
+                <div style={{ flex: 1, fontSize: "13.5px", fontWeight: 600 }}>{eq.nom}</div>
+                <div style={{ fontSize: "12.5px", color: "var(--text-dim)", minWidth: "70px" }}>
+                  {autrePeriode === "am" ? "AM" : "PM"}: {autreReleve ? `${autreReleve.conforme ? "✓" : "⚠️"} ${autreReleve.temperature}°C` : "—"}
                 </div>
-              );
-            })}
-          </div>
-        </>
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder={`${periodeLabel.slice(0, 2)} °C`}
+                  style={{ width: "90px" }}
+                  value={drafts[eq.id] ?? ""}
+                  onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
+                />
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      <div className="submit-wrap" style={{ marginTop: "16px" }}>
+        <button type="button" className="submit-btn" onClick={handleSave} disabled={saving || !estModifie()}>
+          {saving ? "Enregistrement..." : "Enregistrer"}
+        </button>
+      </div>
+      {msg && (
+        <p className={`settings-msg ${msg.type}`} style={{ textAlign: "center" }}>
+          {msg.text}
+        </p>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
-import { estConforme } from "@/lib/temperature";
+import { estConforme, creneauActuel } from "@/lib/temperature";
 
 export async function GET(request) {
   const employe = await verifierSession(getBearerToken(request));
@@ -19,7 +19,7 @@ export async function GET(request) {
 
   const { data: equipements } = await service
     .from("equipements_temperature")
-    .select("*")
+    .select("*, categorie:categorie_id(id, nom)")
     .eq("entreprise_id", employe.entreprise_id)
     .order("nom", { ascending: true });
 
@@ -29,17 +29,15 @@ export async function GET(request) {
     (eq) => !eq.emplacement_id || mesEmplacementIds.includes(eq.emplacement_id)
   );
 
-  const debutJournee = new Date();
-  debutJournee.setHours(0, 0, 0, 0);
+  const creneau = creneauActuel();
 
   const { data: relevesDuJour } = await service
     .from("releves_temperature")
     .select("*")
     .eq("entreprise_id", employe.entreprise_id)
-    .gte("created_at", debutJournee.toISOString())
-    .order("created_at", { ascending: false });
+    .eq("date_relevee", creneau.date);
 
-  return NextResponse.json({ equipements: equipementsVisibles, relevesDuJour: relevesDuJour || [] });
+  return NextResponse.json({ equipements: equipementsVisibles, relevesDuJour: relevesDuJour || [], creneauActuel: creneau });
 }
 
 export async function POST(request) {
@@ -66,15 +64,26 @@ export async function POST(request) {
     return NextResponse.json({ error: "Équipement introuvable." }, { status: 404 });
   }
 
-  const { error } = await service.from("releves_temperature").insert({
-    entreprise_id: employe.entreprise_id,
-    equipement_id: equipementId,
-    employe_id: employe.id,
-    releve_par: employe.nom,
-    temperature: temp,
-    conforme: estConforme(equipement.type, temp),
-    note: note?.trim() || null,
-  });
+  // Le créneau (date + AM/PM) est toujours calculé côté serveur, jamais
+  // envoyé par le client - impossible d'écrire dans un créneau passé ou
+  // futur, ce qui applique naturellement la règle "fenêtre manquée = on
+  // n'y revient plus".
+  const { date, periode } = creneauActuel();
+
+  const { error } = await service.from("releves_temperature").upsert(
+    {
+      entreprise_id: employe.entreprise_id,
+      equipement_id: equipementId,
+      employe_id: employe.id,
+      releve_par: employe.nom,
+      temperature: temp,
+      conforme: estConforme(equipement.type, temp),
+      note: note?.trim() || null,
+      date_relevee: date,
+      periode,
+    },
+    { onConflict: "equipement_id,date_relevee,periode" }
+  );
 
   if (error) {
     return NextResponse.json({ error: "L'enregistrement a échoué." }, { status: 500 });
