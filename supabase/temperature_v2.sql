@@ -45,8 +45,10 @@ alter table equipements_temperature add column if not exists categorie_id uuid r
 alter table releves_temperature add column if not exists date_relevee date not null default current_date;
 alter table releves_temperature add column if not exists periode text not null default 'am' check (periode in ('am','pm'));
 
--- Si des relevés de test existent déjà avec la même date/créneau par
--- équipement, cette contrainte échouera - vide la table releves_temperature
--- avant de rouler ce script si tu as testé le module entretemps.
+-- Des relevés de test peuvent déjà exister en double pour un même
+-- équipement/date/créneau (avant l'ajout de la contrainte ci-dessous) -
+-- on les vide, ce sont forcément des données de test à ce stade-ci.
+truncate table releves_temperature;
+
 alter table releves_temperature drop constraint if exists releves_temperature_equip_date_periode_key;
 alter table releves_temperature add constraint releves_temperature_equip_date_periode_key unique (equipement_id, date_relevee, periode);

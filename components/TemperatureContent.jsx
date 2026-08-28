@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import DashSidebar from "@/components/DashSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
-import { TYPES_EQUIPEMENT, PERIODES, estConforme, creneauActuel, dateStr } from "@/lib/temperature";
+import { PERIODES, estConforme, creneauActuel } from "@/lib/temperature";
 import EmplacementSelect from "@/components/EmplacementSelect";
-import SimpleSelect from "@/components/SimpleSelect";
-import CategoriesTemperatureSection from "@/components/temperature/CategoriesTemperatureSection";
 
 export default function TemperatureContent() {
   const router = useRouter();
@@ -18,7 +17,6 @@ export default function TemperatureContent() {
   const [entrepriseId, setEntrepriseId] = useState(null);
 
   const [emplacements, setEmplacements] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [equipements, setEquipements] = useState([]);
   const [relevesDuJour, setRelevesDuJour] = useState([]);
   const [historique, setHistorique] = useState([]);
@@ -27,12 +25,6 @@ export default function TemperatureContent() {
   const [drafts, setDrafts] = useState({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
-
-  const [gestionOuverte, setGestionOuverte] = useState(false);
-  const [nomEquipement, setNomEquipement] = useState("");
-  const [typeEquipement, setTypeEquipement] = useState("refrigerateur");
-  const [categorieEquipement, setCategorieEquipement] = useState(null);
-  const [emplacementEquipement, setEmplacementEquipement] = useState(null);
 
   const [emplacementFiltre, setEmplacementFiltre] = useState(null);
 
@@ -84,9 +76,8 @@ export default function TemperatureContent() {
 
   async function load() {
     setLoadingDonnees(true);
-    const [{ data: emps }, { data: cats }, { data: eqs }, { data: relevesJour }, { data: hist }] = await Promise.all([
+    const [{ data: emps }, { data: eqs }, { data: relevesJour }, { data: hist }] = await Promise.all([
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
-      supabase.from("categories_temperature").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
       supabase
         .from("equipements_temperature")
         .select("*, categorie:categorie_id(id, nom)")
@@ -102,7 +93,6 @@ export default function TemperatureContent() {
         .limit(100),
     ]);
     setEmplacements(emps || []);
-    setCategories(cats || []);
     setEquipements(eqs || []);
     setRelevesDuJour(relevesJour || []);
     setHistorique(hist || []);
@@ -118,28 +108,6 @@ export default function TemperatureContent() {
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/login");
-  }
-
-  async function handleAddEquipement(e) {
-    e.preventDefault();
-    if (!nomEquipement.trim()) return;
-    await supabase.from("equipements_temperature").insert({
-      entreprise_id: entrepriseId,
-      nom: nomEquipement.trim(),
-      type: typeEquipement,
-      categorie_id: categorieEquipement,
-      emplacement_id: emplacementEquipement,
-    });
-    setNomEquipement("");
-    setTypeEquipement("refrigerateur");
-    setCategorieEquipement(null);
-    setEmplacementEquipement(null);
-    load();
-  }
-
-  async function handleDeleteEquipement(id) {
-    await supabase.from("equipements_temperature").delete().eq("id", id);
-    load();
   }
 
   function releveExistant(equipementId, periode) {
@@ -236,11 +204,17 @@ export default function TemperatureContent() {
 
       <main className="dash-main">
         <div className="dash-main-inner">
-          <header className="dash-hero-inline">
+          <header
+            className="dash-hero-inline"
+            style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}
+          >
             <div>
               <h1>Températures</h1>
               <p>Registre de conformité MAPAQ - frigos, congélateurs et maintien au chaud.</p>
             </div>
+            <Link href="/dashboard/temperature/equipements" className="admin-icon-btn">
+              ⚙ Gérer les équipements
+            </Link>
           </header>
 
           {!entrepriseId ? (
@@ -249,85 +223,6 @@ export default function TemperatureContent() {
             <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
           ) : (
             <>
-              <div className="settings-section">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <h3>Catégories et équipements</h3>
-                    <p className="section-hint">Comme dans Planning : range tes équipements par catégorie (Frigos, Congélateurs...).</p>
-                  </div>
-                  <button type="button" className="admin-icon-btn" onClick={() => setGestionOuverte((v) => !v)}>
-                    Gérer {gestionOuverte ? "▴" : "▾"}
-                  </button>
-                </div>
-
-                {gestionOuverte && (
-                  <>
-                    <div className="settings-divider">Catégories</div>
-                    <CategoriesTemperatureSection entrepriseId={entrepriseId} />
-
-                    <div className="settings-divider">Équipements</div>
-                    <div className="admin-list" style={{ marginBottom: "14px", maxWidth: "560px" }}>
-                      {equipements.map((eq) => (
-                        <div className="admin-row" key={eq.id}>
-                          <div className="admin-row-main">
-                            <div className="admin-row-title">{eq.nom}</div>
-                            <div className="admin-row-sub">
-                              {eq.categorie?.nom || "Sans catégorie"} · {TYPES_EQUIPEMENT.find((t) => t.id === eq.type)?.label}
-                              {eq.emplacement_id && " · " + (emplacements.find((e) => e.id === eq.emplacement_id)?.nom || "")}
-                            </div>
-                          </div>
-                          <div className="admin-row-controls">
-                            <button className="admin-icon-btn danger" onClick={() => handleDeleteEquipement(eq.id)}>
-                              Retirer
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      {equipements.length === 0 && <div className="admin-empty">Aucun équipement pour l'instant.</div>}
-                    </div>
-
-                    <form className="field-row" onSubmit={handleAddEquipement} style={{ alignItems: "flex-end" }}>
-                      <div className="field">
-                        <label>Nom</label>
-                        <input
-                          type="text"
-                          placeholder="Frigo cuisine"
-                          value={nomEquipement}
-                          onChange={(e) => setNomEquipement(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="field" style={{ minWidth: "180px" }}>
-                        <label>Catégorie</label>
-                        <SimpleSelect
-                          options={categories.map((c) => ({ id: c.id, label: c.nom }))}
-                          value={categorieEquipement}
-                          onChange={setCategorieEquipement}
-                          placeholder="Aucune"
-                        />
-                      </div>
-                      <div className="field" style={{ minWidth: "200px" }}>
-                        <label>Type</label>
-                        <SimpleSelect
-                          options={TYPES_EQUIPEMENT.map((t) => ({ id: t.id, label: t.label }))}
-                          value={typeEquipement}
-                          onChange={setTypeEquipement}
-                        />
-                      </div>
-                      {emplacements.length > 1 && (
-                        <div className="field">
-                          <label>Succursale</label>
-                          <EmplacementSelect emplacements={emplacements} value={emplacementEquipement} onChange={setEmplacementEquipement} />
-                        </div>
-                      )}
-                      <button type="submit" className="btn-small">
-                        Ajouter
-                      </button>
-                    </form>
-                  </>
-                )}
-              </div>
-
               <div style={{ marginBottom: "14px" }}>
                 <EmplacementSelect emplacements={emplacements} value={emplacementFiltre} onChange={setEmplacementFiltre} includeToutes />
               </div>
@@ -339,7 +234,13 @@ export default function TemperatureContent() {
                 </p>
 
                 {equipementsFiltres.length === 0 ? (
-                  <p className="section-hint">Ajoute un équipement ci-dessus pour commencer.</p>
+                  <p className="section-hint">
+                    Aucun équipement pour l'instant -{" "}
+                    <Link href="/dashboard/temperature/equipements" style={{ color: "var(--text)" }}>
+                      ajoutes-en un
+                    </Link>{" "}
+                    pour commencer.
+                  </p>
                 ) : (
                   <>
                     {categoriesAffichees.map((cat) => (
