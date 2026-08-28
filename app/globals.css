@@ -1128,6 +1128,7 @@ input.planning-date-picker{
     margin-bottom:8px;cursor:pointer;
   }
 .planning-tache input[type="checkbox"]{width:18px;height:18px;accent-color:var(--violet);flex-shrink:0;cursor:pointer;}
+.permission-checkbox{width:16px;height:16px;accent-color:var(--violet);flex-shrink:0;cursor:pointer;}
 .planning-tache-texte{flex:1;font-size:14px;}
 .planning-tache-texte.done{color:var(--text-dim);text-decoration:line-through;}
 

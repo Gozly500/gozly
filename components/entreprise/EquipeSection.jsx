@@ -209,99 +209,105 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
 
       <div className="admin-list" style={{ marginBottom: "24px", maxWidth: "560px" }}>
         {membres.map((m) => (
-          <div key={m.id}>
-            <div className="admin-row">
-              <div className="admin-row-main">
-                <div className="admin-row-title">{m.email}</div>
-                <div className="admin-row-sub">{m.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
-              </div>
-              <div className="admin-row-controls">
-                {jeSuisProprietaire && m.role !== "proprietaire" && (
-                  <button className="admin-icon-btn" onClick={() => handleToggleOuvert(m)}>
-                    Permissions {ouverts.has(m.id) ? "▴" : "▾"}
-                  </button>
-                )}
-                {m.user_id === userId
-                  ? m.role !== "proprietaire" && (
-                      <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
-                        Quitter
-                      </button>
-                    )
-                  : jeSuisProprietaire && (
-                      <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
-                        Retirer
-                      </button>
-                    )}
-              </div>
+          <div className="admin-row" key={m.id}>
+            <div className="admin-row-main">
+              <div className="admin-row-title">{m.email}</div>
+              <div className="admin-row-sub">{m.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
             </div>
-
-            {jeSuisProprietaire && m.role !== "proprietaire" && ouverts.has(m.id) && (
-              <div className="settings-section" style={{ marginTop: "-8px", marginBottom: "14px" }}>
-                {Object.entries(permissionsParModule()).map(([module, perms]) => (
-                  <div key={module} style={{ marginBottom: "10px" }}>
-                    <h4 style={{ fontSize: "12.5px", color: "var(--text-dim)", marginBottom: "8px" }}>
-                      {MODULES_PERMISSIONS[module] || module}
-                    </h4>
-                    {perms.map((p) => {
-                      const draft = drafts[m.id] || [];
-                      const draftRow = draft.find((dp) => dp.permission === p.id);
-                      const checked = !!draftRow;
-                      const emplacementId = draftRow?.emplacement_id ?? null;
-                      return (
-                        <div key={p.id} style={{ marginBottom: "10px" }}>
-                          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={(e) => handleToggleDraftPermission(m, p.id, e.target.checked)}
-                            />
-                            <span>
-                              <strong style={{ fontSize: "13.5px" }}>{p.label}</strong>
-                              <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>{p.description}</div>
-                            </span>
-                          </label>
-                          {checked && emplacements.length > 1 && (
-                            <div style={{ marginTop: "6px", marginLeft: "26px", maxWidth: "260px" }}>
-                              <EmplacementSelect
-                                emplacements={emplacements}
-                                value={emplacementId}
-                                onChange={(id) => handleChangeDraftScope(m, p.id, id)}
-                                includeToutes
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-
-                {estModifie(m) && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px" }}>
-                    <button
-                      type="button"
-                      className={`submit-btn${shaking === m.id ? " shake-flash" : ""}`}
-                      onClick={() => handleSavePermissions(m)}
-                      disabled={savingPermissions === m.id}
-                    >
-                      {savingPermissions === m.id ? "Enregistrement..." : "Enregistrer"}
+            <div className="admin-row-controls">
+              {jeSuisProprietaire && m.role !== "proprietaire" && (
+                <button className="admin-icon-btn" onClick={() => handleToggleOuvert(m)}>
+                  Permissions {ouverts.has(m.id) ? "▴" : "▾"}
+                </button>
+              )}
+              {m.user_id === userId
+                ? m.role !== "proprietaire" && (
+                    <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
+                      Quitter
                     </button>
-                    <button
-                      type="button"
-                      className="admin-icon-btn"
-                      onClick={() => handleAnnulerPermissions(m)}
-                      disabled={savingPermissions === m.id}
-                    >
-                      Annuler
+                  )
+                : jeSuisProprietaire && (
+                    <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
+                      Retirer
                     </button>
-                    <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>Modifications non enregistrées</span>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Panneaux de permissions rendus hors de .admin-list (overflow:hidden
+          là-bas coupait le menu déroulant de succursale) plutôt que sous
+          chaque ligne. */}
+      {jeSuisProprietaire &&
+        membres
+          .filter((m) => m.role !== "proprietaire" && ouverts.has(m.id))
+          .map((m) => (
+            <div className="settings-section" style={{ marginBottom: "14px", maxWidth: "560px" }} key={m.id}>
+              <h3 style={{ fontSize: "14px" }}>Permissions - {m.email}</h3>
+              {Object.entries(permissionsParModule()).map(([module, perms]) => (
+                <div key={module} style={{ marginTop: "12px" }}>
+                  <h4 style={{ fontSize: "12.5px", color: "var(--text-dim)", marginBottom: "8px" }}>
+                    {MODULES_PERMISSIONS[module] || module}
+                  </h4>
+                  {perms.map((p) => {
+                    const draft = drafts[m.id] || [];
+                    const draftRow = draft.find((dp) => dp.permission === p.id);
+                    const checked = !!draftRow;
+                    const emplacementId = draftRow?.emplacement_id ?? null;
+                    return (
+                      <div key={p.id} style={{ marginBottom: "10px" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            className="permission-checkbox"
+                            checked={checked}
+                            onChange={(e) => handleToggleDraftPermission(m, p.id, e.target.checked)}
+                          />
+                          <span>
+                            <strong style={{ fontSize: "13.5px" }}>{p.label}</strong>
+                            <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>{p.description}</div>
+                          </span>
+                        </label>
+                        {checked && emplacements.length > 1 && (
+                          <div style={{ marginTop: "6px", marginLeft: "26px", maxWidth: "260px" }}>
+                            <EmplacementSelect
+                              emplacements={emplacements}
+                              value={emplacementId}
+                              onChange={(id) => handleChangeDraftScope(m, p.id, id)}
+                              includeToutes
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+
+              {estModifie(m) && (
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px" }}>
+                  <button
+                    type="button"
+                    className={`submit-btn${shaking === m.id ? " shake-flash" : ""}`}
+                    onClick={() => handleSavePermissions(m)}
+                    disabled={savingPermissions === m.id}
+                  >
+                    {savingPermissions === m.id ? "Enregistrement..." : "Enregistrer"}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-icon-btn"
+                    onClick={() => handleAnnulerPermissions(m)}
+                    disabled={savingPermissions === m.id}
+                  >
+                    Annuler
+                  </button>
+                  <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>Modifications non enregistrées</span>
+                </div>
+              )}
+            </div>
+          ))}
 
       {invitations.length > 0 && (
         <>
