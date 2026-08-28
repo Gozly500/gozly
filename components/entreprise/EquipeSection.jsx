@@ -14,6 +14,9 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
   const [error, setError] = useState(null);
   const [inviting, setInviting] = useState(false);
   const [ouverts, setOuverts] = useState(() => new Set());
+  const [drafts, setDrafts] = useState({}); // { [membreId]: [{ permission, emplacement_id }] } - brouillon local, pas encore enregistré
+  const [shaking, setShaking] = useState(null); // membreId dont le bouton Enregistrer doit trembler
+  const [savingPermissions, setSavingPermissions] = useState(null); // membreId en cours d'enregistrement
 
   useEffect(() => {
     load();
@@ -53,30 +56,82 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
     setLoading(false);
   }
 
-  function toggleOuvert(membreId) {
+  function origineDraft(membre) {
+    return (membre.permissions || []).map((p) => ({ permission: p.permission, emplacement_id: p.emplacement_id }));
+  }
+
+  function estModifie(membre) {
+    const draft = drafts[membre.id];
+    if (!draft) return false;
+    const norm = (arr) => arr.map((p) => `${p.permission}:${p.emplacement_id ?? "toutes"}`).sort().join("|");
+    return norm(draft) !== norm(origineDraft(membre));
+  }
+
+  function handleToggleOuvert(membre) {
+    const estOuvert = ouverts.has(membre.id);
+
+    if (estOuvert && estModifie(membre)) {
+      setShaking(membre.id);
+      setTimeout(() => setShaking(null), 600);
+      return;
+    }
+
     setOuverts((prev) => {
       const next = new Set(prev);
-      if (next.has(membreId)) next.delete(membreId);
-      else next.add(membreId);
+      if (estOuvert) next.delete(membre.id);
+      else next.add(membre.id);
+      return next;
+    });
+
+    if (!estOuvert) {
+      setDrafts((prev) => ({ ...prev, [membre.id]: origineDraft(membre) }));
+    }
+  }
+
+  function handleAnnulerPermissions(membre) {
+    setDrafts((prev) => {
+      const next = { ...prev };
+      delete next[membre.id];
+      return next;
+    });
+    setOuverts((prev) => {
+      const next = new Set(prev);
+      next.delete(membre.id);
       return next;
     });
   }
 
-  async function handleTogglePermission(membre, permissionId, checked) {
-    if (checked) {
-      await supabase.from("membre_permissions").insert({ membre_id: membre.id, permission: permissionId, emplacement_id: null });
-    } else {
-      await supabase.from("membre_permissions").delete().eq("membre_id", membre.id).eq("permission", permissionId);
-    }
-    load();
+  function handleToggleDraftPermission(membre, permissionId, checked) {
+    setDrafts((prev) => {
+      const current = prev[membre.id] || [];
+      const next = checked
+        ? [...current, { permission: permissionId, emplacement_id: null }]
+        : current.filter((p) => p.permission !== permissionId);
+      return { ...prev, [membre.id]: next };
+    });
   }
 
-  async function handleChangePermissionScope(membre, permissionId, emplacementId) {
-    await supabase.from("membre_permissions").delete().eq("membre_id", membre.id).eq("permission", permissionId);
-    await supabase
-      .from("membre_permissions")
-      .insert({ membre_id: membre.id, permission: permissionId, emplacement_id: emplacementId });
-    load();
+  function handleChangeDraftScope(membre, permissionId, emplacementId) {
+    setDrafts((prev) => {
+      const current = prev[membre.id] || [];
+      const next = current.map((p) => (p.permission === permissionId ? { ...p, emplacement_id: emplacementId } : p));
+      return { ...prev, [membre.id]: next };
+    });
+  }
+
+  async function handleSavePermissions(membre) {
+    setSavingPermissions(membre.id);
+    const draft = drafts[membre.id] || [];
+
+    await supabase.from("membre_permissions").delete().eq("membre_id", membre.id);
+    if (draft.length > 0) {
+      await supabase
+        .from("membre_permissions")
+        .insert(draft.map((p) => ({ membre_id: membre.id, permission: p.permission, emplacement_id: p.emplacement_id })));
+    }
+
+    await load();
+    setSavingPermissions(null);
   }
 
   async function handleInvite(e) {
@@ -162,7 +217,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
               </div>
               <div className="admin-row-controls">
                 {jeSuisProprietaire && m.role !== "proprietaire" && (
-                  <button className="admin-icon-btn" onClick={() => toggleOuvert(m.id)}>
+                  <button className="admin-icon-btn" onClick={() => handleToggleOuvert(m)}>
                     Permissions {ouverts.has(m.id) ? "▴" : "▾"}
                   </button>
                 )}
@@ -188,16 +243,17 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
                       {MODULES_PERMISSIONS[module] || module}
                     </h4>
                     {perms.map((p) => {
-                      const rows = (m.permissions || []).filter((mp) => mp.permission === p.id);
-                      const checked = rows.length > 0;
-                      const emplacementId = rows[0]?.emplacement_id ?? null;
+                      const draft = drafts[m.id] || [];
+                      const draftRow = draft.find((dp) => dp.permission === p.id);
+                      const checked = !!draftRow;
+                      const emplacementId = draftRow?.emplacement_id ?? null;
                       return (
                         <div key={p.id} style={{ marginBottom: "10px" }}>
                           <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
                             <input
                               type="checkbox"
                               checked={checked}
-                              onChange={(e) => handleTogglePermission(m, p.id, e.target.checked)}
+                              onChange={(e) => handleToggleDraftPermission(m, p.id, e.target.checked)}
                             />
                             <span>
                               <strong style={{ fontSize: "13.5px" }}>{p.label}</strong>
@@ -209,7 +265,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
                               <EmplacementSelect
                                 emplacements={emplacements}
                                 value={emplacementId}
-                                onChange={(id) => handleChangePermissionScope(m, p.id, id)}
+                                onChange={(id) => handleChangeDraftScope(m, p.id, id)}
                                 includeToutes
                               />
                             </div>
@@ -219,6 +275,28 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
                     })}
                   </div>
                 ))}
+
+                {estModifie(m) && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px" }}>
+                    <button
+                      type="button"
+                      className={`submit-btn${shaking === m.id ? " shake-flash" : ""}`}
+                      onClick={() => handleSavePermissions(m)}
+                      disabled={savingPermissions === m.id}
+                    >
+                      {savingPermissions === m.id ? "Enregistrement..." : "Enregistrer"}
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-icon-btn"
+                      onClick={() => handleAnnulerPermissions(m)}
+                      disabled={savingPermissions === m.id}
+                    >
+                      Annuler
+                    </button>
+                    <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>Modifications non enregistrées</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
