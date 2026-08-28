@@ -80,7 +80,7 @@ export default function TemperatureContent() {
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
       supabase
         .from("equipements_temperature")
-        .select("*, categorie:categorie_id(id, nom)")
+        .select("*")
         .eq("entreprise_id", entrepriseId)
         .order("nom", { ascending: true }),
       supabase.from("releves_temperature").select("*").eq("entreprise_id", entrepriseId).eq("date_relevee", creneau.date),
@@ -176,17 +176,6 @@ export default function TemperatureContent() {
 
   const equipementsFiltres = emplacementFiltre ? equipements.filter((eq) => eq.emplacement_id === emplacementFiltre) : equipements;
 
-  const categoriesAffichees = [];
-  const parCategorie = new Map();
-  for (const eq of equipementsFiltres) {
-    const cle = eq.categorie?.id || "sans-categorie";
-    if (!parCategorie.has(cle)) {
-      parCategorie.set(cle, []);
-      categoriesAffichees.push({ id: cle, nom: eq.categorie?.nom || "Sans catégorie" });
-    }
-    parCategorie.get(cle).push(eq);
-  }
-
   const historiqueFiltre = emplacementFiltre
     ? historique.filter((r) => equipements.find((eq) => eq.id === r.equipement_id)?.emplacement_id === emplacementFiltre)
     : historique;
@@ -243,31 +232,26 @@ export default function TemperatureContent() {
                   </p>
                 ) : (
                   <>
-                    {categoriesAffichees.map((cat) => (
-                      <div key={cat.id} style={{ marginBottom: "16px" }}>
-                        <h4 style={{ fontSize: "12.5px", color: "var(--text-dim)", marginBottom: "8px" }}>{cat.nom}</h4>
-                        {parCategorie.get(cat.id).map((eq) => {
-                          const autreReleve = releveExistant(eq.id, autrePeriode);
-                          return (
-                            <div key={eq.id} className="field-row" style={{ alignItems: "center", marginBottom: "6px" }}>
-                              <div style={{ flex: 1, fontSize: "13.5px", fontWeight: 600 }}>{eq.nom}</div>
-                              <div style={{ fontSize: "12.5px", color: "var(--text-dim)", minWidth: "110px" }}>
-                                {autrePeriode === "am" ? "AM" : "PM"}:{" "}
-                                {autreReleve ? `${autreReleve.conforme ? "✓" : "⚠️"} ${autreReleve.temperature}°C` : "—"}
-                              </div>
-                              <input
-                                type="number"
-                                step="0.1"
-                                placeholder="°C"
-                                style={{ width: "90px" }}
-                                value={drafts[eq.id] ?? ""}
-                                onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
+                    {equipementsFiltres.map((eq) => {
+                      const autreReleve = releveExistant(eq.id, autrePeriode);
+                      return (
+                        <div key={eq.id} className="field-row" style={{ alignItems: "center", marginBottom: "6px" }}>
+                          <div style={{ flex: 1, fontSize: "13.5px", fontWeight: 600 }}>{eq.nom}</div>
+                          <div style={{ fontSize: "12.5px", color: "var(--text-dim)", minWidth: "110px" }}>
+                            {autrePeriode === "am" ? "AM" : "PM"}:{" "}
+                            {autreReleve ? `${autreReleve.conforme ? "✓" : "⚠️"} ${autreReleve.temperature}°C` : "—"}
+                          </div>
+                          <input
+                            type="number"
+                            step="0.1"
+                            placeholder="°C"
+                            style={{ width: "90px" }}
+                            value={drafts[eq.id] ?? ""}
+                            onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
+                          />
+                        </div>
+                      );
+                    })}
 
                     <button type="button" className="submit-btn" onClick={handleSaveGrille} disabled={saving || !estModifie()}>
                       {saving ? "Enregistrement..." : "Enregistrer"}

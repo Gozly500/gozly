@@ -19,7 +19,7 @@ export async function GET(request) {
 
   const { data: equipements } = await service
     .from("equipements_temperature")
-    .select("*, categorie:categorie_id(id, nom)")
+    .select("*")
     .eq("entreprise_id", employe.entreprise_id)
     .order("nom", { ascending: true });
 

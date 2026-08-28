@@ -95,48 +95,32 @@ export default function TemperatureEmploye() {
   const periodeLabel = PERIODES.find((p) => p.id === creneau?.periode)?.label || "";
   const autrePeriode = creneau?.periode === "am" ? "pm" : "am";
 
-  const categories = [];
-  const parCategorie = new Map();
-  for (const eq of equipements) {
-    const cle = eq.categorie?.id || "sans-categorie";
-    if (!parCategorie.has(cle)) {
-      parCategorie.set(cle, []);
-      categories.push({ id: cle, nom: eq.categorie?.nom || "Autres" });
-    }
-    parCategorie.get(cle).push(eq);
-  }
-
   return (
     <div>
       <h2>Températures</h2>
       <p className="panel-hint">Créneau actuel : {periodeLabel}. Une fenêtre manquée ne revient pas - inutile de la rattraper.</p>
 
-      {categories.map((cat) => (
-        <div className="planning-day" key={cat.id} style={{ marginBottom: "14px" }}>
-          <div className="planning-day-head">
-            <span className="planning-day-title">{cat.nom}</span>
-          </div>
-          {parCategorie.get(cat.id).map((eq) => {
-            const autreReleve = releveExistant(eq.id, autrePeriode);
-            return (
-              <div key={eq.id} className="field-row" style={{ padding: "10px 14px", alignItems: "center", margin: 0 }}>
-                <div style={{ flex: 1, fontSize: "13.5px", fontWeight: 600 }}>{eq.nom}</div>
-                <div style={{ fontSize: "12.5px", color: "var(--text-dim)", minWidth: "70px" }}>
-                  {autrePeriode === "am" ? "AM" : "PM"}: {autreReleve ? `${autreReleve.conforme ? "✓" : "⚠️"} ${autreReleve.temperature}°C` : "—"}
-                </div>
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder={`${periodeLabel.slice(0, 2)} °C`}
-                  style={{ width: "90px" }}
-                  value={drafts[eq.id] ?? ""}
-                  onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
-                />
+      <div className="planning-day" style={{ marginBottom: "14px" }}>
+        {equipements.map((eq) => {
+          const autreReleve = releveExistant(eq.id, autrePeriode);
+          return (
+            <div key={eq.id} className="field-row" style={{ padding: "10px 14px", alignItems: "center", margin: 0 }}>
+              <div style={{ flex: 1, fontSize: "13.5px", fontWeight: 600 }}>{eq.nom}</div>
+              <div style={{ fontSize: "12.5px", color: "var(--text-dim)", minWidth: "70px" }}>
+                {autrePeriode === "am" ? "AM" : "PM"}: {autreReleve ? `${autreReleve.conforme ? "✓" : "⚠️"} ${autreReleve.temperature}°C` : "—"}
               </div>
-            );
-          })}
-        </div>
-      ))}
+              <input
+                type="number"
+                step="0.1"
+                placeholder={`${periodeLabel.slice(0, 2)} °C`}
+                style={{ width: "90px" }}
+                value={drafts[eq.id] ?? ""}
+                onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
+              />
+            </div>
+          );
+        })}
+      </div>
 
       <div className="submit-wrap" style={{ marginTop: "16px" }}>
         <button type="button" className="submit-btn" onClick={handleSave} disabled={saving || !estModifie()}>

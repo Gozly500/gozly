@@ -8,7 +8,6 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { TYPES_EQUIPEMENT } from "@/lib/temperature";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import SimpleSelect from "@/components/SimpleSelect";
-import CategoriesTemperatureSection from "@/components/temperature/CategoriesTemperatureSection";
 
 export default function TemperatureEquipementsContent() {
   const router = useRouter();
@@ -18,13 +17,11 @@ export default function TemperatureEquipementsContent() {
   const [entrepriseId, setEntrepriseId] = useState(null);
 
   const [emplacements, setEmplacements] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [equipements, setEquipements] = useState([]);
   const [loadingDonnees, setLoadingDonnees] = useState(true);
 
   const [nomEquipement, setNomEquipement] = useState("");
   const [typeEquipement, setTypeEquipement] = useState("refrigerateur");
-  const [categorieEquipement, setCategorieEquipement] = useState(null);
   const [emplacementEquipement, setEmplacementEquipement] = useState(null);
 
   useEffect(() => {
@@ -73,17 +70,11 @@ export default function TemperatureEquipementsContent() {
 
   async function load() {
     setLoadingDonnees(true);
-    const [{ data: emps }, { data: cats }, { data: eqs }] = await Promise.all([
+    const [{ data: emps }, { data: eqs }] = await Promise.all([
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
-      supabase.from("categories_temperature").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
-      supabase
-        .from("equipements_temperature")
-        .select("*, categorie:categorie_id(id, nom)")
-        .eq("entreprise_id", entrepriseId)
-        .order("nom", { ascending: true }),
+      supabase.from("equipements_temperature").select("*").eq("entreprise_id", entrepriseId).order("nom", { ascending: true }),
     ]);
     setEmplacements(emps || []);
-    setCategories(cats || []);
     setEquipements(eqs || []);
     setLoadingDonnees(false);
   }
@@ -100,12 +91,10 @@ export default function TemperatureEquipementsContent() {
       entreprise_id: entrepriseId,
       nom: nomEquipement.trim(),
       type: typeEquipement,
-      categorie_id: categorieEquipement,
       emplacement_id: emplacementEquipement,
     });
     setNomEquipement("");
     setTypeEquipement("refrigerateur");
-    setCategorieEquipement(null);
     setEmplacementEquipement(null);
     load();
   }
@@ -141,7 +130,7 @@ export default function TemperatureEquipementsContent() {
           <header className="dash-hero-inline">
             <div>
               <h1>Équipements - Températures</h1>
-              <p>Catégories et équipements à surveiller (frigos, congélateurs, maintien au chaud).</p>
+              <p>Les équipements à surveiller (frigos, congélateurs, maintien au chaud).</p>
             </div>
           </header>
 
@@ -152,19 +141,14 @@ export default function TemperatureEquipementsContent() {
           ) : (
             <>
               <div className="settings-section">
-                <h3>Catégories</h3>
-                <CategoriesTemperatureSection entrepriseId={entrepriseId} />
-              </div>
-
-              <div className="settings-section">
                 <h3>Équipements</h3>
-                <div className="admin-list" style={{ marginTop: "14px", marginBottom: "14px", maxWidth: "560px" }}>
+                <div className="admin-list" style={{ marginTop: "14px", maxWidth: "560px" }}>
                   {equipements.map((eq) => (
                     <div className="admin-row" key={eq.id}>
                       <div className="admin-row-main">
                         <div className="admin-row-title">{eq.nom}</div>
                         <div className="admin-row-sub">
-                          {eq.categorie?.nom || "Sans catégorie"} · {TYPES_EQUIPEMENT.find((t) => t.id === eq.type)?.label}
+                          {TYPES_EQUIPEMENT.find((t) => t.id === eq.type)?.label}
                           {eq.emplacement_id && " · " + (emplacements.find((e) => e.id === eq.emplacement_id)?.nom || "")}
                         </div>
                       </div>
@@ -177,7 +161,10 @@ export default function TemperatureEquipementsContent() {
                   ))}
                   {equipements.length === 0 && <div className="admin-empty">Aucun équipement pour l'instant.</div>}
                 </div>
+              </div>
 
+              <div className="settings-section">
+                <h3>Ajouter un équipement</h3>
                 <form className="field-row" onSubmit={handleAddEquipement} style={{ alignItems: "flex-end" }}>
                   <div className="field">
                     <label>Nom</label>
@@ -187,15 +174,6 @@ export default function TemperatureEquipementsContent() {
                       value={nomEquipement}
                       onChange={(e) => setNomEquipement(e.target.value)}
                       required
-                    />
-                  </div>
-                  <div className="field" style={{ minWidth: "180px" }}>
-                    <label>Catégorie</label>
-                    <SimpleSelect
-                      options={categories.map((c) => ({ id: c.id, label: c.nom }))}
-                      value={categorieEquipement}
-                      onChange={setCategorieEquipement}
-                      placeholder="Aucune"
                     />
                   </div>
                   <div className="field" style={{ minWidth: "200px" }}>
