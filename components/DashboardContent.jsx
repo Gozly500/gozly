@@ -14,6 +14,7 @@ import PlanningJourWidget from "@/components/dashboard/PlanningJourWidget";
 import HoraireJourWidget from "@/components/dashboard/HoraireJourWidget";
 import InventaireWidget from "@/components/dashboard/InventaireWidget";
 import VentesWidget from "@/components/dashboard/VentesWidget";
+import TemperatureWidget from "@/components/dashboard/TemperatureWidget";
 import { WIDGETS, fusionnerConfigWidgets } from "@/lib/dashboardWidgets";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
@@ -188,6 +189,7 @@ export default function DashboardContent() {
     if (id === "horaire-jour") return <HoraireJourWidget entrepriseId={entrepriseId} />;
     if (id === "inventaire-alertes") return <InventaireWidget entrepriseId={entrepriseId} />;
     if (id === "ventes-jour") return <VentesWidget entrepriseId={entrepriseId} />;
+    if (id === "temperature-alertes") return <TemperatureWidget entrepriseId={entrepriseId} />;
     return null;
   }
 

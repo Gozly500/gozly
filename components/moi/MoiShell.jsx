@@ -8,6 +8,7 @@ import { IconHoraire, IconDiscussion, IconDemande } from "@/components/icons/Goz
 const ONGLETS = [
   { id: "horaire", label: "Horaire", Icone: IconHoraire, href: "/moi/horaire" },
   { id: "taches", label: "Tâches", icon: "✅", href: "/moi/taches", module: "planning" },
+  { id: "temperature", label: "Températures", icon: "🌡️", href: "/moi/temperature", module: "temperature" },
   { id: "demandes", label: "Demandes", Icone: IconDemande, href: "/moi/demandes" },
   { id: "discussion", label: "Discussion", Icone: IconDiscussion, href: "/moi/discussion" },
 ];
