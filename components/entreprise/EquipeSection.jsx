@@ -2,21 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import EmplacementSelect from "@/components/EmplacementSelect";
-import { permissionsParModule, MODULES_PERMISSIONS } from "@/lib/permissions";
+import EmplacementMultiSelectModal from "@/components/entreprise/EmplacementMultiSelectModal";
+import { permissionsParModule } from "@/lib/permissions";
+import { MODULES } from "@/lib/modules";
+
+function normaliserScope(ids) {
+  return [...ids].map((id) => id ?? "toutes").sort().join(",");
+}
 
 export default function EquipeSection({ entrepriseId, userId, onLeft }) {
   const [loading, setLoading] = useState(true);
   const [membres, setMembres] = useState([]);
   const [invitations, setInvitations] = useState([]);
   const [emplacements, setEmplacements] = useState([]);
+  const [modulesActifs, setModulesActifs] = useState([]);
   const [email, setEmail] = useState("");
   const [error, setError] = useState(null);
   const [inviting, setInviting] = useState(false);
   const [ouverts, setOuverts] = useState(() => new Set());
-  const [drafts, setDrafts] = useState({}); // { [membreId]: [{ permission, emplacement_id }] } - brouillon local, pas encore enregistré
-  const [shaking, setShaking] = useState(null); // membreId dont le bouton Enregistrer doit trembler
-  const [savingPermissions, setSavingPermissions] = useState(null); // membreId en cours d'enregistrement
+  const [drafts, setDrafts] = useState({}); // { [membreId]: [{ permission, emplacement_ids: [] }] } - brouillon local
+  const [shaking, setShaking] = useState(null);
+  const [savingPermissions, setSavingPermissions] = useState(null);
+  const [modalPour, setModalPour] = useState(null); // { membreId, permissionId }
 
   useEffect(() => {
     load();
@@ -29,7 +36,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
 
-    const [membresResRaw, invitationsRes, emplacementsRes] = await Promise.all([
+    const [membresResRaw, invitationsRes, emplacementsRes, modulesRes] = await Promise.all([
       fetch(`/api/team/members?entrepriseId=${entrepriseId}`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
@@ -40,6 +47,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
         .eq("statut", "en_attente")
         .order("created_at", { ascending: false }),
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
+      supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId),
     ]);
 
     const membresRes = await membresResRaw.json();
@@ -53,17 +61,27 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
 
     setInvitations(invitationsRes.data || []);
     setEmplacements(emplacementsRes.data || []);
+    setModulesActifs((modulesRes.data || []).map((m) => m.module));
     setLoading(false);
   }
 
   function origineDraft(membre) {
-    return (membre.permissions || []).map((p) => ({ permission: p.permission, emplacement_id: p.emplacement_id }));
+    const parPermission = new Map();
+    for (const p of membre.permissions || []) {
+      if (!parPermission.has(p.permission)) parPermission.set(p.permission, []);
+      parPermission.get(p.permission).push(p.emplacement_id);
+    }
+    return [...parPermission.entries()].map(([permission, emplacement_ids]) => ({ permission, emplacement_ids }));
   }
 
   function estModifie(membre) {
     const draft = drafts[membre.id];
     if (!draft) return false;
-    const norm = (arr) => arr.map((p) => `${p.permission}:${p.emplacement_id ?? "toutes"}`).sort().join("|");
+    const norm = (arr) =>
+      arr
+        .map((p) => `${p.permission}:${normaliserScope(p.emplacement_ids)}`)
+        .sort()
+        .join("|");
     return norm(draft) !== norm(origineDraft(membre));
   }
 
@@ -105,16 +123,16 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
     setDrafts((prev) => {
       const current = prev[membre.id] || [];
       const next = checked
-        ? [...current, { permission: permissionId, emplacement_id: null }]
+        ? [...current, { permission: permissionId, emplacement_ids: [null] }]
         : current.filter((p) => p.permission !== permissionId);
       return { ...prev, [membre.id]: next };
     });
   }
 
-  function handleChangeDraftScope(membre, permissionId, emplacementId) {
+  function handleChangeScopeIds(membre, permissionId, emplacementIds) {
     setDrafts((prev) => {
       const current = prev[membre.id] || [];
-      const next = current.map((p) => (p.permission === permissionId ? { ...p, emplacement_id: emplacementId } : p));
+      const next = current.map((p) => (p.permission === permissionId ? { ...p, emplacement_ids: emplacementIds } : p));
       return { ...prev, [membre.id]: next };
     });
   }
@@ -123,11 +141,13 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
     setSavingPermissions(membre.id);
     const draft = drafts[membre.id] || [];
 
+    const rows = draft.flatMap((p) =>
+      p.emplacement_ids.map((emplacement_id) => ({ membre_id: membre.id, permission: p.permission, emplacement_id }))
+    );
+
     await supabase.from("membre_permissions").delete().eq("membre_id", membre.id);
-    if (draft.length > 0) {
-      await supabase
-        .from("membre_permissions")
-        .insert(draft.map((p) => ({ membre_id: membre.id, permission: p.permission, emplacement_id: p.emplacement_id })));
+    if (rows.length > 0) {
+      await supabase.from("membre_permissions").insert(rows);
     }
 
     await load();
@@ -201,6 +221,15 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
   const monRole = membres.find((m) => m.user_id === userId)?.role;
   const jeSuisProprietaire = monRole === "proprietaire";
 
+  const categoriesActives = Object.entries(permissionsParModule()).filter(([module]) => modulesActifs.includes(module));
+
+  function labelScope(emplacementIds) {
+    if (emplacementIds.includes(null)) return "Toutes les succursales";
+    if (emplacementIds.length === 0) return "Aucune succursale";
+    if (emplacementIds.length === 1) return emplacements.find((e) => e.id === emplacementIds[0])?.nom || "1 succursale";
+    return `${emplacementIds.length} succursales`;
+  }
+
   return (
     <div>
       <h2>Équipe</h2>
@@ -237,53 +266,56 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
       </div>
 
       {/* Panneaux de permissions rendus hors de .admin-list (overflow:hidden
-          là-bas coupait le menu déroulant de succursale) plutôt que sous
-          chaque ligne. */}
+          là-bas coupait les menus déroulants) plutôt que sous chaque ligne. */}
       {jeSuisProprietaire &&
         membres
           .filter((m) => m.role !== "proprietaire" && ouverts.has(m.id))
           .map((m) => (
             <div className="settings-section" style={{ marginBottom: "14px", maxWidth: "560px" }} key={m.id}>
               <h3 style={{ fontSize: "14px" }}>Permissions - {m.email}</h3>
-              {Object.entries(permissionsParModule()).map(([module, perms]) => (
-                <div key={module} style={{ marginTop: "12px" }}>
-                  <h4 style={{ fontSize: "12.5px", color: "var(--text-dim)", marginBottom: "8px" }}>
-                    {MODULES_PERMISSIONS[module] || module}
-                  </h4>
-                  {perms.map((p) => {
-                    const draft = drafts[m.id] || [];
-                    const draftRow = draft.find((dp) => dp.permission === p.id);
-                    const checked = !!draftRow;
-                    const emplacementId = draftRow?.emplacement_id ?? null;
-                    return (
-                      <div key={p.id} style={{ marginBottom: "10px" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                          <input
-                            type="checkbox"
-                            className="permission-checkbox"
-                            checked={checked}
-                            onChange={(e) => handleToggleDraftPermission(m, p.id, e.target.checked)}
-                          />
-                          <span>
-                            <strong style={{ fontSize: "13.5px" }}>{p.label}</strong>
-                            <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>{p.description}</div>
-                          </span>
-                        </label>
-                        {checked && emplacements.length > 1 && (
-                          <div style={{ marginTop: "6px", marginLeft: "26px", maxWidth: "260px" }}>
-                            <EmplacementSelect
-                              emplacements={emplacements}
-                              value={emplacementId}
-                              onChange={(id) => handleChangeDraftScope(m, p.id, id)}
-                              includeToutes
+
+              {categoriesActives.length === 0 ? (
+                <p className="section-hint">Active un module (ex: Horaire &amp; Pointage) pour voir apparaître ses permissions ici.</p>
+              ) : (
+                categoriesActives.map(([module, perms]) => (
+                  <div key={module} style={{ marginTop: "12px" }}>
+                    <h4 style={{ fontSize: "12.5px", color: "var(--text-dim)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: ".04em" }}>
+                      {MODULES.find((mod) => mod.id === module)?.nom || module}
+                    </h4>
+                    {perms.map((p) => {
+                      const draft = drafts[m.id] || [];
+                      const draftRow = draft.find((dp) => dp.permission === p.id);
+                      const checked = !!draftRow;
+                      return (
+                        <div key={p.id} style={{ marginBottom: "10px" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                            <input
+                              type="checkbox"
+                              className="permission-checkbox"
+                              checked={checked}
+                              onChange={(e) => handleToggleDraftPermission(m, p.id, e.target.checked)}
                             />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+                            <span>
+                              <strong style={{ fontSize: "13.5px" }}>{p.label}</strong>
+                              <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>{p.description}</div>
+                            </span>
+                          </label>
+                          {checked && emplacements.length > 1 && (
+                            <button
+                              type="button"
+                              className="admin-icon-btn"
+                              style={{ marginTop: "6px", marginLeft: "26px" }}
+                              onClick={() => setModalPour({ membreId: m.id, permissionId: p.id })}
+                            >
+                              📍 {labelScope(draftRow.emplacement_ids)}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))
+              )}
 
               {estModifie(m) && (
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px" }}>
@@ -308,6 +340,22 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
               )}
             </div>
           ))}
+
+      {modalPour &&
+        (() => {
+          const membre = membres.find((m) => m.id === modalPour.membreId);
+          const draft = drafts[modalPour.membreId] || [];
+          const draftRow = draft.find((dp) => dp.permission === modalPour.permissionId);
+          if (!membre || !draftRow) return null;
+          return (
+            <EmplacementMultiSelectModal
+              emplacements={emplacements}
+              value={draftRow.emplacement_ids}
+              onChange={(ids) => handleChangeScopeIds(membre, modalPour.permissionId, ids)}
+              onClose={() => setModalPour(null)}
+            />
+          );
+        })()}
 
       {invitations.length > 0 && (
         <>

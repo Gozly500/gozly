@@ -11,7 +11,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconHoraire, IconFeuilleTemps, IconDemande } from "@/components/icons/GozlyIcons";
 
-const PERMISSIONS_FEUILLE = ["voir_feuille_temps", "gerer_feuille_temps", "approuver_feuille_temps"];
+const PERMISSIONS_FEUILLE = ["voir_feuille_temps", "corriger_feuille_temps", "approuver_feuille_temps", "exporter_feuille_temps"];
 
 const TABS = [
   { id: "horaire", label: "Horaire", Icone: IconHoraire },

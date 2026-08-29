@@ -1358,7 +1358,12 @@ input.planning-date-picker{
     transition:background .15s ease;
   }
 .horaire-chip:hover{background:rgba(255,255,255,0.14);}
-.horaire-chip-nom{font-weight:600;}
+.horaire-chip.brouillon{border-style:dashed;border-color:rgba(242,146,90,0.5);}
+.horaire-chip-nom{font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.horaire-chip-badge{
+    font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    background:rgba(242,146,90,0.2);color:var(--orange);border-radius:6px;padding:1px 5px;
+  }
 .horaire-chip-heures{color:var(--text-dim);font-size:11px;}
 .horaire-chip-poste{color:var(--text-dim);font-size:11px;font-style:italic;margin-top:1px;}
 

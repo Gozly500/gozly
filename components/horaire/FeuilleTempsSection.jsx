@@ -72,9 +72,10 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [approving, setApproving] = useState(false);
 
   const weekEnd = addDays(weekStart, 7);
-  const peutGerer = mesPermissions.includes("gerer_feuille_temps");
+  const peutCorriger = mesPermissions.includes("corriger_feuille_temps");
   const peutApprouver = mesPermissions.includes("approuver_feuille_temps");
-  const seulementVoir = mesPermissions.includes("voir_feuille_temps") && !peutGerer && !peutApprouver;
+  const peutExporter = mesPermissions.includes("exporter_feuille_temps");
+  const seulementVoir = mesPermissions.includes("voir_feuille_temps") && !peutCorriger && !peutApprouver;
 
   useEffect(() => {
     supabase
@@ -304,6 +305,8 @@ export default function FeuilleTempsSection({ entrepriseId }) {
     6
   ).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}`;
 
+  const approbationActuelle = semainesApprouvees.find((s) => s.emplacement_id === emplacementId);
+
   return (
     <div>
       <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={setEmplacementId} includeToutes />
@@ -318,87 +321,54 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         </button>
       </div>
 
-      {peutApprouver && (
-        <div className="settings-section" style={{ marginBottom: "14px" }}>
-          {emplacements.length <= 1 ? (
-            <div className="switch-row">
-              <div className="switch-row-text">
-                <h4>{semainesApprouvees.some((s) => s.emplacement_id === null) ? "Semaine approuvée" : "Semaine pas encore approuvée"}</h4>
-                <p>
-                  Les membres en lecture seule (ex: comptable) ne voient que les semaines approuvées
-                  {autoVisible && " - le mode automatique est actif dans Personnalisation, donc tout est visible sans approbation"}.
-                </p>
-              </div>
-              {semainesApprouvees.some((s) => s.emplacement_id === null) ? (
-                <button
-                  className="admin-icon-btn"
-                  onClick={() => handleDesapprouverSemaine(semainesApprouvees.find((s) => s.emplacement_id === null))}
-                  disabled={approving}
-                >
-                  Retirer l'approbation
-                </button>
-              ) : (
-                <button className="btn-small" onClick={() => handleApprouverSemaine(null)} disabled={approving}>
-                  Approuver cette semaine
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              <h3>Approbation par succursale</h3>
-              <p className="section-hint">Semaine du {weekLabel}.</p>
-              {emplacements.map((e) => {
-                const row = semainesApprouvees.find((s) => s.emplacement_id === e.id);
-                return (
-                  <div className="switch-row" key={e.id}>
-                    <div className="switch-row-text">
-                      <h4>{e.nom}</h4>
-                      <p>{row ? "Approuvée" : "Pas encore approuvée"}</p>
-                    </div>
-                    {row ? (
-                      <button className="admin-icon-btn" onClick={() => handleDesapprouverSemaine(row)} disabled={approving}>
-                        Retirer
-                      </button>
-                    ) : (
-                      <button className="btn-small" onClick={() => handleApprouverSemaine(e.id)} disabled={approving}>
-                        Approuver
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </>
-          )}
-        </div>
-      )}
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
+        {autoVisible && (
+          <span className="section-hint" style={{ margin: 0 }}>
+            Mode automatique actif (Personnalisation) - visible sans approbation.
+          </span>
+        )}
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "14px" }}>
-        <div className="account-wrap">
-          <button
-            className="submit-btn"
-            onClick={() => setExportOpen((v) => !v)}
-            disabled={lignes.length === 0}
-          >
-            ⬇ Exporter ▾
-          </button>
-          {exportOpen && (
-            <div className="account-dropdown open">
-              {SERVICES_PAIE.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="menu-item"
-                  disabled={!s.disponible}
-                  onClick={s.id === "nethris" ? handleExportNethris : undefined}
-                >
-                  {s.label}
-                  {!s.disponible && " (bientôt disponible)"}
-                  {s.id === "nethris" && s.disponible && nethrisConnecte && <IconIntegration className="gozly-icon" />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {peutApprouver &&
+          (emplacements.length > 1 && !emplacementId ? (
+            <span className="section-hint" style={{ margin: 0 }}>Choisis une succursale pour approuver.</span>
+          ) : approbationActuelle ? (
+            <button className="admin-icon-btn" onClick={() => handleDesapprouverSemaine(approbationActuelle)} disabled={approving}>
+              Retirer l'approbation
+            </button>
+          ) : (
+            <button className="btn-small" onClick={() => handleApprouverSemaine(emplacementId)} disabled={approving}>
+              Approuver cette semaine
+            </button>
+          ))}
+
+        {peutExporter && (
+          <div className="account-wrap">
+            <button
+              className="submit-btn"
+              onClick={() => setExportOpen((v) => !v)}
+              disabled={lignes.length === 0}
+            >
+              ⬇ Exporter ▾
+            </button>
+            {exportOpen && (
+              <div className="account-dropdown open">
+                {SERVICES_PAIE.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className="menu-item"
+                    disabled={!s.disponible}
+                    onClick={s.id === "nethris" ? handleExportNethris : undefined}
+                  >
+                    {s.label}
+                    {!s.disponible && " (bientôt disponible)"}
+                    {s.id === "nethris" && s.disponible && nethrisConnecte && <IconIntegration className="gozly-icon" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -431,7 +401,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                   <td>{l.fin ? new Date(l.fin).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }) : "en cours"}</td>
                   <td>{heuresDecimal(l.minutes)}</td>
                   <td>
-                    {peutGerer && (
+                    {peutCorriger && (
                       <button className="admin-icon-btn" onClick={() => openEdit(l)}>
                         Modifier
                       </button>

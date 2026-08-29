@@ -24,6 +24,7 @@ export async function GET(request) {
     .from("planning_quarts")
     .select("id, date, heure_debut, heure_fin")
     .eq("employe_id", employe.id)
+    .eq("publie", true)
     .gte("date", semaine)
     .lt("date", finISO)
     .order("date", { ascending: true })

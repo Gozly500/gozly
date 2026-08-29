@@ -13,9 +13,25 @@ export default function DemandesSection({ entrepriseId }) {
   const [employes, setEmployes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
+  const [peutApprouver, setPeutApprouver] = useState(true); // true par défaut (propriétaire/pas encore chargé)
 
   useEffect(() => {
     load();
+  }, [entrepriseId]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const { data: membre } = await supabase
+        .from("membres")
+        .select("id, role")
+        .eq("entreprise_id", entrepriseId)
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (!membre || membre.role === "proprietaire") return;
+      const { data: perms } = await supabase.from("membre_permissions").select("permission").eq("membre_id", membre.id);
+      setPeutApprouver((perms || []).some((p) => p.permission === "approuver_demandes"));
+    });
   }, [entrepriseId]);
 
   async function load() {
@@ -95,14 +111,16 @@ export default function DemandesSection({ entrepriseId }) {
                     {c.raison && ` · ${c.raison}`}
                   </div>
                 </div>
-                <div className="admin-row-controls">
-                  <button className="admin-icon-btn" onClick={() => traiterConge(c.id, "approuve")} disabled={busyId === c.id}>
-                    Approuver
-                  </button>
-                  <button className="admin-icon-btn danger" onClick={() => traiterConge(c.id, "refuse")} disabled={busyId === c.id}>
-                    Refuser
-                  </button>
-                </div>
+                {peutApprouver && (
+                  <div className="admin-row-controls">
+                    <button className="admin-icon-btn" onClick={() => traiterConge(c.id, "approuve")} disabled={busyId === c.id}>
+                      Approuver
+                    </button>
+                    <button className="admin-icon-btn danger" onClick={() => traiterConge(c.id, "refuse")} disabled={busyId === c.id}>
+                      Refuser
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -147,14 +165,16 @@ export default function DemandesSection({ entrepriseId }) {
                     {" · les deux employés sont d'accord, en attente de ton approbation"}
                   </div>
                 </div>
-                <div className="admin-row-controls">
-                  <button className="admin-icon-btn" onClick={() => traiterEchange(e, true)} disabled={busyId === e.id}>
-                    Approuver
-                  </button>
-                  <button className="admin-icon-btn danger" onClick={() => traiterEchange(e, false)} disabled={busyId === e.id}>
-                    Refuser
-                  </button>
-                </div>
+                {peutApprouver && (
+                  <div className="admin-row-controls">
+                    <button className="admin-icon-btn" onClick={() => traiterEchange(e, true)} disabled={busyId === e.id}>
+                      Approuver
+                    </button>
+                    <button className="admin-icon-btn danger" onClick={() => traiterEchange(e, false)} disabled={busyId === e.id}>
+                      Refuser
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -21,6 +21,7 @@ export default function HoraireSection({ entrepriseId }) {
   const [loading, setLoading] = useState(true);
   const [dragOverDate, setDragOverDate] = useState(null);
   const [modal, setModal] = useState(null); // { date, employeId, quartId, heureDebut, heureFin }
+  const [publishing, setPublishing] = useState(false);
 
   const weekEnd = addDays(weekStart, 6);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -167,6 +168,20 @@ export default function HoraireSection({ entrepriseId }) {
     load();
   }
 
+  async function handlePublierSemaine() {
+    setPublishing(true);
+    let query = supabase
+      .from("planning_quarts")
+      .update({ publie: true })
+      .eq("entreprise_id", entrepriseId)
+      .gte("date", toISODate(weekStart))
+      .lte("date", toISODate(weekEnd));
+    if (emplacements.length > 0) query = query.eq("emplacement_id", emplacementId);
+    await query;
+    setPublishing(false);
+    load();
+  }
+
   const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${weekEnd.toLocaleDateString(
     "fr-CA",
     { day: "numeric", month: "long", year: "numeric" }
@@ -184,7 +199,21 @@ export default function HoraireSection({ entrepriseId }) {
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
           Semaine suivante ›
         </button>
+        <button
+          className="submit-btn"
+          style={{ marginLeft: "auto" }}
+          onClick={handlePublierSemaine}
+          disabled={publishing || quarts.length === 0 || quarts.every((q) => q.publie)}
+        >
+          {publishing ? "Publication..." : "📢 Publier la semaine"}
+        </button>
       </div>
+      {quarts.some((q) => !q.publie) && (
+        <p className="section-hint" style={{ marginBottom: "10px" }}>
+          Les quarts marqués <strong>Brouillon</strong> ne sont pas encore visibles des employés - clique "Publier la
+          semaine" quand l'horaire est prêt.
+        </p>
+      )}
 
       {loading ? (
         <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
@@ -235,8 +264,11 @@ export default function HoraireSection({ entrepriseId }) {
                     </div>
 
                     {dayQuarts.map((q) => (
-                      <div className="horaire-chip" key={q.id} onClick={() => openEdit(q)}>
-                        <div className="horaire-chip-nom">{employeNom(q.employe_id)}</div>
+                      <div className={`horaire-chip${q.publie ? "" : " brouillon"}`} key={q.id} onClick={() => openEdit(q)}>
+                        <div className="horaire-chip-nom">
+                          {employeNom(q.employe_id)}
+                          {!q.publie && <span className="horaire-chip-badge">Brouillon</span>}
+                        </div>
                         <div className="horaire-chip-heures">
                           {q.heure_debut.slice(0, 5)} - {q.heure_fin.slice(0, 5)}
                         </div>
