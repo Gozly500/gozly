@@ -17,7 +17,13 @@ export default function EmplacementMultiSelectModal({ emplacements, value, onCha
   }
 
   function toggleEmplacement(id) {
-    if (toutesSelectionnees) return;
+    // Cocher une succursale précise pendant que "Toutes" est actif bascule
+    // directement sur cette seule succursale, plutôt que de forcer à
+    // décocher "Toutes" en premier.
+    if (toutesSelectionnees) {
+      onChange([id]);
+      return;
+    }
     onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
   }
 
@@ -38,38 +44,39 @@ export default function EmplacementMultiSelectModal({ emplacements, value, onCha
           <input type="checkbox" className="permission-checkbox" checked={toutesSelectionnees} onChange={toggleToutes} />
         </label>
 
-        {!toutesSelectionnees && (
-          <>
-            {emplacements.length > 5 && (
-              <input
-                type="text"
-                placeholder="Rechercher une succursale..."
-                value={recherche}
-                onChange={(e) => setRecherche(e.target.value)}
-                style={{ width: "100%", marginBottom: "10px" }}
-              />
-            )}
-            <div className="admin-list" style={{ maxHeight: "260px", overflowY: "auto" }}>
-              {emplacementsFiltres.map((e) => (
-                <label
-                  key={e.id}
-                  className="admin-row"
-                  style={{ cursor: "pointer" }}
-                  onClick={(ev) => {
-                    ev.preventDefault();
-                    toggleEmplacement(e.id);
-                  }}
-                >
-                  <div className="admin-row-main">
-                    <div className="admin-row-title">{e.nom}</div>
-                  </div>
-                  <input type="checkbox" className="permission-checkbox" checked={value.includes(e.id)} readOnly />
-                </label>
-              ))}
-              {emplacementsFiltres.length === 0 && <div className="admin-empty">Aucune succursale trouvée.</div>}
-            </div>
-          </>
+        {emplacements.length > 5 && (
+          <input
+            type="text"
+            placeholder="Rechercher une succursale..."
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            style={{ width: "100%", marginBottom: "10px" }}
+          />
         )}
+        <div className="admin-list" style={{ maxHeight: "260px", overflowY: "auto" }}>
+          {emplacementsFiltres.map((e) => (
+            <label
+              key={e.id}
+              className="admin-row"
+              style={{ cursor: "pointer", opacity: toutesSelectionnees ? 0.55 : 1 }}
+              onClick={(ev) => {
+                ev.preventDefault();
+                toggleEmplacement(e.id);
+              }}
+            >
+              <div className="admin-row-main">
+                <div className="admin-row-title">{e.nom}</div>
+              </div>
+              <input
+                type="checkbox"
+                className="permission-checkbox"
+                checked={!toutesSelectionnees && value.includes(e.id)}
+                readOnly
+              />
+            </label>
+          ))}
+          {emplacementsFiltres.length === 0 && <div className="admin-empty">Aucune succursale trouvée.</div>}
+        </div>
 
         <div className="admin-edit-actions" style={{ marginTop: "16px" }}>
           <button type="button" className="submit-btn" onClick={onClose}>
