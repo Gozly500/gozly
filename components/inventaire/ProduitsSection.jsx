@@ -190,7 +190,7 @@ export default function ProduitsSection({ entrepriseId }) {
                 </div>
               </div>
               <div className="admin-row-controls">
-                {p.source === "wix" && (
+                {p.source === "wix" && !wixPushAuto && (
                   <button className="admin-icon-btn" onClick={() => pousserVersWix(p.id)} disabled={pushingId === p.id}>
                     {pushingId === p.id ? "..." : <><IconIntegration className="gozly-icon" /> Pousser vers Wix</>}
                   </button>
