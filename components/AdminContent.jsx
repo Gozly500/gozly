@@ -6,9 +6,11 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import ClientsSection from "@/components/admin/ClientsSection";
 import AdminsSection from "@/components/admin/AdminsSection";
+import DemandesContactSection from "@/components/admin/DemandesContactSection";
 
 const TABS = [
   { id: "clients", label: "Clients", icon: "👥" },
+  { id: "demandes", label: "Demandes", icon: "✉" },
   { id: "admins", label: "Équipe admin", icon: "🛡" },
 ];
 
@@ -85,6 +87,7 @@ export default function AdminContent() {
 
       <div className="settings-panel">
         {activeTab === "clients" && <ClientsSection />}
+        {activeTab === "demandes" && <DemandesContactSection />}
         {activeTab === "admins" && <AdminsSection currentEmail={email} />}
       </div>
     </div>
