@@ -36,10 +36,10 @@ export default function ProduitsSection({ entrepriseId }) {
     );
     supabase
       .from("entreprises")
-      .select("wix_push_auto")
+      .select("sync_produits_auto")
       .eq("id", entrepriseId)
       .maybeSingle()
-      .then(({ data }) => setWixPushAuto(!!data?.wix_push_auto));
+      .then(({ data }) => setWixPushAuto(!!data?.sync_produits_auto));
   }, [entrepriseId]);
 
   async function pousserVersWix(produitId) {

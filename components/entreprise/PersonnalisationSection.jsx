@@ -55,7 +55,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, wix_push_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation"
+          "premier_jour_semaine, auto_approuver_echanges, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -63,7 +63,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setModulesActifs((actifsData || []).map((m) => m.module));
     setPremierJourSemaine(entrepriseData?.premier_jour_semaine || "lundi");
     setApprobationEchanges(entrepriseData?.auto_approuver_echanges ? "automatique" : "manuelle");
-    setPushWix(entrepriseData?.wix_push_auto ? "automatique" : "manuel");
+    setPushWix(entrepriseData?.sync_produits_auto ? "automatique" : "manuel");
     setCalculPointage(entrepriseData?.pointage_calcul_mode || "reel");
     setVisibiliteFeuilleTemps(entrepriseData?.feuille_temps_visible_sans_approbation ? "automatique" : "manuelle");
     setLoading(false);
@@ -114,7 +114,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setSaving(true);
     setMsg(null);
 
-    const { error } = await supabase.from("entreprises").update({ wix_push_auto: value === "automatique" }).eq("id", entrepriseId);
+    const { error } = await supabase.from("entreprises").update({ sync_produits_auto: value === "automatique" }).eq("id", entrepriseId);
 
     setSaving(false);
     setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
