@@ -10,6 +10,8 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
   const [forfait, setForfait] = useState(null);
   const [actifs, setActifs] = useState([]);
   const [busyId, setBusyId] = useState(null);
+  const [nomEntreprise, setNomEntreprise] = useState("");
+  const [demandeVitrineStatut, setDemandeVitrineStatut] = useState("idle"); // idle | envoi | envoye | erreur
 
   useEffect(() => {
     load();
@@ -20,7 +22,7 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
 
     const { data: entreprise } = await supabase
       .from("entreprises")
-      .select("forfait")
+      .select("forfait, nom")
       .eq("id", entrepriseId)
       .maybeSingle();
 
@@ -30,8 +32,26 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
       .eq("entreprise_id", entrepriseId);
 
     setForfait(entreprise?.forfait || null);
+    setNomEntreprise(entreprise?.nom || "");
     setActifs((modules || []).map((m) => m.module));
     setLoading(false);
+  }
+
+  async function handleDemanderVitrine() {
+    setDemandeVitrineStatut("envoi");
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const { error } = await supabase.from("messages_contact").insert({
+      nom: nomEntreprise || session?.user?.email,
+      courriel: session?.user?.email,
+      objet: "Demande de site vitrine",
+      message: `L'entreprise "${nomEntreprise || entrepriseId}" (id: ${entrepriseId}) souhaite obtenir un site vitrine.`,
+    });
+
+    setDemandeVitrineStatut(error ? "erreur" : "envoye");
   }
 
   const limite = limiteModules(forfait);
@@ -102,6 +122,29 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
                 );
               })}
             </div>
+
+            <div className="settings-divider">Autre service</div>
+            <div className="switch-row">
+              <div className="switch-row-text">
+                <h4>◆ Site vitrine</h4>
+                <p>Un site rapide, moderne et à ton image, propulsé par Wix - construit pour toi par l&apos;équipe Gozly.</p>
+              </div>
+              <button
+                type="button"
+                className="btn-small"
+                onClick={handleDemanderVitrine}
+                disabled={demandeVitrineStatut === "envoi" || demandeVitrineStatut === "envoye"}
+              >
+                {demandeVitrineStatut === "envoye"
+                  ? "Demande envoyée ✓"
+                  : demandeVitrineStatut === "envoi"
+                  ? "Envoi..."
+                  : "Demander"}
+              </button>
+            </div>
+            {demandeVitrineStatut === "erreur" && (
+              <p className="settings-msg err">La demande a échoué. Réessaie dans un instant.</p>
+            )}
           </>
         )}
       </div>
