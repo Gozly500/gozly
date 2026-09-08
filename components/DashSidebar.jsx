@@ -18,9 +18,16 @@ import {
   IconHoraire,
   IconInventaire,
   IconVentes,
+  IconTemperature,
 } from "@/components/icons/GozlyIcons";
 
-const ICONES_MODULES = { planning: IconPlanning, horaire: IconHoraire, inventaire: IconInventaire, ventes: IconVentes };
+const ICONES_MODULES = {
+  planning: IconPlanning,
+  horaire: IconHoraire,
+  inventaire: IconInventaire,
+  ventes: IconVentes,
+  temperature: IconTemperature,
+};
 
 export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout, entrepriseId }) {
   const router = useRouter();
