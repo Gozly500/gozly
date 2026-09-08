@@ -55,6 +55,11 @@ export default function HomePage() {
               <p>Construis l&apos;horaire de ton équipe, suis les heures travaillées et le pointage de chacun - simple pour les employés, clair pour toi au moment de la paie.</p>
             </div>
             <div className="service-card">
+              <div className="badge b-5">▤</div>
+              <h3>Inventaire</h3>
+              <p>Un suivi de stock qui se met à jour avec tes ventes, pour ne plus jamais être pris au dépourvu.</p>
+            </div>
+            <div className="service-card">
               <div className="badge b-6">◈</div>
               <h3>Suivi des ventes</h3>
               <p>Un journal de ventes multi-sources (Wix, Moneris, comptant...) avec les totaux de la semaine en un coup d&apos;œil.</p>
