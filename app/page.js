@@ -50,22 +50,32 @@ export default function HomePage() {
               <p>Un espace privé pour toi et ton équipe, qui centralise l&apos;information au lieu de l&apos;éparpiller.</p>
             </div>
             <div className="service-card">
-              <div className="badge b-3">◷</div>
-              <h3>Planning &amp; horaire</h3>
-              <p>Un planning simple à mettre à jour, affiché où ton équipe en a besoin - même sur une tablette partagée.</p>
+              <div className="badge b-3">▥</div>
+              <h3>Planning</h3>
+              <p>Bâtis l&apos;horaire de ton équipe à l&apos;avance et publie-le seulement quand il est prêt - affiché où ton équipe en a besoin, même sur une tablette partagée.</p>
             </div>
             <div className="service-card">
-              <div className="badge b-4">✓</div>
-              <h3>Pointage</h3>
-              <p>Suivi des heures travaillées, simple pour les employés, clair pour toi au moment de la paie.</p>
+              <div className="badge b-4">◷</div>
+              <h3>Horaire &amp; pointage</h3>
+              <p>Suivi des heures travaillées et approbation de la feuille de temps, simple pour les employés, clair pour toi au moment de la paie.</p>
             </div>
             <div className="service-card">
               <div className="badge b-5">▤</div>
-              <h3>Inventaire &amp; ventes</h3>
+              <h3>Inventaire</h3>
               <p>Un suivi de stock qui se met à jour avec tes ventes, pour ne plus jamais être pris au dépourvu.</p>
             </div>
             <div className="service-card">
-              <div className="badge b-6">✦</div>
+              <div className="badge b-6">◈</div>
+              <h3>Suivi des ventes</h3>
+              <p>Un journal de ventes multi-sources (Wix, Moneris, comptant...) avec les totaux de la semaine en un coup d&apos;œil.</p>
+            </div>
+            <div className="service-card">
+              <div className="badge b-7">🌡️</div>
+              <h3>Températures</h3>
+              <p>Le registre de conformité MAPAQ pour tes frigos et congélateurs, rempli directement sur le téléphone de ton équipe.</p>
+            </div>
+            <div className="service-card">
+              <div className="badge b-8">✦</div>
               <h3>Et plus encore</h3>
               <p>D&apos;autres modules s&apos;ajoutent régulièrement à la plateforme, à mesure que de nouveaux besoins se présentent.</p>
             </div>

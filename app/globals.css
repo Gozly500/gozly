@@ -563,6 +563,8 @@ section{padding:80px 0;position:relative;}
 .b-5{background:linear-gradient(150deg,var(--pink),var(--purple));}
 
 .b-6{background:linear-gradient(150deg,var(--cyan),var(--orange));}
+.b-7{background:linear-gradient(150deg,var(--purple),var(--cyan));}
+.b-8{background:linear-gradient(150deg,var(--indigo),var(--pink));}
 
 .service-card h3{font-size:19px;margin:8px 0 10px;}
 
