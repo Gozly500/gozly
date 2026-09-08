@@ -96,24 +96,17 @@ export default function SubscribePage() {
               </div>
             </div>
             <div className="module-row">
-              <div className="badge b-2">▦</div>
-              <div className="module-row-text">
-                <h3>Dashboard sur mesure</h3>
-                <p>Un espace privé pour toi et ton équipe, qui centralise l&apos;information au lieu de l&apos;éparpiller.</p>
-              </div>
-            </div>
-            <div className="module-row">
               <div className="badge b-3">▥</div>
               <div className="module-row-text">
                 <h3>Planning</h3>
-                <p>Bâtis l&apos;horaire de ton équipe à l&apos;avance et publie-le seulement quand il est prêt - affiché où ton équipe en a besoin, même sur une tablette partagée.</p>
+                <p>Prépare les tâches et ce qu&apos;il y a à faire, jour par jour - une liste claire pour ton équipe, même plusieurs jours à l&apos;avance.</p>
               </div>
             </div>
             <div className="module-row">
               <div className="badge b-4">◷</div>
               <div className="module-row-text">
                 <h3>Horaire &amp; pointage</h3>
-                <p>Suivi des heures travaillées et approbation de la feuille de temps, simple pour les employés, clair pour toi au moment de la paie.</p>
+                <p>Construis l&apos;horaire de ton équipe, suis les heures travaillées et le pointage de chacun - simple pour les employés, clair pour toi au moment de la paie.</p>
               </div>
             </div>
             <div className="module-row">
@@ -135,13 +128,6 @@ export default function SubscribePage() {
               <div className="module-row-text">
                 <h3>Températures</h3>
                 <p>Le registre de conformité MAPAQ pour tes frigos et congélateurs, rempli directement sur le téléphone de ton équipe.</p>
-              </div>
-            </div>
-            <div className="module-row">
-              <div className="badge b-8">✦</div>
-              <div className="module-row-text">
-                <h3>Et plus encore</h3>
-                <p>D&apos;autres modules s&apos;ajoutent régulièrement à la plateforme, à mesure que de nouveaux besoins se présentent.</p>
               </div>
             </div>
           </div>
