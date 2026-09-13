@@ -136,6 +136,15 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     await supabase.from("messages").insert({ conversation_id: activeId, user_id: userId, contenu });
     chargerMessages(activeId);
     chargerConversations();
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    fetch("/api/notifications/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ conversationId: activeId, contenu }),
+    }).catch(() => {});
   }
 
   async function ouvrirConversationAvec(employeId) {

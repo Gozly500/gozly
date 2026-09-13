@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
+import NotificationsPush from "@/components/moi/NotificationsPush";
 
 export default function DiscussionEmploye() {
   const [conversations, setConversations] = useState([]);
@@ -114,6 +115,7 @@ export default function DiscussionEmploye() {
   return (
     <div className="moi-discussion">
       {erreur && <p className="settings-msg err" style={{ margin: "0 0 10px" }}>{erreur}</p>}
+      {vue === "liste" && <NotificationsPush />}
       <div className="chat-layout">
         <div className={`chat-conv-list${vue === "thread" ? " hidden-mobile" : ""}`}>
           <div className="chat-conv-list-head">

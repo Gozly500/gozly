@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
+import { notifierNouveauMessage } from "@/lib/pushServer";
 
 async function aAcces(service, employe, conversationId) {
   const { data: conversation } = await service
@@ -99,6 +100,13 @@ export async function POST(request) {
     console.error("Erreur envoi message employé:", error);
     return NextResponse.json({ error: "L'envoi a échoué." }, { status: 500 });
   }
+
+  notifierNouveauMessage(service, {
+    conversationId,
+    expediteurNom: employe.nom,
+    contenu: message.contenu,
+    exclureEmployeId: employe.id,
+  }).catch((err) => console.error("Erreur notification push:", err));
 
   return NextResponse.json({
     message: { id: message.id, contenu: message.contenu, createdAt: message.created_at, expediteurNom: employe.nom, deMoi: true },

@@ -1514,6 +1514,9 @@ input.planning-date-picker{
     border:none;border-top:1px solid rgba(255,255,255,0.15);color:#fff;
   }
 
+.moi-notifications-bar{padding:0 0 10px;}
+.moi-notifications-bar .admin-icon-btn{width:100%;}
+
 .moi-picker-list{max-height:60vh;overflow-y:auto;margin:0 -8px;}
 .moi-picker-row{
     display:flex;align-items:center;justify-content:space-between;gap:12px;
