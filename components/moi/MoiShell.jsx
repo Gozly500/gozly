@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
-import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature } from "@/components/icons/GozlyIcons";
+import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches } from "@/components/icons/GozlyIcons";
 
 const ONGLETS_PRINCIPAUX = [
   { id: "horaire", label: "Horaire", Icone: IconHoraire, href: "/moi/horaire" },
@@ -14,7 +14,7 @@ const ONGLETS_PRINCIPAUX = [
 // Pages secondaires, regroupées derrière le bouton "Menu" de la barre du
 // bas plutôt que d'avoir un onglet chacune.
 const ONGLETS_MENU = [
-  { id: "taches", label: "Tâches", icon: "✅", href: "/moi/taches", module: "planning" },
+  { id: "taches", label: "Tâches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
   { id: "temperature", label: "Températures", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
 ];
 
