@@ -243,6 +243,16 @@ export function IconCrayon(props) {
   );
 }
 
+export function IconMenu(props) {
+  return (
+    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <rect x="120" y="220" width="760" height="90" rx="45" />
+      <rect x="120" y="455" width="760" height="90" rx="45" />
+      <rect x="120" y="690" width="760" height="90" rx="45" />
+    </svg>
+  );
+}
+
 export function IconTemperature(props) {
   return (
     <svg viewBox="0 0 1182 1182" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
