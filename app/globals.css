@@ -949,6 +949,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 .integration-header .ih-arrow{transition:transform .2s ease;color:var(--text-dim);font-size:13px;}
 .integration-header.open .ih-arrow{transform:rotate(180deg);}
 .integration-body{padding:4px 20px 22px;border-top:1px solid rgba(255,255,255,0.1);margin-top:4px;}
+.integration-body .section-hint{margin-bottom:10px;}
 
 .avatar-upload{display:flex;align-items:center;gap:18px;margin-bottom:8px;}
 .avatar-preview{
