@@ -16,10 +16,65 @@ export default function IntegrationsSection() {
   const [msg, setMsg] = useState(null);
   const pollRef = useRef(null);
 
+  const [nethrisStatut, setNethrisStatut] = useState("chargement"); // "chargement" | "deconnecte" | "connecte"
+  const [nethrisBusy, setNethrisBusy] = useState(false);
+  const [nethrisMsg, setNethrisMsg] = useState(null);
+  const [nethrisForm, setNethrisForm] = useState({ codeEntreprise: "", codeUtilisateur: "", motDePasse: "" });
+
   useEffect(() => {
     charger();
+    chargerNethris();
     return () => clearInterval(pollRef.current);
   }, []);
+
+  async function chargerNethris() {
+    try {
+      const res = await fetch("/api/paie/nethris/statut", { headers: await authHeaders() });
+      const data = await res.json();
+      setNethrisStatut(data.connecte ? "connecte" : "deconnecte");
+    } catch {
+      setNethrisStatut("deconnecte");
+    }
+  }
+
+  async function handleConnecterNethris(e) {
+    e.preventDefault();
+    setNethrisBusy(true);
+    setNethrisMsg(null);
+
+    try {
+      const res = await fetch("/api/paie/nethris/connecter", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify(nethrisForm),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setNethrisMsg({ type: "err", text: data.error || "La connexion a échoué." });
+      } else {
+        setNethrisStatut("connecte");
+        setNethrisForm({ codeEntreprise: "", codeUtilisateur: "", motDePasse: "" });
+      }
+    } catch {
+      setNethrisMsg({ type: "err", text: "La connexion a échoué." });
+    }
+    setNethrisBusy(false);
+  }
+
+  async function handleDeconnecterNethris() {
+    setNethrisBusy(true);
+    setNethrisMsg(null);
+
+    try {
+      await fetch("/api/paie/nethris/deconnecter", { method: "POST", headers: await authHeaders() });
+      setNethrisStatut("deconnecte");
+      setNethrisMsg({ type: "ok", text: "Nethris est déconnecté." });
+    } catch {
+      setNethrisMsg({ type: "err", text: "La déconnexion a échoué." });
+    }
+    setNethrisBusy(false);
+  }
 
   async function charger() {
     try {
@@ -140,6 +195,75 @@ export default function IntegrationsSection() {
                 </button>
               </>
             )}
+          </div>
+        </div>
+
+        <div className="integration-item">
+          <div className="integration-header open">
+            <span className="ih-label">
+              Nethris — Paie
+              {nethrisStatut === "connecte" && (
+                <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
+                  <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} /> Connecté
+                </span>
+              )}
+            </span>
+          </div>
+
+          <div className="integration-body">
+            {nethrisStatut === "chargement" && <p className="section-hint">Vérification du statut...</p>}
+
+            {nethrisStatut === "deconnecte" && (
+              <form onSubmit={handleConnecterNethris}>
+                <p className="section-hint">
+                  Entre les identifiants de l'utilisateur de services créé dans ta Suite Internet Nethris
+                  (Administration → Ajout d'un utilisateur) pour connecter l'exportation de la feuille de temps.
+                </p>
+                <div className="field-row">
+                  <div className="field">
+                    <label>Code d'entreprise</label>
+                    <input
+                      type="text"
+                      value={nethrisForm.codeEntreprise}
+                      onChange={(e) => setNethrisForm((f) => ({ ...f, codeEntreprise: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="field">
+                    <label>Code d'utilisateur</label>
+                    <input
+                      type="text"
+                      value={nethrisForm.codeUtilisateur}
+                      onChange={(e) => setNethrisForm((f) => ({ ...f, codeUtilisateur: e.target.value }))}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Mot de passe</label>
+                  <input
+                    type="password"
+                    value={nethrisForm.motDePasse}
+                    onChange={(e) => setNethrisForm((f) => ({ ...f, motDePasse: e.target.value }))}
+                    required
+                  />
+                </div>
+                <button type="submit" className="submit-btn" disabled={nethrisBusy} style={{ marginTop: "10px" }}>
+                  {nethrisBusy ? "..." : "Connecter Nethris"}
+                </button>
+              </form>
+            )}
+
+            {nethrisStatut === "connecte" && (
+              <>
+                <p className="section-hint">Nethris est connecté.</p>
+                <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecterNethris} disabled={nethrisBusy}>
+                  {nethrisBusy ? "..." : "Déconnecter"}
+                </button>
+              </>
+            )}
+
+            {nethrisMsg && <p className={`settings-msg ${nethrisMsg.type}`}>{nethrisMsg.text}</p>}
           </div>
         </div>
       </div>
