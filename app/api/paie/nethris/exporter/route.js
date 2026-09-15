@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
+import { decrypt } from "@/lib/paieCrypto";
+import { nethrisLogin, nethrisPutFilePaie, nethrisLogout } from "@/lib/nethrisClient";
 
 // Agrège les heures pointées d'une semaine par employé (régulières jusqu'à
 // 40h, supplémentaires au-delà) - même logique que l'export CSV manuel côté
-// client, reprise ici pour le futur envoi automatique.
+// client ([FeuilleTempsSection.jsx](../../../../components/horaire/FeuilleTempsSection.jsx)).
 function agregerHeuresParEmploye(employes, pointages) {
   return employes
     .map((emp) => {
@@ -23,6 +25,35 @@ function agregerHeuresParEmploye(employes, pointages) {
       };
     })
     .filter((t) => t.heuresRegulieres + t.heuresSupplementaires > 0);
+}
+
+function csvEscape(value) {
+  const str = String(value ?? "");
+  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  return str;
+}
+
+// Même format que l'export CSV manuel : Numéro d'employé, Nom, Semaine du,
+// Code 1 (heures régulières), Code 43 (heures supplémentaires). Best-guess
+// en attendant que Nethris/le client confirme le gabarit exact attendu par
+// leur configuration de paie - voir project_nethris_export dans la mémoire.
+function construireCsv(totaux, weekStart) {
+  const semaineDu = weekStart.toLocaleDateString("fr-CA");
+  const header = [
+    "Numero d'employe",
+    "Nom de l'employe",
+    "Semaine du",
+    "Code 1 - Heures regulieres",
+    "Code 43 - Heures supplementaires",
+  ];
+  const rows = totaux.map((t) => [
+    t.numeroEmploye,
+    t.nom,
+    semaineDu,
+    t.heuresRegulieres.toFixed(2),
+    t.heuresSupplementaires.toFixed(2),
+  ]);
+  return [header, ...rows].map((r) => r.map(csvEscape).join(",")).join("\n");
 }
 
 export async function POST(request) {
@@ -78,21 +109,37 @@ export async function POST(request) {
   ]);
 
   const totaux = agregerHeuresParEmploye(employes || [], pointages || []);
+  if (totaux.length === 0) {
+    return NextResponse.json({ error: "Aucune heure à exporter pour cette semaine." }, { status: 400 });
+  }
 
-  // Les identifiants de connexion (connexion.code_entreprise,
-  // connexion.code_utilisateur, decrypt(connexion.mot_de_passe_chiffre) -
-  // voir lib/paieCrypto.js) sont prêts, mais l'appel réel à l'API Nethris
-  // (endpoint + format de payload exacts pour soumettre `totaux`) n'est pas
-  // encore documenté de notre côté - voir dev.nethris.com.
-  // TODO: une fois la doc obtenue, remplacer ce bloc par le vrai fetch()
-  // vers https://api.nethris.com/HC/Payroll/...
+  const csv = construireCsv(totaux, debut);
+  const fileContent = Buffer.from(csv, "utf8").toString("base64");
+  const fileName = `nethris-heures-${debut.toISOString().slice(0, 10)}.csv`;
 
-  return NextResponse.json(
-    {
-      error:
-        "L'envoi automatique vers Nethris n'est pas encore branché - utilise l'export CSV en attendant.",
-      apercu: totaux,
-    },
-    { status: 501 }
-  );
+  let sessionId;
+  try {
+    sessionId = await nethrisLogin({
+      businessCode: connexion.code_entreprise,
+      userCode: connexion.code_utilisateur,
+      userPassword: decrypt(connexion.mot_de_passe_chiffre),
+    });
+  } catch (err) {
+    console.error("Erreur connexion Nethris:", err.message);
+    await service.from("paie_connexions").update({ statut: "erreur" }).eq("id", connexion.id);
+    return NextResponse.json({ error: `Connexion à Nethris refusée : ${err.message}` }, { status: 502 });
+  }
+
+  try {
+    await nethrisPutFilePaie({ sessionId, fileName, fileContent });
+  } catch (err) {
+    console.error("Erreur envoi fichier Nethris:", err.message);
+    return NextResponse.json({ error: `L'envoi du fichier a échoué : ${err.message}` }, { status: 502 });
+  } finally {
+    await nethrisLogout(sessionId);
+  }
+
+  await service.from("paie_connexions").update({ statut: "verifie" }).eq("id", connexion.id);
+
+  return NextResponse.json({ envoye: true, apercu: totaux });
 }

@@ -66,6 +66,8 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [saving, setSaving] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [nethrisConnecte, setNethrisConnecte] = useState(false);
+  const [envoiNethris, setEnvoiNethris] = useState(false);
+  const [nethrisMsg, setNethrisMsg] = useState(null);
   const [mesPermissions, setMesPermissions] = useState([]);
   const [autoVisible, setAutoVisible] = useState(false);
   const [semainesApprouvees, setSemainesApprouvees] = useState([]);
@@ -300,6 +302,34 @@ export default function FeuilleTempsSection({ entrepriseId }) {
     downloadCsv(`nethris-heures-${weekStart.toISOString().slice(0, 10)}.csv`, [header, ...rows]);
   }
 
+  // Une fois Nethris connecté (Entreprise > Intégrations), l'envoi se fait
+  // directement via l'API plutôt que par téléchargement manuel du CSV.
+  async function handleEnvoyerNethris() {
+    setExportOpen(false);
+    setEnvoiNethris(true);
+    setNethrisMsg(null);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const res = await fetch("/api/paie/nethris/exporter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ weekStart: weekStart.toISOString() }),
+      });
+      const data = await res.json();
+      setNethrisMsg(
+        res.ok
+          ? { type: "ok", text: "Les heures ont été envoyées à Nethris." }
+          : { type: "err", text: data.error || "L'envoi a échoué." }
+      );
+    } catch {
+      setNethrisMsg({ type: "err", text: "L'envoi a échoué." });
+    }
+    setEnvoiNethris(false);
+  }
+
   const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${addDays(
     weekStart,
     6
@@ -346,9 +376,9 @@ export default function FeuilleTempsSection({ entrepriseId }) {
             <button
               className="submit-btn"
               onClick={() => setExportOpen((v) => !v)}
-              disabled={lignes.length === 0}
+              disabled={lignes.length === 0 || envoiNethris}
             >
-              ⬇ Exporter ▾
+              {envoiNethris ? "Envoi..." : "⬇ Exporter ▾"}
             </button>
             {exportOpen && (
               <div className="account-dropdown open">
@@ -358,14 +388,19 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                     type="button"
                     className="menu-item"
                     disabled={!s.disponible}
-                    onClick={s.id === "nethris" ? handleExportNethris : undefined}
+                    onClick={s.id === "nethris" ? (nethrisConnecte ? handleEnvoyerNethris : handleExportNethris) : undefined}
                   >
-                    {s.label}
+                    {s.id === "nethris" && nethrisConnecte ? "Envoyer à Nethris" : s.label}
                     {!s.disponible && " (bientôt disponible)"}
                     {s.id === "nethris" && s.disponible && nethrisConnecte && <IconIntegration className="gozly-icon" />}
                   </button>
                 ))}
               </div>
+            )}
+            {nethrisMsg && (
+              <p className={`settings-msg ${nethrisMsg.type}`} style={{ margin: "8px 0 0" }}>
+                {nethrisMsg.text}
+              </p>
             )}
           </div>
         )}
