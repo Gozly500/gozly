@@ -35,7 +35,7 @@ export default function WidgetCard({
         )}
       </div>
 
-      {children}
+      {editMode ? <div style={{ pointerEvents: "none" }}>{children}</div> : children}
     </div>
   );
 }
