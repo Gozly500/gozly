@@ -295,7 +295,7 @@ export default function IntegrationsSection() {
 
               {ouverte && (
                 <div className="integration-body">
-                  <div className="integration-list" style={{ marginTop: 0 }}>
+                  <div className="integration-list" style={{ marginTop: "14px" }}>
                     {cat.services.map((service) => renderService(service))}
                   </div>
                 </div>
