@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/nettoyer-demandes",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}

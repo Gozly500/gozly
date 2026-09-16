@@ -28,6 +28,12 @@ const OPTIONS_VISIBILITE_FEUILLE_TEMPS = [
   { id: "automatique", label: "Automatique (toujours visible, aucune approbation requise)" },
 ];
 
+const OPTIONS_RETENTION_DEMANDES = [
+  { id: "3", label: "3 mois" },
+  { id: "6", label: "6 mois" },
+  { id: "12", label: "12 mois" },
+];
+
 export default function PersonnalisationSection({ entrepriseId }) {
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
@@ -40,6 +46,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [pushWixOpen, setPushWixOpen] = useState(false);
   const [visibiliteFeuilleTemps, setVisibiliteFeuilleTemps] = useState("manuelle");
   const [visibiliteFeuilleTempsOpen, setVisibiliteFeuilleTempsOpen] = useState(false);
+  const [retentionDemandes, setRetentionDemandes] = useState("6");
+  const [retentionDemandesOpen, setRetentionDemandesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -55,7 +63,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation"
+          "premier_jour_semaine, auto_approuver_echanges, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -66,6 +74,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setPushWix(entrepriseData?.sync_produits_auto ? "automatique" : "manuel");
     setCalculPointage(entrepriseData?.pointage_calcul_mode || "reel");
     setVisibiliteFeuilleTemps(entrepriseData?.feuille_temps_visible_sans_approbation ? "automatique" : "manuelle");
+    setRetentionDemandes(String(entrepriseData?.demandes_retention_mois || 6));
     setLoading(false);
   }
 
@@ -129,6 +138,21 @@ export default function PersonnalisationSection({ entrepriseId }) {
     const { error } = await supabase
       .from("entreprises")
       .update({ feuille_temps_visible_sans_approbation: value === "automatique" })
+      .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+  }
+
+  async function handleChangeRetentionDemandes(value) {
+    setRetentionDemandesOpen(false);
+    setRetentionDemandes(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ demandes_retention_mois: Number(value) })
       .eq("id", entrepriseId);
 
     setSaving(false);
@@ -261,6 +285,35 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 <div className="forfait-select-options open">
                   {OPTIONS_VISIBILITE_FEUILLE_TEMPS.map((o) => (
                     <div key={o.id} className="forfait-option" onClick={() => handleChangeVisibiliteFeuilleTemps(o.id)}>
+                      <div className="fo-label">{o.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <p className="section-hint" style={{ marginTop: "18px" }}>
+            Combien de temps garder une demande (congé ou échange de quart) une fois qu'elle a été approuvée
+            ou refusée, avant qu'elle soit supprimée automatiquement ? (Une demande jamais traitée après 2
+            semaines est toujours supprimée automatiquement, peu importe ce réglage.)
+          </p>
+          <div className="field" style={{ maxWidth: "220px" }}>
+            <label>Conservation des demandes traitées</label>
+            <div className="forfait-select-wrap">
+              <div
+                className={`forfait-select-trigger${retentionDemandesOpen ? " open" : ""}`}
+                onClick={() => !saving && setRetentionDemandesOpen((v) => !v)}
+              >
+                <div className="fs-label">
+                  {OPTIONS_RETENTION_DEMANDES.find((o) => o.id === retentionDemandes)?.label}
+                </div>
+                <span className="fs-arrow">▾</span>
+              </div>
+              {retentionDemandesOpen && (
+                <div className="forfait-select-options open">
+                  {OPTIONS_RETENTION_DEMANDES.map((o) => (
+                    <div key={o.id} className="forfait-option" onClick={() => handleChangeRetentionDemandes(o.id)}>
                       <div className="fo-label">{o.label}</div>
                     </div>
                   ))}
