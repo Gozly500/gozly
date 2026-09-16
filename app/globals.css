@@ -31,6 +31,13 @@
     --purple: #232329;
     --glow: rgba(91,124,250,0.22);
   }
+[data-theme="sunset"]{
+    --navy: #2b0f12;
+    --indigo: #6b1f1a;
+    --violet: #f2925a;
+    --purple: #c1443f;
+    --glow: rgba(242,146,90,0.35);
+  }
 
 *{margin:0;padding:0;box-sizing:border-box;}
 
