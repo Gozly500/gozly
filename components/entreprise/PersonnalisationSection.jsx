@@ -48,6 +48,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [visibiliteFeuilleTempsOpen, setVisibiliteFeuilleTempsOpen] = useState(false);
   const [retentionDemandes, setRetentionDemandes] = useState("6");
   const [retentionDemandesOpen, setRetentionDemandesOpen] = useState(false);
+  const [sectionsOuvertes, setSectionsOuvertes] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -159,6 +160,10 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
   }
 
+  function toggleSection(id) {
+    setSectionsOuvertes((cur) => ({ ...cur, [id]: !cur[id] }));
+  }
+
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
@@ -178,10 +183,19 @@ export default function PersonnalisationSection({ entrepriseId }) {
           Active un module (ex: Horaire &amp; Pointage) pour voir apparaître ici ses options de personnalisation.
         </p>
       ) : (
-        <>
+        <div className="integration-list">
       {horaireActif && (
-        <div className="settings-section">
-          <h3>Horaire &amp; Pointage</h3>
+        <div className="integration-item">
+          <button
+            type="button"
+            className={`integration-header${sectionsOuvertes.horaire ? " open" : ""}`}
+            onClick={() => toggleSection("horaire")}
+          >
+            <span className="ih-label">Horaire &amp; Pointage</span>
+            <span className="ih-arrow">▾</span>
+          </button>
+          {sectionsOuvertes.horaire && (
+          <div className="integration-body">
           <p className="section-hint">Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps.</p>
           <div className="field" style={{ maxWidth: "220px" }}>
             <label>Premier jour de la semaine</label>
@@ -321,12 +335,23 @@ export default function PersonnalisationSection({ entrepriseId }) {
               )}
             </div>
           </div>
+          </div>
+          )}
         </div>
       )}
 
       {inventaireActif && (
-        <div className="settings-section">
-          <h3>Inventaire</h3>
+        <div className="integration-item">
+          <button
+            type="button"
+            className={`integration-header${sectionsOuvertes.inventaire ? " open" : ""}`}
+            onClick={() => toggleSection("inventaire")}
+          >
+            <span className="ih-label">Inventaire</span>
+            <span className="ih-arrow">▾</span>
+          </button>
+          {sectionsOuvertes.inventaire && (
+          <div className="integration-body">
           <p className="section-hint">
             Une fois Wix connecté (Entreprise → Intégrations), faut-il pousser tes produits Gozly vers Wix
             automatiquement à chaque ajout/modification/suppression, ou seulement quand tu cliques
@@ -353,9 +378,11 @@ export default function PersonnalisationSection({ entrepriseId }) {
               )}
             </div>
           </div>
+          </div>
+          )}
         </div>
       )}
-        </>
+        </div>
       )}
     </div>
   );
