@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
-import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches, IconTableauDeBord, IconParametres } from "@/components/icons/GozlyIcons";
+import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches, IconParametres } from "@/components/icons/GozlyIcons";
 import { DEFAULT_THEME, THEME_STORAGE_KEY_MOI, isValidTheme } from "@/lib/themes";
 
+// L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
+// en haut à gauche (voir le <header> plus bas).
 const ONGLETS_PRINCIPAUX = [
-  { id: "accueil", label: "Accueil", Icone: IconTableauDeBord, href: "/moi/accueil" },
   { id: "horaire", label: "Horaire", Icone: IconHoraire, href: "/moi/horaire" },
   { id: "demandes", label: "Demandes", Icone: IconDemande, href: "/moi/demandes" },
   { id: "discussion", label: "Discussion", Icone: IconDiscussion, href: "/moi/discussion" },
@@ -18,7 +19,6 @@ const ONGLETS_PRINCIPAUX = [
 const ONGLETS_MENU = [
   { id: "taches", label: "Tâches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
   { id: "temperature", label: "Températures", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
-  { id: "parametres", label: "Paramètres", Icone: IconParametres, href: "/moi/parametres" },
 ];
 
 export default function MoiShell({ children }) {
@@ -88,13 +88,23 @@ export default function MoiShell({ children }) {
   return (
     <div className="moi-shell">
       <header className="moi-header">
-        <div>
+        <button type="button" className="moi-header-identite" onClick={() => router.push("/moi/accueil")}>
           <div className="moi-header-nom">{moi?.employe?.nom}</div>
           <div className="moi-header-entreprise">{moi?.entreprise?.nom}</div>
-        </div>
-        <button type="button" className="admin-icon-btn" onClick={handleLogout}>
-          Déconnexion
         </button>
+        <div className="moi-header-actions">
+          <button
+            type="button"
+            className="admin-icon-btn moi-header-icon-btn"
+            onClick={() => router.push("/moi/parametres")}
+            aria-label="Paramètres"
+          >
+            <IconParametres className="gozly-icon" />
+          </button>
+          <button type="button" className="admin-icon-btn" onClick={handleLogout}>
+            Déconnexion
+          </button>
+        </div>
       </header>
 
       <main className={`moi-main${estDiscussion ? " moi-main-chat" : ""}`}>{children}</main>
