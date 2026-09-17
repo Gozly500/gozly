@@ -20,54 +20,29 @@ export default function HomePage() {
             <Link href="/contact" className="btn-pill-dark">
               Démarrer un projet →
             </Link>
-            <a href="#services" className="btn-pill-glass">
+            <a href="#modules" className="btn-pill-glass">
               Voir les modules
             </a>
           </div>
         </div>
       </header>
 
-      <section id="services">
+      <section id="modules" className="module-promo">
         <div className="wrap">
-          <div className="sec-head">
-            <div className="eyebrow">Ce qu&apos;on construit</div>
-            <h2>Votre système, votre contrôle.</h2>
-            <p>
-              Chaque module s&apos;ajoute à ton propre tableau de bord - tu ne payes que pour ce dont
-              tu as besoin, quand tu en as besoin.
-            </p>
-          </div>
-          <div className="services">
-            <div className="service-card">
-              <div className="badge b-1">◆</div>
-              <h3>Site vitrine</h3>
-              <p>Un site rapide, moderne et à ton image pour présenter ton entreprise et convertir tes visiteurs.</p>
-              <span className="wix-tag">Propulsé par Wix</span>
+          <div className="module-promo-wrap">
+            <div className="module-promo-img">
+              <img src="/marketing/planification.svg" alt="Aperçu du module Planning de Gozly" />
             </div>
-            <div className="service-card">
-              <div className="badge b-3">▥</div>
-              <h3>Planning</h3>
-              <p>Prépare les tâches et ce qu&apos;il y a à faire, jour par jour - une liste claire pour ton équipe, même plusieurs jours à l&apos;avance.</p>
-            </div>
-            <div className="service-card">
-              <div className="badge b-4">◷</div>
-              <h3>Horaire &amp; pointage</h3>
-              <p>Construis l&apos;horaire de ton équipe, suis les heures travaillées et le pointage de chacun - simple pour les employés, clair pour toi au moment de la paie.</p>
-            </div>
-            <div className="service-card">
-              <div className="badge b-5">▤</div>
-              <h3>Inventaire</h3>
-              <p>Un suivi de stock qui se met à jour avec tes ventes, pour ne plus jamais être pris au dépourvu.</p>
-            </div>
-            <div className="service-card">
-              <div className="badge b-6">◈</div>
-              <h3>Suivi des ventes</h3>
-              <p>Un journal de ventes multi-sources (Wix, Moneris, comptant...) avec les totaux de la semaine en un coup d&apos;œil.</p>
-            </div>
-            <div className="service-card">
-              <div className="badge b-8">✦</div>
-              <h3>Et plus encore</h3>
-              <p>D&apos;autres modules s&apos;ajoutent régulièrement à la plateforme, à mesure que de nouveaux besoins se présentent.</p>
+            <div className="module-promo-text">
+              <div className="eyebrow">Module Planning</div>
+              <h2>Le planning de ton équipe, clair pour tout le monde</h2>
+              <p>
+                Prépare les tâches jour par jour, assigne-les à ton équipe et garde une vue claire sur ce
+                qu&apos;il y a à faire - même plusieurs jours à l&apos;avance.
+              </p>
+              <Link href="/s-abonner" className="btn-pill-glass">
+                Voir les forfaits →
+              </Link>
             </div>
           </div>
         </div>
@@ -126,6 +101,27 @@ export default function HomePage() {
                   </g>
                 </g>
               </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="module-promo">
+        <div className="wrap">
+          <div className="module-promo-wrap reverse">
+            <div className="module-promo-img">
+              <img src="/marketing/horaire.svg" alt="Aperçu du module Horaire & Pointage de Gozly" />
+            </div>
+            <div className="module-promo-text">
+              <div className="eyebrow">Module Horaire &amp; pointage</div>
+              <h2>L&apos;horaire et le pointage, enfin simples</h2>
+              <p>
+                Construis l&apos;horaire de ton équipe, suis les heures travaillées et le pointage de
+                chacun - simple pour les employés, clair pour toi au moment de la paie.
+              </p>
+              <Link href="/s-abonner" className="btn-pill-glass">
+                Voir les forfaits →
+              </Link>
             </div>
           </div>
         </div>
@@ -193,6 +189,27 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="module-promo">
+        <div className="wrap">
+          <div className="module-promo-wrap">
+            <div className="module-promo-img">
+              <img src="/marketing/inventaire.svg" alt="Aperçu du module Inventaire de Gozly" />
+            </div>
+            <div className="module-promo-text">
+              <div className="eyebrow">Module Inventaire</div>
+              <h2>Ton inventaire, toujours à jour</h2>
+              <p>
+                Un suivi de stock qui se met à jour avec tes ventes, pour ne plus jamais être pris au
+                dépourvu - reçois une alerte avant la rupture.
+              </p>
+              <Link href="/s-abonner" className="btn-pill-glass">
+                Voir les forfaits →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="promo">
         <div className="wrap promo-wrap">
           <div className="promo-big top">1 mois!?</div>
@@ -221,6 +238,27 @@ export default function HomePage() {
             </div>
           </div>
           <div className="promo-big bottom">Gratuit</div>
+        </div>
+      </section>
+
+      <section className="module-promo">
+        <div className="wrap">
+          <div className="module-promo-wrap reverse">
+            <div className="module-promo-img">
+              <img src="/marketing/ventes.svg" alt="Aperçu du module Suivi des ventes de Gozly" />
+            </div>
+            <div className="module-promo-text">
+              <div className="eyebrow">Module Suivi des ventes</div>
+              <h2>Toutes tes ventes, un seul endroit</h2>
+              <p>
+                Un journal de ventes multi-sources (Wix, Moneris, comptant...) avec les totaux de la
+                semaine en un coup d&apos;œil.
+              </p>
+              <Link href="/s-abonner" className="btn-pill-glass">
+                Voir les forfaits →
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
