@@ -3,6 +3,7 @@ import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
+import ParallaxSection from "@/components/ParallaxSection";
 
 export default function HomePage() {
   return (
@@ -27,9 +28,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <section id="modules" className="module-showcase">
-        <img src="/marketing/planification.png" alt="Aperçu du module Planning de Gozly" />
-      </section>
+      <ParallaxSection id="modules" src="/marketing/planification.png" alt="Aperçu du module Planning de Gozly" />
 
       <section id="process">
         <div className="wrap">
@@ -89,9 +88,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="module-showcase">
-        <img src="/marketing/horaire.png" alt="Aperçu du module Horaire & Pointage de Gozly" />
-      </section>
+      <ParallaxSection src="/marketing/horaire.png" alt="Aperçu du module Horaire & Pointage de Gozly" />
 
       <section id="pricing">
         <div className="wrap">
@@ -156,9 +153,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="module-showcase">
-        <img src="/marketing/inventaire.png" alt="Aperçu du module Inventaire de Gozly" />
-      </section>
+      <ParallaxSection src="/marketing/inventaire.png" alt="Aperçu du module Inventaire de Gozly" />
 
       <section className="promo">
         <div className="wrap promo-wrap">
@@ -191,9 +186,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="module-showcase">
-        <img src="/marketing/ventes.png" alt="Aperçu du module Suivi des ventes de Gozly" />
-      </section>
+      <ParallaxSection src="/marketing/ventes.png" alt="Aperçu du module Suivi des ventes de Gozly" />
 
       <section id="contact-cta">
         <div className="wrap">
