@@ -1505,7 +1505,9 @@ input.planning-date-picker{
 .moi-loading{
     min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
     overflow:hidden;
+    opacity:1;transition:opacity .4s ease;
   }
+.moi-loading-sortie{opacity:0;}
 /* Rogne précisément 150px en haut et 150px en bas du canevas source
    (1080x1920) - le rectangle visible ci-dessous fait donc 1080x1620
    (ratio 2:3), contenu dans l'écran (jamais plus grand que la largeur
@@ -1532,7 +1534,8 @@ input.planning-date-picker{
 .moi-connexion .field{text-align:left;margin:22px 0;}
 .moi-connexion input{width:100%;text-align:center;font-size:20px;letter-spacing:.12em;text-transform:uppercase;}
 
-.moi-shell{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;}
+.moi-shell{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;animation:moi-fade-in .4s ease;}
+@keyframes moi-fade-in{from{opacity:0;}to{opacity:1;}}
 .moi-header{
     display:flex;align-items:center;justify-content:space-between;gap:14px;
     padding:18px 20px;background:color-mix(in srgb, var(--navy) 32%, rgba(255,255,255,0.05));
