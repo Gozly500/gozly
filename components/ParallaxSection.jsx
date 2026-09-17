@@ -24,7 +24,7 @@ export default function ParallaxSection({ id, src, alt }) {
       const rect = section.getBoundingClientRect();
       const vh = window.innerHeight;
       const offset = (rect.top - vh / 2) * 0.18;
-      img.style.transform = `translate(-50%, calc(-50% + ${offset}px))`;
+      img.style.transform = `translateY(calc(-50% + ${offset}px))`;
       ticking = false;
     }
 
