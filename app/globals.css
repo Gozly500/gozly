@@ -1506,11 +1506,22 @@ input.planning-date-picker{
     min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
     overflow:hidden;
   }
-/* Plein écran, avec un léger zoom pour "ronger" le cadre vide en haut et
-   en bas du fichier source (~50px) - preserveAspectRatio "slice" côté
-   lottie (voir MoiChargement.jsx) fait le remplissage complet, le
-   scale() ici resserre le cadrage. */
-.moi-loading-lottie{width:100vw;height:100vh;height:100dvh;transform:scale(1.14);}
+/* Rogne précisément 70px en haut et 70px en bas du canevas source
+   (1080x1920) - le rectangle visible ci-dessous fait donc 1080x1780
+   (ratio ~0.607, plus du tout 9:16), contenu dans l'écran (jamais plus
+   grand que la largeur ou la hauteur dispo, quitte à être plus petit -
+   pas besoin de forcer un plein écran qui déformerait le cadrage). */
+.moi-loading-lottie-wrap{
+    width:min(100vw, 60.68dvh);
+    aspect-ratio:1080/1780;
+    overflow:hidden;
+    position:relative;
+  }
+.moi-loading-lottie{
+    position:absolute;
+    left:0;top:-3.933%;
+    width:100%;height:107.865%;
+  }
 .moi-loading-lottie svg{width:100%;height:100%;}
 
 .moi-connexion{

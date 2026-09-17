@@ -24,7 +24,6 @@ export default function MoiChargement({ onTermine }) {
         loop: false,
         autoplay: true,
         path: "/animations/moi-ouverture.json",
-        rendererSettings: { preserveAspectRatio: "xMidYMid slice" },
       });
       anim.addEventListener("complete", () => onTermine?.());
     });
@@ -40,7 +39,9 @@ export default function MoiChargement({ onTermine }) {
 
   return (
     <div className="moi-loading">
-      <div ref={lottieRef} className="moi-loading-lottie"></div>
+      <div className="moi-loading-lottie-wrap">
+        <div ref={lottieRef} className="moi-loading-lottie"></div>
+      </div>
     </div>
   );
 }
