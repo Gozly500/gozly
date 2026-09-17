@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
 import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches, IconParametres } from "@/components/icons/GozlyIcons";
-import { DEFAULT_THEME, THEME_STORAGE_KEY_MOI, isValidTheme } from "@/lib/themes";
 import MoiChargement from "@/components/moi/MoiChargement";
 
 // L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
@@ -65,21 +64,6 @@ export default function MoiShell({ children }) {
       setChecking(false);
     });
   }, [router]);
-
-  // Thème choisi dans Paramètres (voir components/moi/ParametresEmploye.jsx),
-  // gardé en localStorage sur l'appareil - pas de compte Supabase Auth côté
-  // employé pour le persister en base.
-  useEffect(() => {
-    let theme = DEFAULT_THEME;
-    try {
-      const cached = window.localStorage.getItem(THEME_STORAGE_KEY_MOI);
-      if (isValidTheme(cached)) theme = cached;
-    } catch {}
-    document.documentElement.dataset.theme = theme;
-    return () => {
-      delete document.documentElement.dataset.theme;
-    };
-  }, []);
 
   async function handleLogout() {
     await employeFetch("/api/employe-app/deconnexion", { method: "POST" });

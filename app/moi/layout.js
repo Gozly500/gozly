@@ -1,3 +1,5 @@
+import MoiThemeAppliqueur from "@/components/moi/MoiThemeAppliqueur";
+
 export const metadata = {
   title: "Gozly Équipe",
   manifest: "/manifest.json",
@@ -10,5 +12,10 @@ export const viewport = {
 };
 
 export default function MoiLayout({ children }) {
-  return <div className="page page-default moi-page">{children}</div>;
+  return (
+    <div className="page moi-page">
+      <MoiThemeAppliqueur />
+      {children}
+    </div>
+  );
 }

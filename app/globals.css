@@ -1500,8 +1500,17 @@ input.planning-date-picker{
 /* min-height:100vh d'abord (support universel), puis 100dvh par-dessus
    quand le navigateur le comprend - sur mobile, 100vh compte la zone
    cachée par la barre d'adresse/le clavier, ce qui poussait la barre
-   d'onglets et le champ de saisie du chat hors de l'écran visible. */
-.moi-page{min-height:100vh;min-height:100dvh;}
+   d'onglets et le champ de saisie du chat hors de l'écran visible.
+   Dégradé de fond dupliqué de .page-default plutôt que d'utiliser cette
+   classe : .page-default fige indigo/violet/purple/glow en bleu pour le
+   site public (vitrine), ce qui empêchait les thèmes de /moi de changer
+   quoi que ce soit à part le tout premier point du dégradé (--navy). */
+.moi-page{
+    min-height:100vh;min-height:100dvh;
+    background:
+      radial-gradient(ellipse 900px 700px at 75% 60%, var(--glow), transparent 60%),
+      linear-gradient(135deg, var(--navy) 0%, var(--indigo) 45%, var(--purple) 100%);
+  }
 .moi-loading{
     min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
     overflow:hidden;
