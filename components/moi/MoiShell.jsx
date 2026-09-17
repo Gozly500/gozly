@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
 import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches, IconParametres } from "@/components/icons/GozlyIcons";
 import { DEFAULT_THEME, THEME_STORAGE_KEY_MOI, isValidTheme } from "@/lib/themes";
+import MoiChargement from "@/components/moi/MoiChargement";
 
 // L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
 // en haut à gauche (voir le <header> plus bas).
@@ -21,12 +22,29 @@ const ONGLETS_MENU = [
   { id: "temperature", label: "Températures", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
 ];
 
+// MoiShell remonte à chaque changement de page (chaque route sous /moi a
+// son propre page.js qui l'instancie) - l'animation d'ouverture ne doit
+// jouer qu'une fois par session, pas à chaque changement d'onglet.
+const CLE_SPLASH_VU = "gozly_moi_splash_vu";
+
 export default function MoiShell({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [checking, setChecking] = useState(true);
   const [moi, setMoi] = useState(null);
   const [menuOuvert, setMenuOuvert] = useState(false);
+  // Démarre à false des deux côtés (serveur et client) pour éviter un
+  // mismatch d'hydratation - sessionStorage n'existe pas côté serveur.
+  const [afficherSplash, setAfficherSplash] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!window.sessionStorage.getItem(CLE_SPLASH_VU)) {
+        window.sessionStorage.setItem(CLE_SPLASH_VU, "1");
+        setAfficherSplash(true);
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     const token = getEmployeToken();
@@ -68,7 +86,9 @@ export default function MoiShell({ children }) {
   }
 
   if (checking) {
-    return (
+    return afficherSplash ? (
+      <MoiChargement />
+    ) : (
       <div className="moi-loading">
         <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
       </div>
