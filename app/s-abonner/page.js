@@ -68,6 +68,7 @@ export default function SubscribePage() {
               </div>
               <ul>
                 <li>Modules illimités</li>
+                <li>Module personnalisé sur demande</li>
                 <li>Assistance prioritaire</li>
                 <li>Mises à jour avancées</li>
               </ul>
