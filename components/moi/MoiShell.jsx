@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
-import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches } from "@/components/icons/GozlyIcons";
+import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches, IconTableauDeBord, IconParametres } from "@/components/icons/GozlyIcons";
+import { DEFAULT_THEME, THEME_STORAGE_KEY_MOI, isValidTheme } from "@/lib/themes";
 
 const ONGLETS_PRINCIPAUX = [
+  { id: "accueil", label: "Accueil", Icone: IconTableauDeBord, href: "/moi/accueil" },
   { id: "horaire", label: "Horaire", Icone: IconHoraire, href: "/moi/horaire" },
   { id: "demandes", label: "Demandes", Icone: IconDemande, href: "/moi/demandes" },
   { id: "discussion", label: "Discussion", Icone: IconDiscussion, href: "/moi/discussion" },
@@ -16,6 +18,7 @@ const ONGLETS_PRINCIPAUX = [
 const ONGLETS_MENU = [
   { id: "taches", label: "Tâches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
   { id: "temperature", label: "Températures", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
+  { id: "parametres", label: "Paramètres", Icone: IconParametres, href: "/moi/parametres" },
 ];
 
 export default function MoiShell({ children }) {
@@ -42,6 +45,21 @@ export default function MoiShell({ children }) {
       setChecking(false);
     });
   }, [router]);
+
+  // Thème choisi dans Paramètres (voir components/moi/ParametresEmploye.jsx),
+  // gardé en localStorage sur l'appareil - pas de compte Supabase Auth côté
+  // employé pour le persister en base.
+  useEffect(() => {
+    let theme = DEFAULT_THEME;
+    try {
+      const cached = window.localStorage.getItem(THEME_STORAGE_KEY_MOI);
+      if (isValidTheme(cached)) theme = cached;
+    } catch {}
+    document.documentElement.dataset.theme = theme;
+    return () => {
+      delete document.documentElement.dataset.theme;
+    };
+  }, []);
 
   async function handleLogout() {
     await employeFetch("/api/employe-app/deconnexion", { method: "POST" });

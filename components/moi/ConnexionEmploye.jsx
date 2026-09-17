@@ -51,7 +51,7 @@ export default function ConnexionEmploye() {
       }
 
       setEmployeToken(data.token);
-      router.push("/moi/horaire");
+      router.push("/moi/accueil");
     } catch {
       setMessage({ type: "err", text: "Connexion impossible." });
       setNip("");

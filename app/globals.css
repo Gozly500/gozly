@@ -13,8 +13,9 @@
     --glow: rgba(122,63,224,0.4);
   }
 
-/* Thèmes du tableau de bord (Paramètres du compte > Apparence) - le
-   [data-theme] est posé sur <html> uniquement dans app/dashboard/layout.js,
+/* Thèmes du tableau de bord (Paramètres du compte > Apparence) et de l'app
+   employé (/moi > Paramètres) - le [data-theme] est posé sur <html> par
+   app/dashboard/layout.js et components/moi/MoiShell.jsx respectivement,
    donc le site public (marketing, /parametres) garde toujours le dégradé
    Gozly par défaut ci-dessus. */
 [data-theme="vert"]{
@@ -1531,6 +1532,16 @@ input.planning-date-picker{
 .moi-tab-icon{font-size:19px;display:flex;}
 .moi-tab.active{color:#fff;}
 .moi-tab.disabled{opacity:.4;}
+
+.moi-accueil-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px;}
+.moi-accueil-card{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+    border-radius:16px;padding:22px 12px;color:var(--text);font-size:13.5px;font-weight:600;text-align:center;
+  }
+.moi-accueil-card:active{background:rgba(255,255,255,0.1);}
+.moi-accueil-card-icon{display:flex;}
+.moi-accueil-card-icon .gozly-icon{width:26px;height:26px;}
 
 .moi-week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
 .moi-week-label{font-weight:600;font-size:14px;text-transform:capitalize;}
