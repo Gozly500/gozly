@@ -1564,6 +1564,15 @@ input.planning-date-picker{
 .moi-tab.active{color:#fff;}
 .moi-tab.disabled{opacity:.4;}
 
+.pointage-mobile-bloc{
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);
+    border-radius:16px;padding:18px;margin-top:18px;
+  }
+.pointage-mobile-bloc h3{margin:0 0 6px;font-size:15.5px;}
+.pointage-mobile-bloc .panel-hint{margin-bottom:12px;}
+.pointage-mobile-bloc .emplacement-select-wrap{margin-bottom:12px;}
+.pointage-mobile-bloc.pointage-success{align-items:center;padding:26px 18px;}
+
 .moi-accueil-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px;}
 .moi-accueil-card{
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;

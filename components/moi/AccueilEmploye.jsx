@@ -11,6 +11,7 @@ import {
   IconTemperature,
   IconParametres,
 } from "@/components/icons/GozlyIcons";
+import PointageMobileBloc from "@/components/moi/PointageMobileBloc";
 
 const RACCOURCIS = [
   { id: "horaire", label: "Mon horaire", Icone: IconHoraire, href: "/moi/horaire" },
@@ -41,6 +42,8 @@ export default function AccueilEmploye() {
       <p className="panel-hint">
         {moi?.entreprise?.nom ? `Bienvenue chez ${moi.entreprise.nom}.` : "Bienvenue."}
       </p>
+
+      <PointageMobileBloc />
 
       <div className="moi-accueil-grid">
         {raccourcis.map((r) => (

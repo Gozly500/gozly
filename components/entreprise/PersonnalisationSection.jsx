@@ -18,6 +18,11 @@ const OPTIONS_CALCUL_POINTAGE = [
   { id: "horaire", label: "Heure prévue à l'horaire" },
 ];
 
+const OPTIONS_POINTAGE_MOBILE = [
+  { id: "desactive", label: "Désactivé" },
+  { id: "active", label: "Activé" },
+];
+
 const OPTIONS_PUSH_WIX = [
   { id: "manuel", label: "Manuel (bouton Synchroniser)" },
   { id: "automatique", label: "Automatique à chaque changement" },
@@ -42,6 +47,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [approbationOpen, setApprobationOpen] = useState(false);
   const [calculPointage, setCalculPointage] = useState("reel");
   const [calculPointageOpen, setCalculPointageOpen] = useState(false);
+  const [pointageMobile, setPointageMobile] = useState("desactive");
+  const [pointageMobileOpen, setPointageMobileOpen] = useState(false);
   const [pushWix, setPushWix] = useState("manuel");
   const [pushWixOpen, setPushWixOpen] = useState(false);
   const [visibiliteFeuilleTemps, setVisibiliteFeuilleTemps] = useState("manuelle");
@@ -64,7 +71,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois"
+          "premier_jour_semaine, auto_approuver_echanges, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -74,6 +81,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setApprobationEchanges(entrepriseData?.auto_approuver_echanges ? "automatique" : "manuelle");
     setPushWix(entrepriseData?.sync_produits_auto ? "automatique" : "manuel");
     setCalculPointage(entrepriseData?.pointage_calcul_mode || "reel");
+    setPointageMobile(entrepriseData?.pointage_mobile_actif ? "active" : "desactive");
     setVisibiliteFeuilleTemps(entrepriseData?.feuille_temps_visible_sans_approbation ? "automatique" : "manuelle");
     setRetentionDemandes(String(entrepriseData?.demandes_retention_mois || 6));
     setLoading(false);
@@ -113,6 +121,21 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setMsg(null);
 
     const { error } = await supabase.from("entreprises").update({ pointage_calcul_mode: value }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+  }
+
+  async function handleChangePointageMobile(value) {
+    setPointageMobileOpen(false);
+    setPointageMobile(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ pointage_mobile_actif: value === "active" })
+      .eq("id", entrepriseId);
 
     setSaving(false);
     setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
@@ -213,6 +236,36 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 <div className="forfait-select-options open">
                   {OPTIONS_PREMIER_JOUR.map((o) => (
                     <div key={o.id} className="forfait-option" onClick={() => handleChangePremierJour(o.id)}>
+                      <div className="fo-label">{o.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <p className="section-hint" style={{ marginTop: "18px" }}>
+            Permet à un employé de pointer son arrivée/départ depuis l'app mobile (/moi) plutôt qu'au kiosque
+            physique, en vérifiant sa position GPS par rapport à l'adresse de sa succursale (voir Emplacements).
+            Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, et
+            seulement les jours où ils ont un quart prévu.
+          </p>
+          <div className="field" style={{ maxWidth: "220px" }}>
+            <label>Pointage mobile (GPS)</label>
+            <div className="forfait-select-wrap">
+              <div
+                className={`forfait-select-trigger${pointageMobileOpen ? " open" : ""}`}
+                onClick={() => !saving && setPointageMobileOpen((v) => !v)}
+              >
+                <div className="fs-label">
+                  {OPTIONS_POINTAGE_MOBILE.find((o) => o.id === pointageMobile)?.label}
+                </div>
+                <span className="fs-arrow">▾</span>
+              </div>
+              {pointageMobileOpen && (
+                <div className="forfait-select-options open">
+                  {OPTIONS_POINTAGE_MOBILE.map((o) => (
+                    <div key={o.id} className="forfait-option" onClick={() => handleChangePointageMobile(o.id)}>
                       <div className="fo-label">{o.label}</div>
                     </div>
                   ))}
