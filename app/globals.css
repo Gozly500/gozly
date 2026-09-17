@@ -30,7 +30,10 @@
     --indigo: #18181e;
     --violet: #5b7cfa;
     --purple: #232329;
-    --glow: rgba(91,124,250,0.22);
+    /* Gris neutre, pas bleu comme le thème par défaut - contrairement à
+       "vert" et "sunset", où le glow reprend la teinte du thème, "sombre"
+       se veut sans couleur du tout. */
+    --glow: rgba(210,210,218,0.16);
   }
 [data-theme="sunset"]{
     --navy: #2b0f12;
@@ -1499,8 +1502,15 @@ input.planning-date-picker{
    cachée par la barre d'adresse/le clavier, ce qui poussait la barre
    d'onglets et le champ de saisie du chat hors de l'écran visible. */
 .moi-page{min-height:100vh;min-height:100dvh;}
-.moi-loading{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;}
-.moi-loading-lottie{width:min(62vw,280px);aspect-ratio:1080/1920;}
+.moi-loading{
+    min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+/* Plein écran, avec un léger zoom pour "ronger" le cadre vide en haut et
+   en bas du fichier source (~50px) - preserveAspectRatio "slice" côté
+   lottie (voir MoiChargement.jsx) fait le remplissage complet, le
+   scale() ici resserre le cadrage. */
+.moi-loading-lottie{width:100vw;height:100vh;height:100dvh;transform:scale(1.14);}
 .moi-loading-lottie svg{width:100%;height:100%;}
 
 .moi-connexion{

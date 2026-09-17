@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
-export default function MoiChargement() {
+// Durée réelle de l'animation (voir "op"/"fr" dans le JSON): ~2.56s -
+// filet de sécurité si le fichier tarde à charger ou que l'évènement
+// "complete" ne se déclenche pas.
+const FILET_SECURITE_MS = 3500;
+
+export default function MoiChargement({ onTermine }) {
   const lottieRef = useRef(null);
 
   useEffect(() => {
@@ -16,17 +21,22 @@ export default function MoiChargement() {
       anim = lottie.loadAnimation({
         container: lottieRef.current,
         renderer: "svg",
-        loop: true,
+        loop: false,
         autoplay: true,
         path: "/animations/moi-ouverture.json",
+        rendererSettings: { preserveAspectRatio: "xMidYMid slice" },
       });
+      anim.addEventListener("complete", () => onTermine?.());
     });
+
+    const filet = setTimeout(() => onTermine?.(), FILET_SECURITE_MS);
 
     return () => {
       cancelled = true;
+      clearTimeout(filet);
       anim?.destroy();
     };
-  }, []);
+  }, [onTermine]);
 
   return (
     <div className="moi-loading">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
 import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches, IconParametres } from "@/components/icons/GozlyIcons";
@@ -36,6 +36,8 @@ export default function MoiShell({ children }) {
   // Démarre à false des deux côtés (serveur et client) pour éviter un
   // mismatch d'hydratation - sessionStorage n'existe pas côté serveur.
   const [afficherSplash, setAfficherSplash] = useState(false);
+  const [animationTerminee, setAnimationTerminee] = useState(false);
+  const marquerAnimationTerminee = useCallback(() => setAnimationTerminee(true), []);
 
   useEffect(() => {
     try {
@@ -85,9 +87,12 @@ export default function MoiShell({ children }) {
     router.push("/moi/connexion");
   }
 
-  if (checking) {
+  // Si le splash joue, on garde l'app cachée jusqu'à ce qu'il soit fini
+  // (même si les données ont fini de charger avant), pour ne pas couper
+  // l'animation en plein milieu.
+  if (checking || (afficherSplash && !animationTerminee)) {
     return afficherSplash ? (
-      <MoiChargement />
+      <MoiChargement onTermine={marquerAnimationTerminee} />
     ) : (
       <div className="moi-loading">
         <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
