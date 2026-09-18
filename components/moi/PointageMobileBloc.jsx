@@ -23,12 +23,8 @@ export default function PointageMobileBloc() {
 
   async function charger() {
     const res = await employeFetch("/api/employe-app/pointage-mobile");
-    if (!res.ok) {
-      console.log("[DEBUG pointage mobile] requête échouée, status:", res.status, await res.text());
-      return;
-    }
+    if (!res.ok) return;
     const data = await res.json();
-    console.log("[DEBUG pointage mobile] réponse:", data);
     setEtat(data);
     if (data?.pointageOuvert?.emplacementId) {
       setEmplacementChoisi(data.pointageOuvert.emplacementId);
