@@ -25,7 +25,6 @@ export default function PointageMobileBloc() {
     const res = await employeFetch("/api/employe-app/pointage-mobile");
     if (!res.ok) return;
     const data = await res.json();
-    console.log("[DEBUG pointage mobile]", data);
     setEtat(data);
     if (data?.pointageOuvert?.emplacementId) {
       setEmplacementChoisi(data.pointageOuvert.emplacementId);

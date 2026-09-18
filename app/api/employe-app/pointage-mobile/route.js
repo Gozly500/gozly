@@ -74,20 +74,11 @@ async function resoudreEtat(service, employe) {
     .eq("date", aujourdhui)
     .limit(1);
 
-  const { data: quartsDebug } = await service
-    .from("planning_quarts")
-    .select("date, publie")
-    .eq("employe_id", employe.id)
-    .order("date", { ascending: false })
-    .limit(5);
-
   return {
     pointageOuvert: null,
     aQuartAujourdhui: (quarts || []).length > 0,
     emplacementsEligibles,
     emplacements,
-    _debugAujourdhui: aujourdhui,
-    _debugQuarts: quartsDebug,
   };
 }
 
@@ -109,15 +100,10 @@ export async function GET(request) {
     return NextResponse.json({ actif: false });
   }
 
-  const { pointageOuvert, aQuartAujourdhui, emplacementsEligibles, _debugAujourdhui, _debugQuarts } = await resoudreEtat(
-    service,
-    employe
-  );
+  const { pointageOuvert, aQuartAujourdhui, emplacementsEligibles } = await resoudreEtat(service, employe);
 
   return NextResponse.json({
     actif: true,
-    _debugAujourdhui,
-    _debugQuarts,
     pointageOuvert,
     aQuartAujourdhui,
     emplacements: emplacementsEligibles.map((e) => ({ id: e.id, nom: e.nom })),
