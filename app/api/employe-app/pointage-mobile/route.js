@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { distanceMetres } from "@/lib/geocode";
+import { aujourdhuiLocal } from "@/lib/dates";
 
 const RAYON_MAX_METRES = 150;
 
@@ -64,7 +65,7 @@ async function resoudreEtat(service, employe) {
   }
   emplacementsEligibles = emplacementsEligibles.filter((e) => e.latitude != null && e.longitude != null);
 
-  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const aujourdhui = aujourdhuiLocal();
   const { data: quarts } = await service
     .from("planning_quarts")
     .select("id")
