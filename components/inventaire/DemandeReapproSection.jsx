@@ -160,10 +160,6 @@ export default function DemandeReapproSection({ entrepriseId }) {
         </div>
       )}
 
-      <button className="submit-btn" onClick={handleEnvoyer} disabled={busy || nbSelections === 0}>
-        Envoyer au mode kiosk{nbSelections > 0 && ` (${nbSelections})`}
-      </button>
-
       <div className="settings-section" style={{ marginTop: "26px", maxWidth: "560px" }}>
         <h3>Item hors catalogue</h3>
         <form onSubmit={handleAjouterLibre} className="field-row" style={{ alignItems: "flex-end" }}>
@@ -185,6 +181,15 @@ export default function DemandeReapproSection({ entrepriseId }) {
           </button>
         </form>
       </div>
+
+      <button
+        className="submit-btn"
+        style={{ marginTop: "18px" }}
+        onClick={handleEnvoyer}
+        disabled={busy || nbSelections === 0}
+      >
+        Ajouter à la liste{nbSelections > 0 && ` (${nbSelections})`}
+      </button>
 
       {liste.length > 0 && (
         <div style={{ marginTop: "26px" }}>
