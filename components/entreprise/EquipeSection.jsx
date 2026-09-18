@@ -304,7 +304,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
                             <button
                               type="button"
                               className="admin-icon-btn"
-                              style={{ marginTop: "6px", marginLeft: "26px" }}
+                              style={{ marginTop: "6px", marginLeft: "28px" }}
                               onClick={() => setModalPour({ membreId: m.id, permissionId: p.id })}
                             >
                               📍 {labelScope(draftRow.emplacement_ids)}

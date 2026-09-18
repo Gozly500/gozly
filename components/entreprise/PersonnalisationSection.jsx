@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import InfoTooltip from "@/components/InfoTooltip";
 
 const OPTIONS_PREMIER_JOUR = [
   { id: "lundi", label: "Lundi" },
@@ -9,13 +10,13 @@ const OPTIONS_PREMIER_JOUR = [
 ];
 
 const OPTIONS_APPROBATION_ECHANGES = [
-  { id: "manuelle", label: "Manuelle (tu dois approuver)" },
+  { id: "manuelle", label: "Manuelle" },
   { id: "automatique", label: "Automatique" },
 ];
 
 const OPTIONS_CALCUL_POINTAGE = [
-  { id: "reel", label: "Heure réelle de pointage" },
-  { id: "horaire", label: "Heure prévue à l'horaire" },
+  { id: "reel", label: "Heure réelle" },
+  { id: "horaire", label: "Heure prévue" },
 ];
 
 const OPTIONS_POINTAGE_MOBILE = [
@@ -24,13 +25,13 @@ const OPTIONS_POINTAGE_MOBILE = [
 ];
 
 const OPTIONS_PUSH_WIX = [
-  { id: "manuel", label: "Manuel (bouton Synchroniser)" },
-  { id: "automatique", label: "Automatique à chaque changement" },
+  { id: "manuel", label: "Manuel" },
+  { id: "automatique", label: "Automatique" },
 ];
 
 const OPTIONS_VISIBILITE_FEUILLE_TEMPS = [
-  { id: "manuelle", label: "Manuelle (tu dois approuver chaque semaine)" },
-  { id: "automatique", label: "Automatique (toujours visible, aucune approbation requise)" },
+  { id: "manuelle", label: "Manuelle" },
+  { id: "automatique", label: "Automatique" },
 ];
 
 const OPTIONS_RETENTION_DEMANDES = [
@@ -39,22 +40,62 @@ const OPTIONS_RETENTION_DEMANDES = [
   { id: "12", label: "12 mois" },
 ];
 
+// Liste déroulante maison (voir .forfait-select-*) avec sa bulle d'aide "i".
+// Gère son propre état ouvert/fermé et se ferme au clic à l'extérieur.
+function ParametreSelect({ label, info, options, value, onChange, disabled }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function fermerSiDehors(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", fermerSiDehors);
+    return () => document.removeEventListener("mousedown", fermerSiDehors);
+  }, [open]);
+
+  return (
+    <div className="field param-field" ref={ref}>
+      <label>
+        {label}
+        {info && <InfoTooltip>{info}</InfoTooltip>}
+      </label>
+      <div className="forfait-select-wrap">
+        <div className={`forfait-select-trigger${open ? " open" : ""}`} onClick={() => !disabled && setOpen((v) => !v)}>
+          <div className="fs-label">{options.find((o) => o.id === value)?.label}</div>
+          <span className="fs-arrow">▾</span>
+        </div>
+        {open && (
+          <div className="forfait-select-options open">
+            {options.map((o) => (
+              <div
+                key={o.id}
+                className="forfait-option"
+                onClick={() => {
+                  setOpen(false);
+                  onChange(o.id);
+                }}
+              >
+                <div className="fo-label">{o.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PersonnalisationSection({ entrepriseId }) {
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
-  const [premierJourOpen, setPremierJourOpen] = useState(false);
   const [approbationEchanges, setApprobationEchanges] = useState("manuelle");
-  const [approbationOpen, setApprobationOpen] = useState(false);
   const [calculPointage, setCalculPointage] = useState("reel");
-  const [calculPointageOpen, setCalculPointageOpen] = useState(false);
   const [pointageMobile, setPointageMobile] = useState("desactive");
-  const [pointageMobileOpen, setPointageMobileOpen] = useState(false);
   const [pushWix, setPushWix] = useState("manuel");
-  const [pushWixOpen, setPushWixOpen] = useState(false);
   const [visibiliteFeuilleTemps, setVisibiliteFeuilleTemps] = useState("manuelle");
-  const [visibiliteFeuilleTempsOpen, setVisibiliteFeuilleTempsOpen] = useState(false);
   const [retentionDemandes, setRetentionDemandes] = useState("6");
-  const [retentionDemandesOpen, setRetentionDemandesOpen] = useState(false);
   const [sectionsOuvertes, setSectionsOuvertes] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -88,7 +129,6 @@ export default function PersonnalisationSection({ entrepriseId }) {
   }
 
   async function handleChangePremierJour(value) {
-    setPremierJourOpen(false);
     setPremierJourSemaine(value);
     setSaving(true);
     setMsg(null);
@@ -100,7 +140,6 @@ export default function PersonnalisationSection({ entrepriseId }) {
   }
 
   async function handleChangeApprobation(value) {
-    setApprobationOpen(false);
     setApprobationEchanges(value);
     setSaving(true);
     setMsg(null);
@@ -115,7 +154,6 @@ export default function PersonnalisationSection({ entrepriseId }) {
   }
 
   async function handleChangeCalculPointage(value) {
-    setCalculPointageOpen(false);
     setCalculPointage(value);
     setSaving(true);
     setMsg(null);
@@ -127,7 +165,6 @@ export default function PersonnalisationSection({ entrepriseId }) {
   }
 
   async function handleChangePointageMobile(value) {
-    setPointageMobileOpen(false);
     setPointageMobile(value);
     setSaving(true);
     setMsg(null);
@@ -142,7 +179,6 @@ export default function PersonnalisationSection({ entrepriseId }) {
   }
 
   async function handleChangePushWix(value) {
-    setPushWixOpen(false);
     setPushWix(value);
     setSaving(true);
     setMsg(null);
@@ -154,7 +190,6 @@ export default function PersonnalisationSection({ entrepriseId }) {
   }
 
   async function handleChangeVisibiliteFeuilleTemps(value) {
-    setVisibiliteFeuilleTempsOpen(false);
     setVisibiliteFeuilleTemps(value);
     setSaving(true);
     setMsg(null);
@@ -169,7 +204,6 @@ export default function PersonnalisationSection({ entrepriseId }) {
   }
 
   async function handleChangeRetentionDemandes(value) {
-    setRetentionDemandesOpen(false);
     setRetentionDemandes(value);
     setSaving(true);
     setMsg(null);
@@ -218,177 +252,58 @@ export default function PersonnalisationSection({ entrepriseId }) {
             <span className="ih-arrow">▾</span>
           </button>
           {sectionsOuvertes.horaire && (
-          <div className="integration-body">
-          <p className="section-hint">Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps.</p>
-          <div className="field" style={{ maxWidth: "220px" }}>
-            <label>Premier jour de la semaine</label>
-            <div className="forfait-select-wrap">
-              <div
-                className={`forfait-select-trigger${premierJourOpen ? " open" : ""}`}
-                onClick={() => !saving && setPremierJourOpen((v) => !v)}
-              >
-                <div className="fs-label">
-                  {OPTIONS_PREMIER_JOUR.find((o) => o.id === premierJourSemaine)?.label}
-                </div>
-                <span className="fs-arrow">▾</span>
+            <div className="integration-body">
+              <div className="param-grid">
+                <ParametreSelect
+                  label="Premier jour de la semaine"
+                  info="Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps."
+                  options={OPTIONS_PREMIER_JOUR}
+                  value={premierJourSemaine}
+                  onChange={handleChangePremierJour}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Pointage mobile (GPS)"
+                  info="Permet de pointer depuis l'app mobile plutôt qu'au kiosque, en vérifiant la position GPS par rapport à l'adresse de la succursale (voir Emplacements). Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, les jours où ils ont un quart prévu."
+                  options={OPTIONS_POINTAGE_MOBILE}
+                  value={pointageMobile}
+                  onChange={handleChangePointageMobile}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Approbation des échanges"
+                  info="Quand un employé accepte de prendre le quart d'un collègue : approuver l'échange toi-même (manuelle) ou le valider tout de suite (automatique)."
+                  options={OPTIONS_APPROBATION_ECHANGES}
+                  value={approbationEchanges}
+                  onChange={handleChangeApprobation}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Calcul des heures"
+                  info="Heure réelle : les heures comptent dès que l'employé pointe. Heure prévue : s'il pointe en avance, elles comptent à partir de l'heure de son quart. S'il pointe en retard ou sans quart prévu, l'heure réelle est toujours utilisée."
+                  options={OPTIONS_CALCUL_POINTAGE}
+                  value={calculPointage}
+                  onChange={handleChangeCalculPointage}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Visibilité de la feuille de temps"
+                  info="Les membres en lecture seule (ex: comptable) doivent-ils attendre ton approbation pour voir une semaine (manuelle), ou la voient-ils dès qu'elle existe (automatique) ?"
+                  options={OPTIONS_VISIBILITE_FEUILLE_TEMPS}
+                  value={visibiliteFeuilleTemps}
+                  onChange={handleChangeVisibiliteFeuilleTemps}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Conservation des demandes"
+                  info="Combien de temps garder une demande de congé ou d'échange une fois traitée avant sa suppression automatique. Une demande jamais traitée est supprimée après 2 semaines, peu importe ce réglage."
+                  options={OPTIONS_RETENTION_DEMANDES}
+                  value={retentionDemandes}
+                  onChange={handleChangeRetentionDemandes}
+                  disabled={saving}
+                />
               </div>
-              {premierJourOpen && (
-                <div className="forfait-select-options open">
-                  {OPTIONS_PREMIER_JOUR.map((o) => (
-                    <div key={o.id} className="forfait-option" onClick={() => handleChangePremierJour(o.id)}>
-                      <div className="fo-label">{o.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-          </div>
-
-          <p className="section-hint" style={{ marginTop: "18px" }}>
-            Permet à un employé de pointer son arrivée/départ depuis l'app mobile (/moi) plutôt qu'au kiosque
-            physique, en vérifiant sa position GPS par rapport à l'adresse de sa succursale (voir Emplacements).
-            Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, et
-            seulement les jours où ils ont un quart prévu.
-          </p>
-          <div className="field" style={{ maxWidth: "220px" }}>
-            <label>Pointage mobile (GPS)</label>
-            <div className="forfait-select-wrap">
-              <div
-                className={`forfait-select-trigger${pointageMobileOpen ? " open" : ""}`}
-                onClick={() => !saving && setPointageMobileOpen((v) => !v)}
-              >
-                <div className="fs-label">
-                  {OPTIONS_POINTAGE_MOBILE.find((o) => o.id === pointageMobile)?.label}
-                </div>
-                <span className="fs-arrow">▾</span>
-              </div>
-              {pointageMobileOpen && (
-                <div className="forfait-select-options open">
-                  {OPTIONS_POINTAGE_MOBILE.map((o) => (
-                    <div key={o.id} className="forfait-option" onClick={() => handleChangePointageMobile(o.id)}>
-                      <div className="fo-label">{o.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <p className="section-hint" style={{ marginTop: "18px" }}>
-            Quand un employé accepte de prendre le quart d'un collègue, faut-il approuver l'échange toi-même ?
-          </p>
-          <div className="field" style={{ maxWidth: "260px" }}>
-            <label>Approbation des échanges de quart</label>
-            <div className="forfait-select-wrap">
-              <div
-                className={`forfait-select-trigger${approbationOpen ? " open" : ""}`}
-                onClick={() => !saving && setApprobationOpen((v) => !v)}
-              >
-                <div className="fs-label">
-                  {OPTIONS_APPROBATION_ECHANGES.find((o) => o.id === approbationEchanges)?.label}
-                </div>
-                <span className="fs-arrow">▾</span>
-              </div>
-              {approbationOpen && (
-                <div className="forfait-select-options open">
-                  {OPTIONS_APPROBATION_ECHANGES.map((o) => (
-                    <div key={o.id} className="forfait-option" onClick={() => handleChangeApprobation(o.id)}>
-                      <div className="fo-label">{o.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <p className="section-hint" style={{ marginTop: "18px" }}>
-            Quand un employé pointe son arrivée, faut-il compter les heures à partir de l'heure réelle de
-            pointage, ou seulement à partir de l'heure prévue à son quart (s'il pointe en avance) ? S'il
-            pointe en retard ou qu'aucun quart n'est planifié ce jour-là, l'heure réelle est toujours
-            utilisée.
-          </p>
-          <div className="field" style={{ maxWidth: "260px" }}>
-            <label>Calcul des heures de pointage</label>
-            <div className="forfait-select-wrap">
-              <div
-                className={`forfait-select-trigger${calculPointageOpen ? " open" : ""}`}
-                onClick={() => !saving && setCalculPointageOpen((v) => !v)}
-              >
-                <div className="fs-label">
-                  {OPTIONS_CALCUL_POINTAGE.find((o) => o.id === calculPointage)?.label}
-                </div>
-                <span className="fs-arrow">▾</span>
-              </div>
-              {calculPointageOpen && (
-                <div className="forfait-select-options open">
-                  {OPTIONS_CALCUL_POINTAGE.map((o) => (
-                    <div key={o.id} className="forfait-option" onClick={() => handleChangeCalculPointage(o.id)}>
-                      <div className="fo-label">{o.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <p className="section-hint" style={{ marginTop: "18px" }}>
-            Les membres qui n'ont accès qu'en lecture à la feuille de temps (ex: comptable) doivent-ils
-            attendre ton approbation pour voir une semaine, ou la voient-ils automatiquement dès qu'elle
-            existe ?
-          </p>
-          <div className="field" style={{ maxWidth: "320px" }}>
-            <label>Visibilité de la feuille de temps</label>
-            <div className="forfait-select-wrap">
-              <div
-                className={`forfait-select-trigger${visibiliteFeuilleTempsOpen ? " open" : ""}`}
-                onClick={() => !saving && setVisibiliteFeuilleTempsOpen((v) => !v)}
-              >
-                <div className="fs-label">
-                  {OPTIONS_VISIBILITE_FEUILLE_TEMPS.find((o) => o.id === visibiliteFeuilleTemps)?.label}
-                </div>
-                <span className="fs-arrow">▾</span>
-              </div>
-              {visibiliteFeuilleTempsOpen && (
-                <div className="forfait-select-options open">
-                  {OPTIONS_VISIBILITE_FEUILLE_TEMPS.map((o) => (
-                    <div key={o.id} className="forfait-option" onClick={() => handleChangeVisibiliteFeuilleTemps(o.id)}>
-                      <div className="fo-label">{o.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <p className="section-hint" style={{ marginTop: "18px" }}>
-            Combien de temps garder une demande (congé ou échange de quart) une fois qu'elle a été approuvée
-            ou refusée, avant qu'elle soit supprimée automatiquement ? (Une demande jamais traitée après 2
-            semaines est toujours supprimée automatiquement, peu importe ce réglage.)
-          </p>
-          <div className="field" style={{ maxWidth: "220px" }}>
-            <label>Conservation des demandes traitées</label>
-            <div className="forfait-select-wrap">
-              <div
-                className={`forfait-select-trigger${retentionDemandesOpen ? " open" : ""}`}
-                onClick={() => !saving && setRetentionDemandesOpen((v) => !v)}
-              >
-                <div className="fs-label">
-                  {OPTIONS_RETENTION_DEMANDES.find((o) => o.id === retentionDemandes)?.label}
-                </div>
-                <span className="fs-arrow">▾</span>
-              </div>
-              {retentionDemandesOpen && (
-                <div className="forfait-select-options open">
-                  {OPTIONS_RETENTION_DEMANDES.map((o) => (
-                    <div key={o.id} className="forfait-option" onClick={() => handleChangeRetentionDemandes(o.id)}>
-                      <div className="fo-label">{o.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          </div>
           )}
         </div>
       )}
@@ -404,34 +319,18 @@ export default function PersonnalisationSection({ entrepriseId }) {
             <span className="ih-arrow">▾</span>
           </button>
           {sectionsOuvertes.inventaire && (
-          <div className="integration-body">
-          <p className="section-hint">
-            Une fois Wix connecté (Entreprise → Intégrations), faut-il pousser tes produits Gozly vers Wix
-            automatiquement à chaque ajout/modification/suppression, ou seulement quand tu cliques
-            "Synchroniser" ?
-          </p>
-          <div className="field" style={{ maxWidth: "300px" }}>
-            <label>Synchronisation vers Wix</label>
-            <div className="forfait-select-wrap">
-              <div
-                className={`forfait-select-trigger${pushWixOpen ? " open" : ""}`}
-                onClick={() => !saving && setPushWixOpen((v) => !v)}
-              >
-                <div className="fs-label">{OPTIONS_PUSH_WIX.find((o) => o.id === pushWix)?.label}</div>
-                <span className="fs-arrow">▾</span>
+            <div className="integration-body">
+              <div className="param-grid">
+                <ParametreSelect
+                  label="Synchronisation vers Wix"
+                  info="Une fois Wix connecté (Entreprise → Intégrations) : pousser tes produits vers Wix automatiquement à chaque ajout/modification/suppression, ou seulement quand tu cliques « Synchroniser »."
+                  options={OPTIONS_PUSH_WIX}
+                  value={pushWix}
+                  onChange={handleChangePushWix}
+                  disabled={saving}
+                />
               </div>
-              {pushWixOpen && (
-                <div className="forfait-select-options open">
-                  {OPTIONS_PUSH_WIX.map((o) => (
-                    <div key={o.id} className="forfait-option" onClick={() => handleChangePushWix(o.id)}>
-                      <div className="fo-label">{o.label}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-          </div>
-          </div>
           )}
         </div>
       )}
