@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function DiscussionPage() {
   return (
-    <div className="page page-default">
+    <div className="page dash-page">
       <DiscussionContent />
     </div>
   );

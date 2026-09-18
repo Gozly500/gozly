@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function PointagePage() {
   return (
-    <div className="page page-default">
+    <div className="page dash-page">
       <PointageKioskContent />
     </div>
   );

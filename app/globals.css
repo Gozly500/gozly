@@ -44,14 +44,21 @@
   }
 
 /* Site public (vitrine, /s-abonner, /contact) - palette plus bleue, moins
-   violette que le reste de l'app. Scopé à .page-default pour ne jamais
-   toucher le dashboard (ses thèmes, voir plus haut) ni la barre de
-   navigation, qui n'utilise aucune de ces variables. */
+   violette que le reste de l'app. Scopé à .page-default, qui n'est plus
+   utilisé QUE par le site public - le dashboard utilise .dash-page (même
+   dégradé, mais sans ces 4 variables figées) pour que ses thèmes (voir
+   plus haut) changent vraiment tout le dégradé, pas juste --navy. */
 .page-default{
     --indigo: #15267f;
     --violet: #2f5fdb;
     --purple: #1b3aa0;
     --glow: rgba(47,95,219,0.35);
+  }
+
+.dash-page{
+    background:
+      radial-gradient(ellipse 900px 700px at 75% 60%, var(--glow), transparent 60%),
+      linear-gradient(135deg, var(--navy) 0%, var(--indigo) 45%, var(--purple) 100%);
   }
 
 *{margin:0;padding:0;box-sizing:border-box;}

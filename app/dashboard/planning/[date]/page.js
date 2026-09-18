@@ -8,7 +8,7 @@ export default async function JourPage({ params }) {
   const { date } = await params;
 
   return (
-    <div className="page page-default">
+    <div className="page dash-page">
       <JourContent date={date} />
     </div>
   );

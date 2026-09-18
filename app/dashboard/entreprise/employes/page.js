@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function EmployesPage() {
   return (
-    <div className="page page-default">
+    <div className="page dash-page">
       <EmployesContent />
     </div>
   );
