@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
+import { envoyerPushEmployes } from "@/lib/pushServer";
 
 export async function POST(request, { params }) {
   const employe = await verifierSession(getBearerToken(request));
@@ -32,6 +33,18 @@ export async function POST(request, { params }) {
 
   if (!accepte) {
     await service.from("demandes_echange").update({ statut_employe: "refuse", traite_le: new Date().toISOString() }).eq("id", demande.id);
+
+    await envoyerPushEmployes(
+      service,
+      [demande.employe_donneur_id],
+      {
+        titre: "Échange de quart",
+        corps: `${employe.nom} a refusé ton échange de quart.`,
+        url: "/moi/demandes",
+      },
+      "notif_echange_traite"
+    ).catch((err) => console.error("Erreur notification push:", err));
+
     return NextResponse.json({ ok: true });
   }
 
@@ -54,6 +67,17 @@ export async function POST(request, { params }) {
 
   if (auto) {
     await service.from("planning_quarts").update({ employe_id: employe.id }).eq("id", demande.quart_id);
+
+    await envoyerPushEmployes(
+      service,
+      [demande.employe_donneur_id],
+      {
+        titre: "Échange de quart",
+        corps: `Ton échange de quart avec ${employe.nom} a été approuvé.`,
+        url: "/moi/demandes",
+      },
+      "notif_echange_traite"
+    ).catch((err) => console.error("Erreur notification push:", err));
   }
 
   return NextResponse.json({ ok: true, reassigne: auto });

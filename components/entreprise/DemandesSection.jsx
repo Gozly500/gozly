@@ -60,16 +60,29 @@ export default function DemandesSection({ entrepriseId }) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
+    const conge = conges.find((c) => c.id === id);
     await supabase
       .from("demandes_conge")
       .update({ statut, traite_par: session?.user?.id || null, traite_le: new Date().toISOString() })
       .eq("id", id);
+
+    if (conge) {
+      fetch("/api/notifications/demande-traitee", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ type: "conge", employeId: conge.employe_id, approuve: statut === "approuve" }),
+      }).catch(() => {});
+    }
+
     setBusyId(null);
     load();
   }
 
   async function traiterEchange(demande, approuve) {
     setBusyId(demande.id);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     await supabase
       .from("demandes_echange")
       .update({ statut_admin: approuve ? "approuve" : "refuse", traite_le: new Date().toISOString() })
@@ -78,6 +91,13 @@ export default function DemandesSection({ entrepriseId }) {
     if (approuve) {
       await supabase.from("planning_quarts").update({ employe_id: demande.employe_receveur_id }).eq("id", demande.quart_id);
     }
+
+    fetch("/api/notifications/demande-traitee", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ type: "echange", employeId: demande.employe_donneur_id, approuve }),
+    }).catch(() => {});
+
     setBusyId(null);
     load();
   }

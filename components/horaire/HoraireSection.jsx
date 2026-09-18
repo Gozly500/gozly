@@ -178,6 +178,20 @@ export default function HoraireSection({ entrepriseId }) {
       .lte("date", toISODate(weekEnd));
     if (emplacements.length > 0) query = query.eq("emplacement_id", emplacementId);
     await query;
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    fetch("/api/notifications/semaine-publiee", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({
+        dateDebut: toISODate(weekStart),
+        dateFin: toISODate(weekEnd),
+        emplacementId: emplacements.length > 0 ? emplacementId : null,
+      }),
+    }).catch(() => {});
+
     setPublishing(false);
     load();
   }

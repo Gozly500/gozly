@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
+import { envoyerPushEmployes } from "@/lib/pushServer";
 
 async function resoudreNomsEmployes(service, ids) {
   if (ids.length === 0) return [];
@@ -98,6 +99,17 @@ export async function POST(request) {
     console.error("Erreur création demande d'échange:", error);
     return NextResponse.json({ error: "La demande a échoué." }, { status: 500 });
   }
+
+  await envoyerPushEmployes(
+    service,
+    [avecEmployeId],
+    {
+      titre: "Échange de quart",
+      corps: `${employe.nom} t'a proposé un échange de quart.`,
+      url: "/moi/demandes",
+    },
+    "notif_echange_recu"
+  ).catch((err) => console.error("Erreur notification push:", err));
 
   return NextResponse.json({ demande });
 }
