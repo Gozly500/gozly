@@ -76,6 +76,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
         .eq("id", entrepriseId)
         .maybeSingle(),
     ]);
+    console.log("[DEBUG] entrepriseId utilisé:", entrepriseId, "données reçues:", entrepriseData);
     setModulesActifs((actifsData || []).map((m) => m.module));
     setPremierJourSemaine(entrepriseData?.premier_jour_semaine || "lundi");
     setApprobationEchanges(entrepriseData?.auto_approuver_echanges ? "automatique" : "manuelle");
