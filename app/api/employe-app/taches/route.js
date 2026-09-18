@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
+import { aujourdhuiLocal } from "@/lib/dates";
 
 export async function GET(request) {
   const employe = await verifierSession(getBearerToken(request));
@@ -20,7 +21,7 @@ export async function GET(request) {
     return NextResponse.json({ taches: [] });
   }
 
-  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const aujourdhui = aujourdhuiLocal();
 
   const { data: taches } = await service
     .from("taches")
