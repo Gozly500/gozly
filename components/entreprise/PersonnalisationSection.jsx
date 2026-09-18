@@ -66,7 +66,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
 
   async function load() {
     setLoading(true);
-    const [{ data: actifsData }, { data: entrepriseData, error: entrepriseError, status: entrepriseStatus }] = await Promise.all([
+    const [{ data: actifsData }, { data: entrepriseData }] = await Promise.all([
       supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId),
       supabase
         .from("entreprises")
@@ -76,16 +76,6 @@ export default function PersonnalisationSection({ entrepriseId }) {
         .eq("id", entrepriseId)
         .maybeSingle(),
     ]);
-    console.log(
-      "[DEBUG] entrepriseId utilisé:",
-      entrepriseId,
-      "données reçues:",
-      entrepriseData,
-      "status:",
-      entrepriseStatus,
-      "erreur:",
-      JSON.stringify(entrepriseError)
-    );
     setModulesActifs((actifsData || []).map((m) => m.module));
     setPremierJourSemaine(entrepriseData?.premier_jour_semaine || "lundi");
     setApprobationEchanges(entrepriseData?.auto_approuver_echanges ? "automatique" : "manuelle");
