@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { PERIODES } from "@/lib/temperature";
 
@@ -12,13 +12,17 @@ export default function TemperatureEmploye() {
   const [drafts, setDrafts] = useState({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
+  const relevesRef = useRef([]);
 
   useEffect(() => {
     charger();
+    // Rafraîchit les relevés des collègues sans écraser ce qui est en train d'être saisi.
+    const id = setInterval(() => charger({ silencieux: true }), 30000);
+    return () => clearInterval(id);
   }, []);
 
-  async function charger() {
-    setLoading(true);
+  async function charger({ silencieux = false } = {}) {
+    if (!silencieux) setLoading(true);
     const res = await employeFetch("/api/employe-app/temperature");
     const data = await res.json();
     setEquipements(data.equipements || []);
@@ -29,7 +33,20 @@ export default function TemperatureEmploye() {
     for (const r of data.relevesDuJour || []) {
       if (r.periode === data.creneauActuel?.periode) seed[r.equipement_id] = String(r.temperature);
     }
-    setDrafts(seed);
+    if (silencieux) {
+      // Garde les champs que l'employé a déjà modifiés.
+      setDrafts((prev) => {
+        const next = { ...seed };
+        for (const k of Object.keys(prev)) {
+          const vieux = relevesRef.current.find((r) => r.equipement_id === k && r.periode === data.creneauActuel?.periode);
+          if (prev[k] !== (vieux ? String(vieux.temperature) : "")) next[k] = prev[k];
+        }
+        return next;
+      });
+    } else {
+      setDrafts(seed);
+    }
+    relevesRef.current = data.relevesDuJour || [];
     setLoading(false);
   }
 
@@ -103,9 +120,17 @@ export default function TemperatureEmploye() {
       <div className="planning-day" style={{ marginBottom: "14px" }}>
         {equipements.map((eq) => {
           const autreReleve = releveExistant(eq.id, autrePeriode);
+          const actuel = releveExistant(eq.id, creneau?.periode);
           return (
             <div key={eq.id} className="field-row" style={{ padding: "10px 14px", alignItems: "center", margin: 0 }}>
-              <div style={{ flex: 1, fontSize: "13.5px", fontWeight: 600 }}>{eq.nom}</div>
+              <div style={{ flex: 1, fontSize: "13.5px", fontWeight: 600 }}>
+                {eq.nom}
+                {actuel && (
+                  <div style={{ fontSize: "11.5px", fontWeight: 400, color: "var(--text-dim)" }}>
+                    {actuel.conforme ? "✓" : "⚠️"} relevé par {actuel.releve_par}
+                  </div>
+                )}
+              </div>
               <div style={{ fontSize: "12.5px", color: "var(--text-dim)", minWidth: "70px" }}>
                 {autrePeriode === "am" ? "AM" : "PM"}: {autreReleve ? `${autreReleve.conforme ? "✓" : "⚠️"} ${autreReleve.temperature}°C` : "—"}
               </div>
@@ -122,7 +147,7 @@ export default function TemperatureEmploye() {
         })}
       </div>
 
-      <div className="submit-wrap" style={{ marginTop: "16px" }}>
+      <div className="submit-wrap" style={{ marginTop: "16px", position: "static" }}>
         <button type="button" className="submit-btn" onClick={handleSave} disabled={saving || !estModifie()}>
           {saving ? "Enregistrement..." : "Enregistrer"}
         </button>
