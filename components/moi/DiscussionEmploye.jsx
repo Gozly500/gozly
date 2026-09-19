@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
-import NotificationsPush from "@/components/moi/NotificationsPush";
+import RappelNotifications from "@/components/moi/RappelNotifications";
 
 export default function DiscussionEmploye() {
   const [conversations, setConversations] = useState([]);
@@ -15,7 +15,9 @@ export default function DiscussionEmploye() {
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [vue, setVue] = useState("liste"); // "liste" | "thread"
-  const messagesEndRef = useRef(null);
+  const messagesRef = useRef(null);
+  const dernierIdRef = useRef(null);
+  const presDuBasRef = useRef(true);
   const pollRef = useRef(null);
 
   useEffect(() => {
@@ -33,9 +35,33 @@ export default function DiscussionEmploye() {
     return () => clearInterval(pollRef.current);
   }, [activeId]);
 
+  // À l'ouverture d'une conversation, on repart en bas.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ block: "end" });
-  }, [messages]);
+    dernierIdRef.current = null;
+    presDuBasRef.current = true;
+  }, [vue, activeId]);
+
+  // Le rechargement automatique (toutes les 4 s) ne doit JAMAIS ramener en
+  // bas quelqu'un qui lit plus haut : on ne défile que s'il y a un nouveau
+  // message ET que la personne était déjà en bas (ou que c'est son message).
+  // On agit sur le conteneur des messages plutôt que scrollIntoView, qui
+  // faisait aussi défiler la page entière.
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (!el) return;
+    const dernier = messages[messages.length - 1];
+    const nouveauMessage = (dernier?.id ?? null) !== dernierIdRef.current;
+    dernierIdRef.current = dernier?.id ?? null;
+    if (nouveauMessage && (presDuBasRef.current || dernier?.deMoi)) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [messages, vue]);
+
+  function surDefilement() {
+    const el = messagesRef.current;
+    if (!el) return;
+    presDuBasRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }
 
   async function chargerConversations() {
     setLoading(true);
@@ -58,10 +84,17 @@ export default function DiscussionEmploye() {
   async function chargerMessages(conversationId) {
     const res = await employeFetch(`/api/employe-app/chat/messages?conversationId=${conversationId}`);
     const data = await res.json();
-    setMessages(data.messages || []);
+    const nouveaux = data.messages || [];
+    // Même liste qu'avant : on garde la référence pour ne pas re-rendre.
+    setMessages((actuels) =>
+      actuels.length === nouveaux.length && actuels[actuels.length - 1]?.id === nouveaux[nouveaux.length - 1]?.id
+        ? actuels
+        : nouveaux
+    );
   }
 
   function ouvrirConversation(c) {
+    if (c.id !== activeId) setMessages([]);
     setActiveId(c.id);
     setActiveTitre(c.titre);
     setVue("thread");
@@ -95,6 +128,7 @@ export default function DiscussionEmploye() {
         return;
       }
       await chargerConversations();
+      if (data.conversationId !== activeId) setMessages([]);
       setActiveId(data.conversationId);
       setActiveTitre(nom);
       setVue("thread");
@@ -115,7 +149,7 @@ export default function DiscussionEmploye() {
   return (
     <div className="moi-discussion">
       {erreur && <p className="settings-msg err" style={{ margin: "0 0 10px" }}>{erreur}</p>}
-      {vue === "liste" && <NotificationsPush />}
+      {vue === "liste" && <RappelNotifications types={["notif_messages"]} sujet="de messages" />}
       <div className="chat-layout">
         <div className={`chat-conv-list${vue === "thread" ? " hidden-mobile" : ""}`}>
           <div className="chat-conv-list-head">
@@ -146,7 +180,7 @@ export default function DiscussionEmploye() {
               </button>
               <strong style={{ fontSize: "14px" }}>{activeTitre}</strong>
             </div>
-            <div className="chat-messages">
+            <div className="chat-messages" ref={messagesRef} onScroll={surDefilement}>
               {messages.length === 0 && <p className="chat-empty">Aucun message pour l'instant.</p>}
               {messages.map((m) => (
                 <div key={m.id} className={`chat-bubble-row${m.deMoi ? " mine" : ""}`}>
@@ -154,7 +188,6 @@ export default function DiscussionEmploye() {
                   <div className="chat-bubble">{m.contenu}</div>
                 </div>
               ))}
-              <div ref={messagesEndRef} />
             </div>
             <form className="chat-compose" onSubmit={handleEnvoyer}>
               <input type="text" value={texte} onChange={(e) => setTexte(e.target.value)} placeholder="Écrire un message..." />

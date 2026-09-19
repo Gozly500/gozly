@@ -9,17 +9,20 @@ import {
   IconDiscussion,
   IconTaches,
   IconTemperature,
-  IconParametres,
 } from "@/components/icons/GozlyIcons";
 import PointageMobileBloc from "@/components/moi/PointageMobileBloc";
 
-const RACCOURCIS = [
+// Les 3 pages de base, en petites cases sur une seule ligne.
+const PRINCIPAUX = [
   { id: "horaire", label: "Mon horaire", Icone: IconHoraire, href: "/moi/horaire" },
   { id: "demandes", label: "Demandes", Icone: IconDemande, href: "/moi/demandes" },
   { id: "discussion", label: "Discussion", Icone: IconDiscussion, href: "/moi/discussion" },
+];
+
+// Boutons de modules, affichés seulement si le module est actif.
+const MODULES = [
   { id: "taches", label: "Tâches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
   { id: "temperature", label: "Températures", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
-  { id: "parametres", label: "Paramètres", Icone: IconParametres, href: "/moi/parametres" },
 ];
 
 export default function AccueilEmploye() {
@@ -33,7 +36,7 @@ export default function AccueilEmploye() {
   }, []);
 
   const modulesActifs = moi?.modulesActifs || [];
-  const raccourcis = RACCOURCIS.filter((r) => !r.module || modulesActifs.includes(r.module));
+  const modules = MODULES.filter((m) => modulesActifs.includes(m.module));
   const prenom = moi?.employe?.nom?.split(" ")[0] || "";
 
   return (
@@ -45,9 +48,9 @@ export default function AccueilEmploye() {
 
       <PointageMobileBloc />
 
-      <div className="moi-accueil-grid">
-        {raccourcis.map((r) => (
-          <button key={r.id} type="button" className="moi-accueil-card" onClick={() => router.push(r.href)}>
+      <div className="moi-accueil-trio">
+        {PRINCIPAUX.map((r) => (
+          <button key={r.id} type="button" className="moi-accueil-card petite" onClick={() => router.push(r.href)}>
             <span className="moi-accueil-card-icon">
               <r.Icone className="gozly-icon" />
             </span>
@@ -55,6 +58,22 @@ export default function AccueilEmploye() {
           </button>
         ))}
       </div>
+
+      {modules.length > 0 && (
+        <>
+          <p className="moi-accueil-section">Modules</p>
+          <div className="moi-accueil-grid" style={{ marginTop: 0 }}>
+            {modules.map((r) => (
+              <button key={r.id} type="button" className="moi-accueil-card" onClick={() => router.push(r.href)}>
+                <span className="moi-accueil-card-icon">
+                  <r.Icone className="gozly-icon" />
+                </span>
+                <span>{r.label}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

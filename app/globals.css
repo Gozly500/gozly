@@ -35,6 +35,13 @@
        se veut sans couleur du tout. */
     --glow: rgba(210,210,218,0.16);
   }
+[data-theme="rose"]{
+    --navy: #3d0f2e;
+    --indigo: #9b1f5c;
+    --violet: #ff5c9d;
+    --purple: #d6407f;
+    --glow: rgba(255,92,157,0.35);
+  }
 [data-theme="sunset"]{
     --navy: #2b0f12;
     --indigo: #6b1f1a;
@@ -1653,6 +1660,23 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .moi-accueil-card-icon{display:flex;}
 .moi-accueil-card-icon .gozly-icon{width:26px;height:26px;}
 
+/* Les 3 pages de base : 3 petites cases sur une seule ligne. */
+.moi-accueil-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px;}
+.moi-accueil-card.petite{padding:14px 4px;gap:7px;font-size:12px;border-radius:14px;min-width:0;}
+.moi-accueil-card.petite .moi-accueil-card-icon .gozly-icon{width:22px;height:22px;}
+.moi-accueil-section{
+    margin:22px 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--text-dim);
+  }
+
+/* Rappel "notifications désactivées" (Discussion, Demandes, Horaire). */
+.moi-rappel{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-bottom:14px;padding:10px 14px;border-radius:12px;font-size:13px;
+    background:rgba(242,146,90,0.13);border:1px solid rgba(242,146,90,0.4);color:var(--text);
+  }
+.moi-rappel a{flex-shrink:0;font-weight:700;color:#fff;text-decoration:underline;}
+
 .moi-week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
 .moi-week-label{font-weight:600;font-size:14px;text-transform:capitalize;}
 
@@ -1722,6 +1746,11 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .chat-section-label{padding:10px 16px 6px;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;}
 .chat-picker{border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:6px;}
 
+/* Page discussion : hauteur FIXE (et non min-height) pour que seule la liste de
+   messages défile - sinon la page entière grandit avec les messages et c'est
+   elle qui défile, ce qui rendait impossible de lire plus haut sans être
+   ramené vers le bas. */
+.moi-shell-chat{height:100vh;height:100dvh;min-height:0;}
 .moi-main-chat{display:flex;flex-direction:column;padding:16px 16px 0;overflow:hidden;}
 .moi-discussion{
     flex:1;display:flex;flex-direction:column;min-height:0;

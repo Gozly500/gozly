@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { getDebutSemaine } from "@/lib/semaine";
+import RappelNotifications from "@/components/moi/RappelNotifications";
 
 function badgeConge(statut) {
   if (statut === "approuve") return "✅ Approuvé";

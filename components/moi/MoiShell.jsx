@@ -95,7 +95,7 @@ export default function MoiShell({ children }) {
   }
 
   return (
-    <div className="moi-shell">
+    <div className={`moi-shell${estDiscussion ? " moi-shell-chat" : ""}`}>
       <header className="moi-header">
         <button type="button" className="moi-header-identite" onClick={() => router.push("/moi/accueil")}>
           <div className="moi-header-nom">{moi?.employe?.nom}</div>

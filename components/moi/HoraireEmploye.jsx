@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
+import RappelNotifications from "@/components/moi/RappelNotifications";
 
 function heure(t) {
   return t.slice(0, 5);
@@ -53,6 +54,7 @@ export default function HoraireEmploye() {
 
   return (
     <div className="moi-horaire">
+      <RappelNotifications types={["notif_semaine_publiee"]} sujet="d'horaire" />
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
           ‹

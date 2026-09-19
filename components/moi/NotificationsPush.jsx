@@ -14,6 +14,19 @@ function supporte() {
   return typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 }
 
+// "indisponible" | "inactif" | "actif" - utilisé aussi par RappelNotifications.
+export async function lireStatutPush() {
+  if (!supporte()) return "indisponible";
+  try {
+    const registration = await navigator.serviceWorker.register("/sw-push.js");
+    const subscription = await registration.pushManager.getSubscription();
+    return subscription ? "actif" : "inactif";
+  } catch (err) {
+    console.error("Erreur vérification notifications:", err);
+    return "indisponible";
+  }
+}
+
 // Bouton "Activer les notifications" pour la page Discussion de l'app
 // employé - averti par une notif push quand un message arrive, sans avoir
 // besoin de garder l'app ouverte. Repose sur le Push API standard (pas
@@ -28,18 +41,7 @@ export default function NotificationsPush() {
   }, []);
 
   async function verifierStatut() {
-    if (!supporte()) {
-      setStatut("indisponible");
-      return;
-    }
-    try {
-      const registration = await navigator.serviceWorker.register("/sw-push.js");
-      const subscription = await registration.pushManager.getSubscription();
-      setStatut(subscription ? "actif" : "inactif");
-    } catch (err) {
-      console.error("Erreur vérification notifications:", err);
-      setStatut("indisponible");
-    }
+    setStatut(await lireStatutPush());
   }
 
   async function activer() {
