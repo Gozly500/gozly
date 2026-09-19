@@ -1603,6 +1603,20 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
   }
 .moi-loading-lottie svg{width:100%;height:100%;}
 
+/* Transition de changement de thème : plein écran, par-dessus tout.
+   Canevas source 1080x1990 dont on rogne 160px du bas : le filigrane
+   "jitter.video" du fichier occupe y=1840..1940 (70px ne le cachait qu'à
+   moitié). Zone visible : 1080x1830, mise à l'échelle pour COUVRIR l'écran
+   (les côtés dépassent, ce qui est rogné par overflow). */
+.transition-theme{position:fixed;inset:0;z-index:3000;overflow:hidden;}
+.transition-theme-cadre{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:max(100vw,59.02vh);width:max(100vw,59.02dvh);
+    aspect-ratio:1080/1830;overflow:hidden;
+  }
+.transition-theme-lottie{position:absolute;left:0;top:0;width:100%;height:108.743%;}
+.transition-theme-lottie svg{width:100%;height:100%;}
+
 .moi-connexion{
     min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;
     max-width:380px;margin:0 auto;padding:40px 24px;text-align:center;

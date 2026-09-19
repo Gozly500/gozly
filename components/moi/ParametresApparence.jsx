@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY_MOI, isValidTheme } from "@/lib/themes";
+import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY_MOI, isValidTheme, couleursDuTheme } from "@/lib/themes";
+import TransitionTheme from "@/components/moi/TransitionTheme";
 import MoiRetour from "@/components/moi/MoiRetour";
 
 export default function ParametresApparence() {
   const [theme, setTheme] = useState(DEFAULT_THEME);
+  const [transition, setTransition] = useState(null); // { id, couleurs } pendant l'animation
 
   useEffect(() => {
     try {
@@ -14,13 +16,19 @@ export default function ParametresApparence() {
     } catch {}
   }, []);
 
-  function handleSelect(id) {
-    if (id === theme) return;
+  function appliquer(id) {
     setTheme(id);
     document.documentElement.dataset.theme = id;
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY_MOI, id);
     } catch {}
+  }
+
+  // Le thème ne change qu'au milieu de l'animation, quand le cercle couvre
+  // tout l'écran (voir TransitionTheme.jsx).
+  function handleSelect(id) {
+    if (id === theme || transition) return;
+    setTransition({ id, couleurs: couleursDuTheme(id) });
   }
 
   return (
@@ -46,6 +54,14 @@ export default function ParametresApparence() {
           </button>
         ))}
       </div>
+
+      {transition && (
+        <TransitionTheme
+          couleurs={transition.couleurs}
+          onMilieu={() => appliquer(transition.id)}
+          onFin={() => setTransition(null)}
+        />
+      )}
     </div>
   );
 }
