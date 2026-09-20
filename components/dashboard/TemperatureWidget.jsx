@@ -3,6 +3,21 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { creneauActuel } from "@/lib/temperature";
+
+// "Aujourd'hui AM", "Hier PM" ou "18 sept. PM" - une alerte sans date pouvait
+// passer pour actuelle alors qu'elle date de la veille.
+function quand(r, aujourdhui) {
+  const periode = r.periode?.toUpperCase() || "";
+  const hier = new Date(aujourdhui + "T00:00:00");
+  hier.setDate(hier.getDate() - 1);
+  const hierStr = `${hier.getFullYear()}-${String(hier.getMonth() + 1).padStart(2, "0")}-${String(hier.getDate()).padStart(2, "0")}`;
+  let jour;
+  if (r.date_relevee === aujourdhui) jour = "Aujourd'hui";
+  else if (r.date_relevee === hierStr) jour = "Hier";
+  else jour = new Date(r.date_relevee + "T00:00:00").toLocaleDateString("fr-CA", { day: "numeric", month: "short" });
+  return `${jour} ${periode}`.trim();
+}
 
 export default function TemperatureWidget({ entrepriseId }) {
   const [releves, setReleves] = useState([]);
@@ -13,6 +28,7 @@ export default function TemperatureWidget({ entrepriseId }) {
       .from("releves_temperature")
       .select("*, equipement:equipement_id(nom)")
       .eq("entreprise_id", entrepriseId)
+      .order("date_relevee", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(20)
       .then(({ data }) => {
@@ -26,6 +42,7 @@ export default function TemperatureWidget({ entrepriseId }) {
   }
 
   const nonConformes = releves.filter((r) => !r.conforme);
+  const aujourdhui = creneauActuel().date;
 
   if (nonConformes.length === 0) {
     return <p className="widget-card-empty">Aucun relevé hors norme récemment.</p>;
@@ -38,6 +55,7 @@ export default function TemperatureWidget({ entrepriseId }) {
           <thead>
             <tr>
               <th>Équipement</th>
+              <th>Quand</th>
               <th>Température</th>
               <th>Relevé par</th>
             </tr>
@@ -46,6 +64,7 @@ export default function TemperatureWidget({ entrepriseId }) {
             {nonConformes.slice(0, 5).map((r) => (
               <tr key={r.id}>
                 <td>{r.equipement?.nom || "?"}</td>
+                <td>{quand(r, aujourdhui)}</td>
                 <td>⚠️ {r.temperature}°C</td>
                 <td>{r.releve_par}</td>
               </tr>
