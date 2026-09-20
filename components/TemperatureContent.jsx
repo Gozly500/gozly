@@ -6,7 +6,7 @@ import Link from "next/link";
 import DashSidebar from "@/components/DashSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
-import { PERIODES, estConforme, creneauActuel } from "@/lib/temperature";
+import { PERIODES, estConforme, creneauActuel, grouperParJour, relevesEnCsv, telechargerFichier } from "@/lib/temperature";
 import EmplacementSelect from "@/components/EmplacementSelect";
 
 export default function TemperatureContent() {
@@ -27,6 +27,7 @@ export default function TemperatureContent() {
   const [msg, setMsg] = useState(null);
 
   const [emplacementFiltre, setEmplacementFiltre] = useState(null);
+  const [jourOuvert, setJourOuvert] = useState(null);
 
   const creneau = creneauActuel();
 
@@ -76,7 +77,7 @@ export default function TemperatureContent() {
 
   async function load() {
     setLoadingDonnees(true);
-    const [{ data: emps }, { data: eqs }, { data: relevesJour }, { data: hist }] = await Promise.all([
+    const [{ data: emps }, { data: eqs }, { data: relevesJour }, hist] = await Promise.all([
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
       supabase
         .from("equipements_temperature")
@@ -84,13 +85,7 @@ export default function TemperatureContent() {
         .eq("entreprise_id", entrepriseId)
         .order("nom", { ascending: true }),
       supabase.from("releves_temperature").select("*").eq("entreprise_id", entrepriseId).eq("date_relevee", creneau.date),
-      supabase
-        .from("releves_temperature")
-        .select("*, equipement:equipement_id(nom)")
-        .eq("entreprise_id", entrepriseId)
-        .order("date_relevee", { ascending: false })
-        .order("periode", { ascending: true })
-        .limit(100),
+      chargerTousLesReleves(),
     ]);
     setEmplacements(emps || []);
     setEquipements(eqs || []);
@@ -103,6 +98,23 @@ export default function TemperatureContent() {
     }
     setDrafts(seed);
     setLoadingDonnees(false);
+  }
+
+  // Supabase plafonne à 1000 lignes par requête - on pagine pour tout récupérer.
+  async function chargerTousLesReleves() {
+    const tous = [];
+    for (let debut = 0; ; debut += 1000) {
+      const { data } = await supabase
+        .from("releves_temperature")
+        .select("*")
+        .eq("entreprise_id", entrepriseId)
+        .order("date_relevee", { ascending: false })
+        .order("id", { ascending: true })
+        .range(debut, debut + 999);
+      tous.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    return tous;
   }
 
   async function handleLogout() {
@@ -172,13 +184,19 @@ export default function TemperatureContent() {
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.entreprise || user?.email;
   const periodeLabel = PERIODES.find((p) => p.id === creneau.periode)?.label || "";
-  const autrePeriode = creneau.periode === "am" ? "pm" : "am";
+  const grilleAmPm = { display: "grid", gridTemplateColumns: "1fr 100px 100px", gap: "10px", alignItems: "center", marginBottom: "8px", maxWidth: "560px" };
 
   const equipementsFiltres = emplacementFiltre ? equipements.filter((eq) => eq.emplacement_id === emplacementFiltre) : equipements;
 
   const historiqueFiltre = emplacementFiltre
     ? historique.filter((r) => equipements.find((eq) => eq.id === r.equipement_id)?.emplacement_id === emplacementFiltre)
     : historique;
+
+  const fiches = grouperParJour(historiqueFiltre);
+
+  function exporter(releves, nomFichier) {
+    telechargerFichier(nomFichier, relevesEnCsv(releves, equipements, emplacements));
+  }
 
   return (
     <div className="dash-layout">
@@ -232,23 +250,44 @@ export default function TemperatureContent() {
                   </p>
                 ) : (
                   <>
+                    <div style={{ ...grilleAmPm, fontSize: "12px", fontWeight: 700, color: "var(--text-dim)" }}>
+                      <div>Équipement</div>
+                      {["am", "pm"].map((p) => (
+                        <div key={p} style={{ textAlign: "center", color: p === creneau.periode ? "var(--text)" : undefined }}>
+                          {p.toUpperCase()}
+                          {p === creneau.periode ? " ●" : ""}
+                        </div>
+                      ))}
+                    </div>
                     {equipementsFiltres.map((eq) => {
-                      const autreReleve = releveExistant(eq.id, autrePeriode);
+                      const actuel = releveExistant(eq.id, creneau.periode);
                       return (
-                        <div key={eq.id} className="field-row" style={{ alignItems: "center", marginBottom: "6px" }}>
-                          <div style={{ flex: 1, fontSize: "13.5px", fontWeight: 600 }}>{eq.nom}</div>
-                          <div style={{ fontSize: "12.5px", color: "var(--text-dim)", minWidth: "110px" }}>
-                            {autrePeriode === "am" ? "AM" : "PM"}:{" "}
-                            {autreReleve ? `${autreReleve.conforme ? "✓" : "⚠️"} ${autreReleve.temperature}°C` : "—"}
+                        <div key={eq.id} style={grilleAmPm}>
+                          <div style={{ fontSize: "13.5px", fontWeight: 600, minWidth: 0 }}>
+                            {eq.nom}
+                            {actuel && <div style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-dim)" }}>par {actuel.releve_par}</div>}
                           </div>
-                          <input
-                            type="number"
-                            step="0.1"
-                            placeholder="°C"
-                            style={{ width: "90px" }}
-                            value={drafts[eq.id] ?? ""}
-                            onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
-                          />
+                          {["am", "pm"].map((p) => {
+                            if (p === creneau.periode) {
+                              return (
+                                <input
+                                  key={p}
+                                  type="number"
+                                  step="0.1"
+                                  placeholder="°C"
+                                  style={{ width: "100%", boxSizing: "border-box" }}
+                                  value={drafts[eq.id] ?? ""}
+                                  onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
+                                />
+                              );
+                            }
+                            const r = releveExistant(eq.id, p);
+                            return (
+                              <div key={p} style={{ textAlign: "center", fontSize: "13px", color: r ? "var(--text)" : "var(--text-dim)" }}>
+                                {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°C` : "—"}
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     })}
@@ -263,34 +302,76 @@ export default function TemperatureContent() {
 
               <div className="settings-divider">Historique</div>
 
-              {historiqueFiltre.length === 0 ? (
-                <p style={{ color: "var(--text-dim)" }}>Aucun relevé pour l'instant.</p>
+              {fiches.length > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
+                  <button
+                    type="button"
+                    className="admin-icon-btn"
+                    onClick={() => exporter(historiqueFiltre, `temperatures_${creneau.date}.csv`)}
+                  >
+                    ⬇ Tout exporter (Excel)
+                  </button>
+                  <span className="section-hint" style={{ margin: 0 }}>
+                    Les fiches sont supprimées automatiquement après la durée choisie dans Personnalisation - exporte-les pour les garder.
+                  </span>
+                </div>
+              )}
+
+              {fiches.length === 0 ? (
+                <p style={{ color: "var(--text-dim)" }}>Aucune fiche pour l'instant.</p>
               ) : (
-                <div className="admin-table-wrap">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Créneau</th>
-                        <th>Équipement</th>
-                        <th>Température</th>
-                        <th>Relevé par</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historiqueFiltre.map((r) => (
-                        <tr key={r.id}>
-                          <td>{new Date(r.date_relevee + "T00:00:00").toLocaleDateString("fr-CA")}</td>
-                          <td>{PERIODES.find((p) => p.id === r.periode)?.label}</td>
-                          <td>{r.equipement?.nom || "?"}</td>
-                          <td>
-                            {r.conforme ? "✓" : "⚠️"} {r.temperature}°C
-                          </td>
-                          <td>{r.releve_par}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "720px" }}>
+                  {fiches.map((f) => {
+                    const ouvert = jourOuvert === f.date;
+                    const enCours = f.date === creneau.date;
+                    const equipementsDuJour = equipements.filter((eq) => f.releves.some((r) => r.equipement_id === eq.id));
+                    return (
+                      <div key={f.date} className="planning-day">
+                        <button
+                          type="button"
+                          onClick={() => setJourOuvert(ouvert ? null : f.date)}
+                          style={{
+                            display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%",
+                            padding: "12px 14px", background: "none", border: "none", color: "inherit", cursor: "pointer", font: "inherit", textAlign: "left",
+                          }}
+                        >
+                          <span style={{ fontWeight: 600 }}>
+                            {new Date(f.date + "T00:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                            {enCours && <span style={{ color: "var(--text-dim)", fontWeight: 400 }}> · en cours</span>}
+                          </span>
+                          <span style={{ fontSize: "12.5px", color: "var(--text-dim)" }}>
+                            {f.nonConformes > 0 ? `⚠️ ${f.nonConformes} non conforme${f.nonConformes > 1 ? "s" : ""}` : "✓ conforme"} {ouvert ? "▴" : "▾"}
+                          </span>
+                        </button>
+                        {ouvert && (
+                          <div style={{ padding: "0 14px 12px" }}>
+                            <div style={{ ...grilleAmPm, gridTemplateColumns: "1fr 120px 120px", maxWidth: "none", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)" }}>
+                              <div>Équipement</div>
+                              <div style={{ textAlign: "center" }}>AM</div>
+                              <div style={{ textAlign: "center" }}>PM</div>
+                            </div>
+                            {equipementsDuJour.map((eq) => (
+                              <div key={eq.id} style={{ ...grilleAmPm, gridTemplateColumns: "1fr 120px 120px", maxWidth: "none" }}>
+                                <div style={{ fontSize: "13.5px", fontWeight: 600 }}>{eq.nom}</div>
+                                {["am", "pm"].map((p) => {
+                                  const r = f.releves.find((x) => x.equipement_id === eq.id && x.periode === p);
+                                  return (
+                                    <div key={p} style={{ textAlign: "center", fontSize: "13px", color: r ? "var(--text)" : "var(--text-dim)" }}>
+                                      {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°C` : "—"}
+                                      {r && <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>{r.releve_par}</div>}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ))}
+                            <button type="button" className="admin-icon-btn" onClick={() => exporter(f.releves, `temperatures_${f.date}.csv`)}>
+                              ⬇ Exporter cette fiche
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </>

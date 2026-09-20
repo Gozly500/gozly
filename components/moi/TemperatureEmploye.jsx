@@ -110,38 +110,60 @@ export default function TemperatureEmploye() {
   }
 
   const periodeLabel = PERIODES.find((p) => p.id === creneau?.periode)?.label || "";
-  const autrePeriode = creneau?.periode === "am" ? "pm" : "am";
+  const grille = { display: "grid", gridTemplateColumns: "1fr 84px 84px", gap: "8px", alignItems: "center", padding: "10px 14px" };
+
+  // Une case AM ou PM : champ de saisie seulement pour le créneau actuel,
+  // sinon la valeur déjà relevée en lecture seule (ou un tiret).
+  function renderCase(eq, periode) {
+    if (periode === creneau?.periode) {
+      return (
+        <input
+          type="number"
+          step="0.1"
+          placeholder="°C"
+          style={{ width: "100%", boxSizing: "border-box" }}
+          value={drafts[eq.id] ?? ""}
+          onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
+        />
+      );
+    }
+    const r = releveExistant(eq.id, periode);
+    return (
+      <div style={{ textAlign: "center", fontSize: "13px", color: r ? "var(--text)" : "var(--text-dim)" }}>
+        {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°C` : "—"}
+      </div>
+    );
+  }
 
   return (
     <div>
       <h2>Températures</h2>
-      <p className="panel-hint">Créneau actuel : {periodeLabel}. Une fenêtre manquée ne revient pas - inutile de la rattraper.</p>
+      <p className="panel-hint">
+        Créneau actuel : {periodeLabel}. Seule la colonne du créneau actuel est modifiable - une fenêtre manquée ne revient pas.
+      </p>
 
       <div className="planning-day" style={{ marginBottom: "14px" }}>
+        <div style={{ ...grille, paddingBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)" }}>
+          <div>Équipement</div>
+          {["am", "pm"].map((p) => (
+            <div key={p} style={{ textAlign: "center", color: p === creneau?.periode ? "var(--text)" : undefined }}>
+              {p.toUpperCase()}
+              {p === creneau?.periode ? " ●" : ""}
+            </div>
+          ))}
+        </div>
         {equipements.map((eq) => {
-          const autreReleve = releveExistant(eq.id, autrePeriode);
           const actuel = releveExistant(eq.id, creneau?.periode);
           return (
-            <div key={eq.id} className="field-row" style={{ padding: "10px 14px", alignItems: "center", margin: 0 }}>
-              <div style={{ flex: 1, fontSize: "13.5px", fontWeight: 600 }}>
+            <div key={eq.id} style={grille}>
+              <div style={{ fontSize: "13.5px", fontWeight: 600, minWidth: 0 }}>
                 {eq.nom}
                 {actuel && (
-                  <div style={{ fontSize: "11.5px", fontWeight: 400, color: "var(--text-dim)" }}>
-                    {actuel.conforme ? "✓" : "⚠️"} relevé par {actuel.releve_par}
-                  </div>
+                  <div style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-dim)" }}>par {actuel.releve_par}</div>
                 )}
               </div>
-              <div style={{ fontSize: "12.5px", color: "var(--text-dim)", minWidth: "70px" }}>
-                {autrePeriode === "am" ? "AM" : "PM"}: {autreReleve ? `${autreReleve.conforme ? "✓" : "⚠️"} ${autreReleve.temperature}°C` : "—"}
-              </div>
-              <input
-                type="number"
-                step="0.1"
-                placeholder={`${periodeLabel.slice(0, 2)} °C`}
-                style={{ width: "90px" }}
-                value={drafts[eq.id] ?? ""}
-                onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
-              />
+              {renderCase(eq, "am")}
+              {renderCase(eq, "pm")}
             </div>
           );
         })}

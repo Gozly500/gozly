@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/nettoyer-demandes",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/nettoyer-temperatures",
+      "schedule": "15 6 * * *"
     }
   ]
 }

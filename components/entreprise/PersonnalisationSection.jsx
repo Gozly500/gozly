@@ -40,6 +40,12 @@ const OPTIONS_RETENTION_DEMANDES = [
   { id: "12", label: "12 mois" },
 ];
 
+const OPTIONS_RETENTION_TEMPERATURE = [
+  { id: "3", label: "3 mois" },
+  { id: "6", label: "6 mois" },
+  { id: "12", label: "12 mois" },
+];
+
 // Liste déroulante maison (voir .forfait-select-*) avec sa bulle d'aide "i".
 // Gère son propre état ouvert/fermé et se ferme au clic à l'extérieur.
 function ParametreSelect({ label, info, options, value, onChange, disabled }) {
@@ -96,6 +102,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [pushWix, setPushWix] = useState("manuel");
   const [visibiliteFeuilleTemps, setVisibiliteFeuilleTemps] = useState("manuelle");
   const [retentionDemandes, setRetentionDemandes] = useState("6");
+  const [retentionTemperature, setRetentionTemperature] = useState("3");
   const [sectionsOuvertes, setSectionsOuvertes] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -112,7 +119,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif"
+          "premier_jour_semaine, auto_approuver_echanges, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -125,7 +132,22 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setPointageMobile(entrepriseData?.pointage_mobile_actif ? "active" : "desactive");
     setVisibiliteFeuilleTemps(entrepriseData?.feuille_temps_visible_sans_approbation ? "automatique" : "manuelle");
     setRetentionDemandes(String(entrepriseData?.demandes_retention_mois || 6));
+    setRetentionTemperature(String(entrepriseData?.temperature_retention_mois || 3));
     setLoading(false);
+  }
+
+  async function handleChangeRetentionTemperature(value) {
+    setRetentionTemperature(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ temperature_retention_mois: Number(value) })
+      .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
   }
 
   async function handleChangePremierJour(value) {
@@ -227,6 +249,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
 
   const horaireActif = modulesActifs.includes("horaire");
   const inventaireActif = modulesActifs.includes("inventaire");
+  const temperatureActif = modulesActifs.includes("temperature");
 
   return (
     <div>
@@ -235,7 +258,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
-      {!horaireActif && !inventaireActif ? (
+      {!horaireActif && !inventaireActif && !temperatureActif ? (
         <p className="section-hint">
           Active un module (ex: Horaire &amp; Pointage) pour voir apparaître ici ses options de personnalisation.
         </p>
@@ -300,6 +323,33 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   options={OPTIONS_RETENTION_DEMANDES}
                   value={retentionDemandes}
                   onChange={handleChangeRetentionDemandes}
+                  disabled={saving}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {temperatureActif && (
+        <div className="integration-item">
+          <button
+            type="button"
+            className={`integration-header${sectionsOuvertes.temperature ? " open" : ""}`}
+            onClick={() => toggleSection("temperature")}
+          >
+            <span className="ih-label">Températures</span>
+            <span className="ih-arrow">▾</span>
+          </button>
+          {sectionsOuvertes.temperature && (
+            <div className="integration-body">
+              <div className="param-grid">
+                <ParametreSelect
+                  label="Conservation des fiches"
+                  info="Combien de temps garder les fiches de température avant leur suppression automatique. Pense à les exporter (Températures → Historique → Exporter) pour les garder en local."
+                  options={OPTIONS_RETENTION_TEMPERATURE}
+                  value={retentionTemperature}
+                  onChange={handleChangeRetentionTemperature}
                   disabled={saving}
                 />
               </div>
