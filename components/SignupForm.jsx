@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
 const FORFAITS = [
@@ -205,6 +206,11 @@ export default function SignupForm() {
             )}
           </div>
         </div>
+
+        <p className="legal-notice">
+          En créant un compte, tu acceptes nos <Link href="/conditions">Conditions d'utilisation</Link> et notre{" "}
+          <Link href="/confidentialite">Politique de confidentialité</Link>.
+        </p>
 
         <div className="submit-wrap">
           <button type="submit" className="submit-btn" disabled={loading}>

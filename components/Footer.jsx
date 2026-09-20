@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer>
@@ -33,7 +35,11 @@ export default function Footer() {
           </span>
           Gozly
         </div>
-        <div>© 2026 Gozly - Tous droits réservés</div>
+        <div className="footer-links">
+          <span>© 2026 Gozly - Tous droits réservés</span>
+          <Link href="/conditions">Conditions d'utilisation</Link>
+          <Link href="/confidentialite">Confidentialité</Link>
+        </div>
       </div>
     </footer>
   );
