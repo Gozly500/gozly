@@ -5,6 +5,16 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { creneauActuel } from "@/lib/temperature";
 
+// Une alerte disparaît du widget après ce nombre de jours (le registre complet
+// reste dans Températures > Historique).
+const JOURS_AFFICHAGE_ALERTES = 3;
+
+function jourMoinsN(dateStr, n) {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setDate(d.getDate() - n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // "Aujourd'hui AM", "Hier PM" ou "18 sept. PM" - une alerte sans date pouvait
 // passer pour actuelle alors qu'elle date de la veille.
 function quand(r, aujourdhui) {
@@ -28,6 +38,8 @@ export default function TemperatureWidget({ entrepriseId }) {
       .from("releves_temperature")
       .select("*, equipement:equipement_id(nom)")
       .eq("entreprise_id", entrepriseId)
+      .eq("conforme", false)
+      .gte("date_relevee", jourMoinsN(creneauActuel().date, JOURS_AFFICHAGE_ALERTES))
       .order("date_relevee", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(20)
@@ -45,7 +57,7 @@ export default function TemperatureWidget({ entrepriseId }) {
   const aujourdhui = creneauActuel().date;
 
   if (nonConformes.length === 0) {
-    return <p className="widget-card-empty">Aucun relevé hors norme récemment.</p>;
+    return <p className="widget-card-empty">Aucun relevé hors norme dans les 3 derniers jours.</p>;
   }
 
   return (
