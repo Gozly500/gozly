@@ -29,7 +29,8 @@ function estEchangeTraite(e) {
 
 export async function GET(request) {
   const authHeader = request.headers.get("authorization") || "";
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Sans CRON_SECRET configuré, refuser tout : sinon "Bearer undefined" passerait.
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Non autorisé." }, { status: 401 });
   }
 
