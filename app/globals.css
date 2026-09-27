@@ -88,6 +88,20 @@
 [data-theme="clair"] .dash-page,
 [data-theme="clair"] .moi-page,
 [data-theme="clair"] .loader{background:var(--page-clair);}
+/* Cartes blanches (style Shopify/Wix) en thème clair : fond blanc, contour fin,
+   ombre discrète. Bloc isolé : le retirer ramène les cartes en gris doux. */
+[data-theme="clair"] :is(.settings-section,.settings-card,.integration-item,.switch-row,.admin-list,
+    .admin-table-wrap,.planning-day,.widget-card,.horaire-col,.moi-accueil-card,.moi-jour-card,
+    .dashboard-picker-card,.pointage-mobile-bloc,.chat-layout){
+    background:#fff;border-color:rgba(20,20,40,0.10);box-shadow:0 1px 3px rgba(20,20,40,0.06);
+  }
+[data-theme="clair"] :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,
+    .emplacement-select-trigger,.forfait-select-trigger){
+    background:#fff;border-color:rgba(20,20,40,0.16);
+  }
+[data-theme="clair"] .dash-sidebar :is(input,textarea,.emplacement-select-trigger,.forfait-select-trigger){
+    background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.16);
+  }
 [data-theme="rose"]{
     --navy: #3d0f2e;
     --indigo: #9b1f5c;
