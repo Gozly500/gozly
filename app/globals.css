@@ -64,7 +64,25 @@
     --glow: transparent;
     --pop: #ffffff;
     --pop-2: #ffffff;
-    --page-clair: #f4f4f6;
+    /* Gris doux (pas de blanc éclatant) : moins "flash". */
+    --page-clair: #eceef3;
+  }
+/* Barre latérale (et barre du bas de l'app mobile) restent foncées, à la Wix :
+   un noir qui tire très légèrement vers l'indigo. On y remet les variables du
+   thème foncé, donc tout ce qu'elles contiennent (textes, survols, menus) reste
+   lisible sans autre règle. */
+[data-theme="clair"] .dash-sidebar,
+[data-theme="clair"] .moi-tabbar{
+    --w: 255,255,255;
+    --fg: #fff;
+    --text: #f2f0ff;
+    --text-dim: rgba(242,240,255,0.72);
+    --pop: rgba(30,25,70,0.97);
+    --pop-2: rgba(30,25,70,0.98);
+    background:#12122b;
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+    border-color:rgba(255,255,255,0.08);
+    color:var(--text);
   }
 [data-theme="clair"] body,
 [data-theme="clair"] .dash-page,
