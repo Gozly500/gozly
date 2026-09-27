@@ -213,15 +213,29 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
               Déconnexion
             </button>
           </div>
-          {plusieursEntreprises && (
-            <Link href="/dashboards" className="dash-switch-link">
-              ⇄ Changer de dashboard
-            </Link>
-          )}
-          {!impersonation && (
-            <button type="button" className="dash-switch-link" onClick={() => setCreerEntrepriseOpen(true)}>
-              + Créer une entreprise
-            </button>
+          {plusieursEntreprises ? (
+            <div className="dash-switch-row">
+              <Link href="/dashboards" className="dash-switch-link">
+                ⇄ Changer de dashboard
+              </Link>
+              {!impersonation && (
+                <button
+                  type="button"
+                  className="dash-switch-link dash-switch-add"
+                  onClick={() => setCreerEntrepriseOpen(true)}
+                  title="Créer une entreprise"
+                  aria-label="Créer une entreprise"
+                >
+                  +
+                </button>
+              )}
+            </div>
+          ) : (
+            !impersonation && (
+              <button type="button" className="dash-switch-link" onClick={() => setCreerEntrepriseOpen(true)}>
+                + Créer une entreprise
+              </button>
+            )
           )}
         </div>
       </aside>
