@@ -35,6 +35,16 @@
        se veut sans couleur du tout. */
     --glow: rgba(210,210,218,0.16);
   }
+/* Mode sobre (case "Couleur" décochée) : fond noir uni, sans dégradé ni lueur.
+   Seuls les FONDS de page sont neutralisés - les boutons, textes et accents
+   gardent leurs couleurs (--indigo, --violet, etc. ne sont pas modifiés). */
+[data-theme="sobre"]{
+    --navy: #0b0b0d;
+    --glow: transparent;
+  }
+[data-theme="sobre"] .dash-page,
+[data-theme="sobre"] .moi-page,
+[data-theme="sobre"] .loader{background:var(--navy);}
 [data-theme="rose"]{
     --navy: #3d0f2e;
     --indigo: #9b1f5c;
@@ -1021,6 +1031,10 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
     cursor:pointer;transition:background .2s ease,border-color .2s ease;
   }
 .theme-choice:hover{background:rgba(255,255,255,0.08);}
+.theme-choice:disabled{cursor:not-allowed;}
+.theme-choice:disabled:hover{background:inherit;}
+/* Thèmes colorés grisés quand la case "Couleur" est décochée (mode sobre) */
+.theme-grid-inactif{opacity:.35;filter:saturate(.5);pointer-events:none;}
 .theme-choice.selected{background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.4);}
 .theme-choice:disabled{opacity:.6;cursor:default;}
 .theme-swatch{width:38px;height:38px;border-radius:12px;flex-shrink:0;border:1px solid rgba(255,255,255,0.2);}

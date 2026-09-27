@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { THEMES, DEFAULT_THEME, THEME_STORAGE_KEY } from "@/lib/themes";
+import ThemeGrids from "@/components/ThemeGrids";
+import { THEME_SOBRE, DEFAULT_THEME, THEME_STORAGE_KEY, THEME_COULEUR_STORAGE_KEY, isValidTheme } from "@/lib/themes";
 
 export default function AppearanceSection({ profil, setProfil }) {
   const [theme, setThemeState] = useState(profil?.theme || DEFAULT_THEME);
@@ -29,6 +30,7 @@ export default function AppearanceSection({ profil, setProfil }) {
 
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, id);
+      if (id !== THEME_SOBRE) window.localStorage.setItem(THEME_COULEUR_STORAGE_KEY, id);
     } catch {}
 
     setProfil({ ...profil, theme: id });
@@ -36,29 +38,35 @@ export default function AppearanceSection({ profil, setProfil }) {
     setTimeout(() => setMsg(null), 3000);
   }
 
+  const sobre = theme === THEME_SOBRE;
+
+  // Case "Couleur" : décochée = mode sobre ; recochée = dernier thème coloré.
+  function handleToggleCouleur(couleur) {
+    if (couleur) {
+      let dernier = null;
+      try {
+        dernier = window.localStorage.getItem(THEME_COULEUR_STORAGE_KEY);
+      } catch {}
+      handleSelect(isValidTheme(dernier) && dernier !== THEME_SOBRE ? dernier : DEFAULT_THEME);
+    } else {
+      handleSelect(THEME_SOBRE);
+    }
+  }
+
   return (
     <div>
       <h2>Apparence</h2>
       <p className="panel-hint">Choisis le thème visuel de ton tableau de bord.</p>
 
-      <div className="theme-grid">
-        {THEMES.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`theme-choice${theme === t.id ? " selected" : ""}`}
-            onClick={() => handleSelect(t.id)}
-            disabled={saving}
-          >
-            <span className="theme-swatch" style={{ background: t.swatch }} />
-            <span className="theme-choice-text">
-              <strong>{t.label}</strong>
-              <span>{t.description}</span>
-            </span>
-            {theme === t.id && <span className="theme-check">✓</span>}
-          </button>
-        ))}
-      </div>
+      <label className="switch-row" style={{ cursor: "pointer", marginBottom: "18px" }}>
+        <span className="switch-row-text">
+          <h4>Couleur</h4>
+          <p>Décoche pour un affichage sobre, sans couleur de fond : Sombre ou Clair.</p>
+        </span>
+        <input type="checkbox" checked={!sobre} disabled={saving} onChange={(e) => handleToggleCouleur(e.target.checked)} />
+      </label>
+
+      <ThemeGrids theme={theme} onSelect={handleSelect} disabled={saving} />
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
     </div>
