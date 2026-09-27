@@ -174,7 +174,7 @@ export default function DiscussionEmploye() {
 
         {vue === "thread" && (
           <div className="chat-thread">
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderBottom: "1px solid rgba(var(--w),0.1)" }}>
               <button type="button" className="admin-icon-btn" onClick={() => setVue("liste")}>
                 ‹
               </button>

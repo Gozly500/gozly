@@ -108,7 +108,7 @@ export default function JourEditor({ entrepriseId, date }) {
       {categories.length === 0 ? (
         <p style={{ color: "var(--text-dim)" }}>
           Aucune catégorie pour l'instant.{" "}
-          <Link href="/dashboard/planning/categories" style={{ textDecoration: "underline", color: "#fff" }}>
+          <Link href="/dashboard/planning/categories" style={{ textDecoration: "underline", color: "var(--fg)" }}>
             Crée-en une
           </Link>{" "}
           pour pouvoir ajouter des tâches.

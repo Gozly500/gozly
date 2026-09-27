@@ -62,7 +62,7 @@ export default function AdminContent() {
         <h1>Accès refusé</h1>
         <p>Ce compte n'a pas accès au panneau admin.</p>
         <p style={{ marginTop: "18px" }}>
-          <Link href="/dashboard" style={{ textDecoration: "underline", color: "#fff" }}>
+          <Link href="/dashboard" style={{ textDecoration: "underline", color: "var(--fg)" }}>
             Retourner au tableau de bord
           </Link>
         </p>
