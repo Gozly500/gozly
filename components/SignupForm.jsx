@@ -123,7 +123,8 @@ export default function SignupForm() {
       return;
     }
 
-    router.push(forfaitVoulu ? `/parametres?acheter=${forfaitVoulu}` : "/dashboard");
+    // Forfait déjà choisi depuis la page des forfaits : direct au paiement. Sinon, page de choix.
+    router.push(forfaitVoulu ? `/parametres?acheter=${forfaitVoulu}` : "/choisir-forfait");
   }
 
   return (

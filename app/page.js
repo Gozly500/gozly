@@ -110,7 +110,7 @@ export default function HomePage() {
                 <li>Assistance standard</li>
                 <li>Mises à jour essentielles</li>
               </ul>
-              <Link href="/contact" className="price-btn">
+              <Link href="/inscription?forfait=opale" className="price-btn">
                 Choisir ce forfait
               </Link>
             </TiltCard>
@@ -127,7 +127,7 @@ export default function HomePage() {
                 <li>Support prioritaire</li>
                 <li>Mises à jour avancées</li>
               </ul>
-              <Link href="/contact" className="price-btn">
+              <Link href="/inscription?forfait=onyx" className="price-btn">
                 Choisir ce forfait
               </Link>
             </TiltCard>
@@ -145,7 +145,7 @@ export default function HomePage() {
                 <li>Assistance prioritaire</li>
                 <li>Mises à jour avancées</li>
               </ul>
-              <Link href="/contact" className="price-btn">
+              <Link href="/inscription?forfait=crystal" className="price-btn">
                 Choisir ce forfait
               </Link>
             </TiltCard>

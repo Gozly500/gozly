@@ -1,13 +1,13 @@
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import SignupForm from "@/components/SignupForm";
+import ChoisirForfaitContent from "@/components/ChoisirForfaitContent";
 
 export const metadata = {
-  title: "Gozly - Créer un compte",
+  title: "Gozly - Choisir un forfait",
 };
 
-export default function SignupPage() {
+export default function ChoisirForfaitPage() {
   return (
     <div className="page page-default">
       <Loader />
@@ -15,14 +15,14 @@ export default function SignupPage() {
 
       <header className="page-hero">
         <div className="wrap">
-          <h1>Créer un compte</h1>
-          <p>Crée ton compte, puis choisis ton forfait.</p>
+          <h1>Choisis ton forfait</h1>
+          <p>Ton compte est créé. Choisis ton forfait pour activer tes modules.</p>
         </div>
       </header>
 
-      <section id="signup-form">
-        <div className="wrap signup-wrap">
-          <SignupForm />
+      <section id="pricing">
+        <div className="wrap">
+          <ChoisirForfaitContent />
         </div>
       </section>
 
