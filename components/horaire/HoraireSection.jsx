@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
+import SimpleSelect from "@/components/SimpleSelect";
 
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
@@ -314,21 +315,14 @@ export default function HoraireSection({ entrepriseId }) {
               <div className="field">
                 <label>Employé</label>
                 {modal.quartId || employes.find((e) => e.id === modal.employeId) ? (
-                  <select
-                    className="admin-select"
-                    style={{ width: "100%" }}
-                    value={modal.employeId}
-                    onChange={(e) => setModal((m) => ({ ...m, employeId: e.target.value }))}
-                  >
-                    {(employesVisibles.some((e) => e.id === modal.employeId)
+                  <SimpleSelect
+                    options={(employesVisibles.some((e) => e.id === modal.employeId)
                       ? employesVisibles
                       : [...employesVisibles, employes.find((e) => e.id === modal.employeId)].filter(Boolean)
-                    ).map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.nom}
-                      </option>
-                    ))}
-                  </select>
+                    ).map((emp) => ({ id: emp.id, label: emp.nom }))}
+                    value={modal.employeId}
+                    onChange={(id) => setModal((m) => ({ ...m, employeId: id }))}
+                  />
                 ) : (
                   <div style={{ fontWeight: 600 }}>{employeNom(modal.employeId)}</div>
                 )}

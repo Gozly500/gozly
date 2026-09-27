@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { demarrerImpersonation } from "@/lib/entreprise";
+import SimpleSelect from "@/components/SimpleSelect";
 
 const FORFAITS = [
   { id: "", label: "Aucun forfait" },
@@ -164,17 +165,20 @@ export default function ClientsSection() {
               </div>
 
               <div className="admin-row-controls">
-                <select
-                  className="admin-select"
-                  value={row.entreprise.forfait || ""}
-                  onChange={(e) => handleForfaitChange(row.entreprise.id, e.target.value)}
-                >
-                  {FORFAITS.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
+                {/* Menu maison : un <select> natif s'ouvre blanc (texte blanc sur blanc) */}
+                <div style={{ minWidth: "200px" }}>
+                  <SimpleSelect
+                    options={FORFAITS}
+                    value={row.entreprise.forfait || ""}
+                    onChange={(id) => handleForfaitChange(row.entreprise.id, id)}
+                  />
+                  {row.entreprise.stripe_subscription_id && (
+                    <div style={{ fontSize: "11.5px", color: "var(--text-dim)", marginTop: "4px", maxWidth: "260px" }}>
+                      ⚠️ Abonnement Stripe actif : au prochain événement (renouvellement, etc.), Stripe remettra le
+                      forfait payé. Pour un changement durable, modifie l'abonnement dans Stripe.
+                    </div>
+                  )}
+                </div>
 
                 {row.profil ? (
                   <label className="switch" title={row.profil.desactive ? "Compte désactivé" : "Compte actif"}>
