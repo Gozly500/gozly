@@ -4,6 +4,9 @@
     --w: 255,255,255;
     /* Texte "fort" (titres, libellés) : blanc en thème foncé ; le thème clair le passera au noir. */
     --fg: #fff;
+    /* Fond des fenêtres, menus déroulants et bulles (foncé ici ; blanc en thème clair). */
+    --pop: rgba(30,25,70,0.97);
+    --pop-2: rgba(30,25,70,0.98);
     --navy: #0d0d3f;
     --indigo: #221f8a;
     --violet: #7a3fe0;
@@ -50,6 +53,23 @@
 [data-theme="sobre"] .dash-page,
 [data-theme="sobre"] .moi-page,
 [data-theme="sobre"] .loader{background:var(--navy);}
+/* Thème clair (Paramètres > Apparence, interrupteur Couleur éteint > Clair).
+   --w passe à 0,0,0 : tous les voiles translucides deviennent des voiles sombres
+   sur fond clair ; --fg = texte fort noir. Les boutons gardent leur bleu/indigo. */
+[data-theme="clair"]{
+    --w: 0,0,0;
+    --fg: #111114;
+    --text: #1c1c22;
+    --text-dim: rgba(28,28,34,0.66);
+    --glow: transparent;
+    --pop: #ffffff;
+    --pop-2: #ffffff;
+    --page-clair: #f4f4f6;
+  }
+[data-theme="clair"] body,
+[data-theme="clair"] .dash-page,
+[data-theme="clair"] .moi-page,
+[data-theme="clair"] .loader{background:var(--page-clair);}
 [data-theme="rose"]{
     --navy: #3d0f2e;
     --indigo: #9b1f5c;
@@ -292,7 +312,7 @@ button:hover{background:rgba(var(--w),0.15);}
   }
 .modal-card{
     width:100%;max-width:440px;max-height:80vh;overflow-y:auto;
-    background:rgba(30,25,70,0.97);backdrop-filter:blur(20px);
+    background:var(--pop);backdrop-filter:blur(20px);
     border:1px solid rgba(var(--w),0.16);border-radius:24px;
     padding:28px 26px;box-shadow:0 30px 60px -15px rgba(0,0,0,0.5);
   }
@@ -951,7 +971,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
   }
 .account-dropdown{
     position:absolute;top:calc(100% + 10px);right:0;min-width:200px;
-    background:rgba(30,25,70,0.97);backdrop-filter:blur(20px);
+    background:var(--pop);backdrop-filter:blur(20px);
     border:1px solid rgba(var(--w),0.16);border-radius:16px;
     padding:8px;z-index:70;box-shadow:0 20px 40px rgba(0,0,0,0.4);
   }
@@ -982,7 +1002,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 .forfait-select-trigger.open .fs-arrow{transform:rotate(180deg);}
 .forfait-select-options{
     position:absolute;top:calc(100% + 8px);left:0;right:0;
-    background:rgba(30,25,70,0.97);backdrop-filter:blur(20px);
+    background:var(--pop);backdrop-filter:blur(20px);
     border:1px solid rgba(var(--w),0.16);border-radius:16px;padding:6px;
     z-index:20;box-shadow:0 20px 40px rgba(0,0,0,0.4);
   }
@@ -1125,7 +1145,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
     position:absolute;top:calc(100% + 8px);left:-6px;z-index:40;
     width:max-content;max-width:min(280px,80vw);
     padding:10px 13px;border-radius:12px;
-    background:rgba(30,25,70,0.98);border:1px solid rgba(var(--w),0.18);
+    background:var(--pop-2);border:1px solid rgba(var(--w),0.18);
     box-shadow:0 14px 32px rgba(0,0,0,0.45);
     font-size:12.5px;font-weight:400;line-height:1.45;color:var(--text);text-align:left;
     font-style:normal;text-transform:none;letter-spacing:0;white-space:normal;
@@ -1306,7 +1326,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 
 input.planning-date-picker{
     position:absolute;top:calc(100% + 8px);right:0;z-index:20;
-    background:rgba(30,25,70,0.97);backdrop-filter:blur(20px);
+    background:var(--pop);backdrop-filter:blur(20px);
     border:1px solid rgba(var(--w),0.16);border-radius:14px;
     padding:10px 14px;color:var(--fg);font-size:14px;
   }
@@ -1397,7 +1417,7 @@ input.planning-date-picker{
 .emplacement-select-trigger.open .fs-arrow{transform:rotate(180deg);}
 .emplacement-select-options{
     position:absolute;top:calc(100% + 8px);left:0;min-width:100%;z-index:20;
-    background:rgba(30,25,70,0.97);backdrop-filter:blur(20px);
+    background:var(--pop);backdrop-filter:blur(20px);
     border:1px solid rgba(var(--w),0.16);border-radius:16px;padding:6px;
     box-shadow:0 20px 40px rgba(0,0,0,0.4);
   }

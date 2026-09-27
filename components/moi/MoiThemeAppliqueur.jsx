@@ -14,6 +14,8 @@ export default function MoiThemeAppliqueur() {
       const cached = window.localStorage.getItem(THEME_STORAGE_KEY_MOI);
       if (isValidTheme(cached)) theme = cached;
     } catch {}
+    // ?apercu=clair : teste le thème Clair (en construction) sans l'enregistrer.
+    if (new URLSearchParams(window.location.search).get("apercu") === "clair") theme = "clair";
     document.documentElement.dataset.theme = theme;
 
     return () => {

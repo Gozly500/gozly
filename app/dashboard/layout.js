@@ -1,18 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { DEFAULT_THEME, THEME_STORAGE_KEY, isValidTheme } from "@/lib/themes";
 
 export default function DashboardLayout({ children }) {
   const [theme, setTheme] = useState(DEFAULT_THEME);
+  // ?apercu=clair : teste le thème Clair (en construction) sans l'enregistrer ni l'exposer aux autres.
+  const apercuClair = useRef(false);
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("apercu") === "clair") {
+      apercuClair.current = true;
+      setTheme("clair");
+    }
+
     let cached = null;
     try {
       cached = window.localStorage.getItem(THEME_STORAGE_KEY);
     } catch {}
-    if (isValidTheme(cached)) setTheme(cached);
+    if (!apercuClair.current && isValidTheme(cached)) setTheme(cached);
 
     let ignore = false;
 
@@ -25,7 +32,7 @@ export default function DashboardLayout({ children }) {
         .eq("id", session.user.id)
         .maybeSingle();
 
-      if (ignore || !isValidTheme(data?.theme)) return;
+      if (ignore || apercuClair.current || !isValidTheme(data?.theme)) return;
 
       setTheme(data.theme);
       try {
