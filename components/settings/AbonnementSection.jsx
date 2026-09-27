@@ -15,7 +15,10 @@ export default function AbonnementSection({ entreprise }) {
   const [error, setError] = useState(null);
   const [checkoutMsg, setCheckoutMsg] = useState(null);
 
-  const current = FORFAITS.find((f) => f.id === entreprise?.forfait);
+  // "pilote" = forfait interne gratuit (assigné par un admin), absent de la liste
+  // publique FORFAITS : sans ça il s'afficherait "Aucun forfait actif".
+  const FORFAIT_PILOTE = { id: "pilote", label: "Pilote", detail: "Modules illimités - gratuit" };
+  const current = entreprise?.forfait === "pilote" ? FORFAIT_PILOTE : FORFAITS.find((f) => f.id === entreprise?.forfait);
   const achatAutoLance = useRef(false);
 
   useEffect(() => {

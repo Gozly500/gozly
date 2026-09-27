@@ -10,6 +10,7 @@ const FORFAITS = [
   { id: "opale", label: "Opale" },
   { id: "onyx", label: "Onyx" },
   { id: "crystal", label: "Crystal" },
+  { id: "pilote", label: "Pilote (interne, gratuit)" },
 ];
 
 async function authFetch(path, options = {}) {
