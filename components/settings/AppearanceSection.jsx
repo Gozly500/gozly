@@ -58,13 +58,17 @@ export default function AppearanceSection({ profil, setProfil }) {
       <h2>Apparence</h2>
       <p className="panel-hint">Choisis le thème visuel de ton tableau de bord.</p>
 
-      <label className="switch-row" style={{ cursor: "pointer", marginBottom: "18px" }}>
-        <span className="switch-row-text">
+      <div className="switch-row" style={{ marginBottom: "18px" }}>
+        <div className="switch-row-text">
           <h4>Couleur</h4>
           <p>Décoche pour un affichage sobre, sans couleur de fond : Sombre ou Clair.</p>
-        </span>
-        <input type="checkbox" checked={!sobre} disabled={saving} onChange={(e) => handleToggleCouleur(e.target.checked)} />
-      </label>
+        </div>
+        <label className="switch">
+          <input type="checkbox" checked={!sobre} disabled={saving} onChange={(e) => handleToggleCouleur(e.target.checked)} />
+          <span className="switch-track"></span>
+          <span className="switch-thumb"></span>
+        </label>
+      </div>
 
       <ThemeGrids theme={theme} onSelect={handleSelect} disabled={saving} />
 
