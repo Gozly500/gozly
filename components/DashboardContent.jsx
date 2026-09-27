@@ -208,8 +208,8 @@ export default function DashboardContent() {
         <div className="dash-main-inner dash-main-wide">
           {noForfait && (
             <div className="dash-forfait-banner">
-              <span>Vous n'avez aucun forfait actif.</span>
-              <Link href="/s-abonner" className="dash-forfait-banner-btn">
+              <span>Tu n'as aucun forfait actif.</span>
+              <Link href="/parametres?tab=abonnement" className="dash-forfait-banner-btn">
                 Choisir un forfait →
               </Link>
             </div>
