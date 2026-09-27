@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import ThemeGrids from "@/components/ThemeGrids";
-import { THEME_SOBRE, DEFAULT_THEME, THEME_STORAGE_KEY, THEME_COULEUR_STORAGE_KEY, isValidTheme } from "@/lib/themes";
+import { THEME_SOBRE, DEFAULT_THEME, THEME_STORAGE_KEY, THEME_COULEUR_STORAGE_KEY, isValidTheme, estSobre } from "@/lib/themes";
 
 export default function AppearanceSection({ profil, setProfil }) {
   const [theme, setThemeState] = useState(profil?.theme || DEFAULT_THEME);
@@ -30,7 +30,7 @@ export default function AppearanceSection({ profil, setProfil }) {
 
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, id);
-      if (id !== THEME_SOBRE) window.localStorage.setItem(THEME_COULEUR_STORAGE_KEY, id);
+      if (!estSobre(id)) window.localStorage.setItem(THEME_COULEUR_STORAGE_KEY, id);
     } catch {}
 
     setProfil({ ...profil, theme: id });
@@ -38,7 +38,7 @@ export default function AppearanceSection({ profil, setProfil }) {
     setTimeout(() => setMsg(null), 3000);
   }
 
-  const sobre = theme === THEME_SOBRE;
+  const sobre = estSobre(theme);
 
   // Case "Couleur" : décochée = mode sobre ; recochée = dernier thème coloré.
   function handleToggleCouleur(couleur) {
@@ -47,7 +47,7 @@ export default function AppearanceSection({ profil, setProfil }) {
       try {
         dernier = window.localStorage.getItem(THEME_COULEUR_STORAGE_KEY);
       } catch {}
-      handleSelect(isValidTheme(dernier) && dernier !== THEME_SOBRE ? dernier : DEFAULT_THEME);
+      handleSelect(isValidTheme(dernier) && !estSobre(dernier) ? dernier : DEFAULT_THEME);
     } else {
       handleSelect(THEME_SOBRE);
     }

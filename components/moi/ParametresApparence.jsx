@@ -9,6 +9,7 @@ import {
   THEME_COULEUR_STORAGE_KEY_MOI,
   isValidTheme,
   couleursDuTheme,
+  estSobre,
 } from "@/lib/themes";
 import TransitionTheme from "@/components/moi/TransitionTheme";
 import MoiRetour from "@/components/moi/MoiRetour";
@@ -29,7 +30,7 @@ export default function ParametresApparence() {
     document.documentElement.dataset.theme = id;
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY_MOI, id);
-      if (id !== THEME_SOBRE) window.localStorage.setItem(THEME_COULEUR_STORAGE_KEY_MOI, id);
+      if (!estSobre(id)) window.localStorage.setItem(THEME_COULEUR_STORAGE_KEY_MOI, id);
     } catch {}
   }
 
@@ -40,7 +41,7 @@ export default function ParametresApparence() {
     setTransition({ id, couleurs: couleursDuTheme(id) });
   }
 
-  const sobre = theme === THEME_SOBRE;
+  const sobre = estSobre(theme);
 
   // Case "Couleur" : décochée = mode sobre ; recochée = dernier thème coloré.
   function handleToggleCouleur(couleur) {
@@ -49,7 +50,7 @@ export default function ParametresApparence() {
       try {
         dernier = window.localStorage.getItem(THEME_COULEUR_STORAGE_KEY_MOI);
       } catch {}
-      handleSelect(isValidTheme(dernier) && dernier !== THEME_SOBRE ? dernier : DEFAULT_THEME);
+      handleSelect(isValidTheme(dernier) && !estSobre(dernier) ? dernier : DEFAULT_THEME);
     } else {
       handleSelect(THEME_SOBRE);
     }
