@@ -26,7 +26,14 @@ export default function SettingsContent() {
   const [activeTab, setActiveTab] = useState("informations");
 
   useEffect(() => {
-    const tab = new URLSearchParams(window.location.search).get("tab");
+    const params = new URLSearchParams(window.location.search);
+    // Retour de Stripe (?checkout=...) ou arrivée depuis l'inscription
+    // (?acheter=...) : ouvrir directement l'onglet Abonnement.
+    if (params.has("checkout") || params.has("acheter")) {
+      setActiveTab("abonnement");
+      return;
+    }
+    const tab = params.get("tab");
     if (TABS.some((t) => t.id === tab)) setActiveTab(tab);
   }, []);
 

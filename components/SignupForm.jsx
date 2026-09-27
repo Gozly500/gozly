@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+
+// Forfaits qu'on peut présélectionner via /inscription?forfait=... (depuis la page
+// des forfaits). Le forfait n'est JAMAIS activé à l'inscription : il ne l'est
+// qu'après paiement Stripe (webhook) - voir /parametres?acheter=...
+const FORFAITS_ACHETABLES = {
+  opale: "Opale - 3 modules - 25$/mois",
+  onyx: "Onyx - 5 modules - 40$/mois",
+  crystal: "Crystal - modules illimités - 50$/mois",
+};
 
 export default function SignupForm() {
   const router = useRouter();
@@ -13,6 +22,12 @@ export default function SignupForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [forfaitVoulu, setForfaitVoulu] = useState(null);
+
+  useEffect(() => {
+    const f = new URLSearchParams(window.location.search).get("forfait");
+    if (f && FORFAITS_ACHETABLES[f]) setForfaitVoulu(f);
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -108,7 +123,7 @@ export default function SignupForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(forfaitVoulu ? `/parametres?acheter=${forfaitVoulu}` : "/dashboard");
   }
 
   return (
@@ -163,6 +178,12 @@ export default function SignupForm() {
             required
           />
         </div>
+
+        {forfaitVoulu && (
+          <p className="section-hint" style={{ textAlign: "center", margin: "0 0 10px" }}>
+            Forfait choisi : <strong>{FORFAITS_ACHETABLES[forfaitVoulu]}</strong>. Tu paieras à l'étape suivante.
+          </p>
+        )}
 
         <p className="legal-notice">
           En créant un compte, tu acceptes nos <Link href="/conditions">Conditions d'utilisation</Link> et notre{" "}

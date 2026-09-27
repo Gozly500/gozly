@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 const FORFAITS = [
@@ -16,6 +16,7 @@ export default function AbonnementSection({ entreprise }) {
   const [checkoutMsg, setCheckoutMsg] = useState(null);
 
   const current = FORFAITS.find((f) => f.id === entreprise?.forfait);
+  const achatAutoLance = useRef(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -28,6 +29,20 @@ export default function AbonnementSection({ entreprise }) {
       window.history.replaceState({}, "", "/parametres");
     }
   }, []);
+
+  // Arrivée depuis l'inscription avec un forfait choisi (/parametres?acheter=opale) :
+  // on démarre le paiement tout de suite, sans redemander le choix.
+  useEffect(() => {
+    if (!entreprise?.id || achatAutoLance.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const voulu = params.get("acheter");
+    if (!voulu) return;
+    achatAutoLance.current = true;
+    window.history.replaceState({}, "", "/parametres");
+    if (!entreprise.forfait && FORFAITS.some((f) => f.id === voulu)) {
+      startCheckout(voulu);
+    }
+  }, [entreprise?.id]);
 
   async function startCheckout(forfaitId) {
     setForfaitOpen(false);
