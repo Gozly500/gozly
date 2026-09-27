@@ -1100,6 +1100,8 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 .field:hover .info-tip-btn,.info-tip.open .info-tip-btn,.info-tip-btn:focus-visible{opacity:1;}
 .info-tip-btn:hover{background:rgba(255,255,255,0.25);color:#fff;}
 @media (hover:none){.info-tip-btn{opacity:1;}}
+.info-tip-warn .info-tip-btn{opacity:1;font-style:normal;font-family:inherit;font-size:11px;color:#f2b95a;border-color:rgba(242,185,90,0.6);background:rgba(242,185,90,0.14);}
+.info-tip-warn .info-tip-bubble{left:auto;right:-6px;}
 .info-tip-bubble{
     position:absolute;top:calc(100% + 8px);left:-6px;z-index:40;
     width:max-content;max-width:min(280px,80vw);
@@ -1193,8 +1195,14 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 
 .admin-list{
     background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
-    border-radius:22px;overflow:hidden;
+    border-radius:22px;
   }
+/* Pas d'overflow:hidden sur .admin-list : il coupait les menus déroulants
+   ouverts (forfait, permissions). Les coins arrondis sont donc reportés sur
+   la première et la dernière ligne. */
+.admin-row:first-child{border-radius:22px 22px 0 0;}
+.admin-row:last-child{border-radius:0 0 22px 22px;}
+.admin-row:only-child{border-radius:22px;}
 .admin-row{
     display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
     padding:18px 24px;border-top:1px solid rgba(255,255,255,0.08);

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { demarrerImpersonation } from "@/lib/entreprise";
 import SimpleSelect from "@/components/SimpleSelect";
+import InfoTooltip from "@/components/InfoTooltip";
 
 const FORFAITS = [
   { id: "", label: "Aucun forfait" },
@@ -173,9 +174,12 @@ export default function ClientsSection() {
                     onChange={(id) => handleForfaitChange(row.entreprise.id, id)}
                   />
                   {row.entreprise.stripe_subscription_id && (
-                    <div style={{ fontSize: "11.5px", color: "var(--text-dim)", marginTop: "4px", maxWidth: "260px" }}>
-                      ⚠️ Abonnement Stripe actif : au prochain événement (renouvellement, etc.), Stripe remettra le
-                      forfait payé. Pour un changement durable, modifie l'abonnement dans Stripe.
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", fontSize: "11.5px", color: "var(--text-dim)" }}>
+                      <InfoTooltip symbole="!" alerte>
+                        Si le forfait est changé depuis ici, il reviendra à celui payé au prochain paiement (renouvellement,
+                        etc.). Pour un changement durable, modifie l'abonnement dans Stripe.
+                      </InfoTooltip>
+                      Abonnement Stripe actif
                     </div>
                   )}
                 </div>

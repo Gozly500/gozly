@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 // Petit rond "i" qui ouvre une bulle d'explication au survol (ou au clic/tap
 // sur mobile) - remplace les longs paragraphes d'aide sous chaque réglage.
-export default function InfoTooltip({ children }) {
+// alerte : variante "!" toujours visible (hors d'un .field), bulle alignée à droite.
+export default function InfoTooltip({ children, symbole = "i", alerte = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -20,7 +21,7 @@ export default function InfoTooltip({ children }) {
   return (
     <span
       ref={ref}
-      className={`info-tip${open ? " open" : ""}`}
+      className={`info-tip${open ? " open" : ""}${alerte ? " info-tip-warn" : ""}`}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
@@ -34,7 +35,7 @@ export default function InfoTooltip({ children }) {
         onBlur={() => setOpen(false)}
         onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
       >
-        i
+        {symbole}
       </button>
       {open && (
         <span className="info-tip-bubble" role="tooltip">
