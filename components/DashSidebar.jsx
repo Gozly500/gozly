@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES, limiteModules } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
+import CreerEntrepriseModal from "@/components/CreerEntrepriseModal";
 import ForfaitBloqueModal from "@/components/ForfaitBloqueModal";
 import { listerMesEntreprises, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -35,6 +36,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
   const [actifs, setActifs] = useState([]);
   const [forfait, setForfait] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [creerEntrepriseOpen, setCreerEntrepriseOpen] = useState(false);
   const [plusieursEntreprises, setPlusieursEntreprises] = useState(false);
   const [impersonation, setImpersonationState] = useState(null);
   // null = pas encore chargé (ou propriétaire/admin) - aucune restriction
@@ -216,6 +218,11 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
               ⇄ Changer de dashboard
             </Link>
           )}
+          {!impersonation && (
+            <button type="button" className="dash-switch-link" onClick={() => setCreerEntrepriseOpen(true)}>
+              + Créer une entreprise
+            </button>
+          )}
         </div>
       </aside>
 
@@ -236,6 +243,8 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           onChange={loadActifs}
         />
       )}
+
+      {creerEntrepriseOpen && <CreerEntrepriseModal onClose={() => setCreerEntrepriseOpen(false)} />}
     </>
   );
 }

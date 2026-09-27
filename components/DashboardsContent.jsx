@@ -7,11 +7,13 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
 import { listerMesEntreprises, setEntrepriseSelectionnee } from "@/lib/entreprise";
+import CreerEntrepriseModal from "@/components/CreerEntrepriseModal";
 
 export default function DashboardsContent() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [entreprises, setEntreprises] = useState([]);
+  const [creerOpen, setCreerOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -74,11 +76,18 @@ export default function DashboardsContent() {
                 <div className="dashboard-picker-role">{e.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
               </button>
             ))}
+            <button className="dashboard-picker-card" onClick={() => setCreerOpen(true)}>
+              <div className="dashboard-picker-logo">+</div>
+              <div className="dashboard-picker-nom">Créer une entreprise</div>
+              <div className="dashboard-picker-role">Nouvelle entreprise</div>
+            </button>
           </div>
         </div>
       </section>
 
       <Footer />
+
+      {creerOpen && <CreerEntrepriseModal onClose={() => setCreerOpen(false)} />}
     </div>
   );
 }
