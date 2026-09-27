@@ -16,7 +16,7 @@ export default function SignupPage() {
       <header className="page-hero">
         <div className="wrap">
           <h1>Créer un compte</h1>
-          <p>Choisis ton forfait, active tes modules quand tu veux.</p>
+          <p>Crée ton compte, puis choisis ton forfait et active tes modules quand tu veux.</p>
         </div>
       </header>
 

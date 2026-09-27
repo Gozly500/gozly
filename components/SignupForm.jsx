@@ -5,21 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
-const FORFAITS = [
-  { id: "none", label: "Aucun forfait pour l'instant", detail: "Choisis-en un plus tard" },
-  { id: "opale", label: "Opale", detail: "3 modules - 25$/mois" },
-  { id: "onyx", label: "Onyx", detail: "5 modules - 40$/mois" },
-  { id: "crystal", label: "Crystal", detail: "Modules illimités - 50$/mois" },
-];
-
 export default function SignupForm() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [entrepriseName, setEntrepriseName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [forfait, setForfait] = useState("none");
-  const [forfaitOpen, setForfaitOpen] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -85,7 +76,6 @@ export default function SignupForm() {
     const { error: entrepriseError } = await supabase.from("entreprises").insert({
       id: entrepriseId,
       nom: entrepriseName,
-      forfait: forfait === "none" ? null : forfait,
     });
 
     if (entrepriseError) {
@@ -172,39 +162,6 @@ export default function SignupForm() {
             minLength={6}
             required
           />
-        </div>
-
-        <div className="field">
-          <label>Forfait</label>
-          <div className="forfait-select-wrap">
-            <div
-              className={`forfait-select-trigger${forfaitOpen ? " open" : ""}`}
-              onClick={() => setForfaitOpen((v) => !v)}
-            >
-              <div>
-                <div className="fs-label">{FORFAITS.find((f) => f.id === forfait)?.label}</div>
-                <div className="fs-detail">{FORFAITS.find((f) => f.id === forfait)?.detail}</div>
-              </div>
-              <span className="fs-arrow">▾</span>
-            </div>
-            {forfaitOpen && (
-              <div className="forfait-select-options open">
-                {FORFAITS.map((f) => (
-                  <div
-                    key={f.id}
-                    className="forfait-option"
-                    onClick={() => {
-                      setForfait(f.id);
-                      setForfaitOpen(false);
-                    }}
-                  >
-                    <div className="fo-label">{f.label}</div>
-                    <div className="fo-detail">{f.detail}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         <p className="legal-notice">
