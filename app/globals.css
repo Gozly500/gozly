@@ -48,11 +48,13 @@
    gardent leurs couleurs (--indigo, --violet, etc. ne sont pas modifiés). */
 [data-theme="sobre"]{
     --navy: #0b0b0d;
+    --page-sombre: #0b0b0d;
     --glow: transparent;
   }
+[data-theme="sobre"] body,
 [data-theme="sobre"] .dash-page,
 [data-theme="sobre"] .moi-page,
-[data-theme="sobre"] .loader{background:var(--navy);}
+[data-theme="sobre"] .loader{background:var(--page-sombre);}
 /* Thème clair (Paramètres > Apparence, interrupteur Couleur éteint > Clair).
    --w passe à 0,0,0 : tous les voiles translucides deviennent des voiles sombres
    sur fond clair ; --fg = texte fort noir. Les boutons gardent leur bleu/indigo. */
@@ -79,7 +81,7 @@
     --text-dim: rgba(242,240,255,0.72);
     --pop: rgba(30,25,70,0.97);
     --pop-2: rgba(30,25,70,0.98);
-    background:#12122b;
+    background:var(--side,#12122b);
     backdrop-filter:none;-webkit-backdrop-filter:none;
     border-color:rgba(255,255,255,0.08);
     color:var(--text);
@@ -102,6 +104,21 @@
 [data-theme="clair"] .dash-sidebar :is(input,textarea,.emplacement-select-trigger,.forfait-select-trigger){
     background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.16);
   }
+/* Accents des thèmes sobres (Sombre/Clair) : ne colorent que le bouton principal
+   (dégradé --indigo -> --navy), la barre latérale et la barre du bas. Les fonds de
+   page ont leurs propres variables (--page-sombre / --page-clair), donc changer
+   --navy/--indigo ici ne teinte pas la page. Accent "gozly" = aucun attribut. */
+:is([data-theme="sobre"],[data-theme="clair"])[data-accent="vert"]{
+    --indigo:#1a8a5a;--navy:#04140f;--violet:#22b573;--purple:#0f6b46;--side:#06201a;
+  }
+:is([data-theme="sobre"],[data-theme="clair"])[data-accent="rose"]{
+    --indigo:#b8286b;--navy:#3d0f2e;--violet:#ff5c9d;--purple:#d6407f;--side:#2b0b20;
+  }
+:is([data-theme="sobre"],[data-theme="clair"])[data-accent="sunset"]{
+    --indigo:#c0502a;--navy:#2b0f12;--violet:#f2925a;--purple:#c1443f;--side:#26100f;
+  }
+/* En Sombre, la barre latérale est un voile translucide : avec un accent, elle prend sa teinte. */
+[data-theme="sobre"][data-accent] .dash-sidebar{background:var(--side);backdrop-filter:none;-webkit-backdrop-filter:none;}
 [data-theme="rose"]{
     --navy: #3d0f2e;
     --indigo: #9b1f5c;
@@ -1885,3 +1902,19 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .legal-notice a{color:var(--text);text-decoration:underline;}
 .footer-links{display:flex;gap:16px;flex-wrap:wrap;}
 .footer-links a{color:var(--text-dim);text-decoration:underline;}
+
+/* Sélecteur de couleur d'accent (Apparence, thèmes sobres) */
+.accent-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;}
+.accent-choice{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    background:none;border:none;box-shadow:none;padding:4px;border-radius:12px;
+    cursor:pointer;color:var(--text-dim);font-size:12px;font-weight:600;
+  }
+.accent-dot{
+    width:40px;height:40px;border-radius:50%;
+    border:2px solid rgba(var(--w),0.25);transition:box-shadow .15s ease,border-color .15s ease;
+  }
+.accent-choice:hover .accent-dot{border-color:rgba(var(--w),0.5);}
+.accent-choice.selected{color:var(--fg);}
+.accent-choice.selected .accent-dot{border-color:var(--fg);box-shadow:0 0 0 3px rgba(var(--w),0.18);}
+.accent-choice:disabled{opacity:.5;cursor:default;}

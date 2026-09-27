@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { DEFAULT_THEME, THEME_STORAGE_KEY_MOI, isValidTheme } from "@/lib/themes";
+import { DEFAULT_THEME, THEME_STORAGE_KEY_MOI, THEME_ACCENT_STORAGE_KEY_MOI, isValidTheme, appliquerAccent } from "@/lib/themes";
 
 // Rendu par app/moi/layout.js, qui persiste tant qu'on reste dans /moi -
 // contrairement à MoiShell qui se remonte à chaque changement de page
@@ -17,9 +17,13 @@ export default function MoiThemeAppliqueur() {
     // ?apercu=clair : teste le thème Clair (en construction) sans l'enregistrer.
     if (new URLSearchParams(window.location.search).get("apercu") === "clair") theme = "clair";
     document.documentElement.dataset.theme = theme;
+    try {
+      appliquerAccent(window.localStorage.getItem(THEME_ACCENT_STORAGE_KEY_MOI));
+    } catch {}
 
     return () => {
       delete document.documentElement.dataset.theme;
+      delete document.documentElement.dataset.accent;
     };
   }, []);
 

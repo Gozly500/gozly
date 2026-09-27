@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import ThemeGrids from "@/components/ThemeGrids";
-import { THEME_SOBRE, DEFAULT_THEME, THEME_STORAGE_KEY, THEME_COULEUR_STORAGE_KEY, isValidTheme, estSobre } from "@/lib/themes";
+import { THEME_SOBRE, DEFAULT_THEME, THEME_STORAGE_KEY, THEME_COULEUR_STORAGE_KEY, isValidTheme, estSobre, DEFAULT_ACCENT, THEME_ACCENT_STORAGE_KEY, isValidAccent } from "@/lib/themes";
 
 export default function AppearanceSection({ profil, setProfil }) {
   const [theme, setThemeState] = useState(profil?.theme || DEFAULT_THEME);
+  const [accent, setAccentState] = useState(isValidAccent(profil?.theme_accent) ? profil.theme_accent : DEFAULT_ACCENT);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
 
@@ -35,6 +36,36 @@ export default function AppearanceSection({ profil, setProfil }) {
 
     setProfil({ ...profil, theme: id });
     setMsg({ type: "ok", text: "Thème appliqué au tableau de bord !" });
+    setTimeout(() => setMsg(null), 3000);
+  }
+
+  async function handleSelectAccent(id) {
+    if (id === accent || !profil || saving) return;
+
+    const previous = accent;
+    setAccentState(id);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("profils")
+      .update({ theme_accent: id === DEFAULT_ACCENT ? null : id })
+      .eq("id", profil.id);
+
+    setSaving(false);
+
+    if (error) {
+      setAccentState(previous);
+      setMsg({ type: "err", text: "Le changement de couleur a échoué. Réessaie dans un instant." });
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(THEME_ACCENT_STORAGE_KEY, id);
+    } catch {}
+
+    setProfil({ ...profil, theme_accent: id === DEFAULT_ACCENT ? null : id });
+    setMsg({ type: "ok", text: "Couleur appliquée au tableau de bord !" });
     setTimeout(() => setMsg(null), 3000);
   }
 
@@ -70,7 +101,7 @@ export default function AppearanceSection({ profil, setProfil }) {
         </label>
       </div>
 
-      <ThemeGrids theme={theme} onSelect={handleSelect} disabled={saving} />
+      <ThemeGrids theme={theme} onSelect={handleSelect} disabled={saving} accent={accent} onSelectAccent={handleSelectAccent} />
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
     </div>

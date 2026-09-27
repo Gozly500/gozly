@@ -10,18 +10,25 @@ import {
   isValidTheme,
   couleursDuTheme,
   estSobre,
+  DEFAULT_ACCENT,
+  THEME_ACCENT_STORAGE_KEY_MOI,
+  isValidAccent,
+  appliquerAccent,
 } from "@/lib/themes";
 import TransitionTheme from "@/components/moi/TransitionTheme";
 import MoiRetour from "@/components/moi/MoiRetour";
 
 export default function ParametresApparence() {
   const [theme, setTheme] = useState(DEFAULT_THEME);
+  const [accent, setAccent] = useState(DEFAULT_ACCENT);
   const [transition, setTransition] = useState(null); // { id, couleurs } pendant l'animation
 
   useEffect(() => {
     try {
       const cached = window.localStorage.getItem(THEME_STORAGE_KEY_MOI);
       if (isValidTheme(cached)) setTheme(cached);
+      const accentCache = window.localStorage.getItem(THEME_ACCENT_STORAGE_KEY_MOI);
+      if (isValidAccent(accentCache)) setAccent(accentCache);
     } catch {}
   }, []);
 
@@ -39,6 +46,15 @@ export default function ParametresApparence() {
   function handleSelect(id) {
     if (id === theme || transition) return;
     setTransition({ id, couleurs: couleursDuTheme(id) });
+  }
+
+  // L'accent est mémorisé sur l'appareil (comme le thème) et appliqué tout de suite.
+  function handleSelectAccent(id) {
+    setAccent(id);
+    appliquerAccent(id);
+    try {
+      window.localStorage.setItem(THEME_ACCENT_STORAGE_KEY_MOI, id);
+    } catch {}
   }
 
   const sobre = estSobre(theme);
@@ -74,7 +90,7 @@ export default function ParametresApparence() {
         </label>
       </div>
 
-      <ThemeGrids theme={theme} onSelect={handleSelect} disabled={!!transition} />
+      <ThemeGrids theme={theme} onSelect={handleSelect} disabled={!!transition} accent={accent} onSelectAccent={handleSelectAccent} />
 
       {transition && (
         <TransitionTheme
