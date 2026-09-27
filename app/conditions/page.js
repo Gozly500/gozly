@@ -10,6 +10,7 @@ const sections = [
     titre: "Acceptation",
     contenu: [
       `En créant un compte ou en utilisant Gozly (${LEGAL.siteUrl}), vous acceptez les présentes conditions ainsi que notre Politique de confidentialité. Si vous utilisez Gozly au nom d'une entreprise, vous confirmez avoir l'autorité pour l'engager. Si vous n'êtes pas d'accord, n'utilisez pas le service.`,
+      "Gozly s'adresse aux entreprises. Le compte doit être créé par une personne majeure, ayant l'autorité d'engager l'entreprise.",
     ],
   },
   {
@@ -32,7 +33,15 @@ const sections = [
       "Gozly est offert sur abonnement mensuel (forfaits Opale, Onyx et Crystal, qui déterminent notamment le nombre de modules actifs). Le paiement est traité par Stripe et l'abonnement se renouvelle automatiquement jusqu'à son annulation.",
       "Les prix affichés sont indiqués avant taxes, s'il y a lieu; les taxes applicables sont ajoutées à la facture.",
       "Vous pouvez changer de forfait ou annuler en tout temps depuis les paramètres de votre compte. L'annulation prend effet à la fin de la période déjà payée; sauf disposition contraire de la loi, les montants déjà payés ne sont pas remboursés. Si votre nombre de modules dépasse la limite de votre forfait, l'accès aux modules excédentaires peut être suspendu jusqu'à ce que vous ajustiez votre sélection ou votre forfait.",
-      "Nous pouvons modifier nos prix en vous avisant à l'avance; le nouveau prix s'applique à la prochaine période de facturation.",
+      "Nous pouvons modifier nos prix en vous avisant au moins 30 jours à l'avance; le nouveau prix s'applique à la prochaine période de facturation, et vous pouvez annuler avant son entrée en vigueur.",
+    ],
+  },
+  {
+    titre: "Propriété intellectuelle",
+    contenu: [
+      "Gozly, ainsi que sa plateforme, son code, son design, ses marques, son nom et ses logos, demeurent la propriété de Gozly. Ces conditions ne vous transfèrent aucun droit de propriété sur ces éléments.",
+      "Pendant la durée de votre abonnement, nous vous accordons une licence limitée, non exclusive, non transférable et révocable pour utiliser le service, pour les besoins de votre entreprise. Vous ne pouvez pas copier, modifier, revendre, décompiler ou tenter d'extraire le code source du service, ni l'utiliser pour créer un service concurrent.",
+      "Vos données vous appartiennent (voir la section suivante).",
     ],
   },
   {
@@ -59,7 +68,7 @@ const sections = [
         "perturber le service (attaques, envoi massif de requêtes, etc.);",
         "revendre ou sous-licencier l'accès à Gozly sans notre accord écrit.",
       ],
-      "Nous pouvons suspendre ou fermer un compte qui enfreint ces règles.",
+      "En cas de violation, nous vous aviserons et vous accorderons un délai raisonnable, normalement 10 jours, pour y remédier. Si la violation est grave, répétée, ou menace la sécurité du service ou de tiers, nous pouvons suspendre ou fermer le compte immédiatement.",
     ],
   },
   {
@@ -76,6 +85,12 @@ const sections = [
     ],
   },
   {
+    titre: "Force majeure",
+    contenu: [
+      "Aucune des parties n'est responsable d'un retard ou d'un manquement causé par un événement hors de son contrôle raisonnable : panne majeure d'un fournisseur d'hébergement, d'électricité ou de télécommunications, cyberattaque malgré des mesures raisonnables, catastrophe naturelle, mesure gouvernementale, conflit de travail, etc. Les obligations affectées sont suspendues pendant la durée de l'événement.",
+    ],
+  },
+  {
     titre: "Limite de responsabilité",
     contenu: [
       "Dans la mesure permise par la loi, Gozly n'est pas responsable des dommages indirects (perte de profits, d'occasions d'affaires ou de données résultant de vos propres choix, par exemple de ne pas avoir exporté vos données à temps). Notre responsabilité totale envers vous, pour toute réclamation liée au service, est limitée aux montants que vous avez payés à Gozly au cours des 12 mois précédant l'événement.",
@@ -83,15 +98,18 @@ const sections = [
     ],
   },
   {
-    titre: "Fin du service",
+    titre: "Fin du service et sort de vos données",
     contenu: [
-      "Vous pouvez fermer votre compte en tout temps. Nous pouvons suspendre ou mettre fin à l'accès en cas de non-paiement ou de violation des présentes conditions, en vous avisant quand c'est raisonnablement possible. Après la fermeture, vos données sont traitées selon la Politique de confidentialité.",
+      "Vous pouvez fermer votre compte en tout temps. Nous pouvons suspendre ou mettre fin à l'accès en cas de non-paiement ou de violation des présentes conditions, selon la section « Utilisation acceptable ».",
+      `Après la fermeture d'un compte, vous disposez de ${LEGAL.delaiExportApresFermetureJours} jours pour exporter vos données. Passé ce délai, elles sont détruites dans les ${LEGAL.delaiSuppressionApresExportJours} jours suivants, sauf les renseignements que la loi nous oblige à conserver (par exemple les documents de facturation), comme expliqué dans la Politique de confidentialité.`,
     ],
   },
   {
     titre: "Modifications, droit applicable et contact",
     contenu: [
-      "Nous pouvons modifier ces conditions; nous aviserons les clients des changements importants, et continuer à utiliser Gozly après l'entrée en vigueur d'un changement vaut acceptation.",
+      "Nous pouvons modifier ces conditions. Pour tout changement important, nous vous aviserons au moins 30 jours à l'avance (par courriel ou dans l'application). Si vous refusez le changement, vous pouvez annuler votre abonnement avant son entrée en vigueur, sans pénalité. Continuer à utiliser Gozly après cette date vaut acceptation des nouvelles conditions.",
+      "Ces conditions constituent l'entente complète entre vous et Gozly au sujet du service et remplacent toute entente antérieure. Si une clause est déclarée invalide ou inapplicable, les autres demeurent en vigueur.",
+      "Ces conditions sont rédigées en français. Si elles sont traduites dans une autre langue, la version française prévaut en cas de divergence.",
       "Ces conditions sont régies par les lois du Québec et du Canada qui s'y appliquent. Tout litige relève des tribunaux compétents du Québec.",
       `Questions : ${LEGAL.courrielContact}.`,
     ],

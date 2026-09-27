@@ -11,7 +11,7 @@ const sections = [
     contenu: [
       `${LEGAL.nomLegal} (« Gozly », « nous ») exploite la plateforme accessible à ${LEGAL.siteUrl}, un ensemble d'outils de gestion pour les petites et moyennes entreprises (horaire, pointage, inventaire, suivi des ventes, registre de températures, discussion d'équipe, etc.).`,
       "Nous agissons à titre de responsable des renseignements personnels de nos clients (les entreprises qui s'abonnent) et de leurs utilisateurs. Pour les renseignements de leurs employés que les entreprises saisissent dans Gozly, l'entreprise cliente demeure responsable de leur collecte et de leur utilisation, et Gozly les héberge et les traite pour son compte.",
-      `Pour toute question sur la protection de vos renseignements personnels, ou pour joindre notre responsable de la protection des renseignements personnels : ${LEGAL.courrielContact}.`,
+      `Pour toute question sur la protection de vos renseignements personnels, ou pour joindre notre responsable de la protection des renseignements personnels : ${LEGAL.courrielConfidentialite}.`,
     ],
   },
   {
@@ -38,40 +38,52 @@ const sections = [
     ],
   },
   {
-    titre: "Qui y a accès et avec qui nous les partageons",
+    titre: "Qui y a accès et où ils sont hébergés",
     contenu: [
       "Au sein d'une entreprise, l'accès dépend des permissions données par l'administrateur (par exemple, un employé ne voit que ce que l'application mobile lui permet de voir). Les données d'une entreprise ne sont jamais visibles par une autre entreprise.",
       "Nous faisons appel à des fournisseurs de services pour faire fonctionner Gozly :",
       [
-        "Supabase : hébergement de la base de données et authentification.",
-        "Vercel : hébergement de l'application.",
-        "Stripe : traitement des paiements et de l'abonnement.",
+        "Supabase : base de données et authentification. Les données sont hébergées au Canada (région Canada centrale).",
+        "Vercel : hébergement de l'application. Certains traitements peuvent avoir lieu aux États-Unis.",
+        "Stripe : traitement des paiements et de l'abonnement, principalement au Canada et aux États-Unis.",
         "Wix, Nethris ou d'autres services : seulement si votre entreprise choisit de les connecter à Gozly.",
       ],
-      "Ces fournisseurs peuvent traiter des données à l'extérieur du Québec, notamment aux États-Unis. Nous les choisissons pour leurs pratiques de sécurité, mais nous ne pouvons pas garantir que les lois de ces endroits offrent la même protection qu'au Québec.",
+      "Certains de ces fournisseurs sont établis aux États-Unis ou y traitent des données, et pourraient y être soumis à des lois différentes de celles du Québec. Avant de confier des renseignements personnels à un fournisseur, ou de les transférer hors du Québec, nous évaluons les risques pour la vie privée et prévoyons, lorsque c'est requis, des protections contractuelles (ententes de traitement des données) avec ce fournisseur.",
       "Nous pouvons aussi communiquer des renseignements si la loi ou une ordonnance d'un tribunal l'exige.",
     ],
   },
   {
-    titre: "Durée de conservation",
+    titre: "Durée de conservation et destruction",
     contenu: [
-      "Nous conservons les renseignements aussi longtemps que le compte de l'entreprise est actif et que nécessaire pour offrir le service.",
-      "Certaines données sont supprimées automatiquement selon un délai que l'entreprise peut régler dans Personnalisation, par exemple les fiches de température (3, 6 ou 12 mois) et les demandes de congé ou d'échange traitées. L'entreprise peut exporter ses données avant leur suppression.",
-      "Quand une entreprise supprime son compte, ses données sont supprimées, sous réserve des copies de sauvegarde qui sont écrasées selon leur cycle normal et de ce que la loi nous oblige à conserver (par exemple, les documents de facturation).",
+      "Nous conservons les renseignements seulement le temps nécessaire aux fins pour lesquelles ils ont été recueillis, puis nous les détruisons. En pratique :",
+      [
+        "Données du compte et des modules : tant que le compte de l'entreprise est actif. Certaines données sont supprimées automatiquement selon un délai que l'entreprise règle dans Personnalisation (par exemple les fiches de température : 3, 6 ou 12 mois; les demandes de congé et d'échange traitées).",
+        `Après la fermeture d'un compte : ${LEGAL.delaiExportApresFermetureJours} jours pour exporter les données, puis destruction dans les ${LEGAL.delaiSuppressionApresExportJours} jours suivants.`,
+        `Facturation et paiements : ${LEGAL.conservationFacturationAnnees} ans, comme l'exigent les lois fiscales pour les registres comptables.`,
+        "Copies de sauvegarde : elles sont écrasées selon le cycle normal de notre fournisseur, ce qui peut retarder de quelques semaines la disparition complète d'une donnée supprimée.",
+        "Journaux techniques : conservés pour une durée limitée, selon les réglages de nos fournisseurs, uniquement pour la sécurité et le dépannage.",
+      ],
+      "L'entreprise cliente peut exporter ses données avant leur suppression.",
     ],
   },
   {
-    titre: "Sécurité",
+    titre: "Sécurité et incidents de confidentialité",
     contenu: [
       "Nous prenons des mesures raisonnables pour protéger vos renseignements : connexions chiffrées (HTTPS), séparation des données entre entreprises, contrôle d'accès, chiffrement des identifiants de services externes connectés (par exemple la paie) et limitation des tentatives de connexion.",
-      "Aucun système n'est parfaitement sécuritaire. En cas d'incident de confidentialité présentant un risque de préjudice sérieux, nous aviserons les personnes concernées et la Commission d'accès à l'information du Québec, comme la loi l'exige.",
+      "Aucun système n'est parfaitement sécuritaire. Nous tenons un registre des incidents de confidentialité, comme la loi l'exige. En cas d'incident présentant un risque de préjudice sérieux, nous aviserons les personnes concernées et la Commission d'accès à l'information du Québec.",
     ],
   },
   {
     titre: "Vos droits",
     contenu: [
-      "Conformément à la Loi sur la protection des renseignements personnels dans le secteur privé (Loi 25), vous pouvez demander d'accéder aux renseignements que nous détenons sur vous, de les faire corriger, ou de demander leur suppression, sous réserve des exceptions prévues par la loi.",
-      `Écrivez-nous à ${LEGAL.courrielContact}. Si vous êtes un employé d'une entreprise cliente, nous pourrions vous demander de vous adresser d'abord à votre employeur, qui est responsable de ces renseignements. Vous pouvez aussi déposer une plainte auprès de la Commission d'accès à l'information du Québec.`,
+      "Conformément à la Loi sur la protection des renseignements personnels dans le secteur privé (Loi 25), vous pouvez demander d'accéder aux renseignements que nous détenons sur vous, de les faire corriger, de retirer votre consentement ou de demander leur suppression, sous réserve des exceptions prévues par la loi (par exemple, ce que nous devons conserver à des fins de facturation).",
+      `Écrivez-nous à ${LEGAL.courrielConfidentialite}. Nous répondons dans les 30 jours. Si vous êtes un employé d'une entreprise cliente, nous pourrions vous demander de vous adresser d'abord à votre employeur, qui est responsable de ces renseignements. Vous pouvez aussi déposer une plainte auprès de la Commission d'accès à l'information du Québec.`,
+    ],
+  },
+  {
+    titre: "Âge minimal",
+    contenu: [
+      "Gozly s'adresse aux entreprises : le compte doit être créé par une personne majeure. L'entreprise qui inscrit des employés de moins de 14 ans dans Gozly est responsable d'obtenir, au préalable, le consentement du parent ou du tuteur, comme l'exige la loi.",
     ],
   },
   {
