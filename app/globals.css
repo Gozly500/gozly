@@ -1431,7 +1431,7 @@ input.planning-date-picker{
 .dashboard-picker-nom{font-weight:600;font-size:15px;text-align:center;}
 .dashboard-picker-role{font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;}
 
-.dash-switch-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;}
+.dash-switch-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;}
 .dash-switch-link{
     display:block;width:100%;text-align:center;margin-top:12px;font-size:12.5px;
     color:var(--text-dim);text-decoration:none;
@@ -1439,11 +1439,8 @@ input.planning-date-picker{
   }
 .dash-switch-row .dash-switch-link{width:auto;margin-top:0;}
 .dash-switch-link:hover{color:var(--fg);text-decoration:underline;}
-.dash-switch-add{
-    flex-shrink:0;width:20px;height:20px;line-height:18px;border-radius:50%;
-    border:1px solid rgba(var(--w),0.25);font-size:14px;font-weight:600;
-  }
-.dash-switch-add:hover{border-color:rgba(var(--w),0.5);text-decoration:none;}
+.dash-switch-sep{width:1px;height:11px;background:rgba(var(--w),0.18);flex-shrink:0;}
+.dash-switch-add{flex-shrink:0;font-size:14px;font-weight:700;line-height:1;}
 
 /* ============ Onglets d'emplacement (succursales) ============ */
 .emplacement-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
