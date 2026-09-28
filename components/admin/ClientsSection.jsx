@@ -30,17 +30,195 @@ async function authFetch(path, options = {}) {
   return { ok: res.ok, data };
 }
 
-export default function ClientsSection() {
+// Ligne d'une entreprise (forfait, abonnement Stripe, dashboard, édition,
+// suppression) - utilisée à la fois pour les entreprises d'un compte
+// sélectionné et pour les entreprises orphelines (sans aucun membre).
+function EntrepriseRow({ entreprise, profilId, onForfaitChange, onDeleted, onSaved }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState([]);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    entrepriseNom: entreprise.nom || "",
+    telephone: entreprise.telephone || "",
+    courrielContact: entreprise.courriel_contact || "",
+    adresse: entreprise.adresse || "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(null);
-  const [editingId, setEditingId] = useState(null);
+
+  async function handleSave() {
+    setSaving(true);
+    const { ok, data } = await authFetch("/api/admin/clients", {
+      method: "PATCH",
+      body: JSON.stringify({ entrepriseId: entreprise.id, ...form }),
+    });
+    setSaving(false);
+    if (!ok) {
+      setError(data.error || "La mise à jour a échoué.");
+      return;
+    }
+    setError(null);
+    setEditing(false);
+    onSaved();
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    const { ok, data } = await authFetch("/api/admin/delete-client", {
+      method: "POST",
+      body: JSON.stringify({ entrepriseId: entreprise.id }),
+    });
+    setDeleting(false);
+    if (!ok) {
+      setError(data.error || "La suppression a échoué.");
+      return;
+    }
+    onDeleted();
+  }
+
+  return (
+    <div className="admin-row" style={{ flexDirection: "column", alignItems: "stretch" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+        <div className="admin-row-main">
+          <div className="admin-row-title">{entreprise.nom}</div>
+          <div className="admin-row-sub">inscrit le {new Date(entreprise.created_at).toLocaleDateString("fr-CA")}</div>
+        </div>
+
+        <div className="admin-row-controls">
+          <div style={{ minWidth: "200px" }}>
+            <SimpleSelect
+              options={FORFAITS}
+              value={entreprise.forfait || ""}
+              onChange={(id) => onForfaitChange(entreprise.id, id)}
+            />
+            {entreprise.stripe_subscription_id && (
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", fontSize: "11.5px", color: "var(--text-dim)" }}>
+                <InfoTooltip symbole="!" alerte>
+                  Si le forfait est changé depuis ici, il reviendra à celui payé au prochain paiement (renouvellement,
+                  etc.). Pour un changement durable, modifie l'abonnement dans Stripe.
+                </InfoTooltip>
+                Abonnement Stripe actif
+              </div>
+            )}
+          </div>
+
+          <button className="admin-icon-btn" onClick={() => setEditing((v) => !v)}>
+            {editing ? "Fermer" : "Modifier"}
+          </button>
+          <button
+            className="admin-icon-btn"
+            onClick={() => {
+              demarrerImpersonation(entreprise.id, entreprise.nom);
+              router.push("/dashboard");
+            }}
+          >
+            Voir le dashboard
+          </button>
+        </div>
+      </div>
+
+      {editing && (
+        <div className="admin-edit-panel">
+          {error && <p className="settings-msg err">{error}</p>}
+          <div className="field-row">
+            <div className="field">
+              <label>Nom de l'entreprise</label>
+              <input
+                type="text"
+                value={form.entrepriseNom}
+                onChange={(e) => setForm((f) => ({ ...f, entrepriseNom: e.target.value }))}
+              />
+            </div>
+            <div className="field">
+              <label>Courriel de contact (entreprise)</label>
+              <input
+                type="email"
+                value={form.courrielContact}
+                onChange={(e) => setForm((f) => ({ ...f, courrielContact: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="field">
+            <label>Téléphone de l'entreprise</label>
+            <input type="tel" value={form.telephone} onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))} />
+          </div>
+          <div className="field">
+            <label>Adresse</label>
+            <input type="text" value={form.adresse} onChange={(e) => setForm((f) => ({ ...f, adresse: e.target.value }))} />
+          </div>
+
+          <div className="admin-edit-actions">
+            <button className="submit-btn" onClick={handleSave} disabled={saving}>
+              {saving ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          </div>
+
+          <div className="settings-divider">Zone dangereuse</div>
+
+          {!confirmingDelete ? (
+            <div className="danger-zone">
+              <div>
+                <h4>Supprimer cette entreprise</h4>
+                <p>
+                  Efface définitivement cette entreprise et toutes ses données (planning, employés, etc). Le compte de
+                  connexion {profilId ? "et ses autres entreprises ne sont pas touchés" : ""}.
+                </p>
+              </div>
+              <button className="btn-danger" onClick={() => setConfirmingDelete(true)}>
+                Supprimer l'entreprise
+              </button>
+            </div>
+          ) : (
+            <div className="danger-zone" style={{ flexDirection: "column", alignItems: "stretch", gap: "12px" }}>
+              <div>
+                <h4>Confirmer la suppression</h4>
+                <p>
+                  Tape le nom de l'entreprise (<strong>{entreprise.nom}</strong>) pour confirmer. Cette action est
+                  irréversible.
+                </p>
+              </div>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder={entreprise.nom}
+              />
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button className="btn-danger" disabled={deleteConfirmText !== entreprise.nom || deleting} onClick={handleDelete}>
+                  {deleting ? "Suppression..." : "Confirmer la suppression définitive"}
+                </button>
+                <button
+                  className="admin-icon-btn"
+                  onClick={() => {
+                    setConfirmingDelete(false);
+                    setDeleteConfirmText("");
+                  }}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ClientsSection() {
+  const [loading, setLoading] = useState(true);
+  const [comptes, setComptes] = useState([]);
+  const [entreprisesOrphelines, setEntreprisesOrphelines] = useState([]);
+  const [error, setError] = useState(null);
+  const [compteOuvertId, setCompteOuvertId] = useState(null); // userId sélectionné (vue "entreprises de ce compte")
+  const [editingCompteId, setEditingCompteId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [resetResult, setResetResult] = useState({});
+  const [confirmingDeleteCompte, setConfirmingDeleteCompte] = useState(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -56,167 +234,170 @@ export default function ClientsSection() {
       setLoading(false);
       return;
     }
-    setRows(data.rows || []);
+    setComptes(data.comptes || []);
+    setEntreprisesOrphelines(data.entreprisesOrphelines || []);
     setLoading(false);
   }
 
   async function handleForfaitChange(entrepriseId, forfait) {
-    setRows((prev) =>
-      prev.map((r) =>
-        r.entreprise.id === entrepriseId ? { ...r, entreprise: { ...r.entreprise, forfait: forfait || null } } : r
-      )
+    const patch = (list) =>
+      list.map((row) =>
+        row.entreprise.id === entrepriseId ? { ...row, entreprise: { ...row.entreprise, forfait: forfait || null } } : row
+      );
+    setComptes((prev) => prev.map((c) => ({ ...c, entreprises: patch(c.entreprises) })));
+    setEntreprisesOrphelines((prev) =>
+      prev.map((e) => (e.id === entrepriseId ? { ...e, forfait: forfait || null } : e))
     );
     await supabase.from("entreprises").update({ forfait: forfait || null }).eq("id", entrepriseId);
   }
 
   async function handleToggleActif(profilId, desactive) {
-    setRows((prev) => prev.map((r) => (r.profil?.id === profilId ? { ...r, profil: { ...r.profil, desactive } } : r)));
+    setComptes((prev) => prev.map((c) => (c.profil?.id === profilId ? { ...c, profil: { ...c.profil, desactive } } : c)));
     await supabase.from("profils").update({ desactive }).eq("id", profilId);
   }
 
-  function startEdit(row) {
-    setEditingId(row.entreprise.id);
+  function startEditCompte(compte) {
+    setEditingCompteId(compte.userId);
     setEditForm({
-      fullName: row.profil?.full_name || "",
-      telephonePerso: row.profil?.telephone_perso || "",
-      entrepriseNom: row.entreprise.nom || "",
-      telephone: row.entreprise.telephone || "",
-      courrielContact: row.entreprise.courriel_contact || "",
-      adresse: row.entreprise.adresse || "",
-      email: row.email || "",
+      fullName: compte.profil?.full_name || "",
+      telephonePerso: compte.profil?.telephone_perso || "",
+      email: compte.email || "",
     });
-    setResetResult((prev) => ({ ...prev, [row.entreprise.id]: null }));
-    setConfirmingDelete(false);
+    setResetResult((prev) => ({ ...prev, [compte.userId]: null }));
+    setConfirmingDeleteCompte(null);
     setDeleteConfirmText("");
   }
 
-  async function handleDeleteClient(row) {
-    setDeleting(true);
-    const { ok, data } = await authFetch("/api/admin/delete-client", {
-      method: "POST",
-      body: JSON.stringify({ profilId: row.profil?.id || null, entrepriseId: row.entreprise.id }),
-    });
-    setDeleting(false);
-
-    if (!ok) {
-      setError(data.error || "La suppression a échoué.");
-      return;
-    }
-
-    setError(null);
-    setEditingId(null);
-    setRows((prev) => prev.filter((r) => r.entreprise.id !== row.entreprise.id));
-  }
-
-  async function handleSaveEdit(row) {
+  async function handleSaveCompte(compte) {
     setSaving(true);
     const { ok, data } = await authFetch("/api/admin/clients", {
       method: "PATCH",
-      body: JSON.stringify({
-        profilId: row.profil?.id || null,
-        entrepriseId: row.entreprise.id,
-        ...editForm,
-      }),
+      body: JSON.stringify({ profilId: compte.profil?.id || null, ...editForm }),
     });
     setSaving(false);
-
     if (!ok) {
       setError(data.error || "La mise à jour a échoué.");
       return;
     }
-
     setError(null);
-    setEditingId(null);
+    setEditingCompteId(null);
     load();
   }
 
-  async function handleResetPassword(row) {
-    if (!row.profil) return;
-    setResetResult((prev) => ({ ...prev, [row.entreprise.id]: "..." }));
+  async function handleResetPassword(compte) {
+    if (!compte.profil) return;
+    setResetResult((prev) => ({ ...prev, [compte.userId]: "..." }));
     const { ok, data } = await authFetch("/api/admin/reset-password", {
       method: "POST",
-      body: JSON.stringify({ userId: row.profil.id }),
+      body: JSON.stringify({ userId: compte.profil.id }),
     });
-    setResetResult((prev) => ({
-      ...prev,
-      [row.entreprise.id]: ok ? data.password : data.error || "Échec",
-    }));
+    setResetResult((prev) => ({ ...prev, [compte.userId]: ok ? data.password : data.error || "Échec" }));
+  }
+
+  async function handleDeleteCompte(compte) {
+    setDeleting(true);
+    const { ok, data } = await authFetch("/api/admin/delete-client", {
+      method: "POST",
+      body: JSON.stringify({ profilId: compte.profil?.id || compte.userId, deleteAccount: true }),
+    });
+    setDeleting(false);
+    if (!ok) {
+      setError(data.error || "La suppression a échoué.");
+      return;
+    }
+    setError(null);
+    setEditingCompteId(null);
+    setConfirmingDeleteCompte(null);
+    if (compteOuvertId === compte.userId) setCompteOuvertId(null);
+    load();
   }
 
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
 
+  const compteOuvert = comptes.find((c) => c.userId === compteOuvertId) || null;
+
+  if (compteOuvert) {
+    return (
+      <div>
+        <button
+          type="button"
+          className="admin-icon-btn"
+          style={{ marginBottom: "14px" }}
+          onClick={() => setCompteOuvertId(null)}
+        >
+          ← Retour aux comptes
+        </button>
+        <h2>{compteOuvert.profil?.full_name || compteOuvert.email || "Compte"}</h2>
+        <p className="panel-hint">
+          {compteOuvert.email} · {compteOuvert.entreprises.length} entreprise
+          {compteOuvert.entreprises.length > 1 ? "s" : ""}
+        </p>
+        {error && <p className="settings-msg err">{error}</p>}
+
+        <div className="admin-list">
+          {compteOuvert.entreprises.map(({ entreprise }) => (
+            <EntrepriseRow
+              key={entreprise.id}
+              entreprise={entreprise}
+              profilId={compteOuvert.profil?.id}
+              onForfaitChange={handleForfaitChange}
+              onSaved={load}
+              onDeleted={load}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h2>Clients</h2>
-      <p className="panel-hint">Toutes les entreprises inscrites sur Gozly ({rows.length}).</p>
+      <p className="panel-hint">Tous les comptes inscrits sur Gozly ({comptes.length}).</p>
       {error && <p className="settings-msg err">{error}</p>}
 
       <div className="admin-list">
-        {rows.map((row) => (
-          <div className="admin-row" key={row.entreprise.id} style={{ flexDirection: "column", alignItems: "stretch" }}>
+        {comptes.map((compte) => (
+          <div className="admin-row" key={compte.userId} style={{ flexDirection: "column", alignItems: "stretch" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
               <div className="admin-row-main">
-                <div className="admin-row-title">{row.entreprise.nom}</div>
+                <div className="admin-row-title">{compte.profil?.full_name || compte.email || "(sans nom)"}</div>
                 <div className="admin-row-sub">
-                  {row.email || "Aucun compte lié"} · inscrit le{" "}
-                  {new Date(row.entreprise.created_at).toLocaleDateString("fr-CA")}
+                  {compte.email || "Courriel inconnu"} · {compte.entreprises.length} entreprise
+                  {compte.entreprises.length > 1 ? "s" : ""}
                 </div>
               </div>
 
               <div className="admin-row-controls">
-                {/* Menu maison : un <select> natif s'ouvre blanc (texte blanc sur blanc) */}
-                <div style={{ minWidth: "200px" }}>
-                  <SimpleSelect
-                    options={FORFAITS}
-                    value={row.entreprise.forfait || ""}
-                    onChange={(id) => handleForfaitChange(row.entreprise.id, id)}
-                  />
-                  {row.entreprise.stripe_subscription_id && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", fontSize: "11.5px", color: "var(--text-dim)" }}>
-                      <InfoTooltip symbole="!" alerte>
-                        Si le forfait est changé depuis ici, il reviendra à celui payé au prochain paiement (renouvellement,
-                        etc.). Pour un changement durable, modifie l'abonnement dans Stripe.
-                      </InfoTooltip>
-                      Abonnement Stripe actif
-                    </div>
-                  )}
-                </div>
-
-                {row.profil ? (
-                  <label className="switch" title={row.profil.desactive ? "Compte désactivé" : "Compte actif"}>
+                {compte.profil ? (
+                  <label className="switch" title={compte.profil.desactive ? "Compte désactivé" : "Compte actif"}>
                     <input
                       type="checkbox"
-                      checked={!row.profil.desactive}
-                      onChange={(e) => handleToggleActif(row.profil.id, !e.target.checked)}
+                      checked={!compte.profil.desactive}
+                      onChange={(e) => handleToggleActif(compte.profil.id, !e.target.checked)}
                     />
                     <span className="switch-track"></span>
                     <span className="switch-thumb"></span>
                   </label>
                 ) : (
-                  <span className="admin-status-pill inactive">Sans compte</span>
+                  <span className="admin-status-pill inactive">Profil introuvable</span>
                 )}
 
                 <button
                   className="admin-icon-btn"
-                  onClick={() => (editingId === row.entreprise.id ? setEditingId(null) : startEdit(row))}
+                  onClick={() => (editingCompteId === compte.userId ? setEditingCompteId(null) : startEditCompte(compte))}
                 >
-                  {editingId === row.entreprise.id ? "Fermer" : "Modifier"}
+                  {editingCompteId === compte.userId ? "Fermer" : "Modifier"}
                 </button>
-                <button
-                  className="admin-icon-btn"
-                  onClick={() => {
-                    demarrerImpersonation(row.entreprise.id, row.entreprise.nom);
-                    router.push("/dashboard");
-                  }}
-                >
-                  Voir le dashboard
+                <button className="submit-btn" style={{ padding: "8px 18px" }} onClick={() => setCompteOuvertId(compte.userId)}>
+                  Voir les entreprises →
                 </button>
               </div>
             </div>
 
-            {editingId === row.entreprise.id && (
+            {editingCompteId === compte.userId && (
               <div className="admin-edit-panel">
                 <div className="field-row">
                   <div className="field">
@@ -225,43 +406,6 @@ export default function ClientsSection() {
                       type="text"
                       value={editForm.fullName}
                       onChange={(e) => setEditForm((f) => ({ ...f, fullName: e.target.value }))}
-                    />
-                  </div>
-                  <div className="field">
-                    <label>Nom de l'entreprise</label>
-                    <input
-                      type="text"
-                      value={editForm.entrepriseNom}
-                      onChange={(e) => setEditForm((f) => ({ ...f, entrepriseNom: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="field-row">
-                  <div className="field">
-                    <label>Courriel de connexion</label>
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                      disabled={!row.profil}
-                    />
-                  </div>
-                  <div className="field">
-                    <label>Courriel de contact (entreprise)</label>
-                    <input
-                      type="email"
-                      value={editForm.courrielContact}
-                      onChange={(e) => setEditForm((f) => ({ ...f, courrielContact: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="field-row">
-                  <div className="field">
-                    <label>Téléphone de l'entreprise</label>
-                    <input
-                      type="tel"
-                      value={editForm.telephone}
-                      onChange={(e) => setEditForm((f) => ({ ...f, telephone: e.target.value }))}
                     />
                   </div>
                   <div className="field">
@@ -274,28 +418,29 @@ export default function ClientsSection() {
                   </div>
                 </div>
                 <div className="field">
-                  <label>Adresse</label>
+                  <label>Courriel de connexion</label>
                   <input
-                    type="text"
-                    value={editForm.adresse}
-                    onChange={(e) => setEditForm((f) => ({ ...f, adresse: e.target.value }))}
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                    disabled={!compte.profil}
                   />
                 </div>
 
                 <div className="admin-edit-actions">
-                  <button className="submit-btn" onClick={() => handleSaveEdit(row)} disabled={saving}>
+                  <button className="submit-btn" onClick={() => handleSaveCompte(compte)} disabled={saving}>
                     {saving ? "Enregistrement..." : "Enregistrer"}
                   </button>
-                  {row.profil && (
-                    <button className="admin-icon-btn" onClick={() => handleResetPassword(row)}>
+                  {compte.profil && (
+                    <button className="admin-icon-btn" onClick={() => handleResetPassword(compte)}>
                       Réinitialiser le mot de passe
                     </button>
                   )}
                 </div>
 
-                {resetResult[row.entreprise.id] && (
+                {resetResult[compte.userId] && (
                   <div className="admin-reset-result">
-                    Nouveau mot de passe temporaire : <strong>{resetResult[row.entreprise.id]}</strong>
+                    Nouveau mot de passe temporaire : <strong>{resetResult[compte.userId]}</strong>
                     <br />
                     Transmets-le au client de vive voix — il ne sera plus affiché une fois cette page quittée.
                   </div>
@@ -303,13 +448,16 @@ export default function ClientsSection() {
 
                 <div className="settings-divider">Zone dangereuse</div>
 
-                {!confirmingDelete ? (
+                {confirmingDeleteCompte !== compte.userId ? (
                   <div className="danger-zone">
                     <div>
                       <h4>Supprimer ce compte</h4>
-                      <p>Efface définitivement le compte, l'entreprise et toutes ses données (planning, employés, etc).</p>
+                      <p>
+                        Efface le compte de connexion et toutes les entreprises dont il est l'unique membre. Les
+                        entreprises partagées avec d'autres membres ne sont pas touchées.
+                      </p>
                     </div>
-                    <button className="btn-danger" onClick={() => setConfirmingDelete(true)}>
+                    <button className="btn-danger" onClick={() => setConfirmingDeleteCompte(compte.userId)}>
                       Supprimer le compte
                     </button>
                   </div>
@@ -318,28 +466,28 @@ export default function ClientsSection() {
                     <div>
                       <h4>Confirmer la suppression</h4>
                       <p>
-                        Tape le nom de l'entreprise (<strong>{row.entreprise.nom}</strong>) pour confirmer. Cette
-                        action est irréversible.
+                        Tape le courriel du compte (<strong>{compte.email}</strong>) pour confirmer. Cette action est
+                        irréversible.
                       </p>
                     </div>
                     <input
                       type="text"
                       value={deleteConfirmText}
                       onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder={row.entreprise.nom}
+                      placeholder={compte.email || ""}
                     />
                     <div style={{ display: "flex", gap: "10px" }}>
                       <button
                         className="btn-danger"
-                        disabled={deleteConfirmText !== row.entreprise.nom || deleting}
-                        onClick={() => handleDeleteClient(row)}
+                        disabled={deleteConfirmText !== compte.email || deleting}
+                        onClick={() => handleDeleteCompte(compte)}
                       >
                         {deleting ? "Suppression..." : "Confirmer la suppression définitive"}
                       </button>
                       <button
                         className="admin-icon-btn"
                         onClick={() => {
-                          setConfirmingDelete(false);
+                          setConfirmingDeleteCompte(null);
                           setDeleteConfirmText("");
                         }}
                       >
@@ -353,8 +501,29 @@ export default function ClientsSection() {
           </div>
         ))}
 
-        {rows.length === 0 && <div className="admin-empty">Aucun client pour l'instant.</div>}
+        {comptes.length === 0 && <div className="admin-empty">Aucun client pour l'instant.</div>}
       </div>
+
+      {entreprisesOrphelines.length > 0 && (
+        <>
+          <div className="settings-divider">Entreprises sans compte lié</div>
+          <p className="panel-hint">
+            Ne devrait normalement pas arriver - ces entreprises n'ont aucun membre associé.
+          </p>
+          <div className="admin-list">
+            {entreprisesOrphelines.map((entreprise) => (
+              <EntrepriseRow
+                key={entreprise.id}
+                entreprise={entreprise}
+                profilId={null}
+                onForfaitChange={handleForfaitChange}
+                onSaved={load}
+                onDeleted={load}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

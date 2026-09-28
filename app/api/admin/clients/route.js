@@ -15,22 +15,55 @@ export async function GET(request) {
     .select("*")
     .order("created_at", { ascending: false });
   const { data: profils } = await serviceClient.from("profils").select("*");
+  // "membres" est la source de vérité du lien compte <-> entreprise(s) - un
+  // compte peut posséder ou appartenir à plusieurs entreprises séparées
+  // (ex: deux succursales immatriculées différemment). "profils.entreprise_id"
+  // ne retient que la toute première entreprise créée à l'inscription, donc ne
+  // suffit plus pour retrouver les entreprises créées ensuite (voir
+  // CreerEntrepriseModal.jsx) - d'où l'utilisation de "membres" ici.
+  const { data: membres } = await serviceClient.from("membres").select("entreprise_id, user_id, role");
 
   // Le courriel de connexion vit dans auth.users, invisible depuis les
   // tables normales - seule l'API admin peut le lire.
   const { data: usersPage } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
   const emailById = new Map((usersPage?.users || []).map((u) => [u.id, u.email]));
+  const profilById = new Map((profils || []).map((p) => [p.id, p]));
+  const entrepriseById = new Map((entreprises || []).map((e) => [e.id, e]));
 
-  const rows = (entreprises || []).map((entreprise) => {
-    const profil = (profils || []).find((p) => p.entreprise_id === entreprise.id) || null;
-    return {
-      entreprise,
-      profil,
-      email: profil ? emailById.get(profil.id) || null : null,
-    };
+  // Regroupe par compte (un profil = un compte de connexion), chacun avec la
+  // liste de ses entreprises. Les entreprises sans aucun membre (ne devrait
+  // pas arriver, mais on ne veut jamais les faire disparaître silencieusement)
+  // sont listées à part.
+  const comptes = new Map();
+  const entrepriseIdsAvecMembre = new Set();
+
+  for (const m of membres || []) {
+    const entreprise = entrepriseById.get(m.entreprise_id);
+    if (!entreprise) continue;
+    entrepriseIdsAvecMembre.add(entreprise.id);
+
+    const profil = profilById.get(m.user_id) || null;
+    if (!comptes.has(m.user_id)) {
+      comptes.set(m.user_id, {
+        userId: m.user_id,
+        profil,
+        email: profil ? emailById.get(profil.id) || null : emailById.get(m.user_id) || null,
+        entreprises: [],
+      });
+    }
+    comptes.get(m.user_id).entreprises.push({ entreprise, role: m.role });
+  }
+
+  const entreprisesOrphelines = (entreprises || []).filter((e) => !entrepriseIdsAvecMembre.has(e.id));
+
+  return NextResponse.json({
+    comptes: [...comptes.values()].sort((a, b) => {
+      const da = a.entreprises[0]?.entreprise.created_at || "";
+      const db = b.entreprises[0]?.entreprise.created_at || "";
+      return da < db ? 1 : -1;
+    }),
+    entreprisesOrphelines,
   });
-
-  return NextResponse.json({ rows });
 }
 
 export async function PATCH(request) {

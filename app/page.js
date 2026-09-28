@@ -4,6 +4,7 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
 import ParallaxSection from "@/components/ParallaxSection";
+import HeroParallax from "@/components/HeroParallax";
 
 export default function HomePage() {
   return (
@@ -12,6 +13,7 @@ export default function HomePage() {
       <Nav />
 
       <header className="hero">
+        <HeroParallax src="/marketing/hero-blocks.png" />
         <div className="wrap">
           <div className="hero-title">Gozly</div>
           <div className="hero-slogan">
