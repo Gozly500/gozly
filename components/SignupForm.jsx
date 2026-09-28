@@ -17,7 +17,6 @@ const FORFAITS_ACHETABLES = {
 export default function SignupForm() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
-  const [entrepriseName, setEntrepriseName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -84,75 +83,37 @@ export default function SignupForm() {
       return;
     }
 
-    // 3. Sinon, créer sa propre entreprise (on génère son identifiant
-    //    nous-mêmes, pour ne pas dépendre d'une relecture immédiate).
-    const entrepriseId = crypto.randomUUID();
-
-    const { error: entrepriseError } = await supabase.from("entreprises").insert({
-      id: entrepriseId,
-      nom: entrepriseName,
-    });
-
-    if (entrepriseError) {
-      setLoading(false);
-      setError("Ton compte est créé, mais l'entreprise n'a pas pu être enregistrée. Contacte-nous.");
-      return;
-    }
-
-    // 4. Lier le compte à l'entreprise (profil + adhésion propriétaire)
+    // 3. Sinon, juste le profil - la création de sa première entreprise se
+    //    fait juste après, dans le parcours de bienvenue (logo, secteur
+    //    d'activité, adresse, etc. - un formulaire plus complet qu'ici).
     const { error: profilError } = await supabase.from("profils").insert({
       id: user.id,
-      entreprise_id: entrepriseId,
       full_name: fullName,
     });
 
-    if (profilError) {
-      setLoading(false);
-      setError("Ton compte est créé, mais le lien avec l'entreprise a échoué. Contacte-nous.");
-      return;
-    }
-
-    const { error: membreError } = await supabase
-      .from("membres")
-      .insert({ entreprise_id: entrepriseId, user_id: user.id, role: "proprietaire" });
-
     setLoading(false);
 
-    if (membreError) {
-      setError("Ton compte est créé, mais le lien avec l'entreprise a échoué. Contacte-nous.");
+    if (profilError) {
+      setError("Ton compte est créé, mais une erreur est survenue. Contacte-nous.");
       return;
     }
 
-    // Forfait déjà choisi depuis la page des forfaits : direct au paiement. Sinon, page de choix.
-    router.push(forfaitVoulu ? `/parametres?acheter=${forfaitVoulu}` : "/choisir-forfait");
+    router.push(forfaitVoulu ? `/bienvenue?forfait=${forfaitVoulu}` : "/bienvenue");
   }
 
   return (
     <div className="contact-card">
       <form onSubmit={handleSubmit}>
-        <div className="field-row">
-          <div className="field">
-            <label htmlFor="fullName">Ton nom</label>
-            <input
-              type="text"
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Ton nom"
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="entrepriseName">Nom de l'entreprise</label>
-            <input
-              type="text"
-              id="entrepriseName"
-              value={entrepriseName}
-              onChange={(e) => setEntrepriseName(e.target.value)}
-              placeholder="Nom de l'entreprise"
-              required
-            />
-          </div>
+        <div className="field">
+          <label htmlFor="fullName">Ton nom</label>
+          <input
+            type="text"
+            id="fullName"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Ton nom"
+            required
+          />
         </div>
 
         <div className="field">

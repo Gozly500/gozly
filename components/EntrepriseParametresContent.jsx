@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
+import InformationsEntrepriseSection from "@/components/entreprise/InformationsEntrepriseSection";
 import EquipeSection from "@/components/entreprise/EquipeSection";
 import EmplacementsSection from "@/components/entreprise/EmplacementsSection";
 import PersonnalisationSection from "@/components/entreprise/PersonnalisationSection";
@@ -12,6 +13,7 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconEquipe, IconEmplacement, IconIntegration } from "@/components/icons/GozlyIcons";
 
 const TABS = [
+  { id: "informations", label: "Informations", icon: "👤" },
   { id: "equipe", label: "Équipe", Icone: IconEquipe },
   { id: "emplacements", label: "Emplacements", Icone: IconEmplacement },
   { id: "personnalisation", label: "Personnalisation", icon: "🎨" },
@@ -24,7 +26,7 @@ export default function EntrepriseParametresContent() {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [entrepriseId, setEntrepriseId] = useState(null);
-  const [activeTab, setActiveTab] = useState("equipe");
+  const [activeTab, setActiveTab] = useState("informations");
 
   useEffect(() => {
     let ignore = false;
@@ -44,7 +46,8 @@ export default function EntrepriseParametresContent() {
         .maybeSingle()
         .then(({ data }) => setIsAdmin(!!data));
 
-      const { entrepriseId: eid, besoinChoix, invitationsEnAttente } = await resoudreEntrepriseActive(supabase);
+      const { entrepriseId: eid, entreprises, besoinChoix, invitationsEnAttente, impersonation } =
+        await resoudreEntrepriseActive(supabase);
       if (ignore) return;
 
       if (invitationsEnAttente > 0) {
@@ -54,6 +57,14 @@ export default function EntrepriseParametresContent() {
 
       if (besoinChoix) {
         router.push("/dashboards");
+        return;
+      }
+
+      // Compte tout neuf, sans aucune entreprise : le formulaire de création
+      // (logo, secteur, adresse, etc.) est plus complet là qu'ici, donc on y
+      // redirige plutôt que d'afficher une page vide.
+      if (!impersonation && entreprises.length === 0) {
+        router.push("/bienvenue");
         return;
       }
 
@@ -112,6 +123,9 @@ export default function EntrepriseParametresContent() {
               </nav>
 
               <div className="settings-panel">
+                {activeTab === "informations" && (
+                  <InformationsEntrepriseSection entrepriseId={entrepriseId} userId={user?.id} />
+                )}
                 {activeTab === "equipe" && (
                   <EquipeSection entrepriseId={entrepriseId} userId={user?.id} onLeft={() => router.push("/dashboards")} />
                 )}

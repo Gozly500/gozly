@@ -2,24 +2,23 @@
 
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { geocoderAdresse } from "@/lib/geocode";
 
-export default function InformationsSection({ user, profil, setProfil, entreprise, setEntreprise }) {
+// Informations PERSONNELLES du compte uniquement - le logo, le nom, le
+// secteur d'activité et les coordonnées de l'entreprise se gèrent
+// maintenant depuis Entreprise > Informations (un compte peut posséder
+// plusieurs entreprises distinctes, chacune avec les siennes).
+export default function InformationsSection({ user, profil, setProfil }) {
   const fileInputRef = useRef(null);
 
-  const [fullName, setFullName] = useState(profil?.full_name || "");
-  const [entrepriseName, setEntrepriseName] = useState(entreprise?.nom || "");
-  const [adresse, setAdresse] = useState(entreprise?.adresse || "");
-  const [courrielContact, setCourrielContact] = useState(entreprise?.courriel_contact || "");
-  const [telephone, setTelephone] = useState(entreprise?.telephone || "");
+  const [prenom, setPrenom] = useState(profil?.prenom || "");
+  const [nom, setNom] = useState(profil?.nom || "");
   const [telephonePerso, setTelephonePerso] = useState(profil?.telephone_perso || "");
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
-  const [adresseIntrouvable, setAdresseIntrouvable] = useState(false);
 
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [logoMsg, setLogoMsg] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState(null);
 
   const [pwdStatus, setPwdStatus] = useState("idle");
   const [pwdMsg, setPwdMsg] = useState(null);
@@ -28,56 +27,25 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
     e.preventDefault();
     setSaving(true);
     setMsg(null);
-    setAdresseIntrouvable(false);
 
-    const { error: authError } = await supabase.auth.updateUser({
-      data: { full_name: fullName },
-    });
+    const fullName = `${prenom} ${nom}`.trim();
 
+    // "full_name" reste rempli en plus de prenom/nom, pour ne pas casser les
+    // nombreux endroits de l'app qui affichent déjà ce champ (barre
+    // latérale, panneau admin, discussion, etc.).
+    const { error: authError } = await supabase.auth.updateUser({ data: { full_name: fullName } });
+
+    let profilError = null;
     if (profil) {
-      await supabase
-        .from("profils")
-        .update({ full_name: fullName, telephone_perso: telephonePerso || null })
-        .eq("id", profil.id);
-      setProfil({ ...profil, full_name: fullName, telephone_perso: telephonePerso || null });
-    }
-
-    // Même mécanisme que pour les succursales (Emplacements) : l'adresse est
-    // convertie en coordonnées GPS via Nominatim à l'enregistrement (voir
-    // lib/geocode.js). Pas encore utilisées par une fonctionnalité ici, mais
-    // ça valide au passage que l'adresse saisie existe vraiment.
-    let position = null;
-    if (adresse.trim() && adresse.trim() !== (entreprise?.adresse || "").trim()) {
-      position = await geocoderAdresse(adresse);
-      if (!position) setAdresseIntrouvable(true);
-    }
-
-    let entrepriseError = null;
-    if (entreprise) {
-      const champsEntreprise = {
-        nom: entrepriseName,
-        adresse: adresse || null,
-        courriel_contact: courrielContact || null,
-        telephone: telephone || null,
-      };
-      if (!adresse.trim()) {
-        champsEntreprise.latitude = null;
-        champsEntreprise.longitude = null;
-      } else if (position) {
-        champsEntreprise.latitude = position.latitude;
-        champsEntreprise.longitude = position.longitude;
-      }
-
-      const { error } = await supabase.from("entreprises").update(champsEntreprise).eq("id", entreprise.id);
-      entrepriseError = error;
-      if (!error) {
-        setEntreprise({ ...entreprise, ...champsEntreprise });
-      }
+      const champs = { prenom: prenom || null, nom: nom || null, full_name: fullName, telephone_perso: telephonePerso || null };
+      const { error } = await supabase.from("profils").update(champs).eq("id", profil.id);
+      profilError = error;
+      if (!error) setProfil({ ...profil, ...champs });
     }
 
     setSaving(false);
 
-    if (authError || entrepriseError) {
+    if (authError || profilError) {
       setMsg({ type: "err", text: "La mise à jour a échoué. Réessaie dans un instant." });
       return;
     }
@@ -85,44 +53,41 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
     setTimeout(() => setMsg(null), 3000);
   }
 
-  async function handleLogoChange(e) {
+  async function handleAvatarChange(e) {
     const file = e.target.files?.[0];
-    if (!file || !entreprise) return;
+    if (!file || !profil) return;
 
-    setUploadingLogo(true);
-    setLogoMsg(null);
+    setUploadingAvatar(true);
+    setAvatarMsg(null);
 
     const ext = file.name.split(".").pop();
-    const path = `${entreprise.id}/logo.${ext}`;
+    const path = `avatars/${profil.id}/avatar.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("logos")
       .upload(path, file, { upsert: true, cacheControl: "3600" });
 
     if (uploadError) {
-      setUploadingLogo(false);
-      setLogoMsg({ type: "err", text: "L'envoi du logo a échoué. Réessaie." });
+      setUploadingAvatar(false);
+      setAvatarMsg({ type: "err", text: "L'envoi de la photo a échoué. Réessaie." });
       return;
     }
 
     const { data: publicUrlData } = supabase.storage.from("logos").getPublicUrl(path);
-    const logoUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
+    const avatarUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
 
-    const { error: updateError } = await supabase
-      .from("entreprises")
-      .update({ logo_url: logoUrl })
-      .eq("id", entreprise.id);
+    const { error: updateError } = await supabase.from("profils").update({ avatar_url: avatarUrl }).eq("id", profil.id);
 
-    setUploadingLogo(false);
+    setUploadingAvatar(false);
 
     if (updateError) {
-      setLogoMsg({ type: "err", text: "Le logo a été envoyé, mais n'a pas pu être enregistré." });
+      setAvatarMsg({ type: "err", text: "La photo a été envoyée, mais n'a pas pu être enregistrée." });
       return;
     }
 
-    setEntreprise({ ...entreprise, logo_url: logoUrl });
-    setLogoMsg({ type: "ok", text: "Logo mis à jour !" });
-    setTimeout(() => setLogoMsg(null), 3000);
+    setProfil({ ...profil, avatar_url: avatarUrl });
+    setAvatarMsg({ type: "ok", text: "Photo de profil mise à jour !" });
+    setTimeout(() => setAvatarMsg(null), 3000);
   }
 
   async function handlePasswordReset() {
@@ -149,19 +114,18 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
   return (
     <div>
       <h2>Informations</h2>
-      <p className="panel-hint">Gère les informations générales de ton compte et de ton entreprise.</p>
+      <p className="panel-hint">Ta photo, ton nom et tes coordonnées personnelles.</p>
 
       <form onSubmit={handleSave}>
         <div className="settings-section">
           <h3>Général</h3>
-          <p className="section-hint">Ton nom et le nom de ton entreprise.</p>
 
           <div className="avatar-upload">
             <div className="avatar-preview">
-              {entreprise?.logo_url ? (
-                <img src={entreprise.logo_url} alt="Logo de l'entreprise" />
+              {profil?.avatar_url ? (
+                <img src={profil.avatar_url} alt="Photo de profil" />
               ) : (
-                (entrepriseName || "?").charAt(0).toUpperCase()
+                (prenom || nom || "?").charAt(0).toUpperCase()
               )}
             </div>
             <div className="avatar-actions">
@@ -169,9 +133,9 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
                 type="button"
                 className="btn-small"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingLogo || !entreprise}
+                disabled={uploadingAvatar || !profil}
               >
-                {uploadingLogo ? "Envoi..." : "Changer le logo"}
+                {uploadingAvatar ? "Envoi..." : "Changer la photo"}
               </button>
               <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>PNG ou JPG, carré de préférence</span>
               <input
@@ -179,33 +143,20 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
                 style={{ display: "none" }}
-                onChange={handleLogoChange}
+                onChange={handleAvatarChange}
               />
             </div>
           </div>
-          {logoMsg && <p className={`settings-msg ${logoMsg.type}`}>{logoMsg.text}</p>}
+          {avatarMsg && <p className={`settings-msg ${avatarMsg.type}`}>{avatarMsg.text}</p>}
 
           <div className="field-row" style={{ marginTop: "18px" }}>
             <div className="field">
-              <label htmlFor="fullName">Ton nom</label>
-              <input
-                type="text"
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Ton nom"
-              />
+              <label htmlFor="prenom">Prénom</label>
+              <input type="text" id="prenom" value={prenom} onChange={(e) => setPrenom(e.target.value)} placeholder="Prénom" />
             </div>
             <div className="field">
-              <label htmlFor="entrepriseName">Nom de l'entreprise</label>
-              <input
-                type="text"
-                id="entrepriseName"
-                value={entrepriseName}
-                onChange={(e) => setEntrepriseName(e.target.value)}
-                placeholder="Nom de l'entreprise"
-                disabled={!entreprise}
-              />
+              <label htmlFor="nom">Nom de famille</label>
+              <input type="text" id="nom" value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom de famille" />
             </div>
           </div>
         </div>
@@ -213,62 +164,22 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
         <div className="settings-divider">Contact</div>
 
         <div className="settings-section">
-          <p className="section-hint">Ces informations servent à te contacter, toi ou ton entreprise.</p>
+          <p className="section-hint">Tes propres coordonnées, distinctes de celles de tes entreprises.</p>
 
           <div className="field">
-            <label htmlFor="adresse">Adresse physique de l'entreprise</label>
-            <input
-              type="text"
-              id="adresse"
-              value={adresse}
-              onChange={(e) => {
-                setAdresse(e.target.value);
-                setAdresseIntrouvable(false);
-              }}
-              placeholder="123 rue Exemple, Ville, Province"
-              disabled={!entreprise}
-            />
-            {adresseIntrouvable && (
-              <p className="section-hint" style={{ color: "#f2b95a", marginTop: "4px" }}>
-                ⚠ Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
-              </p>
-            )}
+            <label>Courriel de connexion</label>
+            <input type="email" value={user?.email || ""} disabled />
           </div>
 
           <div className="field">
-            <label htmlFor="courrielContact">Courriel de contact</label>
+            <label htmlFor="telephonePerso">Téléphone personnel (optionnel)</label>
             <input
-              type="email"
-              id="courrielContact"
-              value={courrielContact}
-              onChange={(e) => setCourrielContact(e.target.value)}
-              placeholder="contact@entreprise.com"
-              disabled={!entreprise}
+              type="tel"
+              id="telephonePerso"
+              value={telephonePerso}
+              onChange={(e) => setTelephonePerso(e.target.value)}
+              placeholder="(514) 000-0000"
             />
-          </div>
-
-          <div className="field-row">
-            <div className="field">
-              <label htmlFor="telephone">Téléphone de l'entreprise</label>
-              <input
-                type="tel"
-                id="telephone"
-                value={telephone}
-                onChange={(e) => setTelephone(e.target.value)}
-                placeholder="(514) 000-0000"
-                disabled={!entreprise}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="telephonePerso">Ton téléphone personnel (optionnel)</label>
-              <input
-                type="tel"
-                id="telephonePerso"
-                value={telephonePerso}
-                onChange={(e) => setTelephonePerso(e.target.value)}
-                placeholder="(514) 000-0000"
-              />
-            </div>
           </div>
         </div>
 

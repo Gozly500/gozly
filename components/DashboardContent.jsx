@@ -52,7 +52,8 @@ export default function DashboardContent() {
       // résout celle qui est active pour cette session ; si plusieurs sont
       // possibles et qu'aucune n'est encore choisie, on renvoie vers le
       // sélecteur de dashboard.
-      const { entrepriseId: eid, besoinChoix, invitationsEnAttente } = await resoudreEntrepriseActive(supabase);
+      const { entrepriseId: eid, entreprises, besoinChoix, invitationsEnAttente, impersonation } =
+        await resoudreEntrepriseActive(supabase);
 
       if (invitationsEnAttente > 0) {
         router.push("/invitations");
@@ -61,6 +62,14 @@ export default function DashboardContent() {
 
       if (besoinChoix) {
         router.push("/dashboards");
+        return;
+      }
+
+      // Compte tout neuf, sans aucune entreprise : le parcours de bienvenue
+      // force la création de la première avant de pouvoir voir un tableau
+      // de bord.
+      if (!impersonation && entreprises.length === 0) {
+        router.push("/bienvenue");
         return;
       }
 

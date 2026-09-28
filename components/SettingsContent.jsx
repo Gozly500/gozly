@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import InformationsSection from "@/components/settings/InformationsSection";
 import AbonnementSection from "@/components/settings/AbonnementSection";
 import ActiviteSection from "@/components/settings/ActiviteSection";
@@ -22,7 +21,6 @@ export default function SettingsContent() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [profil, setProfil] = useState(null);
-  const [entreprise, setEntreprise] = useState(null);
   const [checking, setChecking] = useState(true);
   const [activeTab, setActiveTab] = useState("informations");
 
@@ -58,31 +56,20 @@ export default function SettingsContent() {
       if (ignore) return;
       setProfil(profilData || null);
 
-      // L'entreprise à afficher/modifier ici (Informations, Abonnement) doit
-      // être celle actuellement ACTIVE (même résolution que le tableau de
-      // bord et le sélecteur "⇄ Changer de dashboard") - pas systématiquement
-      // la toute première créée à l'inscription (profils.entreprise_id),
-      // sinon un compte avec plusieurs entreprises modifierait la mauvaise
-      // sans le savoir.
-      const { entrepriseId, besoinChoix, invitationsEnAttente } = await resoudreEntrepriseActive(supabase);
+      // Cette page (nom, photo, mot de passe, abonnement) est entièrement
+      // liée au COMPTE, pas à une entreprise en particulier - contrairement
+      // à avant, plus besoin de résoudre "l'entreprise active" ici. On garde
+      // seulement le renvoi vers les invitations en attente.
+      const { count: invitationsEnAttente } = await supabase
+        .from("invitations")
+        .select("id", { count: "exact", head: true })
+        .eq("email", session.user.email)
+        .eq("statut", "en_attente");
       if (ignore) return;
 
-      if (invitationsEnAttente > 0) {
+      if ((invitationsEnAttente || 0) > 0) {
         router.push("/invitations");
         return;
-      }
-      if (besoinChoix) {
-        router.push("/dashboards");
-        return;
-      }
-
-      if (entrepriseId) {
-        const { data: entrepriseData } = await supabase
-          .from("entreprises")
-          .select("*")
-          .eq("id", entrepriseId)
-          .maybeSingle();
-        if (!ignore) setEntreprise(entrepriseData || null);
       }
 
       setChecking(false);
@@ -117,15 +104,7 @@ export default function SettingsContent() {
       </nav>
 
       <div className="settings-panel">
-        {activeTab === "informations" && (
-          <InformationsSection
-            user={user}
-            profil={profil}
-            setProfil={setProfil}
-            entreprise={entreprise}
-            setEntreprise={setEntreprise}
-          />
-        )}
+        {activeTab === "informations" && <InformationsSection user={user} profil={profil} setProfil={setProfil} />}
         {activeTab === "abonnement" && <AbonnementSection profil={profil} />}
         {activeTab === "apparence" && <AppearanceSection profil={profil} setProfil={setProfil} />}
         {activeTab === "activite" && <ActiviteSection user={user} />}

@@ -55,18 +55,12 @@ export default function ChoisirForfaitContent() {
       }
 
       // Déjà un forfait actif (ex: page rouverte plus tard) : rien à choisir ici.
-      const { data: profil } = await supabase.from("profils").select("entreprise_id").eq("id", session.user.id).maybeSingle();
-      if (profil?.entreprise_id) {
-        const { data: entreprise } = await supabase
-          .from("entreprises")
-          .select("forfait")
-          .eq("id", profil.entreprise_id)
-          .maybeSingle();
-        if (ignore) return;
-        if (entreprise?.forfait) {
-          router.replace("/dashboard");
-          return;
-        }
+      // Le forfait appartient au COMPTE (voir supabase/forfait_par_compte.sql).
+      const { data: profil } = await supabase.from("profils").select("forfait").eq("id", session.user.id).maybeSingle();
+      if (ignore) return;
+      if (profil?.forfait) {
+        router.replace("/dashboard");
+        return;
       }
 
       setChecking(false);
