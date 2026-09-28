@@ -8,14 +8,33 @@ import { supabase } from "@/lib/supabaseClient";
 // Même contenu que /s-abonner. Le forfait n'est JAMAIS activé ici : le bouton
 // ouvre Stripe Checkout, et c'est le webhook qui active le forfait après paiement.
 const FORFAITS = [
-  { id: "opale", nom: "Opale", prix: "25$", icone: "pi-1", points: ["3 modules", "Assistance standard", "Mises à jour essentielles"] },
-  { id: "onyx", nom: "Onyx", prix: "40$", icone: "pi-2", featured: true, points: ["5 modules", "Support prioritaire", "Mises à jour avancées"] },
+  {
+    id: "opale",
+    nom: "Opale",
+    prix: "25$",
+    icone: "pi-1",
+    points: ["3 modules", "1 entreprise", "Assistance standard", "Mises à jour essentielles"],
+  },
+  {
+    id: "onyx",
+    nom: "Onyx",
+    prix: "40$",
+    icone: "pi-2",
+    featured: true,
+    points: ["5 modules", "3 entreprises", "Support prioritaire", "Mises à jour avancées"],
+  },
   {
     id: "crystal",
     nom: "Crystal",
     prix: "50$",
     icone: "pi-3",
-    points: ["Modules illimités", "Module personnalisé sur demande", "Assistance prioritaire", "Mises à jour avancées"],
+    points: [
+      "Modules illimités",
+      "5 entreprises",
+      "Module personnalisé sur demande",
+      "Assistance prioritaire",
+      "Mises à jour avancées",
+    ],
   },
 ];
 

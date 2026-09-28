@@ -34,6 +34,7 @@ export default function SubscribePage() {
               </div>
               <ul>
                 <li>3 modules</li>
+                <li>1 entreprise</li>
                 <li>Assistance standard</li>
                 <li>Mises à jour essentielles</li>
               </ul>
@@ -51,6 +52,7 @@ export default function SubscribePage() {
               </div>
               <ul>
                 <li>5 modules</li>
+                <li>3 entreprises</li>
                 <li>Support prioritaire</li>
                 <li>Mises à jour avancées</li>
               </ul>
@@ -68,6 +70,7 @@ export default function SubscribePage() {
               </div>
               <ul>
                 <li>Modules illimités</li>
+                <li>5 entreprises</li>
                 <li>Module personnalisé sur demande</li>
                 <li>Assistance prioritaire</li>
                 <li>Mises à jour avancées</li>
