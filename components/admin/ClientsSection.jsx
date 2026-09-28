@@ -83,7 +83,12 @@ function EntrepriseRow({ entreprise, profilId, onForfaitChange, onDeleted, onSav
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
         <div className="admin-row-main">
           <div className="admin-row-title">{entreprise.nom}</div>
-          <div className="admin-row-sub">inscrit le {new Date(entreprise.created_at).toLocaleDateString("fr-CA")}</div>
+          {/* Utile pour distinguer d'un coup d'œil deux entreprises d'un même compte (ex: deux
+              succursales immatriculées séparément) - retombe sur la date d'inscription si aucune
+              adresse n'a été saisie. */}
+          <div className="admin-row-sub">
+            {entreprise.adresse || `inscrit le ${new Date(entreprise.created_at).toLocaleDateString("fr-CA")}`}
+          </div>
         </div>
 
         <div className="admin-row-controls">
