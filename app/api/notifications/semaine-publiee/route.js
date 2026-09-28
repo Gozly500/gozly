@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { envoyerPushEmployes } from "@/lib/pushServer";
 
 // Déclenché par HoraireSection.jsx (dashboard) juste après avoir publié
@@ -12,11 +12,12 @@ export async function POST(request) {
   const token = authHeader.replace("Bearer ", "");
   if (!token) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
+  const { dateDebut, dateFin, emplacementId, entrepriseId } = await request.json().catch(() => ({}));
+
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, entreprise } = await getUserEntrepriseParId(supabase, token, entrepriseId);
   if (!user || !entreprise) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { dateDebut, dateFin, emplacementId } = await request.json().catch(() => ({}));
   if (!dateDebut || !dateFin) {
     return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
   }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { WIX_INSTALL_LINK } from "@/lib/wixClient";
 
@@ -8,6 +8,8 @@ import { WIX_INSTALL_LINK } from "@/lib/wixClient";
 // /api/wix/webhook de savoir à quelle entreprise associer l'instanceId
 // reçu ensuite (voir le commentaire dans wix_connexions.sql).
 export async function POST(request) {
+  const { entrepriseId } = await request.json().catch(() => ({}));
+
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "");
   if (!token) {
@@ -15,7 +17,7 @@ export async function POST(request) {
   }
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, entreprise } = await getUserEntrepriseParId(supabase, token, entrepriseId);
 
   if (!user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });

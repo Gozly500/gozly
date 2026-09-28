@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { encrypt } from "@/lib/paieCrypto";
 
 export async function POST(request) {
-  const { codeEntreprise, codeUtilisateur, motDePasse } = await request.json().catch(() => ({}));
+  const { codeEntreprise, codeUtilisateur, motDePasse, entrepriseId } = await request.json().catch(() => ({}));
 
   if (!codeEntreprise?.trim() || !codeUtilisateur?.trim() || !motDePasse?.trim()) {
     return NextResponse.json({ error: "Les 3 champs sont requis." }, { status: 400 });
@@ -17,7 +17,7 @@ export async function POST(request) {
   }
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, entreprise } = await getUserEntrepriseParId(supabase, token, entrepriseId);
 
   if (!user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });

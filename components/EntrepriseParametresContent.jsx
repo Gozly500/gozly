@@ -117,7 +117,7 @@ export default function EntrepriseParametresContent() {
                 )}
                 {activeTab === "emplacements" && <EmplacementsSection entrepriseId={entrepriseId} />}
                 {activeTab === "personnalisation" && <PersonnalisationSection entrepriseId={entrepriseId} />}
-                {activeTab === "integrations" && <IntegrationsSection />}
+                {activeTab === "integrations" && <IntegrationsSection entrepriseId={entrepriseId} />}
               </div>
             </div>
           )}

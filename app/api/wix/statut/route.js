@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 
 export async function GET(request) {
@@ -9,8 +9,10 @@ export async function GET(request) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
 
+  const entrepriseId = new URL(request.url).searchParams.get("entrepriseId");
+
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, entreprise } = await getUserEntrepriseParId(supabase, token, entrepriseId);
 
   if (!user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });

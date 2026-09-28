@@ -160,7 +160,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return;
       try {
-        const res = await fetch("/api/paie/nethris/statut", {
+        const res = await fetch(`/api/paie/nethris/statut?entrepriseId=${entrepriseId}`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
         const data = await res.json();
@@ -169,7 +169,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         setNethrisConnecte(false);
       }
     });
-  }, []);
+  }, [entrepriseId]);
 
   useEffect(() => {
     load();
@@ -316,7 +316,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       const res = await fetch("/api/paie/nethris/exporter", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ weekStart: weekStart.toISOString() }),
+        body: JSON.stringify({ weekStart: weekStart.toISOString(), entrepriseId }),
       });
       const data = await res.json();
       setNethrisMsg(

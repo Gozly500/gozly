@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken } from "@/lib/stripeServer";
 import { envoyerPushEmployes } from "@/lib/pushServer";
 
 // Déclenché par DemandesSection.jsx (dashboard) juste après avoir
@@ -14,8 +14,10 @@ export async function POST(request) {
   if (!token) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
-  if (!user || !entreprise) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser(token);
+  if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
   const { type, employeId, approuve } = await request.json().catch(() => ({}));
   if (!["conge", "echange"].includes(type) || !employeId || typeof approuve !== "boolean") {
@@ -29,7 +31,19 @@ export async function POST(request) {
     .select("id, entreprise_id")
     .eq("id", employeId)
     .maybeSingle();
-  if (!cible || cible.entreprise_id !== entreprise.id) {
+  if (!cible) {
+    return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
+  }
+
+  // L'entreprise de L'EMPLOYÉ ciblé fait foi (pas besoin que le client la
+  // précise) - on vérifie seulement que l'appelant en est bien membre, via
+  // le client authentifié comme lui.
+  const { data: appartenance } = await supabase
+    .from("entreprises")
+    .select("id")
+    .eq("id", cible.entreprise_id)
+    .maybeSingle();
+  if (!appartenance) {
     return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
   }
 

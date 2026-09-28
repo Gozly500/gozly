@@ -26,7 +26,7 @@ async function authHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 }
 
-export default function IntegrationsSection() {
+export default function IntegrationsSection({ entrepriseId }) {
   const [categoriesOuvertes, setCategoriesOuvertes] = useState({});
 
   const [statut, setStatut] = useState("chargement"); // "chargement" | "deconnecte" | "en_attente" | "connecte"
@@ -41,10 +41,11 @@ export default function IntegrationsSection() {
   const [nethrisForm, setNethrisForm] = useState({ codeEntreprise: "", codeUtilisateur: "", motDePasse: "" });
 
   useEffect(() => {
+    if (!entrepriseId) return;
     charger();
     chargerNethris();
     return () => clearInterval(pollRef.current);
-  }, []);
+  }, [entrepriseId]);
 
   function toggleCategorie(id) {
     setCategoriesOuvertes((cur) => ({ ...cur, [id]: !cur[id] }));
@@ -52,7 +53,7 @@ export default function IntegrationsSection() {
 
   async function chargerNethris() {
     try {
-      const res = await fetch("/api/paie/nethris/statut", { headers: await authHeaders() });
+      const res = await fetch(`/api/paie/nethris/statut?entrepriseId=${entrepriseId}`, { headers: await authHeaders() });
       const data = await res.json();
       setNethrisStatut(data.connecte ? "connecte" : "deconnecte");
     } catch {
@@ -69,7 +70,7 @@ export default function IntegrationsSection() {
       const res = await fetch("/api/paie/nethris/connecter", {
         method: "POST",
         headers: await authHeaders(),
-        body: JSON.stringify(nethrisForm),
+        body: JSON.stringify({ ...nethrisForm, entrepriseId }),
       });
       const data = await res.json();
 
@@ -91,7 +92,11 @@ export default function IntegrationsSection() {
     setNethrisMsg(null);
 
     try {
-      await fetch("/api/paie/nethris/deconnecter", { method: "POST", headers: await authHeaders() });
+      await fetch("/api/paie/nethris/deconnecter", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify({ entrepriseId }),
+      });
       setNethrisStatut("deconnecte");
       setNethrisMsg({ type: "ok", text: "Nethris est déconnecté." });
     } catch {
@@ -102,7 +107,7 @@ export default function IntegrationsSection() {
 
   async function charger() {
     try {
-      const res = await fetch("/api/wix/statut", { headers: await authHeaders() });
+      const res = await fetch(`/api/wix/statut?entrepriseId=${entrepriseId}`, { headers: await authHeaders() });
       const data = await res.json();
       setStatut(data.connecte ? "connecte" : data.enAttente ? "en_attente" : "deconnecte");
       if (data.enAttente) demarrerSurveillance();
@@ -114,7 +119,7 @@ export default function IntegrationsSection() {
   function demarrerSurveillance() {
     clearInterval(pollRef.current);
     pollRef.current = setInterval(async () => {
-      const res = await fetch("/api/wix/statut", { headers: await authHeaders() });
+      const res = await fetch(`/api/wix/statut?entrepriseId=${entrepriseId}`, { headers: await authHeaders() });
       const data = await res.json();
       if (data.connecte) {
         setStatut("connecte");
@@ -128,7 +133,11 @@ export default function IntegrationsSection() {
     setMsg(null);
 
     try {
-      const res = await fetch("/api/wix/connecter", { method: "POST", headers: await authHeaders() });
+      const res = await fetch("/api/wix/connecter", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify({ entrepriseId }),
+      });
       const data = await res.json();
 
       if (!res.ok || !data.lienInstallation) {
@@ -152,7 +161,11 @@ export default function IntegrationsSection() {
     clearInterval(pollRef.current);
 
     try {
-      await fetch("/api/wix/deconnecter", { method: "POST", headers: await authHeaders() });
+      await fetch("/api/wix/deconnecter", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify({ entrepriseId }),
+      });
       setStatut("deconnecte");
       setMsg({ type: "ok", text: "Wix est déconnecté." });
     } catch {

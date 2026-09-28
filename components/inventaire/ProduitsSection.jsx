@@ -29,7 +29,7 @@ export default function ProduitsSection({ entrepriseId }) {
   useEffect(() => {
     load();
     authHeaders().then((headers) =>
-      fetch("/api/wix/statut", { headers })
+      fetch(`/api/wix/statut?entrepriseId=${entrepriseId}`, { headers })
         .then((res) => res.json())
         .then((data) => setWixConnecte(!!data.connecte))
         .catch(() => setWixConnecte(false))
@@ -48,7 +48,7 @@ export default function ProduitsSection({ entrepriseId }) {
       const res = await fetch("/api/inventaire/pousser-wix", {
         method: "POST",
         headers: await authHeaders(),
-        body: JSON.stringify({ produitId }),
+        body: JSON.stringify({ produitId, entrepriseId }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -64,7 +64,11 @@ export default function ProduitsSection({ entrepriseId }) {
     setSyncing(true);
     setSyncMsg(null);
     try {
-      const res = await fetch("/api/inventaire/synchroniser-wix", { method: "POST", headers: await authHeaders() });
+      const res = await fetch("/api/inventaire/synchroniser-wix", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify({ entrepriseId }),
+      });
       const data = await res.json();
       if (!res.ok) {
         setSyncMsg({ type: "err", text: data.error || "La synchronisation a échoué." });

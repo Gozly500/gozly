@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { pousserQuantiteWix } from "@/lib/wixClient";
 
@@ -7,7 +7,7 @@ import { pousserQuantiteWix } from "@/lib/wixClient";
 // Wix. Appelée manuellement (bouton) ou automatiquement après une
 // modification si l'entreprise a activé la synchro auto (Personnalisation).
 export async function POST(request) {
-  const { produitId } = await request.json().catch(() => ({}));
+  const { produitId, entrepriseId } = await request.json().catch(() => ({}));
   if (!produitId) {
     return NextResponse.json({ error: "Produit manquant." }, { status: 400 });
   }
@@ -19,7 +19,7 @@ export async function POST(request) {
   }
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, entreprise } = await getUserEntrepriseParId(supabase, token, entrepriseId);
 
   if (!user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });

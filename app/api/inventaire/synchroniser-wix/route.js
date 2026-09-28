@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { obtenirInventaireWix } from "@/lib/wixClient";
 
@@ -8,6 +8,8 @@ import { obtenirInventaireWix } from "@/lib/wixClient";
 // entrés à la main. Un re-clic met à jour quantité/nom/SKU sans jamais
 // toucher au seuil d'alerte ni aux notes (propres à Gozly).
 export async function POST(request) {
+  const { entrepriseId } = await request.json().catch(() => ({}));
+
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "");
   if (!token) {
@@ -15,7 +17,7 @@ export async function POST(request) {
   }
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, entreprise } = await getUserEntrepriseParId(supabase, token, entrepriseId);
 
   if (!user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });

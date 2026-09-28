@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { decrypt } from "@/lib/paieCrypto";
 import { nethrisLogin, nethrisPutFilePaie, nethrisLogout } from "@/lib/nethrisClient";
@@ -57,7 +57,7 @@ function construireCsv(totaux, weekStart) {
 }
 
 export async function POST(request) {
-  const { weekStart } = await request.json().catch(() => ({}));
+  const { weekStart, entrepriseId } = await request.json().catch(() => ({}));
   if (!weekStart) {
     return NextResponse.json({ error: "Semaine manquante." }, { status: 400 });
   }
@@ -69,7 +69,7 @@ export async function POST(request) {
   }
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, entreprise } = await getUserEntrepriseParId(supabase, token, entrepriseId);
 
   if (!user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });

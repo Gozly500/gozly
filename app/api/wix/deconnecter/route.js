@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 
 export async function POST(request) {
+  const { entrepriseId } = await request.json().catch(() => ({}));
+
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "");
   if (!token) {
@@ -10,7 +12,7 @@ export async function POST(request) {
   }
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, entreprise } = await getUserEntrepriseParId(supabase, token, entrepriseId);
 
   if (!user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
-import { getSupabaseForToken, getUserEntreprise } from "@/lib/stripeServer";
+import { getSupabaseForToken } from "@/lib/stripeServer";
 import { notifierNouveauMessage } from "@/lib/pushServer";
 
 // Déclenché par DiscussionSection.jsx (dashboard) juste après l'insertion
@@ -13,8 +13,10 @@ export async function POST(request) {
   if (!token) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
-  if (!user || !entreprise) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser(token);
+  if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
   const { conversationId, contenu } = await request.json().catch(() => ({}));
   if (!conversationId || !contenu?.trim()) {
@@ -28,7 +30,20 @@ export async function POST(request) {
     .eq("id", conversationId)
     .maybeSingle();
 
-  if (!conversation || conversation.entreprise_id !== entreprise.id) {
+  if (!conversation) {
+    return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
+  }
+
+  // L'entreprise de LA conversation elle-même fait foi (pas besoin que le
+  // client la précise) - on vérifie seulement que l'appelant en est bien
+  // membre, via le client authentifié comme lui (RLS "un utilisateur peut
+  // lire sa propre entreprise" = est_membre(id)).
+  const { data: appartenance } = await supabase
+    .from("entreprises")
+    .select("id")
+    .eq("id", conversation.entreprise_id)
+    .maybeSingle();
+  if (!appartenance) {
     return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
   }
 

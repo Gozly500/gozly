@@ -187,6 +187,7 @@ export default function HoraireSection({ entrepriseId }) {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
       body: JSON.stringify({
+        entrepriseId,
         dateDebut: toISODate(weekStart),
         dateFin: toISODate(weekEnd),
         emplacementId: emplacements.length > 0 ? emplacementId : null,
