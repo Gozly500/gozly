@@ -79,7 +79,6 @@ export default function DashboardsContent() {
             <button className="dashboard-picker-card" onClick={() => setCreerOpen(true)}>
               <div className="dashboard-picker-logo">+</div>
               <div className="dashboard-picker-nom">Créer une entreprise</div>
-              <div className="dashboard-picker-role">Nouvelle entreprise</div>
             </button>
           </div>
         </div>
