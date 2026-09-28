@@ -34,16 +34,20 @@ export async function POST(request) {
 
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, serviceRoleKey);
 
-  async function syncEntreprise(customerId, updates) {
-    const { error } = await supabase.from("entreprises").update(updates).eq("stripe_customer_id", customerId);
-    if (error) console.error("Échec de synchronisation de l'entreprise:", error.message);
+  // Le forfait/abonnement appartient au COMPTE (profils), pas à une
+  // entreprise en particulier (voir supabase/forfait_par_compte.sql) - un
+  // déclencheur recopie ensuite automatiquement ce forfait sur toutes les
+  // entreprises que ce compte possède.
+  async function syncCompte(customerId, updates) {
+    const { error } = await supabase.from("profils").update(updates).eq("stripe_customer_id", customerId);
+    if (error) console.error("Échec de synchronisation du compte:", error.message);
   }
 
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;
       if (session.mode === "subscription" && session.metadata?.forfait) {
-        await syncEntreprise(session.customer, {
+        await syncCompte(session.customer, {
           forfait: session.metadata.forfait,
           stripe_subscription_id: session.subscription,
         });
@@ -58,17 +62,17 @@ export async function POST(request) {
 
       if (subscription.status === "active" || subscription.status === "trialing") {
         if (forfait) {
-          await syncEntreprise(subscription.customer, { forfait, stripe_subscription_id: subscription.id });
+          await syncCompte(subscription.customer, { forfait, stripe_subscription_id: subscription.id });
         }
       } else if (subscription.status === "canceled" || subscription.status === "unpaid") {
-        await syncEntreprise(subscription.customer, { forfait: null, stripe_subscription_id: null });
+        await syncCompte(subscription.customer, { forfait: null, stripe_subscription_id: null });
       }
       break;
     }
 
     case "customer.subscription.deleted": {
       const subscription = event.data.object;
-      await syncEntreprise(subscription.customer, { forfait: null, stripe_subscription_id: null });
+      await syncCompte(subscription.customer, { forfait: null, stripe_subscription_id: null });
       break;
     }
 

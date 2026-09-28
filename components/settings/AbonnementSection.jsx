@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 const FORFAITS = [
-  { id: "opale", label: "Opale", detail: "3 modules - 25$/mois" },
-  { id: "onyx", label: "Onyx", detail: "5 modules - 40$/mois" },
-  { id: "crystal", label: "Crystal", detail: "Modules illimités - 50$/mois" },
+  { id: "opale", label: "Opale", detail: "3 modules, 1 entreprise - 25$/mois" },
+  { id: "onyx", label: "Onyx", detail: "5 modules, 3 entreprises - 40$/mois" },
+  { id: "crystal", label: "Crystal", detail: "Modules illimités, 5 entreprises - 50$/mois" },
 ];
 
-export default function AbonnementSection({ entreprise }) {
+// Le forfait appartient au COMPTE (une seule facture, voir
+// supabase/forfait_par_compte.sql) : il s'applique à toutes les entreprises
+// que ce compte possède, pas à une seule en particulier.
+export default function AbonnementSection({ profil }) {
   const [forfaitOpen, setForfaitOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -17,8 +20,8 @@ export default function AbonnementSection({ entreprise }) {
 
   // "pilote" = forfait interne gratuit (assigné par un admin), absent de la liste
   // publique FORFAITS : sans ça il s'afficherait "Aucun forfait actif".
-  const FORFAIT_PILOTE = { id: "pilote", label: "Pilote", detail: "Modules illimités - gratuit" };
-  const current = entreprise?.forfait === "pilote" ? FORFAIT_PILOTE : FORFAITS.find((f) => f.id === entreprise?.forfait);
+  const FORFAIT_PILOTE = { id: "pilote", label: "Pilote", detail: "Modules et entreprises illimités - gratuit" };
+  const current = profil?.forfait === "pilote" ? FORFAIT_PILOTE : FORFAITS.find((f) => f.id === profil?.forfait);
   const achatAutoLance = useRef(false);
 
   useEffect(() => {
@@ -36,16 +39,16 @@ export default function AbonnementSection({ entreprise }) {
   // Arrivée depuis l'inscription avec un forfait choisi (/parametres?acheter=opale) :
   // on démarre le paiement tout de suite, sans redemander le choix.
   useEffect(() => {
-    if (!entreprise?.id || achatAutoLance.current) return;
+    if (!profil?.id || achatAutoLance.current) return;
     const params = new URLSearchParams(window.location.search);
     const voulu = params.get("acheter");
     if (!voulu) return;
     achatAutoLance.current = true;
     window.history.replaceState({}, "", "/parametres");
-    if (!entreprise.forfait && FORFAITS.some((f) => f.id === voulu)) {
+    if (!profil.forfait && FORFAITS.some((f) => f.id === voulu)) {
       startCheckout(voulu);
     }
-  }, [entreprise?.id]);
+  }, [profil?.id]);
 
   async function startCheckout(forfaitId) {
     setForfaitOpen(false);
@@ -107,27 +110,17 @@ export default function AbonnementSection({ entreprise }) {
     <div>
       <h2>Abonnement</h2>
       <p className="panel-hint">
-        Ton forfait, ton moyen de paiement et tes factures
-        {entreprise?.nom ? (
-          <>
-            {" "}
-            — <strong>{entreprise.nom}</strong>
-          </>
-        ) : (
-          "."
-        )}
+        Ton forfait, ton moyen de paiement et tes factures - une seule facture pour toutes les entreprises de ton
+        compte.
       </p>
-      {entreprise?.nom && (
-        <p className="section-hint" style={{ marginTop: "-8px", marginBottom: "18px" }}>
-          Sur plusieurs entreprises ? <a href="/dashboards" style={{ color: "var(--text)", textDecoration: "underline" }}>Change de dashboard</a> pour gérer l'abonnement d'une autre.
-        </p>
-      )}
 
       {checkoutMsg && <p className={`settings-msg ${checkoutMsg.type}`}>{checkoutMsg.text}</p>}
 
       <div className="settings-section">
         <h3>Forfait actuel</h3>
-        <p className="section-hint">Le forfait détermine les modules disponibles dans ton tableau de bord.</p>
+        <p className="section-hint">
+          Le forfait détermine les modules disponibles et le nombre d'entreprises que tu peux créer.
+        </p>
 
         {current ? (
           <span className="forfait-badge">

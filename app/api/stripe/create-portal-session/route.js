@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStripe, getSupabaseForToken, getUserEntreprise, getOrCreateStripeCustomer } from "@/lib/stripeServer";
+import { getStripe, getSupabaseForToken, getUserProfil, getOrCreateStripeCustomerCompte } from "@/lib/stripeServer";
 
 export async function POST(request) {
   const stripe = getStripe();
@@ -17,17 +17,17 @@ export async function POST(request) {
   }
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, profil } = await getUserProfil(supabase, token);
 
   if (!user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
-  if (!entreprise) {
-    return NextResponse.json({ error: "Aucune entreprise associée à ce compte." }, { status: 400 });
+  if (!profil) {
+    return NextResponse.json({ error: "Profil introuvable." }, { status: 400 });
   }
 
   try {
-    const customerId = await getOrCreateStripeCustomer(stripe, supabase, entreprise, user);
+    const customerId = await getOrCreateStripeCustomerCompte(stripe, supabase, profil, user);
     const origin = request.headers.get("origin") || new URL(request.url).origin;
 
     const portalSession = await stripe.billingPortal.sessions.create({

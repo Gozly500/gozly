@@ -126,7 +126,7 @@ export default function SettingsContent() {
             setEntreprise={setEntreprise}
           />
         )}
-        {activeTab === "abonnement" && <AbonnementSection entreprise={entreprise} />}
+        {activeTab === "abonnement" && <AbonnementSection profil={profil} />}
         {activeTab === "apparence" && <AppearanceSection profil={profil} setProfil={setProfil} />}
         {activeTab === "activite" && <ActiviteSection user={user} />}
         {activeTab === "gestion" && <GestionSection user={user} profil={profil} router={router} />}

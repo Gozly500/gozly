@@ -1,23 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { setEntrepriseSelectionnee } from "@/lib/entreprise";
+import { limiteEntreprises } from "@/lib/modules";
 
 // Un même compte peut posséder plusieurs entreprises distinctes (ex: deux
 // succursales immatriculées séparément, avec leur propre paie et leurs
-// propres registres) - chacune a son propre abonnement, son propre forfait
-// et ses propres modules. Rien à changer côté base : "entreprises" accepte
-// déjà l'insertion par n'importe quel compte authentifié (policy_inscription.sql),
-// et "membres" relie ce compte à autant d'entreprises que nécessaire (equipe.sql).
+// propres registres) - chacune a ses propres modules et ses propres données,
+// mais elles partagent TOUTES le même forfait/abonnement, celui du compte
+// (une seule facture - voir supabase/forfait_par_compte.sql). Le nombre
+// d'entreprises qu'un compte peut posséder dépend donc de ce forfait
+// (lib/modules.js, LIMITES_ENTREPRISES). Un propriétaire qui veut une
+// facture séparée pour une autre entreprise doit utiliser un compte différent.
 export default function CreerEntrepriseModal({ onClose }) {
   const [nom, setNom] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [chargement, setChargement] = useState(true);
+  const [nbActuel, setNbActuel] = useState(0);
+  const [limite, setLimite] = useState(1);
+
+  useEffect(() => {
+    charger();
+  }, []);
+
+  async function charger() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setChargement(false);
+      return;
+    }
+
+    const [{ data: profil }, { count }] = await Promise.all([
+      supabase.from("profils").select("forfait").eq("id", user.id).maybeSingle(),
+      supabase.from("membres").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("role", "proprietaire"),
+    ]);
+
+    setLimite(limiteEntreprises(profil?.forfait));
+    setNbActuel(count || 0);
+    setChargement(false);
+  }
+
+  const limiteAtteinte = nbActuel >= limite;
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!nom.trim() || saving) return;
+    if (!nom.trim() || saving || limiteAtteinte) return;
 
     setSaving(true);
     setError("");
@@ -44,6 +75,8 @@ export default function CreerEntrepriseModal({ onClose }) {
       return;
     }
 
+    // Un déclencheur donne automatiquement à cette entreprise le forfait déjà
+    // payé par ce compte (voir supabase/forfait_par_compte.sql).
     const { error: membreError } = await supabase
       .from("membres")
       .insert({ entreprise_id: entreprise.id, user_id: user.id, role: "proprietaire" });
@@ -72,32 +105,41 @@ export default function CreerEntrepriseModal({ onClose }) {
           </button>
         </div>
         <p className="section-hint" style={{ marginBottom: "16px" }}>
-          Une entreprise séparée, avec son propre forfait, ses propres modules et ses propres données - utile si tu
-          gères deux entreprises immatriculées différemment (par exemple deux succursales avec leur propre paie).
+          Une entreprise séparée, avec ses propres modules et ses propres données - utile si tu gères deux
+          entreprises immatriculées différemment (par exemple deux succursales avec leur propre paie). Elle partage
+          le forfait de ton compte, une seule facture pour toutes tes entreprises.
         </p>
 
-        <form onSubmit={handleSubmit}>
-          <div className="field">
-            <label htmlFor="nom-entreprise">Nom de l'entreprise</label>
-            <input
-              id="nom-entreprise"
-              type="text"
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-              placeholder="Ex: Pasta Sainte-Marthe"
-              required
-              autoFocus
-            />
-          </div>
+        {!chargement && limiteAtteinte ? (
+          <p className="settings-msg err">
+            Ton forfait actuel permet {limite === Infinity ? "un nombre illimité" : limite} entreprise
+            {limite > 1 ? "s" : ""} ({nbActuel}/{limite === Infinity ? "∞" : limite} déjà créées). Change de forfait
+            dans Paramètres &gt; Abonnement pour en ajouter d'autres.
+          </p>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div className="field">
+              <label htmlFor="nom-entreprise">Nom de l'entreprise</label>
+              <input
+                id="nom-entreprise"
+                type="text"
+                value={nom}
+                onChange={(e) => setNom(e.target.value)}
+                placeholder="Ex: Pasta Sainte-Marthe"
+                required
+                autoFocus
+              />
+            </div>
 
-          {error && <p className="settings-msg err">{error}</p>}
+            {error && <p className="settings-msg err">{error}</p>}
 
-          <div className="submit-wrap" style={{ marginTop: "16px", position: "static" }}>
-            <button type="submit" className="submit-btn" disabled={saving || !nom.trim()}>
-              {saving ? "Création..." : "Créer l'entreprise"}
-            </button>
-          </div>
-        </form>
+            <div className="submit-wrap" style={{ marginTop: "16px", position: "static" }}>
+              <button type="submit" className="submit-btn" disabled={saving || !nom.trim() || chargement}>
+                {saving ? "Création..." : "Créer l'entreprise"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

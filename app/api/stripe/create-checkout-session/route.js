@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStripe, getSupabaseForToken, getUserEntreprise, getOrCreateStripeCustomer } from "@/lib/stripeServer";
+import { getStripe, getSupabaseForToken, getUserProfil, getOrCreateStripeCustomerCompte } from "@/lib/stripeServer";
 
 const FORFAITS_VALIDES = ["opale", "onyx", "crystal"];
 
@@ -24,13 +24,13 @@ export async function POST(request) {
   }
 
   const supabase = getSupabaseForToken(token);
-  const { user, entreprise } = await getUserEntreprise(supabase, token);
+  const { user, profil } = await getUserProfil(supabase, token);
 
   if (!user) {
     return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
   }
-  if (!entreprise) {
-    return NextResponse.json({ error: "Aucune entreprise associée à ce compte." }, { status: 400 });
+  if (!profil) {
+    return NextResponse.json({ error: "Profil introuvable." }, { status: 400 });
   }
 
   try {
@@ -40,13 +40,13 @@ export async function POST(request) {
       return NextResponse.json({ error: "Ce forfait n'est pas disponible pour le moment." }, { status: 404 });
     }
 
-    const customerId = await getOrCreateStripeCustomer(stripe, supabase, entreprise, user);
+    const customerId = await getOrCreateStripeCustomerCompte(stripe, supabase, profil, user);
     const origin = request.headers.get("origin") || new URL(request.url).origin;
 
-    // Si l'entreprise a déjà un abonnement actif, on ne recrée pas de
-    // paiement séparé : on redirige plutôt vers le portail pour changer de
-    // forfait sur l'abonnement existant.
-    if (entreprise.stripe_subscription_id) {
+    // Si le compte a déjà un abonnement actif, on ne recrée pas de paiement
+    // séparé : on redirige plutôt vers le portail pour changer de forfait sur
+    // l'abonnement existant (qui couvre toutes ses entreprises).
+    if (profil.stripe_subscription_id) {
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: customerId,
         return_url: `${origin}/parametres`,
@@ -60,8 +60,8 @@ export async function POST(request) {
       line_items: [{ price: price.id, quantity: 1 }],
       success_url: `${origin}/parametres?checkout=success`,
       cancel_url: `${origin}/parametres?checkout=cancel`,
-      metadata: { entreprise_id: entreprise.id, forfait },
-      subscription_data: { metadata: { entreprise_id: entreprise.id, forfait } },
+      metadata: { user_id: user.id, forfait },
+      subscription_data: { metadata: { user_id: user.id, forfait } },
     });
 
     return NextResponse.json({ url: checkoutSession.url });

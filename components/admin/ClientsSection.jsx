@@ -7,6 +7,7 @@ import { demarrerImpersonation } from "@/lib/entreprise";
 import SimpleSelect from "@/components/SimpleSelect";
 import InfoTooltip from "@/components/InfoTooltip";
 import { geocoderAdresse } from "@/lib/geocode";
+import { limiteEntreprises } from "@/lib/modules";
 
 const FORFAITS = [
   { id: "", label: "Aucun forfait" },
@@ -31,10 +32,12 @@ async function authFetch(path, options = {}) {
   return { ok: res.ok, data };
 }
 
-// Ligne d'une entreprise (forfait, abonnement Stripe, dashboard, édition,
-// suppression) - utilisée à la fois pour les entreprises d'un compte
-// sélectionné et pour les entreprises orphelines (sans aucun membre).
-function EntrepriseRow({ entreprise, profilId, onForfaitChange, onDeleted, onSaved }) {
+// Ligne d'une entreprise (dashboard, édition, suppression) - utilisée à la
+// fois pour les entreprises d'un compte sélectionné (forfait en LECTURE
+// SEULE : il appartient au compte, voir supabase/forfait_par_compte.sql) et
+// pour les entreprises orphelines (sans aucun membre, donc sans compte pour
+// porter un forfait - "forfaitEditable" y est alors modifiable directement).
+function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange, onDeleted, onSaved }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -116,22 +119,19 @@ function EntrepriseRow({ entreprise, profilId, onForfaitChange, onDeleted, onSav
         </div>
 
         <div className="admin-row-controls">
-          <div style={{ minWidth: "200px" }}>
-            <SimpleSelect
-              options={FORFAITS}
-              value={entreprise.forfait || ""}
-              onChange={(id) => onForfaitChange(entreprise.id, id)}
-            />
-            {entreprise.stripe_subscription_id && (
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", fontSize: "11.5px", color: "var(--text-dim)" }}>
-                <InfoTooltip symbole="!" alerte>
-                  Si le forfait est changé depuis ici, il reviendra à celui payé au prochain paiement (renouvellement,
-                  etc.). Pour un changement durable, modifie l'abonnement dans Stripe.
-                </InfoTooltip>
-                Abonnement Stripe actif
-              </div>
-            )}
-          </div>
+          {forfaitEditable ? (
+            <div style={{ minWidth: "200px" }}>
+              <SimpleSelect
+                options={FORFAITS}
+                value={entreprise.forfait || ""}
+                onChange={(id) => onForfaitChange(entreprise.id, id)}
+              />
+            </div>
+          ) : (
+            <span className="admin-status-pill" title="Le forfait appartient au compte, pas à cette entreprise - voir l'onglet du compte.">
+              {FORFAITS.find((f) => f.id === entreprise.forfait)?.label || "Aucun forfait"}
+            </span>
+          )}
 
           <button className="admin-icon-btn" onClick={() => setEditing((v) => !v)}>
             {editing ? "Fermer" : "Modifier"}
@@ -280,16 +280,24 @@ export default function ClientsSection() {
     setLoading(false);
   }
 
-  async function handleForfaitChange(entrepriseId, forfait) {
-    const patch = (list) =>
-      list.map((row) =>
-        row.entreprise.id === entrepriseId ? { ...row, entreprise: { ...row.entreprise, forfait: forfait || null } } : row
-      );
-    setComptes((prev) => prev.map((c) => ({ ...c, entreprises: patch(c.entreprises) })));
+  // Uniquement pour les entreprises ORPHELINES (sans compte) - sinon le
+  // forfait se change au niveau du compte (handleForfaitChangeCompte),
+  // voir supabase/forfait_par_compte.sql.
+  async function handleForfaitChangeOrphelin(entrepriseId, forfait) {
     setEntreprisesOrphelines((prev) =>
       prev.map((e) => (e.id === entrepriseId ? { ...e, forfait: forfait || null } : e))
     );
     await supabase.from("entreprises").update({ forfait: forfait || null }).eq("id", entrepriseId);
+  }
+
+  // Change le forfait du COMPTE - un déclencheur recopie automatiquement
+  // cette valeur sur toutes les entreprises dont ce compte est propriétaire.
+  async function handleForfaitChangeCompte(profilId, forfait) {
+    setComptes((prev) =>
+      prev.map((c) => (c.profil?.id === profilId ? { ...c, profil: { ...c.profil, forfait: forfait || null } } : c))
+    );
+    await supabase.from("profils").update({ forfait: forfait || null }).eq("id", profilId);
+    load();
   }
 
   async function handleToggleActif(profilId, desactive) {
@@ -373,7 +381,9 @@ export default function ClientsSection() {
         <h2>{compteOuvert.profil?.full_name || compteOuvert.email || "Compte"}</h2>
         <p className="panel-hint">
           {compteOuvert.email} · {compteOuvert.entreprises.length} entreprise
-          {compteOuvert.entreprises.length > 1 ? "s" : ""}
+          {compteOuvert.entreprises.length > 1 ? "s" : ""} · Forfait :{" "}
+          {FORFAITS.find((f) => f.id === compteOuvert.profil?.forfait)?.label || "Aucun"} (change dans « ← Retour aux
+          comptes »)
         </p>
         {error && <p className="settings-msg err">{error}</p>}
 
@@ -383,7 +393,7 @@ export default function ClientsSection() {
               key={entreprise.id}
               entreprise={entreprise}
               profilId={compteOuvert.profil?.id}
-              onForfaitChange={handleForfaitChange}
+              forfaitEditable={false}
               onSaved={load}
               onDeleted={load}
             />
@@ -406,12 +416,32 @@ export default function ClientsSection() {
               <div className="admin-row-main">
                 <div className="admin-row-title">{compte.profil?.full_name || compte.email || "(sans nom)"}</div>
                 <div className="admin-row-sub">
-                  {compte.email || "Courriel inconnu"} · {compte.entreprises.length} entreprise
-                  {compte.entreprises.length > 1 ? "s" : ""}
+                  {compte.email || "Courriel inconnu"} · {compte.entreprises.length}/
+                  {limiteEntreprises(compte.profil?.forfait) === Infinity ? "∞" : limiteEntreprises(compte.profil?.forfait)}{" "}
+                  entreprise{compte.entreprises.length > 1 ? "s" : ""}
                 </div>
               </div>
 
               <div className="admin-row-controls">
+                {compte.profil && (
+                  <div style={{ minWidth: "190px" }}>
+                    <SimpleSelect
+                      options={FORFAITS}
+                      value={compte.profil.forfait || ""}
+                      onChange={(id) => handleForfaitChangeCompte(compte.profil.id, id)}
+                    />
+                    {compte.profil.stripe_subscription_id && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", fontSize: "11.5px", color: "var(--text-dim)" }}>
+                        <InfoTooltip symbole="!" alerte>
+                          Si le forfait est changé depuis ici, il reviendra à celui payé au prochain paiement
+                          (renouvellement, etc.). Pour un changement durable, modifie l'abonnement dans Stripe.
+                        </InfoTooltip>
+                        Abonnement Stripe actif
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {compte.profil ? (
                   <label className="switch" title={compte.profil.desactive ? "Compte désactivé" : "Compte actif"}>
                     <input
@@ -557,7 +587,8 @@ export default function ClientsSection() {
                 key={entreprise.id}
                 entreprise={entreprise}
                 profilId={null}
-                onForfaitChange={handleForfaitChange}
+                forfaitEditable
+                onForfaitChange={handleForfaitChangeOrphelin}
                 onSaved={load}
                 onDeleted={load}
               />
