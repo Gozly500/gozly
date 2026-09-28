@@ -106,7 +106,22 @@ export default function AbonnementSection({ entreprise }) {
   return (
     <div>
       <h2>Abonnement</h2>
-      <p className="panel-hint">Ton forfait, ton moyen de paiement et tes factures.</p>
+      <p className="panel-hint">
+        Ton forfait, ton moyen de paiement et tes factures
+        {entreprise?.nom ? (
+          <>
+            {" "}
+            — <strong>{entreprise.nom}</strong>
+          </>
+        ) : (
+          "."
+        )}
+      </p>
+      {entreprise?.nom && (
+        <p className="section-hint" style={{ marginTop: "-8px", marginBottom: "18px" }}>
+          Sur plusieurs entreprises ? <a href="/dashboards" style={{ color: "var(--text)", textDecoration: "underline" }}>Change de dashboard</a> pour gérer l'abonnement d'une autre.
+        </p>
+      )}
 
       {checkoutMsg && <p className={`settings-msg ${checkoutMsg.type}`}>{checkoutMsg.text}</p>}
 

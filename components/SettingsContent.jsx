@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import InformationsSection from "@/components/settings/InformationsSection";
 import AbonnementSection from "@/components/settings/AbonnementSection";
 import ActiviteSection from "@/components/settings/ActiviteSection";
@@ -55,17 +56,35 @@ export default function SettingsContent() {
         .maybeSingle();
 
       if (ignore) return;
+      setProfil(profilData || null);
 
-      if (profilData?.entreprise_id) {
+      // L'entreprise à afficher/modifier ici (Informations, Abonnement) doit
+      // être celle actuellement ACTIVE (même résolution que le tableau de
+      // bord et le sélecteur "⇄ Changer de dashboard") - pas systématiquement
+      // la toute première créée à l'inscription (profils.entreprise_id),
+      // sinon un compte avec plusieurs entreprises modifierait la mauvaise
+      // sans le savoir.
+      const { entrepriseId, besoinChoix, invitationsEnAttente } = await resoudreEntrepriseActive(supabase);
+      if (ignore) return;
+
+      if (invitationsEnAttente > 0) {
+        router.push("/invitations");
+        return;
+      }
+      if (besoinChoix) {
+        router.push("/dashboards");
+        return;
+      }
+
+      if (entrepriseId) {
         const { data: entrepriseData } = await supabase
           .from("entreprises")
           .select("*")
-          .eq("id", profilData.entreprise_id)
+          .eq("id", entrepriseId)
           .maybeSingle();
         if (!ignore) setEntreprise(entrepriseData || null);
       }
 
-      setProfil(profilData || null);
       setChecking(false);
     });
 
