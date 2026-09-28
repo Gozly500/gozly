@@ -5,6 +5,10 @@ import { distanceMetres } from "@/lib/geocode";
 import { aujourdhuiLocal } from "@/lib/dates";
 
 const RAYON_MAX_METRES = 150;
+// Identifiant conventionnel de la "succursale virtuelle" (l'adresse de
+// l'entreprise elle-même) utilisée en repère GPS quand l'entreprise ne
+// gère aucune succursale - voir resoudreEtat().
+const ID_ENTREPRISE_VIRTUELLE = "entreprise";
 
 // Résout, pour un employé donné, l'état de pointage mobile :
 // - s'il a un pointage ouvert (sortie non posée), la succursale à
@@ -17,14 +21,29 @@ const RAYON_MAX_METRES = 150;
 //   explicitement assigné s'il y en a plusieurs).
 // Dans les deux cas, seules les succursales avec une position GPS
 // valide (adresse géocodée) comptent.
-async function resoudreEtat(service, employe) {
+//
+// Entreprise qui ne gère aucune succursale (voir "Emplacements") : son
+// adresse géocodée (Paramètres > Informations) sert alors elle-même de
+// repère GPS, comme s'il s'agissait d'une unique succursale virtuelle
+// (id "entreprise") - sans ça, le pointage mobile serait tout simplement
+// impossible pour ces entreprises.
+async function resoudreEtat(service, employe, entreprise) {
   const { data: toutesEmplacements } = await service
     .from("emplacements")
     .select("id, nom, latitude, longitude")
     .eq("entreprise_id", employe.entreprise_id);
 
   const emplacements = toutesEmplacements || [];
-  const uniqueEmplacement = emplacements.length === 1 ? emplacements[0] : null;
+
+  const emplacementVirtuel =
+    emplacements.length === 0 && entreprise?.latitude != null && entreprise?.longitude != null
+      ? { id: ID_ENTREPRISE_VIRTUELLE, nom: entreprise.nom, latitude: entreprise.latitude, longitude: entreprise.longitude }
+      : null;
+
+  const uniqueEmplacement = emplacements.length === 1 ? emplacements[0] : emplacementVirtuel;
+  // Pour la vérification (fermeture d'un pointage ouvert), la succursale
+  // virtuelle doit être cherchable au même titre qu'une vraie.
+  const emplacementsRecherchables = emplacementVirtuel ? [...emplacements, emplacementVirtuel] : emplacements;
 
   const { data: enCours } = await service
     .from("pointages")
@@ -37,7 +56,7 @@ async function resoudreEtat(service, employe) {
 
   if (enCours) {
     const emplacement = enCours.emplacement_id
-      ? emplacements.find((e) => e.id === enCours.emplacement_id) || null
+      ? emplacementsRecherchables.find((e) => e.id === enCours.emplacement_id) || null
       : uniqueEmplacement;
     return {
       pointageOuvert: {
@@ -48,7 +67,7 @@ async function resoudreEtat(service, employe) {
       },
       aQuartAujourdhui: false,
       emplacementsEligibles: [],
-      emplacements,
+      emplacementsRecherchables,
     };
   }
 
@@ -78,7 +97,7 @@ async function resoudreEtat(service, employe) {
     pointageOuvert: null,
     aQuartAujourdhui: (quarts || []).length > 0,
     emplacementsEligibles,
-    emplacements,
+    emplacementsRecherchables,
   };
 }
 
@@ -92,7 +111,7 @@ export async function GET(request) {
 
   const { data: entreprise } = await service
     .from("entreprises")
-    .select("pointage_mobile_actif")
+    .select("nom, pointage_mobile_actif, latitude, longitude")
     .eq("id", employe.entreprise_id)
     .maybeSingle();
 
@@ -100,7 +119,7 @@ export async function GET(request) {
     return NextResponse.json({ actif: false });
   }
 
-  const { pointageOuvert, aQuartAujourdhui, emplacementsEligibles } = await resoudreEtat(service, employe);
+  const { pointageOuvert, aQuartAujourdhui, emplacementsEligibles } = await resoudreEtat(service, employe, entreprise);
 
   return NextResponse.json({
     actif: true,
@@ -125,7 +144,7 @@ export async function POST(request) {
 
   const { data: entreprise } = await service
     .from("entreprises")
-    .select("pointage_mobile_actif")
+    .select("nom, pointage_mobile_actif, latitude, longitude")
     .eq("id", employe.entreprise_id)
     .maybeSingle();
 
@@ -133,7 +152,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Le pointage mobile n'est pas activé." }, { status: 403 });
   }
 
-  const { pointageOuvert, emplacementsEligibles, emplacements } = await resoudreEtat(service, employe);
+  const { pointageOuvert, emplacementsEligibles, emplacementsRecherchables } = await resoudreEtat(service, employe, entreprise);
 
   // Détermine la succursale à vérifier : celle du pointage ouvert (si on
   // ferme un quart), sinon celle choisie parmi les succursales éligibles
@@ -144,7 +163,7 @@ export async function POST(request) {
     if (!pointageOuvert.gpsDisponible || pointageOuvert.emplacementId !== emplacementId) {
       return NextResponse.json({ error: "Succursale invalide pour ce pointage." }, { status: 403 });
     }
-    emplacement = emplacements.find((e) => e.id === emplacementId) || null;
+    emplacement = emplacementsRecherchables.find((e) => e.id === emplacementId) || null;
   } else {
     emplacement = emplacementsEligibles.find((e) => e.id === emplacementId) || null;
   }
@@ -159,6 +178,11 @@ export async function POST(request) {
       { status: 400 }
     );
   }
+
+  // La "succursale virtuelle" (adresse de l'entreprise, quand elle ne gère
+  // aucune vraie succursale) n'existe pas dans la table emplacements -
+  // pointages.emplacement_id doit rester NULL dans ce cas (colonne nullable).
+  const emplacementIdReel = emplacementId === ID_ENTREPRISE_VIRTUELLE ? null : emplacementId;
 
   const maintenant = new Date().toISOString();
   let type;
@@ -184,7 +208,7 @@ export async function POST(request) {
       entreprise_id: employe.entreprise_id,
       employe_id: employe.id,
       entree: maintenant,
-      emplacement_id: emplacementId,
+      emplacement_id: emplacementIdReel,
       source: "mobile",
       latitude,
       longitude,
