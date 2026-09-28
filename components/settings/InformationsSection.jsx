@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { geocoderAdresse } from "@/lib/geocode";
 
 export default function InformationsSection({ user, profil, setProfil, entreprise, setEntreprise }) {
   const fileInputRef = useRef(null);
@@ -15,6 +16,7 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
 
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [adresseIntrouvable, setAdresseIntrouvable] = useState(false);
 
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoMsg, setLogoMsg] = useState(null);
@@ -26,6 +28,7 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
     e.preventDefault();
     setSaving(true);
     setMsg(null);
+    setAdresseIntrouvable(false);
 
     const { error: authError } = await supabase.auth.updateUser({
       data: { full_name: fullName },
@@ -39,26 +42,36 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
       setProfil({ ...profil, full_name: fullName, telephone_perso: telephonePerso || null });
     }
 
+    // Même mécanisme que pour les succursales (Emplacements) : l'adresse est
+    // convertie en coordonnées GPS via Nominatim à l'enregistrement (voir
+    // lib/geocode.js). Pas encore utilisées par une fonctionnalité ici, mais
+    // ça valide au passage que l'adresse saisie existe vraiment.
+    let position = null;
+    if (adresse.trim() && adresse.trim() !== (entreprise?.adresse || "").trim()) {
+      position = await geocoderAdresse(adresse);
+      if (!position) setAdresseIntrouvable(true);
+    }
+
     let entrepriseError = null;
     if (entreprise) {
-      const { error } = await supabase
-        .from("entreprises")
-        .update({
-          nom: entrepriseName,
-          adresse: adresse || null,
-          courriel_contact: courrielContact || null,
-          telephone: telephone || null,
-        })
-        .eq("id", entreprise.id);
+      const champsEntreprise = {
+        nom: entrepriseName,
+        adresse: adresse || null,
+        courriel_contact: courrielContact || null,
+        telephone: telephone || null,
+      };
+      if (!adresse.trim()) {
+        champsEntreprise.latitude = null;
+        champsEntreprise.longitude = null;
+      } else if (position) {
+        champsEntreprise.latitude = position.latitude;
+        champsEntreprise.longitude = position.longitude;
+      }
+
+      const { error } = await supabase.from("entreprises").update(champsEntreprise).eq("id", entreprise.id);
       entrepriseError = error;
       if (!error) {
-        setEntreprise({
-          ...entreprise,
-          nom: entrepriseName,
-          adresse: adresse || null,
-          courriel_contact: courrielContact || null,
-          telephone: telephone || null,
-        });
+        setEntreprise({ ...entreprise, ...champsEntreprise });
       }
     }
 
@@ -208,10 +221,18 @@ export default function InformationsSection({ user, profil, setProfil, entrepris
               type="text"
               id="adresse"
               value={adresse}
-              onChange={(e) => setAdresse(e.target.value)}
+              onChange={(e) => {
+                setAdresse(e.target.value);
+                setAdresseIntrouvable(false);
+              }}
               placeholder="123 rue Exemple, Ville, Province"
               disabled={!entreprise}
             />
+            {adresseIntrouvable && (
+              <p className="section-hint" style={{ color: "#f2b95a", marginTop: "4px" }}>
+                ⚠ Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
+              </p>
+            )}
           </div>
 
           <div className="field">

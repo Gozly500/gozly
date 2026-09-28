@@ -76,8 +76,22 @@ export async function PATCH(request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const { profilId, entrepriseId, fullName, telephonePerso, entrepriseNom, telephone, courrielContact, adresse, email } =
-    body;
+  const {
+    profilId,
+    entrepriseId,
+    fullName,
+    telephonePerso,
+    entrepriseNom,
+    telephone,
+    courrielContact,
+    adresse,
+    // Géocodées côté client (voir lib/geocode.js, même mécanisme que pour les
+    // succursales) avant l'appel - undefined si l'adresse n'a pas changé, pour
+    // ne pas écraser des coordonnées déjà valides.
+    latitude,
+    longitude,
+    email,
+  } = body;
 
   if (profilId) {
     await serviceClient
@@ -100,15 +114,16 @@ export async function PATCH(request) {
   }
 
   if (entrepriseId) {
-    await serviceClient
-      .from("entreprises")
-      .update({
-        nom: entrepriseNom ?? null,
-        telephone: telephone || null,
-        courriel_contact: courrielContact || null,
-        adresse: adresse || null,
-      })
-      .eq("id", entrepriseId);
+    const champs = {
+      nom: entrepriseNom ?? null,
+      telephone: telephone || null,
+      courriel_contact: courrielContact || null,
+      adresse: adresse || null,
+    };
+    if (latitude !== undefined) champs.latitude = latitude;
+    if (longitude !== undefined) champs.longitude = longitude;
+
+    await serviceClient.from("entreprises").update(champs).eq("id", entrepriseId);
   }
 
   return NextResponse.json({ success: true });

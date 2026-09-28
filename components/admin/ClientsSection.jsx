@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { demarrerImpersonation } from "@/lib/entreprise";
 import SimpleSelect from "@/components/SimpleSelect";
 import InfoTooltip from "@/components/InfoTooltip";
+import { geocoderAdresse } from "@/lib/geocode";
 
 const FORFAITS = [
   { id: "", label: "Aucun forfait" },
@@ -47,12 +48,35 @@ function EntrepriseRow({ entreprise, profilId, onForfaitChange, onDeleted, onSav
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState(null);
+  const [adresseIntrouvable, setAdresseIntrouvable] = useState(false);
 
   async function handleSave() {
     setSaving(true);
+    setAdresseIntrouvable(false);
+
+    // Même mécanisme que pour les succursales (Emplacements) : l'adresse est
+    // convertie en coordonnées GPS via Nominatim (voir lib/geocode.js), pour
+    // que les entreprises et les succursales aient un traitement cohérent.
+    const payload = { entrepriseId: entreprise.id, ...form };
+    const adresseChangee = form.adresse.trim() !== (entreprise.adresse || "").trim();
+    if (adresseChangee) {
+      if (!form.adresse.trim()) {
+        payload.latitude = null;
+        payload.longitude = null;
+      } else {
+        const position = await geocoderAdresse(form.adresse);
+        if (position) {
+          payload.latitude = position.latitude;
+          payload.longitude = position.longitude;
+        } else {
+          setAdresseIntrouvable(true);
+        }
+      }
+    }
+
     const { ok, data } = await authFetch("/api/admin/clients", {
       method: "PATCH",
-      body: JSON.stringify({ entrepriseId: entreprise.id, ...form }),
+      body: JSON.stringify(payload),
     });
     setSaving(false);
     if (!ok) {
@@ -151,7 +175,19 @@ function EntrepriseRow({ entreprise, profilId, onForfaitChange, onDeleted, onSav
           </div>
           <div className="field">
             <label>Adresse</label>
-            <input type="text" value={form.adresse} onChange={(e) => setForm((f) => ({ ...f, adresse: e.target.value }))} />
+            <input
+              type="text"
+              value={form.adresse}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, adresse: e.target.value }));
+                setAdresseIntrouvable(false);
+              }}
+            />
+            {adresseIntrouvable && (
+              <p className="section-hint" style={{ color: "#f2b95a", marginTop: "4px" }}>
+                ⚠ Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
+              </p>
+            )}
           </div>
 
           <div className="admin-edit-actions">
