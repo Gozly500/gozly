@@ -23,8 +23,7 @@ export default function HoraireSection({ entrepriseId }) {
   const [dragOverDate, setDragOverDate] = useState(null);
   const [modal, setModal] = useState(null); // { date, employeId, quartId, heureDebut, heureFin }
   const [publishing, setPublishing] = useState(false);
-  const [premierJourDimanche, setPremierJourDimanche] = useState(false);
-  const [importModal, setImportModal] = useState(null); // { dateSource, confirmerRemplacement, error }
+  const [importModal, setImportModal] = useState(null); // { semaineSource, confirmerRemplacement, error }
   const [importing, setImporting] = useState(false);
 
   const weekEnd = addDays(weekStart, 6);
@@ -50,7 +49,6 @@ export default function HoraireSection({ entrepriseId }) {
       .maybeSingle()
       .then(({ data }) => {
         const dimanche = data?.premier_jour_semaine === "dimanche";
-        setPremierJourDimanche(dimanche);
         setWeekStart((w) => getDebutSemaine(addDays(w, 3), dimanche));
       });
   }, [entrepriseId]);
@@ -202,21 +200,20 @@ export default function HoraireSection({ entrepriseId }) {
     load();
   }
 
+  // Les 8 semaines précédant celle affichée, la plus récente en premier -
+  // plus simple à choisir qu'à saisir une date à la main.
+  const semainesRecentes = Array.from({ length: 8 }, (_, i) => addDays(weekStart, -7 * (i + 1)));
+
   function openImportModal() {
-    setImportModal({ dateSource: toISODate(addDays(weekStart, -7)), confirmerRemplacement: false, error: null });
+    setImportModal({ semaineSource: toISODate(semainesRecentes[0]), confirmerRemplacement: false, error: null });
   }
 
   async function handleImporterSemaine(e) {
     e.preventDefault();
-    if (!importModal?.dateSource) return;
+    if (!importModal?.semaineSource) return;
 
-    const sourceWeekStart = getDebutSemaine(new Date(`${importModal.dateSource}T00:00:00`), premierJourDimanche);
+    const sourceWeekStart = new Date(`${importModal.semaineSource}T00:00:00`);
     const sourceWeekEnd = addDays(sourceWeekStart, 6);
-
-    if (toISODate(sourceWeekStart) === toISODate(weekStart)) {
-      setImportModal((m) => ({ ...m, error: "Choisis une semaine différente de celle affichée en ce moment." }));
-      return;
-    }
 
     // La semaine affichée a déjà des quarts : on demande une confirmation
     // explicite avant de les remplacer, plutôt que d'empiler les deux.
@@ -466,13 +463,30 @@ export default function HoraireSection({ entrepriseId }) {
             </p>
             <form onSubmit={handleImporterSemaine}>
               <div className="field">
-                <label>N'importe quelle date dans la semaine à copier</label>
-                <input
-                  type="date"
-                  value={importModal.dateSource}
-                  onChange={(e) => setImportModal((m) => ({ ...m, dateSource: e.target.value, confirmerRemplacement: false, error: null }))}
-                  required
-                />
+                <label>Semaine à copier</label>
+                <div className="admin-list" style={{ maxHeight: "260px", overflowY: "auto" }}>
+                  {semainesRecentes.map((debut) => {
+                    const iso = toISODate(debut);
+                    const fin = addDays(debut, 6);
+                    const selectionne = importModal.semaineSource === iso;
+                    return (
+                      <div
+                        key={iso}
+                        className="admin-row"
+                        style={{ cursor: "pointer", background: selectionne ? "rgba(122,63,224,0.16)" : undefined }}
+                        onClick={() => setImportModal((m) => ({ ...m, semaineSource: iso, confirmerRemplacement: false, error: null }))}
+                      >
+                        <div className="admin-row-main">
+                          <div className="admin-row-title">
+                            {selectionne ? "✓ " : ""}
+                            {debut.toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} –{" "}
+                            {fin.toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {importModal.confirmerRemplacement && (
