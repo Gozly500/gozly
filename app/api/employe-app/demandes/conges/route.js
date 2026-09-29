@@ -33,6 +33,19 @@ export async function POST(request) {
   }
 
   const service = getServiceClient();
+
+  const { data: entreprise } = await service
+    .from("entreprises")
+    .select("conges_actif, auto_approuver_conges")
+    .eq("id", employe.entreprise_id)
+    .maybeSingle();
+
+  if (entreprise && entreprise.conges_actif === false) {
+    return NextResponse.json({ error: "Les demandes de congé sont désactivées pour ton entreprise." }, { status: 403 });
+  }
+
+  const auto = !!entreprise?.auto_approuver_conges;
+
   const { data: demande, error } = await service
     .from("demandes_conge")
     .insert({
@@ -41,6 +54,8 @@ export async function POST(request) {
       date_debut: dateDebut,
       date_fin: dateFin,
       raison: raison?.trim() || null,
+      statut: auto ? "approuve" : "en_attente",
+      traite_le: auto ? new Date().toISOString() : null,
     })
     .select("*")
     .single();

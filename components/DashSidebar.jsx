@@ -6,9 +6,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES, limiteModules } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
-import CreerEntrepriseModal from "@/components/CreerEntrepriseModal";
 import ForfaitBloqueModal from "@/components/ForfaitBloqueModal";
-import { listerMesEntreprises, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
+import { getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
   IconTableauDeBord,
@@ -36,8 +35,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
   const [actifs, setActifs] = useState([]);
   const [forfait, setForfait] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [creerEntrepriseOpen, setCreerEntrepriseOpen] = useState(false);
-  const [plusieursEntreprises, setPlusieursEntreprises] = useState(false);
+  const [nomEntreprise, setNomEntreprise] = useState("");
   const [impersonation, setImpersonationState] = useState(null);
   // null = pas encore chargé (ou propriétaire/admin) - aucune restriction
   // cosmétique appliquée dans ce cas. La vraie barrière reste les policies RLS.
@@ -50,10 +48,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
   useEffect(() => {
     if (!entrepriseId) return;
     loadActifs();
-    if (!impersonation) {
-      listerMesEntreprises(supabase).then((list) => setPlusieursEntreprises(list.length > 1));
-    }
-  }, [entrepriseId, impersonation]);
+  }, [entrepriseId]);
 
   useEffect(() => {
     if (!entrepriseId) return;
@@ -85,10 +80,11 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
   async function loadActifs() {
     const [{ data: modules }, { data: entreprise }] = await Promise.all([
       supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId),
-      supabase.from("entreprises").select("forfait").eq("id", entrepriseId).maybeSingle(),
+      supabase.from("entreprises").select("forfait, nom").eq("id", entrepriseId).maybeSingle(),
     ]);
     setActifs((modules || []).map((m) => m.module));
     setForfait(entreprise?.forfait || null);
+    setNomEntreprise(entreprise?.nom || "");
   }
 
   const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
@@ -213,32 +209,10 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
               Déconnexion
             </button>
           </div>
-          {plusieursEntreprises ? (
-            <div className="dash-switch-row">
-              <Link href="/dashboards" className="dash-switch-link">
-                ⇄ Changer de dashboard
-              </Link>
-              {!impersonation && (
-                <>
-                  <span className="dash-switch-sep" aria-hidden="true" />
-                  <button
-                    type="button"
-                    className="dash-switch-link dash-switch-add"
-                    onClick={() => setCreerEntrepriseOpen(true)}
-                    title="Créer une entreprise"
-                    aria-label="Créer une entreprise"
-                  >
-                    +
-                  </button>
-                </>
-              )}
-            </div>
-          ) : (
-            !impersonation && (
-              <button type="button" className="dash-switch-link" onClick={() => setCreerEntrepriseOpen(true)}>
-                + Créer une entreprise
-              </button>
-            )
+          {!impersonation && (
+            <Link href="/dashboards" className="dash-switch-link" title="Changer de dashboard">
+              ⇄ {nomEntreprise || "Changer de dashboard"}
+            </Link>
           )}
         </div>
       </aside>
@@ -260,8 +234,6 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           onChange={loadActifs}
         />
       )}
-
-      {creerEntrepriseOpen && <CreerEntrepriseModal onClose={() => setCreerEntrepriseOpen(false)} />}
     </>
   );
 }

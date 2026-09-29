@@ -1185,6 +1185,12 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 
 /* Réglages compacts (Personnalisation) : une grille de listes déroulantes,
    l'explication de chaque réglage vit dans une bulle "i" (InfoTooltip). */
+.param-subgroup{margin-top:4px;}
+.param-subgroup + .param-subgroup{margin-top:18px;padding-top:14px;border-top:1px solid rgba(var(--w),0.08);}
+.param-subgroup-label{
+    font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--text-dim);
+  }
 .param-grid{
     display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
     gap:6px 20px;padding-top:14px;
@@ -1446,16 +1452,12 @@ input.planning-date-picker{
 .dashboard-picker-nom{font-weight:600;font-size:15px;text-align:center;}
 .dashboard-picker-role{font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;}
 
-.dash-switch-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;}
 .dash-switch-link{
     display:block;width:100%;text-align:center;margin-top:12px;font-size:12.5px;
     color:var(--text-dim);text-decoration:none;
     background:none;border:none;padding:0;font-family:inherit;cursor:pointer;
   }
-.dash-switch-row .dash-switch-link{width:auto;margin-top:0;}
 .dash-switch-link:hover{color:var(--fg);text-decoration:underline;}
-.dash-switch-sep{width:1px;height:11px;background:rgba(var(--w),0.18);flex-shrink:0;}
-.dash-switch-add{flex-shrink:0;font-size:14px;font-weight:700;line-height:1;}
 
 /* ============ Onglets d'emplacement (succursales) ============ */
 .emplacement-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}

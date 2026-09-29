@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import InfoTooltip from "@/components/InfoTooltip";
 
 const FORM_VIDE = { nom: "", role: "", telephone: "", courriel: "", nip: "", numeroPaie: "", emplacementIds: [] };
 
@@ -238,7 +239,7 @@ export default function EmployesSection({ entrepriseId }) {
 
       {modalOpen && (
         <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card" style={{ maxWidth: "560px" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <h3>{editingId ? "Modifier l'employé" : "Ajouter un employé"}</h3>
               <button className="admin-icon-btn" onClick={() => setModalOpen(false)}>
@@ -303,7 +304,13 @@ export default function EmployesSection({ entrepriseId }) {
                   />
                 </div>
                 <div className="field">
-                  <label>Numéro d'employé - paie (optionnel)</label>
+                  <label>
+                    Numéro d'employé - paie (optionnel)
+                    <InfoTooltip>
+                      Utilisé pour faire correspondre l'employé lors de l'exportation vers un service de paie
+                      (Nethris, etc.).
+                    </InfoTooltip>
+                  </label>
                   <input
                     type="text"
                     value={form.numeroPaie}
@@ -312,9 +319,6 @@ export default function EmployesSection({ entrepriseId }) {
                   />
                 </div>
               </div>
-              <p className="section-hint" style={{ marginTop: "-8px", marginBottom: "14px" }}>
-                Utilisé pour faire correspondre l'employé lors de l'exportation vers un service de paie (Nethris, etc.).
-              </p>
 
               {emplacements.length > 0 && (
                 <div className="field">

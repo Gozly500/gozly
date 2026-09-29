@@ -28,11 +28,6 @@ export default function DashboardsContent() {
         router.push("/dashboard");
         return;
       }
-      if (list.length === 1) {
-        setEntrepriseSelectionnee(list[0].id);
-        router.push("/dashboard");
-        return;
-      }
 
       setEntreprises(list);
       setChecking(false);
@@ -60,7 +55,7 @@ export default function DashboardsContent() {
       <header className="page-hero">
         <div className="wrap">
           <h1>Choisis un dashboard</h1>
-          <p>Ton compte a accès à plusieurs entreprises.</p>
+          <p>Toutes les entreprises auxquelles ton compte a accès.</p>
         </div>
       </header>
 

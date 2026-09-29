@@ -25,6 +25,8 @@ export default function DemandesEmploye() {
   const [echanges, setEchanges] = useState([]);
   const [collegues, setCollegues] = useState([]);
   const [mesQuarts, setMesQuarts] = useState([]);
+  const [congesActif, setCongesActif] = useState(true);
+  const [echangesActif, setEchangesActif] = useState(true);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -45,12 +47,19 @@ export default function DemandesEmploye() {
   async function chargerTout() {
     setLoading(true);
     const semaine = getDebutSemaine(new Date()).toISOString().slice(0, 10);
-    const [congesRes, echangesRes, colleguesRes, quartsRes] = await Promise.all([
+    const [moiRes, congesRes, echangesRes, colleguesRes, quartsRes] = await Promise.all([
+      employeFetch("/api/employe-app/moi"),
       employeFetch("/api/employe-app/demandes/conges"),
       employeFetch("/api/employe-app/demandes/echanges"),
       employeFetch("/api/employe-app/chat/collegues"),
       employeFetch(`/api/employe-app/horaire?semaine=${semaine}`),
     ]);
+    const moi = await moiRes.json();
+    const congesEstActif = moi.entreprise?.congesActif !== false;
+    const echangesEstActif = moi.entreprise?.echangesActif !== false;
+    setCongesActif(congesEstActif);
+    setEchangesActif(echangesEstActif);
+    setOnglet((cur) => (cur === "conges" && !congesEstActif && echangesEstActif ? "echanges" : cur === "echanges" && !echangesEstActif && congesEstActif ? "conges" : cur));
     setConges((await congesRes.json()).demandes || []);
     setEchanges((await echangesRes.json()).demandes || []);
     setCollegues((await colleguesRes.json()).collegues || []);
@@ -120,20 +129,28 @@ export default function DemandesEmploye() {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
 
+  if (!congesActif && !echangesActif) {
+    return <p className="chat-empty">Les demandes de congé et d'échange ne sont pas activées pour ton entreprise.</p>;
+  }
+
   return (
     <div>
       <div className="settings-nav" style={{ flexDirection: "row", marginBottom: "18px", width: "fit-content" }}>
-        <button type="button" className={`settings-nav-item${onglet === "conges" ? " active" : ""}`} onClick={() => setOnglet("conges")}>
-          Congés
-        </button>
-        <button type="button" className={`settings-nav-item${onglet === "echanges" ? " active" : ""}`} onClick={() => setOnglet("echanges")}>
-          Échanges
-        </button>
+        {congesActif && (
+          <button type="button" className={`settings-nav-item${onglet === "conges" ? " active" : ""}`} onClick={() => setOnglet("conges")}>
+            Congés
+          </button>
+        )}
+        {echangesActif && (
+          <button type="button" className={`settings-nav-item${onglet === "echanges" ? " active" : ""}`} onClick={() => setOnglet("echanges")}>
+            Échanges
+          </button>
+        )}
       </div>
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
-      {onglet === "conges" && (
+      {onglet === "conges" && congesActif && (
         <div>
           <button type="button" className="submit-btn" onClick={() => setFormCongeOpen((v) => !v)} style={{ marginBottom: "14px" }}>
             + Demander un congé
@@ -183,7 +200,7 @@ export default function DemandesEmploye() {
         </div>
       )}
 
-      {onglet === "echanges" && (
+      {onglet === "echanges" && echangesActif && (
         <div>
           <button type="button" className="submit-btn" onClick={() => setFormEchangeOpen((v) => !v)} style={{ marginBottom: "14px" }}>
             + Proposer un échange

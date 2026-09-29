@@ -23,6 +23,9 @@ export default function HoraireSection({ entrepriseId }) {
   const [dragOverDate, setDragOverDate] = useState(null);
   const [modal, setModal] = useState(null); // { date, employeId, quartId, heureDebut, heureFin }
   const [publishing, setPublishing] = useState(false);
+  const [premierJourDimanche, setPremierJourDimanche] = useState(false);
+  const [importModal, setImportModal] = useState(null); // { dateSource, confirmerRemplacement, error }
+  const [importing, setImporting] = useState(false);
 
   const weekEnd = addDays(weekStart, 6);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -47,6 +50,7 @@ export default function HoraireSection({ entrepriseId }) {
       .maybeSingle()
       .then(({ data }) => {
         const dimanche = data?.premier_jour_semaine === "dimanche";
+        setPremierJourDimanche(dimanche);
         setWeekStart((w) => getDebutSemaine(addDays(w, 3), dimanche));
       });
   }, [entrepriseId]);
@@ -198,6 +202,79 @@ export default function HoraireSection({ entrepriseId }) {
     load();
   }
 
+  function openImportModal() {
+    setImportModal({ dateSource: toISODate(addDays(weekStart, -7)), confirmerRemplacement: false, error: null });
+  }
+
+  async function handleImporterSemaine(e) {
+    e.preventDefault();
+    if (!importModal?.dateSource) return;
+
+    const sourceWeekStart = getDebutSemaine(new Date(`${importModal.dateSource}T00:00:00`), premierJourDimanche);
+    const sourceWeekEnd = addDays(sourceWeekStart, 6);
+
+    if (toISODate(sourceWeekStart) === toISODate(weekStart)) {
+      setImportModal((m) => ({ ...m, error: "Choisis une semaine différente de celle affichée en ce moment." }));
+      return;
+    }
+
+    // La semaine affichée a déjà des quarts : on demande une confirmation
+    // explicite avant de les remplacer, plutôt que d'empiler les deux.
+    if (quarts.length > 0 && !importModal.confirmerRemplacement) {
+      setImportModal((m) => ({ ...m, confirmerRemplacement: true, error: null }));
+      return;
+    }
+
+    setImporting(true);
+    setImportModal((m) => ({ ...m, error: null }));
+
+    let sourceQuery = supabase
+      .from("planning_quarts")
+      .select("*")
+      .eq("entreprise_id", entrepriseId)
+      .gte("date", toISODate(sourceWeekStart))
+      .lte("date", toISODate(sourceWeekEnd));
+    sourceQuery = emplacements.length > 0 ? sourceQuery.eq("emplacement_id", emplacementId) : sourceQuery;
+    const { data: quartsSource } = await sourceQuery;
+
+    if (!quartsSource || quartsSource.length === 0) {
+      setImporting(false);
+      setImportModal((m) => ({ ...m, error: "Aucun quart trouvé pour cette semaine-là." }));
+      return;
+    }
+
+    if (quarts.length > 0) {
+      let delQuery = supabase
+        .from("planning_quarts")
+        .delete()
+        .eq("entreprise_id", entrepriseId)
+        .gte("date", toISODate(weekStart))
+        .lte("date", toISODate(weekEnd));
+      delQuery = emplacements.length > 0 ? delQuery.eq("emplacement_id", emplacementId) : delQuery;
+      await delQuery;
+    }
+
+    const copies = quartsSource.map((q) => {
+      const decalageJours = Math.round((new Date(q.date) - sourceWeekStart) / 86400000);
+      return {
+        entreprise_id: entrepriseId,
+        employe_id: q.employe_id,
+        date: toISODate(addDays(weekStart, decalageJours)),
+        heure_debut: q.heure_debut,
+        heure_fin: q.heure_fin,
+        poste: q.poste,
+        emplacement_id: q.emplacement_id,
+        publie: false,
+      };
+    });
+
+    await supabase.from("planning_quarts").insert(copies);
+
+    setImporting(false);
+    setImportModal(null);
+    load();
+  }
+
   const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${weekEnd.toLocaleDateString(
     "fr-CA",
     { day: "numeric", month: "long", year: "numeric" }
@@ -215,9 +292,11 @@ export default function HoraireSection({ entrepriseId }) {
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
           Semaine suivante ›
         </button>
+        <button className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={openImportModal}>
+          📋 Importer une semaine
+        </button>
         <button
           className="submit-btn"
-          style={{ marginLeft: "auto" }}
           onClick={handlePublierSemaine}
           disabled={publishing || quarts.length === 0 || quarts.every((q) => q.publie)}
         >
@@ -366,6 +445,48 @@ export default function HoraireSection({ entrepriseId }) {
                     Retirer ce quart
                   </button>
                 )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {importModal && (
+        <div className="modal-overlay" onClick={() => !importing && setImportModal(null)}>
+          <div className="modal-card" style={{ maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Importer une semaine</h3>
+              <button className="admin-icon-btn" onClick={() => setImportModal(null)} disabled={importing}>
+                Fermer
+              </button>
+            </div>
+            <p className="section-hint" style={{ marginBottom: "14px" }}>
+              Copie tous les quarts d'une semaine existante vers la semaine affichée ({weekLabel}). Les quarts copiés
+              restent en <strong>Brouillon</strong> - tu peux les ajuster avant de publier.
+            </p>
+            <form onSubmit={handleImporterSemaine}>
+              <div className="field">
+                <label>N'importe quelle date dans la semaine à copier</label>
+                <input
+                  type="date"
+                  value={importModal.dateSource}
+                  onChange={(e) => setImportModal((m) => ({ ...m, dateSource: e.target.value, confirmerRemplacement: false, error: null }))}
+                  required
+                />
+              </div>
+
+              {importModal.confirmerRemplacement && (
+                <p className="settings-msg err">
+                  La semaine affichée a déjà des quarts - ils seront tous supprimés et remplacés par la copie. Clique
+                  à nouveau sur "Importer" pour confirmer.
+                </p>
+              )}
+              {importModal.error && <p className="settings-msg err">{importModal.error}</p>}
+
+              <div className="admin-edit-actions">
+                <button type="submit" className="submit-btn" disabled={importing}>
+                  {importing ? "Importation..." : importModal.confirmerRemplacement ? "Confirmer le remplacement" : "Importer"}
+                </button>
               </div>
             </form>
           </div>

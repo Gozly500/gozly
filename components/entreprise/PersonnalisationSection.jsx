@@ -9,10 +9,19 @@ const OPTIONS_PREMIER_JOUR = [
   { id: "dimanche", label: "Dimanche" },
 ];
 
-const OPTIONS_APPROBATION_ECHANGES = [
+const OPTIONS_APPROBATION_DEMANDES = [
   { id: "manuelle", label: "Manuelle" },
   { id: "automatique", label: "Automatique" },
+  { id: "desactive", label: "Désactivé" },
 ];
+
+// Une fonctionnalité peut être désactivée (actif=false) ou activée avec
+// approbation manuelle/automatique - un seul champ à 3 valeurs plutôt que
+// deux booléens séparés à gérer dans l'interface.
+function deriveApprobation(actif, auto) {
+  if (actif === false) return "desactive";
+  return auto ? "automatique" : "manuelle";
+}
 
 const OPTIONS_CALCUL_POINTAGE = [
   { id: "reel", label: "Heure réelle" },
@@ -97,6 +106,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
   const [approbationEchanges, setApprobationEchanges] = useState("manuelle");
+  const [approbationConges, setApprobationConges] = useState("manuelle");
   const [calculPointage, setCalculPointage] = useState("reel");
   const [pointageMobile, setPointageMobile] = useState("desactive");
   const [pushWix, setPushWix] = useState("manuel");
@@ -119,14 +129,15 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois"
+          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
     ]);
     setModulesActifs((actifsData || []).map((m) => m.module));
     setPremierJourSemaine(entrepriseData?.premier_jour_semaine || "lundi");
-    setApprobationEchanges(entrepriseData?.auto_approuver_echanges ? "automatique" : "manuelle");
+    setApprobationEchanges(deriveApprobation(entrepriseData?.echanges_actif, entrepriseData?.auto_approuver_echanges));
+    setApprobationConges(deriveApprobation(entrepriseData?.conges_actif, entrepriseData?.auto_approuver_conges));
     setPushWix(entrepriseData?.sync_produits_auto ? "automatique" : "manuel");
     setCalculPointage(entrepriseData?.pointage_calcul_mode || "reel");
     setPointageMobile(entrepriseData?.pointage_mobile_actif ? "active" : "desactive");
@@ -168,7 +179,21 @@ export default function PersonnalisationSection({ entrepriseId }) {
 
     const { error } = await supabase
       .from("entreprises")
-      .update({ auto_approuver_echanges: value === "automatique" })
+      .update({ echanges_actif: value !== "desactive", auto_approuver_echanges: value === "automatique" })
+      .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+  }
+
+  async function handleChangeApprobationConges(value) {
+    setApprobationConges(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ conges_actif: value !== "desactive", auto_approuver_conges: value === "automatique" })
       .eq("id", entrepriseId);
 
     setSaving(false);
@@ -276,55 +301,78 @@ export default function PersonnalisationSection({ entrepriseId }) {
           </button>
           {sectionsOuvertes.horaire && (
             <div className="integration-body">
-              <div className="param-grid">
-                <ParametreSelect
-                  label="Premier jour de la semaine"
-                  info="Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps."
-                  options={OPTIONS_PREMIER_JOUR}
-                  value={premierJourSemaine}
-                  onChange={handleChangePremierJour}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label="Pointage mobile (GPS)"
-                  info="Permet de pointer depuis l'app mobile plutôt qu'au kiosque, en vérifiant la position GPS par rapport à l'adresse de la succursale (voir Emplacements). Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, les jours où ils ont un quart prévu."
-                  options={OPTIONS_POINTAGE_MOBILE}
-                  value={pointageMobile}
-                  onChange={handleChangePointageMobile}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label="Approbation des échanges"
-                  info="Quand un employé accepte de prendre le quart d'un collègue : approuver l'échange toi-même (manuelle) ou le valider tout de suite (automatique)."
-                  options={OPTIONS_APPROBATION_ECHANGES}
-                  value={approbationEchanges}
-                  onChange={handleChangeApprobation}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label="Calcul des heures"
-                  info="Heure réelle : les heures comptent dès que l'employé pointe. Heure prévue : s'il pointe en avance, elles comptent à partir de l'heure de son quart. S'il pointe en retard ou sans quart prévu, l'heure réelle est toujours utilisée."
-                  options={OPTIONS_CALCUL_POINTAGE}
-                  value={calculPointage}
-                  onChange={handleChangeCalculPointage}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label="Visibilité de la feuille de temps"
-                  info="Les membres en lecture seule (ex: comptable) doivent-ils attendre ton approbation pour voir une semaine (manuelle), ou la voient-ils dès qu'elle existe (automatique) ?"
-                  options={OPTIONS_VISIBILITE_FEUILLE_TEMPS}
-                  value={visibiliteFeuilleTemps}
-                  onChange={handleChangeVisibiliteFeuilleTemps}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label="Conservation des demandes"
-                  info="Combien de temps garder une demande de congé ou d'échange une fois traitée avant sa suppression automatique. Une demande jamais traitée est supprimée après 2 semaines, peu importe ce réglage."
-                  options={OPTIONS_RETENTION_DEMANDES}
-                  value={retentionDemandes}
-                  onChange={handleChangeRetentionDemandes}
-                  disabled={saving}
-                />
+              <div className="param-subgroup">
+                <div className="param-subgroup-label">Horaire</div>
+                <div className="param-grid">
+                  <ParametreSelect
+                    label="Premier jour de la semaine"
+                    info="Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps."
+                    options={OPTIONS_PREMIER_JOUR}
+                    value={premierJourSemaine}
+                    onChange={handleChangePremierJour}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <div className="param-subgroup">
+                <div className="param-subgroup-label">Pointage</div>
+                <div className="param-grid">
+                  <ParametreSelect
+                    label="Pointage mobile (GPS)"
+                    info="Permet de pointer depuis l'app mobile plutôt qu'au kiosque, en vérifiant la position GPS par rapport à l'adresse de la succursale (voir Emplacements). Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, les jours où ils ont un quart prévu."
+                    options={OPTIONS_POINTAGE_MOBILE}
+                    value={pointageMobile}
+                    onChange={handleChangePointageMobile}
+                    disabled={saving}
+                  />
+                  <ParametreSelect
+                    label="Calcul des heures"
+                    info="Heure réelle : les heures comptent dès que l'employé pointe. Heure prévue : s'il pointe en avance, elles comptent à partir de l'heure de son quart. S'il pointe en retard ou sans quart prévu, l'heure réelle est toujours utilisée."
+                    options={OPTIONS_CALCUL_POINTAGE}
+                    value={calculPointage}
+                    onChange={handleChangeCalculPointage}
+                    disabled={saving}
+                  />
+                  <ParametreSelect
+                    label="Visibilité de la feuille de temps"
+                    info="Les membres en lecture seule (ex: comptable) doivent-ils attendre ton approbation pour voir une semaine (manuelle), ou la voient-ils dès qu'elle existe (automatique) ?"
+                    options={OPTIONS_VISIBILITE_FEUILLE_TEMPS}
+                    value={visibiliteFeuilleTemps}
+                    onChange={handleChangeVisibiliteFeuilleTemps}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              <div className="param-subgroup">
+                <div className="param-subgroup-label">Demandes</div>
+                <div className="param-grid">
+                  <ParametreSelect
+                    label="Approbation des congés"
+                    info="Quand un employé demande un congé : approuver toi-même (manuelle), valider tout de suite (automatique), ou désactiver complètement les demandes de congé."
+                    options={OPTIONS_APPROBATION_DEMANDES}
+                    value={approbationConges}
+                    onChange={handleChangeApprobationConges}
+                    disabled={saving}
+                  />
+                  <ParametreSelect
+                    label="Approbation des échanges"
+                    info="Quand un employé accepte de prendre le quart d'un collègue : approuver l'échange toi-même (manuelle), le valider tout de suite (automatique), ou désactiver complètement les échanges."
+                    options={OPTIONS_APPROBATION_DEMANDES}
+                    value={approbationEchanges}
+                    onChange={handleChangeApprobation}
+                    disabled={saving}
+                  />
+                  <ParametreSelect
+                    label="Conservation des demandes"
+                    info="Combien de temps garder une demande de congé ou d'échange une fois traitée avant sa suppression automatique. Une demande jamais traitée est supprimée après 2 semaines, peu importe ce réglage."
+                    options={OPTIONS_RETENTION_DEMANDES}
+                    value={retentionDemandes}
+                    onChange={handleChangeRetentionDemandes}
+                    disabled={saving}
+                  />
+                </div>
               </div>
             </div>
           )}

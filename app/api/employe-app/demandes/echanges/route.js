@@ -62,6 +62,16 @@ export async function POST(request) {
 
   const service = getServiceClient();
 
+  const { data: entreprise } = await service
+    .from("entreprises")
+    .select("echanges_actif")
+    .eq("id", employe.entreprise_id)
+    .maybeSingle();
+
+  if (entreprise && entreprise.echanges_actif === false) {
+    return NextResponse.json({ error: "Les échanges de quart sont désactivés pour ton entreprise." }, { status: 403 });
+  }
+
   const { data: quart } = await service
     .from("planning_quarts")
     .select("id, employe_id, entreprise_id")
