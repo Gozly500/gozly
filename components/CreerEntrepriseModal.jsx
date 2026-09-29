@@ -63,13 +63,18 @@ export default function CreerEntrepriseModal({ onClose }) {
       return;
     }
 
-    const { data: entreprise, error: entrepriseError } = await supabase
-      .from("entreprises")
-      .insert({ nom: nom.trim() })
-      .select("id")
-      .single();
+    // Id généré côté client : évite de devoir relire la ligne juste après
+    // l'avoir insérée (la politique de sécurité qui autorise la lecture
+    // exige d'être déjà membre, ce qui n'est vrai qu'après l'étape suivante -
+    // relire immédiatement échouerait à cause de RLS même si la création a
+    // réussi).
+    const entrepriseId = crypto.randomUUID();
 
-    if (entrepriseError || !entreprise) {
+    const { error: entrepriseError } = await supabase
+      .from("entreprises")
+      .insert({ id: entrepriseId, nom: nom.trim() });
+
+    if (entrepriseError) {
       setSaving(false);
       setError("La création de l'entreprise a échoué. Réessaie dans un instant.");
       return;
@@ -79,7 +84,7 @@ export default function CreerEntrepriseModal({ onClose }) {
     // payé par ce compte (voir supabase/forfait_par_compte.sql).
     const { error: membreError } = await supabase
       .from("membres")
-      .insert({ entreprise_id: entreprise.id, user_id: user.id, role: "proprietaire" });
+      .insert({ entreprise_id: entrepriseId, user_id: user.id, role: "proprietaire" });
 
     setSaving(false);
 
@@ -88,7 +93,7 @@ export default function CreerEntrepriseModal({ onClose }) {
       return;
     }
 
-    setEntrepriseSelectionnee(entreprise.id);
+    setEntrepriseSelectionnee(entrepriseId);
     // Rechargement complet (pas router.push) : si on est déjà sur /dashboard,
     // un push vers la même route ne remonterait pas la page, et l'ancienne
     // entreprise resterait affichée malgré le changement de sélection.
