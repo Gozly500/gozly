@@ -21,6 +21,7 @@ export default function EmployesSection({ entrepriseId }) {
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null); // { emp, quartsCount, messagesCount }
   const [deleting, setDeleting] = useState(false);
+  const [recherche, setRecherche] = useState("");
 
   useEffect(() => {
     load();
@@ -66,6 +67,10 @@ export default function EmployesSection({ entrepriseId }) {
   function emplacementsDe(employeId) {
     return associations.filter((a) => a.employe_id === employeId).map((a) => a.emplacement_id);
   }
+
+  const employesFiltres = recherche.trim()
+    ? employes.filter((e) => e.nom.toLowerCase().includes(recherche.trim().toLowerCase()))
+    : employes;
 
   function openAdd() {
     setEditingId(null);
@@ -207,8 +212,17 @@ export default function EmployesSection({ entrepriseId }) {
         </div>
       )}
 
+      <div className="field" style={{ maxWidth: "320px" }}>
+        <input
+          type="text"
+          value={recherche}
+          onChange={(e) => setRecherche(e.target.value)}
+          placeholder="🔎 Rechercher un employé..."
+        />
+      </div>
+
       <div className="admin-list" style={{ maxWidth: "640px" }}>
-        {employes.map((emp) => {
+        {employesFiltres.map((emp) => {
           const empEmplacements = emplacementsDe(emp.id)
             .map((id) => emplacements.find((e) => e.id === id)?.nom)
             .filter(Boolean);
@@ -235,6 +249,9 @@ export default function EmployesSection({ entrepriseId }) {
           );
         })}
         {employes.length === 0 && <div className="admin-empty">Aucun employé pour l'instant.</div>}
+        {employes.length > 0 && employesFiltres.length === 0 && (
+          <div className="admin-empty">Aucun employé ne correspond à "{recherche}".</div>
+        )}
       </div>
 
       {modalOpen && (

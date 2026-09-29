@@ -21,6 +21,7 @@ export default function HoraireSection({ entrepriseId }) {
   const [emplacementId, setEmplacementId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dragOverDate, setDragOverDate] = useState(null);
+  const [rechercheEmploye, setRechercheEmploye] = useState("");
   const [modal, setModal] = useState(null); // { date, employeId, quartId, heureDebut, heureFin }
   const [publishing, setPublishing] = useState(false);
   const [importModal, setImportModal] = useState(null); // { semaineSource, confirmerRemplacement, error }
@@ -106,6 +107,12 @@ export default function HoraireSection({ entrepriseId }) {
           const assignes = associations.filter((a) => a.employe_id === emp.id).map((a) => a.emplacement_id);
           return assignes.length === 0 || assignes.includes(emplacementId);
         });
+
+  // Filtre de recherche : ne change que la liste des pastilles à glisser,
+  // pas les options d'employé du formulaire d'ajout/édition d'un quart.
+  const employesAffiches = rechercheEmploye.trim()
+    ? employesVisibles.filter((e) => e.nom.toLowerCase().includes(rechercheEmploye.trim().toLowerCase()))
+    : employesVisibles;
 
   function handleDrop(e, dateISO) {
     e.preventDefault();
@@ -322,7 +329,15 @@ export default function HoraireSection({ entrepriseId }) {
           </p>
           <div className="horaire-layout">
             <div className="horaire-employees">
-              {employesVisibles.map((emp) => (
+              <div className="horaire-employee-search">
+                <input
+                  type="text"
+                  value={rechercheEmploye}
+                  onChange={(e) => setRechercheEmploye(e.target.value)}
+                  placeholder="Rechercher..."
+                />
+              </div>
+              {employesAffiches.map((emp) => (
                 <div
                   key={emp.id}
                   className="horaire-employee-pill"
@@ -332,6 +347,11 @@ export default function HoraireSection({ entrepriseId }) {
                   {emp.nom}
                 </div>
               ))}
+              {employesAffiches.length === 0 && (
+                <p className="section-hint" style={{ padding: "0 4px" }}>
+                  Aucun employé trouvé.
+                </p>
+              )}
             </div>
 
             <div className="horaire-grid">

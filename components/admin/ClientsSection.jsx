@@ -261,6 +261,7 @@ export default function ClientsSection() {
   const [confirmingDeleteCompte, setConfirmingDeleteCompte] = useState(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [rechercheClient, setRechercheClient] = useState("");
 
   useEffect(() => {
     load();
@@ -367,6 +368,16 @@ export default function ClientsSection() {
 
   const compteOuvert = comptes.find((c) => c.userId === compteOuvertId) || null;
 
+  const termeRecherche = rechercheClient.trim().toLowerCase();
+  const comptesFiltres = termeRecherche
+    ? comptes.filter(
+        (c) =>
+          (c.profil?.full_name || "").toLowerCase().includes(termeRecherche) ||
+          (c.email || "").toLowerCase().includes(termeRecherche) ||
+          c.entreprises.some(({ entreprise }) => (entreprise.nom || "").toLowerCase().includes(termeRecherche))
+      )
+    : comptes;
+
   if (compteOuvert) {
     return (
       <div>
@@ -409,8 +420,17 @@ export default function ClientsSection() {
       <p className="panel-hint">Tous les comptes inscrits sur Gozly ({comptes.length}).</p>
       {error && <p className="settings-msg err">{error}</p>}
 
+      <div className="field" style={{ maxWidth: "320px" }}>
+        <input
+          type="text"
+          value={rechercheClient}
+          onChange={(e) => setRechercheClient(e.target.value)}
+          placeholder="🔎 Rechercher un client ou une entreprise..."
+        />
+      </div>
+
       <div className="admin-list">
-        {comptes.map((compte) => (
+        {comptesFiltres.map((compte) => (
           <div className="admin-row" key={compte.userId} style={{ flexDirection: "column", alignItems: "stretch" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
               <div className="admin-row-main">
@@ -573,6 +593,9 @@ export default function ClientsSection() {
         ))}
 
         {comptes.length === 0 && <div className="admin-empty">Aucun client pour l'instant.</div>}
+        {comptes.length > 0 && comptesFiltres.length === 0 && (
+          <div className="admin-empty">Aucun client ne correspond à "{rechercheClient}".</div>
+        )}
       </div>
 
       {entreprisesOrphelines.length > 0 && (

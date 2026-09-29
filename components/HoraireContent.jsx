@@ -125,7 +125,7 @@ export default function HoraireContent() {
       />
 
       <main className="dash-main">
-        <div className="dash-main-inner">
+        <div className="dash-main-inner dash-main-wide">
           <header
             className="dash-hero-inline"
             style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}

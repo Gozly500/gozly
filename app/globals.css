@@ -1615,11 +1615,16 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .widget-drop-slot.drag-over{min-height:60px;border-color:rgba(122,63,224,0.8);background:rgba(122,63,224,0.14);}
 
 /* ============ Horaire (calendrier glisser-déposer) ============ */
-.horaire-layout{display:flex;gap:24px;align-items:flex-start;}
+.horaire-layout{display:flex;gap:24px;align-items:stretch;}
 .horaire-employees{
     width:170px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;
     position:sticky;top:100px;
     max-height:calc(100vh - 160px);overflow-y:auto;padding-right:2px;
+  }
+.horaire-employee-search{margin-bottom:2px;}
+.horaire-employee-search input{
+    width:100%;padding:9px 12px;border-radius:12px;font-family:'Inter',sans-serif;font-size:13px;
+    background:rgba(var(--w),0.06);border:1px solid rgba(var(--w),0.16);color:var(--text);outline:none;
   }
 .horaire-employee-pill{
     padding:11px 14px;border-radius:14px;
@@ -1629,11 +1634,11 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .horaire-employee-pill:active{cursor:grabbing;}
 
 .horaire-grid{
-    flex:1;min-width:0;display:grid;grid-template-columns:repeat(7,1fr);gap:10px;
+    flex:1;min-width:0;display:grid;grid-template-columns:repeat(7,1fr);gap:16px;
   }
 .horaire-col{
     background:rgba(var(--w),0.05);border:1px solid rgba(var(--w),0.12);
-    border-radius:16px;padding:12px;min-height:200px;
+    border-radius:16px;padding:16px 14px;min-height:200px;
     transition:background .15s ease,border-color .15s ease;
   }
 .horaire-col.drag-over{background:rgba(122,63,224,0.18);border-color:rgba(122,63,224,0.55);}
