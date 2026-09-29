@@ -11,6 +11,10 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [motDePasseOublie, setMotDePasseOublie] = useState(false);
+  const [emailOubli, setEmailOubli] = useState("");
+  const [envoiStatut, setEnvoiStatut] = useState("idle"); // "idle" | "envoi" | "envoye" | "erreur"
+
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("desactive") === "1") {
       setError("Ce compte a été désactivé.");
@@ -45,6 +49,71 @@ export default function LoginForm() {
     }
 
     router.push("/dashboard");
+  }
+
+  function ouvrirMotDePasseOublie() {
+    setEmailOubli(email);
+    setEnvoiStatut("idle");
+    setMotDePasseOublie(true);
+  }
+
+  async function handleEnvoyerReinitialisation(e) {
+    e.preventDefault();
+    setEnvoiStatut("envoi");
+
+    const { error } = await supabase.auth.resetPasswordForEmail(emailOubli, {
+      redirectTo: `${window.location.origin}/reinitialiser-mot-de-passe`,
+    });
+
+    setEnvoiStatut(error ? "erreur" : "envoye");
+  }
+
+  if (motDePasseOublie) {
+    return (
+      <div className="contact-card login-card">
+        {envoiStatut === "envoye" ? (
+          <p style={{ color: "#7ee787", textAlign: "center" }}>
+            Si un compte existe avec cette adresse, un lien de réinitialisation vient d'être envoyé par courriel.
+          </p>
+        ) : (
+          <form onSubmit={handleEnvoyerReinitialisation}>
+            <p className="section-hint" style={{ textAlign: "center", marginBottom: "18px" }}>
+              Entre ton courriel - on t'envoie un lien pour choisir un nouveau mot de passe.
+            </p>
+            <div className="field">
+              <label htmlFor="email-oublie">Courriel</label>
+              <input
+                type="email"
+                id="email-oublie"
+                value={emailOubli}
+                onChange={(e) => setEmailOubli(e.target.value)}
+                placeholder="ton@courriel.com"
+                required
+              />
+            </div>
+            <div className="submit-wrap">
+              <button type="submit" className="submit-btn" disabled={envoiStatut === "envoi"}>
+                {envoiStatut === "envoi" ? "Envoi..." : "Envoyer le lien"}
+              </button>
+            </div>
+            {envoiStatut === "erreur" && (
+              <p style={{ color: "#ff8a8a", textAlign: "center", marginTop: "14px", fontSize: "14px" }}>
+                L'envoi a échoué. Réessaie dans un instant.
+              </p>
+            )}
+          </form>
+        )}
+        <p style={{ color: "var(--text-dim)", textAlign: "center", marginTop: "18px", fontSize: "13.5px" }}>
+          <button
+            type="button"
+            onClick={() => setMotDePasseOublie(false)}
+            style={{ background: "none", border: "none", padding: 0, textDecoration: "underline", color: "#fff", cursor: "pointer", font: "inherit" }}
+          >
+            ← Retour à la connexion
+          </button>
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -82,7 +151,16 @@ export default function LoginForm() {
             {error}
           </p>
         )}
-        <p style={{ color: "var(--text-dim)", textAlign: "center", marginTop: "18px", fontSize: "13.5px" }}>
+        <p style={{ color: "var(--text-dim)", textAlign: "center", marginTop: "14px", fontSize: "13.5px" }}>
+          <button
+            type="button"
+            onClick={ouvrirMotDePasseOublie}
+            style={{ background: "none", border: "none", padding: 0, textDecoration: "underline", color: "var(--text-dim)", cursor: "pointer", font: "inherit" }}
+          >
+            Mot de passe oublié ?
+          </button>
+        </p>
+        <p style={{ color: "var(--text-dim)", textAlign: "center", marginTop: "10px", fontSize: "13.5px" }}>
           Pas encore de compte?{" "}
           <a href="/inscription" style={{ textDecoration: "underline", color: "#fff" }}>
             Crée-en un
