@@ -9,6 +9,7 @@ export default function Nav() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
 
@@ -21,6 +22,19 @@ export default function Nav() {
     });
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user?.email) {
+      setIsAdmin(false);
+      return;
+    }
+    supabase
+      .from("admins")
+      .select("id")
+      .eq("email", user.email)
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -88,6 +102,11 @@ export default function Nav() {
                   <Link href="/parametres" onClick={() => setAccountOpen(false)}>
                     Paramètres
                   </Link>
+                  {isAdmin && (
+                    <Link href="/admin" onClick={() => setAccountOpen(false)}>
+                      Panneau admin
+                    </Link>
+                  )}
                   <div className="divider"></div>
                   <button className="logout" onClick={handleLogout}>
                     Se déconnecter
@@ -131,6 +150,11 @@ export default function Nav() {
             <Link href="/parametres" onClick={() => setMobileOpen(false)}>
               Paramètres
             </Link>
+            {isAdmin && (
+              <Link href="/admin" onClick={() => setMobileOpen(false)}>
+                Panneau admin
+              </Link>
+            )}
             <button onClick={handleLogout} className="mobile-logout">
               Se déconnecter
             </button>
