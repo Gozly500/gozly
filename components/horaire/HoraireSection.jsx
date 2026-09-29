@@ -26,6 +26,10 @@ export default function HoraireSection({ entrepriseId }) {
   const [publishing, setPublishing] = useState(false);
   const [importModal, setImportModal] = useState(null); // { semaineSource, confirmerRemplacement, error }
   const [importing, setImporting] = useState(false);
+  const [favoris, setFavoris] = useState([]); // dates ISO (semaine_debut) marquées favorites
+  const [favoriMsg, setFavoriMsg] = useState(null);
+
+  const MAX_FAVORIS = 3;
 
   const weekEnd = addDays(weekStart, 6);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -57,6 +61,42 @@ export default function HoraireSection({ entrepriseId }) {
   useEffect(() => {
     load();
   }, [entrepriseId, weekStart, emplacementId]);
+
+  useEffect(() => {
+    if (!entrepriseId) return;
+    chargerFavoris();
+  }, [entrepriseId, emplacementId]);
+
+  async function chargerFavoris() {
+    let q = supabase.from("horaire_semaines_favorites").select("semaine_debut").eq("entreprise_id", entrepriseId);
+    q = emplacements.length > 0 ? q.eq("emplacement_id", emplacementId) : q.is("emplacement_id", null);
+    const { data } = await q;
+    setFavoris((data || []).map((f) => f.semaine_debut));
+  }
+
+  async function toggleFavori(iso) {
+    setFavoriMsg(null);
+    const estFavori = favoris.includes(iso);
+
+    if (!estFavori && favoris.length >= MAX_FAVORIS) {
+      setFavoriMsg(`Maximum ${MAX_FAVORIS} semaines en favoris - retires-en une avant d'en ajouter une nouvelle.`);
+      return;
+    }
+
+    if (estFavori) {
+      let q = supabase.from("horaire_semaines_favorites").delete().eq("entreprise_id", entrepriseId).eq("semaine_debut", iso);
+      q = emplacements.length > 0 ? q.eq("emplacement_id", emplacementId) : q.is("emplacement_id", null);
+      await q;
+      setFavoris((f) => f.filter((d) => d !== iso));
+    } else {
+      await supabase.from("horaire_semaines_favorites").insert({
+        entreprise_id: entrepriseId,
+        emplacement_id: emplacements.length > 0 ? emplacementId : null,
+        semaine_debut: iso,
+      });
+      setFavoris((f) => [...f, iso]);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -208,10 +248,17 @@ export default function HoraireSection({ entrepriseId }) {
   }
 
   // Les 8 semaines précédant celle affichée, la plus récente en premier -
-  // plus simple à choisir qu'à saisir une date à la main.
-  const semainesRecentes = Array.from({ length: 8 }, (_, i) => addDays(weekStart, -7 * (i + 1)));
+  // plus simple à choisir qu'à saisir une date à la main. Une semaine mise
+  // en favori reste dans la liste même si elle est plus vieille que ça.
+  const huitDernieres = Array.from({ length: 8 }, (_, i) => addDays(weekStart, -7 * (i + 1)));
+  const isoHuitDernieres = new Set(huitDernieres.map(toISODate));
+  const semainesFavoritesHorsFenetre = favoris
+    .filter((iso) => iso !== toISODate(weekStart) && !isoHuitDernieres.has(iso))
+    .map((iso) => new Date(`${iso}T00:00:00`));
+  const semainesRecentes = [...huitDernieres, ...semainesFavoritesHorsFenetre].sort((a, b) => b - a);
 
   function openImportModal() {
+    setFavoriMsg(null);
     setImportModal({ semaineSource: toISODate(semainesRecentes[0]), confirmerRemplacement: false, error: null });
   }
 
@@ -296,6 +343,13 @@ export default function HoraireSection({ entrepriseId }) {
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
           Semaine suivante ›
         </button>
+        <button
+          className="admin-icon-btn"
+          title={favoris.includes(toISODate(weekStart)) ? "Retirer des favoris" : "Garder cette semaine en favori (accessible même après 8 semaines)"}
+          onClick={() => toggleFavori(toISODate(weekStart))}
+        >
+          {favoris.includes(toISODate(weekStart)) ? "★" : "☆"}
+        </button>
         <button className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={openImportModal}>
           📋 Importer une semaine
         </button>
@@ -307,6 +361,11 @@ export default function HoraireSection({ entrepriseId }) {
           {publishing ? "Publication..." : "📢 Publier la semaine"}
         </button>
       </div>
+      {favoriMsg && (
+        <p className="settings-msg err" style={{ marginBottom: "10px" }}>
+          {favoriMsg}
+        </p>
+      )}
       {quarts.some((q) => !q.publie) && (
         <p className="section-hint" style={{ marginBottom: "10px" }}>
           Les quarts marqués <strong>Brouillon</strong> ne sont pas encore visibles des employés - clique "Publier la
@@ -489,6 +548,7 @@ export default function HoraireSection({ entrepriseId }) {
                     const iso = toISODate(debut);
                     const fin = addDays(debut, 6);
                     const selectionne = importModal.semaineSource === iso;
+                    const estFavori = favoris.includes(iso);
                     return (
                       <div
                         key={iso}
@@ -503,12 +563,24 @@ export default function HoraireSection({ entrepriseId }) {
                             {fin.toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}
                           </div>
                         </div>
+                        <button
+                          type="button"
+                          className="admin-icon-btn"
+                          title={estFavori ? "Retirer des favoris" : "Garder en favori"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavori(iso);
+                          }}
+                        >
+                          {estFavori ? "★" : "☆"}
+                        </button>
                       </div>
                     );
                   })}
                 </div>
               </div>
 
+              {favoriMsg && <p className="settings-msg err">{favoriMsg}</p>}
               {importModal.confirmerRemplacement && (
                 <p className="settings-msg err">
                   La semaine affichée a déjà des quarts - ils seront tous supprimés et remplacés par la copie. Clique

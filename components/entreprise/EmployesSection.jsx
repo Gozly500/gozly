@@ -22,6 +22,7 @@ export default function EmployesSection({ entrepriseId }) {
   const [confirmDelete, setConfirmDelete] = useState(null); // { emp, quartsCount, messagesCount }
   const [deleting, setDeleting] = useState(false);
   const [recherche, setRecherche] = useState("");
+  const [viewingEmp, setViewingEmp] = useState(null);
 
   useEffect(() => {
     load();
@@ -238,6 +239,9 @@ export default function EmployesSection({ entrepriseId }) {
                 </div>
               </div>
               <div className="admin-row-controls">
+                <button className="admin-icon-btn" onClick={() => setViewingEmp({ ...emp, emplacements: empEmplacements })}>
+                  Voir
+                </button>
                 <button className="admin-icon-btn" onClick={() => openEdit(emp)}>
                   Modifier
                 </button>
@@ -401,6 +405,59 @@ export default function EmployesSection({ entrepriseId }) {
               <button type="button" className="admin-icon-btn danger" onClick={handleConfirmDelete} disabled={deleting}>
                 {deleting ? "Suppression..." : "Confirmer la suppression"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingEmp && (
+        <div className="modal-overlay" onClick={() => setViewingEmp(null)}>
+          <div className="modal-card" style={{ maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{viewingEmp.nom}</h3>
+              <button className="admin-icon-btn" onClick={() => setViewingEmp(null)}>
+                Fermer
+              </button>
+            </div>
+            <div className="admin-list">
+              <div className="admin-row">
+                <div className="admin-row-main">
+                  <div className="admin-row-sub">Rôle</div>
+                  <div className="admin-row-title">{viewingEmp.role || "—"}</div>
+                </div>
+              </div>
+              <div className="admin-row">
+                <div className="admin-row-main">
+                  <div className="admin-row-sub">Téléphone</div>
+                  <div className="admin-row-title">{viewingEmp.telephone || "—"}</div>
+                </div>
+              </div>
+              <div className="admin-row">
+                <div className="admin-row-main">
+                  <div className="admin-row-sub">Courriel</div>
+                  <div className="admin-row-title">{viewingEmp.courriel || "—"}</div>
+                </div>
+              </div>
+              <div className="admin-row">
+                <div className="admin-row-main">
+                  <div className="admin-row-sub">NIP</div>
+                  <div className="admin-row-title">{viewingEmp.nip || "—"}</div>
+                </div>
+              </div>
+              <div className="admin-row">
+                <div className="admin-row-main">
+                  <div className="admin-row-sub">Numéro d'employé - paie</div>
+                  <div className="admin-row-title">{viewingEmp.numero_paie || "—"}</div>
+                </div>
+              </div>
+              <div className="admin-row">
+                <div className="admin-row-main">
+                  <div className="admin-row-sub">Emplacements</div>
+                  <div className="admin-row-title">
+                    {viewingEmp.emplacements.length > 0 ? viewingEmp.emplacements.join(", ") : "Disponible partout"}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
