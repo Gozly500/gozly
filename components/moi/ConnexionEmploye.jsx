@@ -5,26 +5,7 @@ import { useRouter } from "next/navigation";
 import { employeFetch, setEmployeToken } from "@/lib/employeAuth";
 import InstallerApp from "@/components/moi/InstallerApp";
 import { useLangue } from "@/components/moi/LangueContext";
-import { LANGUES } from "@/lib/i18n/moi";
-
-function SelecteurLangue() {
-  const { langue, setLangue } = useLangue();
-  return (
-    <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "18px" }}>
-      {LANGUES.map((l) => (
-        <button
-          key={l.id}
-          type="button"
-          className="admin-icon-btn"
-          style={langue === l.id ? { borderColor: "var(--violet)", color: "var(--fg)" } : undefined}
-          onClick={() => setLangue(l.id)}
-        >
-          {l.id.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  );
-}
+import { CLE_ONBOARDING_VU_MOI } from "@/components/moi/OnboardingEmploye";
 
 export default function ConnexionEmploye() {
   const router = useRouter();
@@ -73,7 +54,12 @@ export default function ConnexionEmploye() {
       }
 
       setEmployeToken(data.token);
-      router.push("/moi/accueil");
+
+      let dejaVu = false;
+      try {
+        dejaVu = !!window.localStorage.getItem(CLE_ONBOARDING_VU_MOI);
+      } catch {}
+      router.push(dejaVu ? "/moi/accueil" : "/moi/bienvenue");
     } catch {
       setMessage({ type: "err", text: t("login.erreur") });
       setNip("");
@@ -84,7 +70,6 @@ export default function ConnexionEmploye() {
   if (etape === "code") {
     return (
       <div className="moi-connexion">
-        <SelecteurLangue />
         <h1>Gozly Équipe</h1>
         <p className="panel-hint">{t("login.hintCode")}</p>
         <form onSubmit={handleSubmitCode}>

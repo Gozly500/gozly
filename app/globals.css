@@ -1744,6 +1744,34 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
   }
 .moi-loading-lottie svg{width:100%;height:100%;}
 
+/* Parcours de bienvenue employé (1er login seulement, voir
+   OnboardingEmploye.jsx) : même rognage 2:3 que le splash normal
+   (canevas source 1080x1920), mais le bandeau se rétracte en petit format
+   après l'animation au lieu de disparaître - il reste affiché en haut
+   pendant tout le parcours (langue > thème > notifications). */
+.moi-onboarding{
+    min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;padding:24px 0 40px;box-sizing:border-box;
+  }
+.moi-onboarding.settled{justify-content:flex-start;padding-top:36px;}
+.moi-onboarding-lottie-wrap{
+    width:min(100vw, 66.67dvh);
+    aspect-ratio:1080/1620;
+    overflow:hidden;position:relative;flex-shrink:0;
+    transition:width .6s cubic-bezier(.3,.9,.3,1);
+  }
+.moi-onboarding-lottie-wrap.settled{width:150px;}
+.moi-onboarding-lottie{position:absolute;left:0;top:-9.259%;width:100%;height:118.519%;}
+.moi-onboarding-lottie svg{width:100%;height:100%;}
+.moi-onboarding-content{
+    width:100%;max-width:420px;padding:0 28px;box-sizing:border-box;text-align:center;
+    opacity:0;transform:translateY(14px);pointer-events:none;
+    transition:opacity .45s ease .15s, transform .45s ease .15s;
+  }
+.moi-onboarding-content.visible{opacity:1;transform:translateY(0);pointer-events:auto;}
+.moi-onboarding-content .field,
+.moi-onboarding-content .switch-row{text-align:left;}
+
 /* Transition de changement de thème : plein écran, par-dessus tout.
    Canevas source 1080x1990 dont on rogne 160px du bas : le filigrane
    "jitter.video" du fichier occupe y=1840..1940 (70px ne le cachait qu'à
