@@ -1753,7 +1753,7 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
    au besoin, difficile à caler pile sans pouvoir prévisualiser le rendu. */
 .moi-onboarding{
     min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;
-    padding:36px 0 40px;box-sizing:border-box;
+    padding:100px 0 40px;box-sizing:border-box;
   }
 /* Largeur ET hauteur fixées en px plutôt qu'un aspect-ratio calculé : la
    librairie d'animation mesure la taille du conteneur en JS dès son
