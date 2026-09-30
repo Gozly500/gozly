@@ -202,6 +202,15 @@ input[type="search"]::placeholder,textarea::placeholder{
     color:var(--text-dim);
   }
 
+/* Barre de défilement personnalisée (fine, discrète) pour remplacer celle,
+   très voyante et blanche, du système d'exploitation - réutilise --w donc
+   s'ajuste automatiquement aux thèmes clair/sombre/sobre. */
+*{scrollbar-width:thin;scrollbar-color:rgba(var(--w),0.25) transparent;}
+*::-webkit-scrollbar{width:8px;height:8px;}
+*::-webkit-scrollbar-track{background:transparent;}
+*::-webkit-scrollbar-thumb{background-color:rgba(var(--w),0.25);border-radius:8px;}
+*::-webkit-scrollbar-thumb:hover{background-color:rgba(var(--w),0.4);}
+
 /* Style par défaut pour tout bouton du site qui n'a pas déjà sa propre
    classe (.submit-btn, .btn-small, .admin-icon-btn, ...) - celles-ci
    restent prioritaires grâce à la spécificité des classes CSS. */
