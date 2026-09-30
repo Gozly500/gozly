@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
+import { useLangue } from "@/components/moi/LangueContext";
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -33,6 +34,7 @@ export async function lireStatutPush() {
 // besoin d'app native) ; sur iPhone, ça ne fonctionne que si l'app a été
 // installée sur l'écran d'accueil (voir InstallerApp.jsx) et iOS 16.4+.
 export default function NotificationsPush() {
+  const { t } = useLangue();
   const [statut, setStatut] = useState("verification"); // verification | indisponible | inactif | actif | erreur
   const [busy, setBusy] = useState(false);
 
@@ -98,11 +100,11 @@ export default function NotificationsPush() {
     <div className="moi-notifications-bar">
       {statut === "actif" ? (
         <button type="button" className="admin-icon-btn" onClick={desactiver} disabled={busy}>
-          🔔 Notifications activées
+          {t("push.actif")}
         </button>
       ) : (
         <button type="button" className="admin-icon-btn" onClick={activer} disabled={busy}>
-          {statut === "erreur" ? "Réessayer d'activer les notifications" : "🔕 Activer les notifications"}
+          {statut === "erreur" ? t("push.reessayer") : t("push.activer")}
         </button>
       )}
     </div>

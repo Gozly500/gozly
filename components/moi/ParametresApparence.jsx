@@ -17,8 +17,10 @@ import {
 } from "@/lib/themes";
 import TransitionTheme from "@/components/moi/TransitionTheme";
 import MoiRetour from "@/components/moi/MoiRetour";
+import { useLangue } from "@/components/moi/LangueContext";
 
 export default function ParametresApparence() {
+  const { t } = useLangue();
   const [theme, setTheme] = useState(DEFAULT_THEME);
   const [accent, setAccent] = useState(DEFAULT_ACCENT);
   const [transition, setTransition] = useState(null); // { id, couleurs } pendant l'animation
@@ -75,13 +77,13 @@ export default function ParametresApparence() {
   return (
     <div>
       <MoiRetour />
-      <h2>Apparence</h2>
-      <p className="panel-hint">Choisis le thème visuel de l'application.</p>
+      <h2>{t("apparence.titre")}</h2>
+      <p className="panel-hint">{t("apparence.hint")}</p>
 
       <div className="switch-row" style={{ marginBottom: "18px" }}>
         <div className="switch-row-text">
-          <h4>Couleur</h4>
-          <p>Décoche pour un affichage sobre, sans couleur de fond : Sombre ou Clair.</p>
+          <h4>{t("apparence.couleurTitre")}</h4>
+          <p>{t("apparence.couleurDesc")}</p>
         </div>
         <label className="switch">
           <input type="checkbox" checked={!sobre} disabled={!!transition} onChange={(e) => handleToggleCouleur(e.target.checked)} />

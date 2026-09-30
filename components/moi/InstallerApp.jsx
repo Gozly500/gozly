@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLangue } from "@/components/moi/LangueContext";
 
 function detecterIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -16,6 +17,7 @@ function dejaInstallee() {
 // s'ouvre ; sur iPhone (Safari ne permet pas de le déclencher par code), on
 // affiche plutôt un petit guide illustré des 3 étapes à suivre.
 export default function InstallerApp() {
+  const { t, langue } = useLangue();
   const [promptEvent, setPromptEvent] = useState(null);
   const [estIOS, setEstIOS] = useState(false);
   const [installee, setInstallee] = useState(true);
@@ -49,25 +51,35 @@ export default function InstallerApp() {
   return (
     <>
       <button type="button" className="admin-icon-btn" style={{ width: "100%", marginTop: "16px" }} onClick={handleClick}>
-        📲 Installer l'app sur cet appareil
+        {t("install.bouton")}
       </button>
 
       {guideOuvert && (
         <div className="modal-overlay" onClick={() => setGuideOuvert(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Installer l'app</h3>
+              <h3>{t("install.titre")}</h3>
               <button className="admin-icon-btn" onClick={() => setGuideOuvert(false)}>
-                Fermer
+                {t("nav.fermer")}
               </button>
             </div>
-            <p className="panel-hint">
-              1. Appuie sur le bouton <strong>Partager</strong> (⬆️) en bas de Safari.
-              <br />
-              2. Choisis <strong>« Sur l'écran d'accueil »</strong>.
-              <br />
-              3. Appuie sur <strong>Ajouter</strong>.
-            </p>
+            {langue === "en" ? (
+              <p className="panel-hint">
+                1. Tap the <strong>Share</strong> button (⬆️) at the bottom of Safari.
+                <br />
+                2. Choose <strong>"Add to Home Screen"</strong>.
+                <br />
+                3. Tap <strong>Add</strong>.
+              </p>
+            ) : (
+              <p className="panel-hint">
+                1. Appuie sur le bouton <strong>Partager</strong> (⬆️) en bas de Safari.
+                <br />
+                2. Choisis <strong>« Sur l'écran d'accueil »</strong>.
+                <br />
+                3. Appuie sur <strong>Ajouter</strong>.
+              </p>
+            )}
           </div>
         </div>
       )}

@@ -4,20 +4,18 @@ import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import NotificationsPush from "@/components/moi/NotificationsPush";
 import MoiRetour from "@/components/moi/MoiRetour";
+import { useLangue } from "@/components/moi/LangueContext";
 
 const TYPES_NOTIF = [
-  { id: "notif_messages", titre: "Nouveaux messages", description: "Quand quelqu'un t'écrit dans Discussion." },
-  { id: "notif_conge_traite", titre: "Réponse à une demande de congé", description: "Approuvée ou refusée." },
-  { id: "notif_echange_recu", titre: "Échange de quart reçu", description: "Un collègue te propose son quart." },
-  {
-    id: "notif_echange_traite",
-    titre: "Réponse à un échange de quart",
-    description: "Ton collègue ou le proprio a répondu.",
-  },
-  { id: "notif_semaine_publiee", titre: "Nouvel horaire publié", description: "Ton horaire de la semaine est prêt." },
+  { id: "notif_messages", titreCle: "notifications.messagesTitre", descCle: "notifications.messagesDesc" },
+  { id: "notif_conge_traite", titreCle: "notifications.congeTraiteTitre", descCle: "notifications.congeTraiteDesc" },
+  { id: "notif_echange_recu", titreCle: "notifications.echangeRecuTitre", descCle: "notifications.echangeRecuDesc" },
+  { id: "notif_echange_traite", titreCle: "notifications.echangeTraiteTitre", descCle: "notifications.echangeTraiteDesc" },
+  { id: "notif_semaine_publiee", titreCle: "notifications.semainePublieeTitre", descCle: "notifications.semainePublieeDesc" },
 ];
 
 export default function ParametresNotifications() {
+  const { t } = useLangue();
   const [prefs, setPrefs] = useState(null);
   const [saving, setSaving] = useState(null);
 
@@ -41,25 +39,25 @@ export default function ParametresNotifications() {
   return (
     <div>
       <MoiRetour />
-      <h2>Notifications</h2>
-      <p className="panel-hint">Choisis ce qui déclenche une notification sur ton téléphone.</p>
+      <h2>{t("notifications.titre")}</h2>
+      <p className="panel-hint">{t("notifications.hint")}</p>
 
       <NotificationsPush />
 
       {prefs && (
         <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
-          {TYPES_NOTIF.map((t) => (
-            <div className="switch-row" key={t.id}>
+          {TYPES_NOTIF.map((tn) => (
+            <div className="switch-row" key={tn.id}>
               <div className="switch-row-text">
-                <h4>{t.titre}</h4>
-                <p>{t.description}</p>
+                <h4>{t(tn.titreCle)}</h4>
+                <p>{t(tn.descCle)}</p>
               </div>
               <label className="switch">
                 <input
                   type="checkbox"
-                  checked={prefs[t.id] !== false}
-                  onChange={() => handleToggleNotif(t.id)}
-                  disabled={saving === t.id}
+                  checked={prefs[tn.id] !== false}
+                  onChange={() => handleToggleNotif(tn.id)}
+                  disabled={saving === tn.id}
                 />
                 <span className="switch-track"></span>
                 <span className="switch-thumb"></span>

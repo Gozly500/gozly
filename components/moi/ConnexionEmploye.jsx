@@ -4,9 +4,31 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { employeFetch, setEmployeToken } from "@/lib/employeAuth";
 import InstallerApp from "@/components/moi/InstallerApp";
+import { useLangue } from "@/components/moi/LangueContext";
+import { LANGUES } from "@/lib/i18n/moi";
+
+function SelecteurLangue() {
+  const { langue, setLangue } = useLangue();
+  return (
+    <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "18px" }}>
+      {LANGUES.map((l) => (
+        <button
+          key={l.id}
+          type="button"
+          className="admin-icon-btn"
+          style={langue === l.id ? { borderColor: "var(--violet)", color: "var(--fg)" } : undefined}
+          onClick={() => setLangue(l.id)}
+        >
+          {l.id.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function ConnexionEmploye() {
   const router = useRouter();
+  const { t } = useLangue();
   const [etape, setEtape] = useState("code"); // "code" | "nip"
   const [codeAcces, setCodeAcces] = useState("");
   const [nip, setNip] = useState("");
@@ -44,7 +66,7 @@ export default function ConnexionEmploye() {
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage({ type: "err", text: data.error || "Connexion impossible." });
+        setMessage({ type: "err", text: data.error || t("login.erreur") });
         setNip("");
         setBusy(false);
         return;
@@ -53,7 +75,7 @@ export default function ConnexionEmploye() {
       setEmployeToken(data.token);
       router.push("/moi/accueil");
     } catch {
-      setMessage({ type: "err", text: "Connexion impossible." });
+      setMessage({ type: "err", text: t("login.erreur") });
       setNip("");
       setBusy(false);
     }
@@ -62,11 +84,12 @@ export default function ConnexionEmploye() {
   if (etape === "code") {
     return (
       <div className="moi-connexion">
+        <SelecteurLangue />
         <h1>Gozly Équipe</h1>
-        <p className="panel-hint">Entre le code d'entreprise fourni par ton employeur.</p>
+        <p className="panel-hint">{t("login.hintCode")}</p>
         <form onSubmit={handleSubmitCode}>
           <div className="field">
-            <label>Code d'entreprise</label>
+            <label>{t("login.labelCode")}</label>
             <input
               type="text"
               value={codeAcces}
@@ -78,7 +101,7 @@ export default function ConnexionEmploye() {
             />
           </div>
           <button type="submit" className="submit-btn" style={{ width: "100%" }}>
-            Continuer
+            {t("login.continuer")}
           </button>
         </form>
         <InstallerApp />
@@ -88,8 +111,8 @@ export default function ConnexionEmploye() {
 
   return (
     <div className="moi-connexion">
-      <h1>Ton NIP</h1>
-      <p className="panel-hint">Le même NIP que pour pointer au travail.</p>
+      <h1>{t("login.titreNip")}</h1>
+      <p className="panel-hint">{t("login.hintNip")}</p>
 
       <div className="pointage-kiosk">
         <div className="pointage-dots">
@@ -111,7 +134,7 @@ export default function ConnexionEmploye() {
             </button>
           ))}
           <button className="pointage-key" onClick={pressClear} disabled={busy}>
-            Effacer
+            {t("login.effacer")}
           </button>
           <button className="pointage-key" onClick={() => pressDigit("0")} disabled={busy}>
             0
@@ -123,7 +146,7 @@ export default function ConnexionEmploye() {
       </div>
 
       <button type="button" className="admin-icon-btn" onClick={() => setEtape("code")} style={{ marginTop: "18px" }}>
-        ‹ Changer de code d'entreprise
+        {t("login.changerCode")}
       </button>
     </div>
   );

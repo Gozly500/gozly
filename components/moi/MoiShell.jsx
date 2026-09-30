@@ -5,20 +5,21 @@ import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
 import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches, IconParametres } from "@/components/icons/GozlyIcons";
 import MoiChargement from "@/components/moi/MoiChargement";
+import { useLangue } from "@/components/moi/LangueContext";
 
 // L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
 // en haut à gauche (voir le <header> plus bas).
 const ONGLETS_PRINCIPAUX = [
-  { id: "horaire", label: "Horaire", Icone: IconHoraire, href: "/moi/horaire" },
-  { id: "demandes", label: "Demandes", Icone: IconDemande, href: "/moi/demandes" },
-  { id: "discussion", label: "Discussion", Icone: IconDiscussion, href: "/moi/discussion" },
+  { id: "horaire", cle: "nav.horaire", Icone: IconHoraire, href: "/moi/horaire" },
+  { id: "demandes", cle: "nav.demandes", Icone: IconDemande, href: "/moi/demandes" },
+  { id: "discussion", cle: "nav.discussion", Icone: IconDiscussion, href: "/moi/discussion" },
 ];
 
 // Pages secondaires, regroupées derrière le bouton "Menu" de la barre du
 // bas plutôt que d'avoir un onglet chacune.
 const ONGLETS_MENU = [
-  { id: "taches", label: "Tâches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
-  { id: "temperature", label: "Températures", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
+  { id: "taches", cle: "nav.taches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
+  { id: "temperature", cle: "nav.temperature", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
 ];
 
 // MoiShell remonte à chaque changement de page (chaque route sous /moi a
@@ -29,6 +30,7 @@ const CLE_SPLASH_VU = "gozly_moi_splash_vu";
 export default function MoiShell({ children }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLangue();
   const [checking, setChecking] = useState(true);
   const [moi, setMoi] = useState(null);
   const [menuOuvert, setMenuOuvert] = useState(false);
@@ -79,7 +81,7 @@ export default function MoiShell({ children }) {
       <MoiChargement onTermine={marquerAnimationTerminee} />
     ) : (
       <div className="moi-loading">
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>
       </div>
     );
   }
@@ -106,12 +108,12 @@ export default function MoiShell({ children }) {
             type="button"
             className="admin-icon-btn moi-header-icon-btn"
             onClick={() => router.push("/moi/parametres")}
-            aria-label="Paramètres"
+            aria-label={t("nav.parametres")}
           >
             <IconParametres className="gozly-icon" />
           </button>
           <button type="button" className="admin-icon-btn" onClick={handleLogout}>
-            Déconnexion
+            {t("nav.deconnexion")}
           </button>
         </div>
       </header>
@@ -127,7 +129,7 @@ export default function MoiShell({ children }) {
             onClick={() => allerA(o.href)}
           >
             <span className="moi-tab-icon">{o.Icone ? <o.Icone className="gozly-icon" /> : o.icon}</span>
-            <span>{o.label}</span>
+            <span>{t(o.cle)}</span>
           </button>
         ))}
         {ongletsMenu.length > 0 && (
@@ -139,7 +141,7 @@ export default function MoiShell({ children }) {
             <span className="moi-tab-icon">
               <IconMenu className="gozly-icon" />
             </span>
-            <span>Menu</span>
+            <span>{t("nav.menu")}</span>
           </button>
         )}
       </nav>
@@ -148,9 +150,9 @@ export default function MoiShell({ children }) {
         <div className="modal-overlay" onClick={() => setMenuOuvert(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Menu</h3>
+              <h3>{t("nav.menu")}</h3>
               <button className="admin-icon-btn" onClick={() => setMenuOuvert(false)}>
-                Fermer
+                {t("nav.fermer")}
               </button>
             </div>
             <div className="dash-nav">
@@ -161,7 +163,7 @@ export default function MoiShell({ children }) {
                   className={`dash-nav-item${pathname === o.href ? " active" : ""}`}
                   onClick={() => allerA(o.href)}
                 >
-                  {o.Icone ? <o.Icone className="gozly-icon" /> : <span>{o.icon}</span>} {o.label}
+                  {o.Icone ? <o.Icone className="gozly-icon" /> : <span>{o.icon}</span>} {t(o.cle)}
                 </button>
               ))}
             </div>

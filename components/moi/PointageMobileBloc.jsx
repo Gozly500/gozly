@@ -3,12 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import EmplacementSelect from "@/components/EmplacementSelect";
+import { useLangue } from "@/components/moi/LangueContext";
+import { localeDate } from "@/lib/i18n/moi";
 
-function formatHeure(iso) {
-  return new Date(iso).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+function formatHeure(iso, langue) {
+  return new Date(iso).toLocaleTimeString(localeDate(langue), { hour: "2-digit", minute: "2-digit" });
 }
 
 export default function PointageMobileBloc() {
+  const { t, langue } = useLangue();
   const [etat, setEtat] = useState(null);
   const [emplacementChoisi, setEmplacementChoisi] = useState(null);
   const [confirmationOuverte, setConfirmationOuverte] = useState(false);
@@ -68,7 +71,7 @@ export default function PointageMobileBloc() {
     setBusy(true);
 
     if (!navigator.geolocation) {
-      setErreur("La localisation n'est pas disponible sur cet appareil.");
+      setErreur(t("pointage.localisationIndisponible"));
       setBusy(false);
       return;
     }
@@ -86,19 +89,19 @@ export default function PointageMobileBloc() {
           });
           const data = await res.json();
           if (!res.ok) {
-            setErreur(data.error || "Le pointage a échoué.");
+            setErreur(data.error || t("pointage.erreur"));
             setBusy(false);
             return;
           }
           setBusy(false);
           setSucces(data);
         } catch {
-          setErreur("Le pointage a échoué. Réessaie.");
+          setErreur(t("pointage.erreurReessaie"));
           setBusy(false);
         }
       },
       () => {
-        setErreur("On n'a pas pu confirmer ta position. Active la localisation et réessaie.");
+        setErreur(t("pointage.localisationRefusee"));
         setBusy(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -120,8 +123,11 @@ export default function PointageMobileBloc() {
       <div className="pointage-mobile-bloc pointage-success">
         <div ref={lottieRef} className="pointage-lottie"></div>
         <p className="settings-msg ok">
-          {succes.type === "arrivee" ? "Shift débuté" : "Shift terminé"} à {formatHeure(succes.heure)} —{" "}
-          {succes.emplacementNom}
+          {t("pointage.succesLigne", {
+            action: succes.type === "arrivee" ? t("pointage.shiftDebute") : t("pointage.shiftTermine"),
+            heure: formatHeure(succes.heure, langue),
+            lieu: succes.emplacementNom,
+          })}
         </p>
       </div>
     );
@@ -129,15 +135,15 @@ export default function PointageMobileBloc() {
 
   return (
     <div className="pointage-mobile-bloc">
-      <h3>Pointage</h3>
+      <h3>{t("pointage.titre")}</h3>
 
       {enPoste ? (
         <p className="panel-hint">
-          En poste depuis {formatHeure(etat.pointageOuvert.entree)} — {etat.pointageOuvert.emplacementNom}
+          {t("pointage.enPosteDepuis", { heure: formatHeure(etat.pointageOuvert.entree, langue), lieu: etat.pointageOuvert.emplacementNom })}
         </p>
       ) : (
         <>
-          <p className="panel-hint">Prêt à débuter ton shift ?</p>
+          <p className="panel-hint">{t("pointage.pret")}</p>
           <EmplacementSelect emplacements={etat.emplacements} value={emplacementChoisi} onChange={setEmplacementChoisi} />
         </>
       )}
@@ -150,24 +156,22 @@ export default function PointageMobileBloc() {
         onClick={() => setConfirmationOuverte(true)}
         disabled={busy || !emplacementChoisi}
       >
-        {busy ? "Un instant..." : enPoste ? "Terminer mon shift" : "Débuter mon shift"}
+        {busy ? t("pointage.instant") : enPoste ? t("pointage.terminer") : t("pointage.debuter")}
       </button>
 
       {confirmationOuverte && (
         <div className="modal-overlay" onClick={() => setConfirmationOuverte(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Confirmer</h3>
+              <h3>{t("pointage.confirmerTitre")}</h3>
             </div>
-            <p>
-              {enPoste ? `Terminer ton shift à ${nomChoisi} ?` : `Débuter ton shift à ${nomChoisi} ?`}
-            </p>
+            <p>{t(enPoste ? "pointage.confirmerFin" : "pointage.confirmerDebut", { lieu: nomChoisi })}</p>
             <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
               <button type="button" className="admin-icon-btn" onClick={() => setConfirmationOuverte(false)}>
-                Annuler
+                {t("pointage.annuler")}
               </button>
               <button type="button" className="btn-small" onClick={confirmerPointage}>
-                Confirmer
+                {t("pointage.confirmer")}
               </button>
             </div>
           </div>

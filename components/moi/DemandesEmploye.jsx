@@ -4,22 +4,25 @@ import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { getDebutSemaine } from "@/lib/semaine";
 import RappelNotifications from "@/components/moi/RappelNotifications";
+import { useLangue } from "@/components/moi/LangueContext";
+import { localeDate } from "@/lib/i18n/moi";
 
-function badgeConge(statut) {
-  if (statut === "approuve") return "✅ Approuvé";
-  if (statut === "refuse") return "❌ Refusé";
-  return "⏳ En attente";
+function badgeConge(statut, t) {
+  if (statut === "approuve") return t("demandes.approuve");
+  if (statut === "refuse") return t("demandes.refuse");
+  return t("demandes.enAttente");
 }
 
-function badgeEchange(d) {
-  if (d.statutEmploye === "refuse") return "❌ Refusé";
-  if (d.statutEmploye === "en_attente") return d.role === "receveur" ? "À répondre" : "⏳ En attente de réponse";
-  if (d.statutAdmin === "approuve" || d.statutAdmin === "non_requis") return "✅ Approuvé";
-  if (d.statutAdmin === "refuse") return "❌ Refusé par l'admin";
-  return "⏳ En attente d'approbation";
+function badgeEchange(d, t) {
+  if (d.statutEmploye === "refuse") return t("demandes.refuse");
+  if (d.statutEmploye === "en_attente") return d.role === "receveur" ? t("demandes.aRepondre") : t("demandes.attenteReponse");
+  if (d.statutAdmin === "approuve" || d.statutAdmin === "non_requis") return t("demandes.approuve");
+  if (d.statutAdmin === "refuse") return t("demandes.refuseParAdmin");
+  return t("demandes.attenteApprobation");
 }
 
 export default function DemandesEmploye() {
+  const { t, langue } = useLangue();
   const [onglet, setOnglet] = useState("conges"); // "conges" | "echanges"
   const [conges, setConges] = useState([]);
   const [echanges, setEchanges] = useState([]);
@@ -78,7 +81,7 @@ export default function DemandesEmploye() {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMsg({ type: "err", text: data.error || "La demande a échoué." });
+      setMsg({ type: "err", text: data.error || t("demandes.erreur") });
       return;
     }
     setDateDebut("");
@@ -100,7 +103,7 @@ export default function DemandesEmploye() {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMsg({ type: "err", text: data.error || "La demande a échoué." });
+      setMsg({ type: "err", text: data.error || t("demandes.erreur") });
       return;
     }
     setQuartChoisi("");
@@ -119,18 +122,18 @@ export default function DemandesEmploye() {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMsg({ type: "err", text: data.error || "Impossible de répondre." });
+      setMsg({ type: "err", text: data.error || t("demandes.erreurReponse") });
       return;
     }
     chargerTout();
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>;
   }
 
   if (!congesActif && !echangesActif) {
-    return <p className="chat-empty">Les demandes de congé et d'échange ne sont pas activées pour ton entreprise.</p>;
+    return <p className="chat-empty">{t("demandes.desactiveLesDeux")}</p>;
   }
 
   return (
@@ -138,12 +141,12 @@ export default function DemandesEmploye() {
       <div className="settings-nav" style={{ flexDirection: "row", marginBottom: "18px", width: "fit-content" }}>
         {congesActif && (
           <button type="button" className={`settings-nav-item${onglet === "conges" ? " active" : ""}`} onClick={() => setOnglet("conges")}>
-            Congés
+            {t("demandes.tabConges")}
           </button>
         )}
         {echangesActif && (
           <button type="button" className={`settings-nav-item${onglet === "echanges" ? " active" : ""}`} onClick={() => setOnglet("echanges")}>
-            Échanges
+            {t("demandes.tabEchanges")}
           </button>
         )}
       </div>
@@ -153,43 +156,46 @@ export default function DemandesEmploye() {
       {onglet === "conges" && congesActif && (
         <div>
           <button type="button" className="submit-btn" onClick={() => setFormCongeOpen((v) => !v)} style={{ marginBottom: "14px" }}>
-            + Demander un congé
+            {t("demandes.ajouterConge")}
           </button>
 
           {formCongeOpen && (
             <form onSubmit={handleSubmitConge} style={{ marginBottom: "18px" }}>
               <div className="field-row">
                 <div className="field">
-                  <label>Date de début</label>
+                  <label>{t("demandes.dateDebut")}</label>
                   <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} required />
                 </div>
                 <div className="field">
-                  <label>Date de fin</label>
+                  <label>{t("demandes.dateFin")}</label>
                   <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} required />
                 </div>
               </div>
               <div className="field">
-                <label>Raison (optionnel)</label>
-                <input type="text" value={raison} onChange={(e) => setRaison(e.target.value)} placeholder="Ex: vacances" />
+                <label>{t("demandes.raison")}</label>
+                <input type="text" value={raison} onChange={(e) => setRaison(e.target.value)} placeholder={t("demandes.raisonPlaceholder")} />
               </div>
               <button type="submit" className="submit-btn" disabled={busy}>
-                {busy ? "Envoi..." : "Envoyer la demande"}
+                {busy ? t("demandes.envoi") : t("demandes.envoyer")}
               </button>
             </form>
           )}
 
           {conges.length === 0 ? (
-            <p className="chat-empty">Aucune demande de congé.</p>
+            <p className="chat-empty">{t("demandes.aucunConge")}</p>
           ) : (
             <div className="admin-list">
               {conges.map((c) => (
                 <div className="admin-row" key={c.id}>
                   <div className="admin-row-main">
                     <div className="admin-row-title">
-                      Du {new Date(c.date_debut).toLocaleDateString("fr-CA")} au {new Date(c.date_fin).toLocaleDateString("fr-CA")}
+                      {t("demandes.duAu", {
+                        debut: new Date(c.date_debut).toLocaleDateString(localeDate(langue)),
+                        fin: new Date(c.date_fin).toLocaleDateString(localeDate(langue)),
+                      })}
                     </div>
                     <div className="admin-row-sub">
-                      {badgeConge(c.statut)}
+                      {badgeConge(c.statut, t)}
                       {c.raison && ` · ${c.raison}`}
                     </div>
                   </div>
@@ -203,26 +209,26 @@ export default function DemandesEmploye() {
       {onglet === "echanges" && echangesActif && (
         <div>
           <button type="button" className="submit-btn" onClick={() => setFormEchangeOpen((v) => !v)} style={{ marginBottom: "14px" }}>
-            + Proposer un échange
+            {t("demandes.ajouterEchange")}
           </button>
 
           {formEchangeOpen && (
             <form onSubmit={handleSubmitEchange} style={{ marginBottom: "18px" }}>
               <div className="field">
-                <label>Quel quart ?</label>
+                <label>{t("demandes.quelQuart")}</label>
                 <select value={quartChoisi} onChange={(e) => setQuartChoisi(e.target.value)} required>
-                  <option value="">Choisir un quart cette semaine...</option>
+                  <option value="">{t("demandes.choisirQuart")}</option>
                   {mesQuarts.map((q) => (
                     <option key={q.id} value={q.id}>
-                      {new Date(q.date).toLocaleDateString("fr-CA")} · {q.heure_debut.slice(0, 5)}–{q.heure_fin.slice(0, 5)}
+                      {new Date(q.date).toLocaleDateString(localeDate(langue))} · {q.heure_debut.slice(0, 5)}–{q.heure_fin.slice(0, 5)}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="field">
-                <label>À qui ?</label>
+                <label>{t("demandes.aQui")}</label>
                 <select value={collegueChoisi} onChange={(e) => setCollegueChoisi(e.target.value)} required>
-                  <option value="">Choisir un collègue...</option>
+                  <option value="">{t("demandes.choisirCollegue")}</option>
                   {collegues.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.nom}
@@ -231,39 +237,39 @@ export default function DemandesEmploye() {
                 </select>
               </div>
               <button type="submit" className="submit-btn" disabled={busy || mesQuarts.length === 0}>
-                {busy ? "Envoi..." : "Proposer"}
+                {busy ? t("demandes.envoi") : t("demandes.proposer")}
               </button>
-              {mesQuarts.length === 0 && <p className="section-hint">Tu n'as aucun quart cette semaine.</p>}
+              {mesQuarts.length === 0 && <p className="section-hint">{t("demandes.aucunQuartSemaine")}</p>}
             </form>
           )}
 
           {echanges.length === 0 ? (
-            <p className="chat-empty">Aucun échange.</p>
+            <p className="chat-empty">{t("demandes.aucunEchange")}</p>
           ) : (
             <div className="admin-list">
               {echanges.map((d) => (
                 <div className="admin-row" key={d.id}>
                   <div className="admin-row-main">
                     <div className="admin-row-title">
-                      {d.role === "donneur" ? `Toi → ${d.autreNom}` : `${d.autreNom} → Toi`}
+                      {d.role === "donneur" ? t("demandes.toiVers", { nom: d.autreNom }) : t("demandes.versToi", { nom: d.autreNom })}
                     </div>
                     <div className="admin-row-sub">
                       {d.quart && (
                         <>
-                          {new Date(d.quart.date).toLocaleDateString("fr-CA")} · {d.quart.heure_debut?.slice(0, 5)}–
+                          {new Date(d.quart.date).toLocaleDateString(localeDate(langue))} · {d.quart.heure_debut?.slice(0, 5)}–
                           {d.quart.heure_fin?.slice(0, 5)} ·{" "}
                         </>
                       )}
-                      {badgeEchange(d)}
+                      {badgeEchange(d, t)}
                     </div>
                   </div>
                   {d.role === "receveur" && d.statutEmploye === "en_attente" && (
                     <div className="admin-row-controls">
                       <button className="admin-icon-btn" onClick={() => repondreEchange(d.id, true)} disabled={busy}>
-                        Accepter
+                        {t("demandes.accepter")}
                       </button>
                       <button className="admin-icon-btn danger" onClick={() => repondreEchange(d.id, false)} disabled={busy}>
-                        Refuser
+                        {t("demandes.refuser")}
                       </button>
                     </div>
                   )}

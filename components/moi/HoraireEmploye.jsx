@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import RappelNotifications from "@/components/moi/RappelNotifications";
+import { useLangue } from "@/components/moi/LangueContext";
+import { localeDate } from "@/lib/i18n/moi";
 
 function heure(t) {
   return t.slice(0, 5);
@@ -20,6 +22,7 @@ function duree(debut, fin) {
 }
 
 export default function HoraireEmploye() {
+  const { t, langue } = useLangue();
   const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
   const [quarts, setQuarts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,16 +48,16 @@ export default function HoraireEmploye() {
     });
   }, [weekStart]);
 
-  const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${addDays(
+  const weekLabel = `${weekStart.toLocaleDateString(localeDate(langue), { day: "numeric", month: "long" })} - ${addDays(
     weekStart,
     6
-  ).toLocaleDateString("fr-CA", { day: "numeric", month: "long" })}`;
+  ).toLocaleDateString(localeDate(langue), { day: "numeric", month: "long" })}`;
 
   const jours = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
     <div className="moi-horaire">
-      <RappelNotifications types={["notif_semaine_publiee"]} sujet="d'horaire" />
+      <RappelNotifications types={["notif_semaine_publiee"]} sujet="horaire" />
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
           ‹
@@ -66,7 +69,7 @@ export default function HoraireEmploye() {
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>
       ) : (
         <div className="moi-jours-list">
           {jours.map((jour) => {
@@ -77,7 +80,7 @@ export default function HoraireEmploye() {
               <div className="moi-jour-card" key={dateISO}>
                 <div className="moi-jour-head">
                   <div className="moi-jour-date">
-                    {jour.toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}
+                    {jour.toLocaleDateString(localeDate(langue), { weekday: "long", day: "numeric", month: "long" })}
                   </div>
                   {quartsDuJour.length > 0 && (
                     <button
@@ -86,12 +89,12 @@ export default function HoraireEmploye() {
                       aria-expanded={!!ouvert}
                       onClick={() => setJoursOuverts((cur) => ({ ...cur, [dateISO]: !cur[dateISO] }))}
                     >
-                      {ouvert ? "Masquer" : "Afficher"}
+                      {ouvert ? t("horaire.masquer") : t("horaire.afficher")}
                     </button>
                   )}
                 </div>
                 {quartsDuJour.length === 0 ? (
-                  <p className="moi-jour-repos">Repos</p>
+                  <p className="moi-jour-repos">{t("horaire.repos")}</p>
                 ) : (
                   quartsDuJour.map((q) => (
                     <div key={q.id}>
@@ -101,24 +104,24 @@ export default function HoraireEmploye() {
                       {ouvert && (
                         <div className="moi-quart-detail">
                           <div className="moi-detail-ligne">
-                            <span>Durée</span>
+                            <span>{t("horaire.duree")}</span>
                             <strong>{duree(q.heure_debut, q.heure_fin) || "—"}</strong>
                           </div>
                           {q.emplacement_nom && (
                             <div className="moi-detail-ligne">
-                              <span>Succursale</span>
+                              <span>{t("horaire.succursale")}</span>
                               <strong>{q.emplacement_nom}</strong>
                             </div>
                           )}
                           {q.poste && (
                             <div className="moi-detail-ligne">
-                              <span>Poste</span>
+                              <span>{t("horaire.poste")}</span>
                               <strong>{q.poste}</strong>
                             </div>
                           )}
-                          <div className="moi-detail-titre">Avec qui tu travailles</div>
+                          <div className="moi-detail-titre">{t("horaire.avecQui")}</div>
                           {q.collegues.length === 0 ? (
-                            <p className="moi-jour-repos">Personne d'autre de prévu sur ce quart.</p>
+                            <p className="moi-jour-repos">{t("horaire.personne")}</p>
                           ) : (
                             q.collegues.map((c, i) => (
                               <div className="moi-detail-ligne" key={i}>

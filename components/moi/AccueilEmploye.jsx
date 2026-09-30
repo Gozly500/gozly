@@ -11,22 +11,24 @@ import {
   IconTemperature,
 } from "@/components/icons/GozlyIcons";
 import PointageMobileBloc from "@/components/moi/PointageMobileBloc";
+import { useLangue } from "@/components/moi/LangueContext";
 
 // Les 3 pages de base, en petites cases sur une seule ligne.
 const PRINCIPAUX = [
-  { id: "horaire", label: "Mon horaire", Icone: IconHoraire, href: "/moi/horaire" },
-  { id: "demandes", label: "Demandes", Icone: IconDemande, href: "/moi/demandes" },
-  { id: "discussion", label: "Discussion", Icone: IconDiscussion, href: "/moi/discussion" },
+  { id: "horaire", cle: "home.horaire", Icone: IconHoraire, href: "/moi/horaire" },
+  { id: "demandes", cle: "nav.demandes", Icone: IconDemande, href: "/moi/demandes" },
+  { id: "discussion", cle: "nav.discussion", Icone: IconDiscussion, href: "/moi/discussion" },
 ];
 
 // Boutons de modules, affichés seulement si le module est actif.
 const MODULES = [
-  { id: "taches", label: "Tâches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
-  { id: "temperature", label: "Températures", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
+  { id: "taches", cle: "nav.taches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
+  { id: "temperature", cle: "nav.temperature", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
 ];
 
 export default function AccueilEmploye() {
   const router = useRouter();
+  const { t } = useLangue();
   const [moi, setMoi] = useState(null);
 
   useEffect(() => {
@@ -41,9 +43,9 @@ export default function AccueilEmploye() {
 
   return (
     <div>
-      <h2>Salut{prenom ? ` ${prenom}` : ""} !</h2>
+      <h2>{t("home.salut")}{prenom ? ` ${prenom}` : ""} !</h2>
       <p className="panel-hint">
-        {moi?.entreprise?.nom ? `Bienvenue chez ${moi.entreprise.nom}.` : "Bienvenue."}
+        {moi?.entreprise?.nom ? t("home.bienvenueAvecNom", { nom: moi.entreprise.nom }) : t("home.bienvenue")}
       </p>
 
       <PointageMobileBloc />
@@ -54,21 +56,21 @@ export default function AccueilEmploye() {
             <span className="moi-accueil-card-icon">
               <r.Icone className="gozly-icon" />
             </span>
-            <span>{r.label}</span>
+            <span>{t(r.cle)}</span>
           </button>
         ))}
       </div>
 
       {modules.length > 0 && (
         <>
-          <p className="moi-accueil-section">Modules</p>
+          <p className="moi-accueil-section">{t("home.modules")}</p>
           <div className="moi-accueil-grid" style={{ marginTop: 0 }}>
             {modules.map((r) => (
               <button key={r.id} type="button" className="moi-accueil-card" onClick={() => router.push(r.href)}>
                 <span className="moi-accueil-card-icon">
                   <r.Icone className="gozly-icon" />
                 </span>
-                <span>{r.label}</span>
+                <span>{t(r.cle)}</span>
               </button>
             ))}
           </div>

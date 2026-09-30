@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
-import { PERIODES } from "@/lib/temperature";
+import { useLangue } from "@/components/moi/LangueContext";
 
 export default function TemperatureEmploye() {
+  const { t } = useLangue();
   const [equipements, setEquipements] = useState([]);
   const [relevesDuJour, setRelevesDuJour] = useState([]);
   const [creneau, setCreneau] = useState(null);
@@ -86,30 +87,30 @@ export default function TemperatureEmploye() {
     setSaving(false);
 
     if (resultats.some((r) => !r.ok)) {
-      setMsg({ type: "err", text: "Certains relevés n'ont pas pu être enregistrés. Réessaie." });
+      setMsg({ type: "err", text: t("temperature.erreurSauvegarde") });
       charger();
       return;
     }
 
-    setMsg({ type: "ok", text: "Relevés enregistrés !" });
+    setMsg({ type: "ok", text: t("temperature.succesSauvegarde") });
     setTimeout(() => setMsg(null), 3000);
     charger();
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>;
   }
 
   if (equipements.length === 0) {
     return (
       <div>
-        <h2>Températures</h2>
-        <p className="chat-empty">Aucun équipement à relever pour l'instant.</p>
+        <h2>{t("temperature.titre")}</h2>
+        <p className="chat-empty">{t("temperature.aucun")}</p>
       </div>
     );
   }
 
-  const periodeLabel = PERIODES.find((p) => p.id === creneau?.periode)?.label || "";
+  const periodeLabel = creneau?.periode === "am" ? t("temperature.matin") : creneau?.periode === "pm" ? t("temperature.soir") : "";
   const grille = { display: "grid", gridTemplateColumns: "1fr 84px 84px", gap: "8px", alignItems: "center", padding: "10px 14px" };
 
   // Une case AM ou PM : champ de saisie seulement pour le créneau actuel,
@@ -137,14 +138,12 @@ export default function TemperatureEmploye() {
 
   return (
     <div>
-      <h2>Températures</h2>
-      <p className="panel-hint">
-        Créneau actuel : {periodeLabel}. Seule la colonne du créneau actuel est modifiable - une fenêtre manquée ne revient pas.
-      </p>
+      <h2>{t("temperature.titre")}</h2>
+      <p className="panel-hint">{t("temperature.creneauActuel", { periode: periodeLabel })}</p>
 
       <div className="planning-day" style={{ marginBottom: "14px" }}>
         <div style={{ ...grille, paddingBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)" }}>
-          <div>Équipement</div>
+          <div>{t("temperature.equipement")}</div>
           {["am", "pm"].map((p) => (
             <div key={p} style={{ textAlign: "center", color: p === creneau?.periode ? "var(--text)" : undefined }}>
               {p.toUpperCase()}
@@ -159,7 +158,9 @@ export default function TemperatureEmploye() {
               <div style={{ fontSize: "13.5px", fontWeight: 600, minWidth: 0 }}>
                 {eq.nom}
                 {actuel && (
-                  <div style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-dim)" }}>par {actuel.releve_par}</div>
+                  <div style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-dim)" }}>
+                    {t("temperature.par")} {actuel.releve_par}
+                  </div>
                 )}
               </div>
               {renderCase(eq, "am")}
@@ -171,7 +172,7 @@ export default function TemperatureEmploye() {
 
       <div className="submit-wrap" style={{ marginTop: "16px", position: "static" }}>
         <button type="button" className="submit-btn" onClick={handleSave} disabled={saving || !estModifie()}>
-          {saving ? "Enregistrement..." : "Enregistrer"}
+          {saving ? t("temperature.enregistrement") : t("temperature.enregistrer")}
         </button>
       </div>
       {msg && (

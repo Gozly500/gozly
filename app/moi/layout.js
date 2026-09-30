@@ -1,4 +1,5 @@
 import MoiThemeAppliqueur from "@/components/moi/MoiThemeAppliqueur";
+import { LangueProvider } from "@/components/moi/LangueContext";
 
 export const metadata = {
   title: "Gozly Équipe",
@@ -15,7 +16,7 @@ export default function MoiLayout({ children }) {
   return (
     <div className="page moi-page">
       <MoiThemeAppliqueur />
-      {children}
+      <LangueProvider>{children}</LangueProvider>
     </div>
   );
 }
