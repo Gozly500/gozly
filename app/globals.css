@@ -1745,33 +1745,19 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .moi-loading-lottie svg{width:100%;height:100%;}
 
 /* Parcours de bienvenue employé (1er login seulement, voir
-   OnboardingEmploye.jsx). Contrairement au splash normal, cette animation
-   se termine déjà avec le logo à la bonne taille/position (rétrécissement
-   fait par l'animation elle-même, pas besoin d'en rajouter côté CSS) - le
-   bandeau garde donc une taille fixe du début à la fin, jamais redimensionné.
-   Rognage plus léger que le splash (canevas source 1080x1920) : à ajuster
-   au besoin, difficile à caler pile sans pouvoir prévisualiser le rendu. */
+   OnboardingEmploye.jsx) : joue le splash habituel (MoiChargement), puis
+   enchaîne sur les étapes de configuration (langue > thème > notifications)
+   affichées comme une page normale, centrée verticalement. */
 .moi-onboarding{
     min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;
-    padding:100px 0 40px;box-sizing:border-box;
+    justify-content:center;padding:40px 0;box-sizing:border-box;
   }
-/* Largeur ET hauteur fixées en px plutôt qu'un aspect-ratio calculé : la
-   librairie d'animation mesure la taille du conteneur en JS dès son
-   chargement, et sur certains appareils cette mesure arrivait avant que le
-   navigateur ait fini de résoudre aspect-ratio, faussant l'échelle du
-   dessin (logo énorme et rogné par le haut de l'écran au lieu du cadre). */
-.moi-onboarding-lottie-wrap{
-    width:260px;height:390px;
-    overflow:hidden;position:relative;flex-shrink:0;
-  }
-.moi-onboarding-lottie{position:absolute;left:0;top:-9.259%;width:100%;height:118.519%;}
-.moi-onboarding-lottie svg{width:100%;height:100%;}
 .moi-onboarding-content{
     width:100%;max-width:420px;padding:0 28px;box-sizing:border-box;text-align:center;
-    opacity:0;transform:translateY(14px);pointer-events:none;
-    transition:opacity .45s ease .15s, transform .45s ease .15s;
+    opacity:0;transform:translateY(14px);
+    transition:opacity .45s ease, transform .45s ease;
   }
-.moi-onboarding-content.visible{opacity:1;transform:translateY(0);pointer-events:auto;}
+.moi-onboarding-content.visible{opacity:1;transform:translateY(0);}
 .moi-onboarding-content .field,
 .moi-onboarding-content .switch-row{text-align:left;}
 

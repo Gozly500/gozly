@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeGrids from "@/components/ThemeGrids";
 import TransitionTheme from "@/components/moi/TransitionTheme";
 import NotificationsPush from "@/components/moi/NotificationsPush";
+import MoiChargement from "@/components/moi/MoiChargement";
 import { useLangue } from "@/components/moi/LangueContext";
 import { LANGUES } from "@/lib/i18n/moi";
 import {
@@ -25,17 +26,14 @@ import {
 // n'a pas besoin d'être valide/invalide, juste présent ou non.
 export const CLE_ONBOARDING_VU_MOI = "gozly_moi_onboarding_vu";
 
-const FILET_SECURITE_MS = 6000;
-
-// Le logo joue en plein écran (mêmes proportions de rognage que le splash
-// habituel, voir moi-ouverture.json/.moi-loading-*), puis se rétracte en
-// petit bandeau qui reste affiché pendant tout le parcours (langue > thème
-// > notifications), au lieu de disparaître comme le fait le splash normal.
+// Même animation d'ouverture que celle jouée à chaque entrée dans l'app
+// (voir MoiShell.jsx) - une fois terminée, on enchaîne directement sur les
+// étapes de configuration (langue > thème > notifications) au lieu de
+// continuer vers l'accueil.
 export default function OnboardingEmploye() {
   const router = useRouter();
   const { t, langue, setLangue } = useLangue();
-  const lottieRef = useRef(null);
-  const [logoInstalle, setLogoInstalle] = useState(false);
+  const [afficherSplash, setAfficherSplash] = useState(true);
   const [etape, setEtape] = useState("langue"); // "langue" | "theme" | "notifications"
 
   const [theme, setTheme] = useState(DEFAULT_THEME);
@@ -47,37 +45,6 @@ export default function OnboardingEmploye() {
       const cached = window.localStorage.getItem(THEME_STORAGE_KEY_MOI);
       if (isValidTheme(cached)) setTheme(cached);
     } catch {}
-  }, []);
-
-  useEffect(() => {
-    if (!lottieRef.current) return;
-
-    let anim;
-    let cancelled = false;
-
-    function installer() {
-      setLogoInstalle(true);
-    }
-
-    import("lottie-web").then(({ default: lottie }) => {
-      if (cancelled || !lottieRef.current) return;
-      anim = lottie.loadAnimation({
-        container: lottieRef.current,
-        renderer: "svg",
-        loop: false,
-        autoplay: true,
-        path: "/animations/moi-bienvenue.json",
-      });
-      anim.addEventListener("complete", installer);
-    });
-
-    const filet = setTimeout(installer, FILET_SECURITE_MS);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(filet);
-      anim?.destroy();
-    };
   }, []);
 
   function appliquerTheme(id) {
@@ -121,13 +88,13 @@ export default function OnboardingEmploye() {
     router.replace("/moi/accueil");
   }
 
+  if (afficherSplash) {
+    return <MoiChargement onTermine={() => setAfficherSplash(false)} />;
+  }
+
   return (
     <div className="moi-onboarding">
-      <div className="moi-onboarding-lottie-wrap">
-        <div ref={lottieRef} className="moi-onboarding-lottie"></div>
-      </div>
-
-      <div className={`moi-onboarding-content${logoInstalle ? " visible" : ""}`}>
+      <div className="moi-onboarding-content visible">
         {etape === "langue" && (
           <>
             <h1>{t("onboarding.langueTitre")}</h1>
