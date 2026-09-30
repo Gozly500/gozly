@@ -122,8 +122,8 @@ export default function OnboardingEmploye() {
   }
 
   return (
-    <div className={`moi-onboarding${logoInstalle ? " settled" : ""}`}>
-      <div className={`moi-onboarding-lottie-wrap${logoInstalle ? " settled" : ""}`}>
+    <div className="moi-onboarding">
+      <div className="moi-onboarding-lottie-wrap">
         <div ref={lottieRef} className="moi-onboarding-lottie"></div>
       </div>
 
