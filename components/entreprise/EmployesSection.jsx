@@ -6,6 +6,15 @@ import InfoTooltip from "@/components/InfoTooltip";
 
 const FORM_VIDE = { nom: "", role: "", telephone: "", courriel: "", nip: "", numeroPaie: "", emplacementIds: [] };
 
+function libelleConnexion(emp) {
+  if (!emp.derniere_connexion) return "📱 N'a jamais ouvert l'application";
+  return `📱 Dernière connexion : ${new Date(emp.derniere_connexion).toLocaleDateString("fr-CA", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })}`;
+}
+
 export default function EmployesSection({ entrepriseId }) {
   const [employes, setEmployes] = useState([]);
   const [emplacements, setEmplacements] = useState([]);
@@ -236,6 +245,8 @@ export default function EmployesSection({ entrepriseId }) {
                     .filter(Boolean)
                     .join(" · ") || "Aucune info de contact"}
                   {empEmplacements.length > 0 && ` · 📍 ${empEmplacements.join(", ")}`}
+                  {" · "}
+                  {libelleConnexion(emp)}
                 </div>
               </div>
               <div className="admin-row-controls">
@@ -456,6 +467,12 @@ export default function EmployesSection({ entrepriseId }) {
                   <div className="admin-row-title">
                     {viewingEmp.emplacements.length > 0 ? viewingEmp.emplacements.join(", ") : "Disponible partout"}
                   </div>
+                </div>
+              </div>
+              <div className="admin-row">
+                <div className="admin-row-main">
+                  <div className="admin-row-sub">App mobile "Gozly Équipe"</div>
+                  <div className="admin-row-title">{libelleConnexion(viewingEmp)}</div>
                 </div>
               </div>
             </div>

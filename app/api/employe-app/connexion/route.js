@@ -74,6 +74,8 @@ export async function POST(request) {
     return NextResponse.json({ error: "La connexion a échoué." }, { status: 500 });
   }
 
+  await service.from("employes").update({ derniere_connexion: new Date().toISOString() }).eq("id", employe.id);
+
   return NextResponse.json({
     token,
     employe: { id: employe.id, nom: employe.nom },
