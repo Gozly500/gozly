@@ -1586,13 +1586,15 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 
 /* ============ Tableau de bord - widgets personnalisables ============ */
 .dash-edit-layout{display:flex;gap:24px;align-items:flex-start;}
-.dash-widgets-grid{flex:1;min-width:0;display:grid;grid-template-columns:repeat(2,1fr);gap:22px;align-items:start;}
+.dash-widgets-grid{flex:1;min-width:0;display:flex;flex-direction:column;gap:22px;}
+.dash-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:start;}
+.dash-col{display:flex;flex-direction:column;gap:22px;min-width:0;}
+.dash-col:empty{display:none;}
+@media (max-width:800px){.dash-cols{grid-template-columns:minmax(0,1fr);}}
 .widget-card{
     background:rgba(var(--w),0.05);border:1px solid rgba(var(--w),0.12);
     border-radius:20px;padding:22px 24px;transition:opacity .2s ease,border-color .2s ease;
-    grid-column:span 1;
   }
-.widget-card.horizontal{grid-column:1/-1;}
 .widget-card.drag-over{border-color:rgba(122,63,224,0.6);background:rgba(122,63,224,0.08);}
 .widget-card-head{
     display:flex;align-items:center;justify-content:space-between;gap:14px;
@@ -1632,7 +1634,7 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .widget-palette-tile:active{cursor:grabbing;}
 
 .widget-drop-slot{
-    grid-column:span 1;border-radius:12px;min-height:14px;
+    border-radius:12px;min-height:14px;
     border:2px dashed rgba(var(--w),0.18);
     transition:border-color .15s ease,background .15s ease,min-height .15s ease;
   }

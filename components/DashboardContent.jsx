@@ -137,24 +137,24 @@ export default function DashboardContent() {
     });
   }
 
-  // Insère (ou déplace) le widget `id` à la position `indexParmiPlaces`
-  // parmi les widgets actuellement visibles - utilisé aussi bien pour
-  // ajouter un widget depuis la palette que pour réordonner la grille.
-  function handleDropSurSlot(indexParmiPlaces) {
-    if (!draggedId) return;
+  // Insère (ou déplace) le widget glissé juste avant le widget `idCible`
+  // (ou à la fin si idCible est null) - utilisé aussi bien pour ajouter un
+  // widget depuis la palette que pour réordonner le tableau de bord.
+  function handleDropAvant(idCible) {
+    if (!draggedId || idCible === draggedId) {
+      setDraggedId(null);
+      setDragOverSlot(null);
+      return;
+    }
     setWidgetConfig((cur) => {
       const sansWidget = cur.filter((w) => w.id !== draggedId);
       const widget = { id: draggedId, visible: true };
-      const placesVisibles = sansWidget.filter((w) => w.visible);
+      const posCible = idCible ? sansWidget.findIndex((w) => w.id === idCible) : -1;
 
-      let config;
-      if (indexParmiPlaces >= placesVisibles.length) {
-        config = [...sansWidget, widget];
-      } else {
-        const idCible = placesVisibles[indexParmiPlaces].id;
-        const posCible = sansWidget.findIndex((w) => w.id === idCible);
-        config = [...sansWidget.slice(0, posCible), widget, ...sansWidget.slice(posCible)];
-      }
+      const config =
+        posCible === -1
+          ? [...sansWidget, widget]
+          : [...sansWidget.slice(0, posCible), widget, ...sansWidget.slice(posCible)];
 
       persisterConfig(config);
       return config;
@@ -202,6 +202,59 @@ export default function DashboardContent() {
     return null;
   }
 
+  // Les widgets verticaux consécutifs sont répartis en alternance dans deux
+  // colonnes indépendantes (gauche, droite, gauche...) : chaque widget se
+  // colle donc directement sous celui qui le précède dans sa colonne, sans
+  // trou, peu importe la hauteur des widgets voisins.
+  const segments = [];
+  for (const w of widgetsPlaces) {
+    const meta = WIDGETS.find((m) => m.id === w.id);
+    if (meta.taille === "horizontal") {
+      segments.push({ type: "horizontal", widget: w });
+      continue;
+    }
+    let dernier = segments[segments.length - 1];
+    if (!dernier || dernier.type !== "verticaux") {
+      dernier = { type: "verticaux", gauche: [], droite: [], compte: 0 };
+      segments.push(dernier);
+    }
+    (dernier.compte % 2 === 0 ? dernier.gauche : dernier.droite).push(w);
+    dernier.compte += 1;
+  }
+
+  function renderWidget(w) {
+    const meta = WIDGETS.find((m) => m.id === w.id);
+    return (
+      <WidgetCard
+        key={w.id}
+        title={meta.nom}
+        taille={meta.taille}
+        editMode={editMode}
+        dragOver={editMode && !!draggedId && draggedId !== w.id && dragOverSlot === w.id}
+        onRemove={() => handleRemove(w.id)}
+        onDragStart={(e) => {
+          e.dataTransfer.setData("text/plain", w.id);
+          setDraggedId(w.id);
+        }}
+        onDragOver={(e) => {
+          if (!draggedId) return;
+          e.preventDefault();
+          setDragOverSlot(w.id);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          handleDropAvant(w.id);
+        }}
+        onDragEnd={() => {
+          setDraggedId(null);
+          setDragOverSlot(null);
+        }}
+      >
+        {renderContenuWidget(w.id)}
+      </WidgetCard>
+    );
+  }
+
   return (
     <div className="dash-layout">
       <DashSidebar
@@ -244,55 +297,29 @@ export default function DashboardContent() {
 
           <div className={editMode ? "dash-edit-layout" : undefined}>
             <div className="dash-widgets-grid">
+              {segments.map((segment, si) =>
+                segment.type === "horizontal" ? (
+                  <div key={`s${si}`}>{renderWidget(segment.widget)}</div>
+                ) : (
+                  <div key={`s${si}`} className="dash-cols">
+                    <div className="dash-col">{segment.gauche.map(renderWidget)}</div>
+                    <div className="dash-col">{segment.droite.map(renderWidget)}</div>
+                  </div>
+                )
+              )}
               {editMode && draggedId && (
                 <DropSlot
-                  dragOver={dragOverSlot === 0}
+                  dragOver={dragOverSlot === "fin"}
                   onDragOver={(e) => {
                     e.preventDefault();
-                    setDragOverSlot(0);
+                    setDragOverSlot("fin");
                   }}
                   onDrop={(e) => {
                     e.preventDefault();
-                    handleDropSurSlot(0);
+                    handleDropAvant(null);
                   }}
                 />
               )}
-              {widgetsPlaces.map((w, i) => {
-                const meta = WIDGETS.find((m) => m.id === w.id);
-                return (
-                  <div key={w.id} style={{ display: "contents" }}>
-                    <WidgetCard
-                      title={meta.nom}
-                      taille={meta.taille}
-                      editMode={editMode}
-                      onRemove={() => handleRemove(w.id)}
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("text/plain", w.id);
-                        setDraggedId(w.id);
-                      }}
-                      onDragEnd={() => {
-                        setDraggedId(null);
-                        setDragOverSlot(null);
-                      }}
-                    >
-                      {renderContenuWidget(w.id)}
-                    </WidgetCard>
-                    {editMode && draggedId && (
-                      <DropSlot
-                        dragOver={dragOverSlot === i + 1}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          setDragOverSlot(i + 1);
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          handleDropSurSlot(i + 1);
-                        }}
-                      />
-                    )}
-                  </div>
-                );
-              })}
             </div>
 
             {editMode && (
