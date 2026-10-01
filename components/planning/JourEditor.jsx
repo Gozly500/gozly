@@ -16,6 +16,7 @@ export default function JourEditor({ entrepriseId, date }) {
   const [loading, setLoading] = useState(true);
   const [addingFor, setAddingFor] = useState(null);
   const [texte, setTexte] = useState("");
+  const [modelesPourCategorie, setModelesPourCategorie] = useState(null); // categorie_id dont la popup de modèles est ouverte
 
   useEffect(() => {
     load();
@@ -139,37 +140,17 @@ export default function JourEditor({ entrepriseId, date }) {
               <div className="planning-day" key={cat.id}>
                 <div className="planning-day-head">
                   <span className="planning-day-title">{cat.nom}</span>
-                  <button className="admin-icon-btn" onClick={() => setAddingFor(cat.id)}>
-                    + Ajouter une tâche
-                  </button>
-                </div>
-
-                {catModeles.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "10px" }}>
-                    {catModeles.map((m) => (
-                      <form
-                        key={m.id}
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          handleAddDepuisModele(m);
-                        }}
-                        style={{ display: "flex", gap: "8px", alignItems: "center" }}
-                      >
-                        <span style={{ fontSize: "13.5px", minWidth: "0", flex: "1 1 40%" }}>{m.nom}</span>
-                        <input
-                          type="text"
-                          placeholder="Quantité ou note"
-                          value={valeursModeles[m.id] || ""}
-                          onChange={(e) => setValeursModeles((prev) => ({ ...prev, [m.id]: e.target.value }))}
-                          style={{ flex: "1 1 auto", minWidth: 0 }}
-                        />
-                        <button type="submit" className="btn-small">
-                          Ajouter
-                        </button>
-                      </form>
-                    ))}
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {catModeles.length > 0 && (
+                      <button className="admin-icon-btn" onClick={() => setModelesPourCategorie(cat.id)}>
+                        📋 Modèles
+                      </button>
+                    )}
+                    <button className="admin-icon-btn" onClick={() => setAddingFor(cat.id)}>
+                      + Ajouter une tâche
+                    </button>
                   </div>
-                )}
+                </div>
 
                 {catTaches.map((t) => (
                   <label className="planning-tache" key={t.id}>
@@ -219,6 +200,45 @@ export default function JourEditor({ entrepriseId, date }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {modelesPourCategorie && (
+        <div className="modal-overlay" onClick={() => setModelesPourCategorie(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{categories.find((c) => c.id === modelesPourCategorie)?.nom}</h3>
+              <button className="admin-icon-btn" onClick={() => setModelesPourCategorie(null)}>
+                Fermer
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {modeles
+                .filter((m) => m.categorie_id === modelesPourCategorie)
+                .map((m) => (
+                  <form
+                    key={m.id}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleAddDepuisModele(m);
+                    }}
+                    style={{ display: "flex", gap: "8px", alignItems: "center" }}
+                  >
+                    <span style={{ fontSize: "13.5px", minWidth: "0", flex: "1 1 40%" }}>{m.nom}</span>
+                    <input
+                      type="text"
+                      placeholder="Quantité ou note"
+                      value={valeursModeles[m.id] || ""}
+                      onChange={(e) => setValeursModeles((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                      style={{ flex: "1 1 auto", minWidth: 0 }}
+                    />
+                    <button type="submit" className="btn-small">
+                      Ajouter
+                    </button>
+                  </form>
+                ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
