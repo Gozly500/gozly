@@ -3,12 +3,24 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import InfoTooltip from "@/components/InfoTooltip";
+import { IconTelephone } from "@/components/icons/GozlyIcons";
 
 const FORM_VIDE = { nom: "", role: "", telephone: "", courriel: "", nip: "", numeroPaie: "", emplacementIds: [] };
 
+// Au-delà de ce délai sans s'être connecté, l'icône repasse au rouge même
+// si l'employé s'est déjà connecté par le passé.
+const MOIS_AVANT_INACTIF = 3;
+
+function estConnecteRecemment(emp) {
+  if (!emp.derniere_connexion) return false;
+  const seuil = new Date();
+  seuil.setMonth(seuil.getMonth() - MOIS_AVANT_INACTIF);
+  return new Date(emp.derniere_connexion) >= seuil;
+}
+
 function libelleConnexion(emp) {
-  if (!emp.derniere_connexion) return "📱 N'a jamais ouvert l'application";
-  return `📱 Dernière connexion : ${new Date(emp.derniere_connexion).toLocaleDateString("fr-CA", {
+  if (!emp.derniere_connexion) return "N'a jamais ouvert l'application";
+  return `Dernière connexion : ${new Date(emp.derniere_connexion).toLocaleDateString("fr-CA", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -236,18 +248,28 @@ export default function EmployesSection({ entrepriseId }) {
           const empEmplacements = emplacementsDe(emp.id)
             .map((id) => emplacements.find((e) => e.id === id)?.nom)
             .filter(Boolean);
+          const connecte = estConnecteRecemment(emp);
           return (
-            <div className="admin-row" key={emp.id}>
+            <div className="admin-row" style={{ position: "relative" }} key={emp.id}>
+              <IconTelephone
+                className="gozly-icon"
+                title={libelleConnexion(emp)}
+                style={{
+                  position: "absolute",
+                  top: "14px",
+                  right: "16px",
+                  width: "15px",
+                  height: "15px",
+                  color: connecte ? "var(--text-dim)" : "#ff8a8a",
+                }}
+              />
               <div className="admin-row-main">
                 <div className="admin-row-title">{emp.nom}</div>
                 <div className="admin-row-sub">
-                  {[emp.role, emp.telephone, emp.courriel, emp.numero_paie && `# paie: ${emp.numero_paie}`]
-                    .filter(Boolean)
-                    .join(" · ") || "Aucune info de contact"}
-                  {empEmplacements.length > 0 && ` · 📍 ${empEmplacements.join(", ")}`}
-                  {" · "}
-                  {libelleConnexion(emp)}
+                  {[emp.role, emp.courriel, emp.numero_paie && `# paie: ${emp.numero_paie}`].filter(Boolean).join(" · ") ||
+                    "Aucune info de contact"}
                 </div>
+                {empEmplacements.length > 0 && <div className="admin-row-sub">📍 {empEmplacements.join(", ")}</div>}
               </div>
               <div className="admin-row-controls">
                 <button className="admin-icon-btn" onClick={() => setViewingEmp({ ...emp, emplacements: empEmplacements })}>
