@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
-import { getDebutSemaine } from "@/lib/semaine";
 import RappelNotifications from "@/components/moi/RappelNotifications";
 import { useLangue } from "@/components/moi/LangueContext";
 import { localeDate } from "@/lib/i18n/moi";
@@ -49,13 +48,12 @@ export default function DemandesEmploye() {
 
   async function chargerTout() {
     setLoading(true);
-    const semaine = getDebutSemaine(new Date()).toISOString().slice(0, 10);
     const [moiRes, congesRes, echangesRes, colleguesRes, quartsRes] = await Promise.all([
       employeFetch("/api/employe-app/moi"),
       employeFetch("/api/employe-app/demandes/conges"),
       employeFetch("/api/employe-app/demandes/echanges"),
       employeFetch("/api/employe-app/chat/collegues"),
-      employeFetch(`/api/employe-app/horaire?semaine=${semaine}`),
+      employeFetch("/api/employe-app/demandes/mes-quarts"),
     ]);
     const moi = await moiRes.json();
     const congesEstActif = moi.entreprise?.congesActif !== false;

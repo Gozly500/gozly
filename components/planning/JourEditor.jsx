@@ -9,6 +9,8 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 export default function JourEditor({ entrepriseId, date }) {
   const [categories, setCategories] = useState([]);
   const [taches, setTaches] = useState([]);
+  const [modeles, setModeles] = useState([]);
+  const [valeursModeles, setValeursModeles] = useState({});
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementIdState] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,12 +29,14 @@ export default function JourEditor({ entrepriseId, date }) {
 
   async function load() {
     setLoading(true);
-    const [categoriesRes, emplacementsRes] = await Promise.all([
+    const [categoriesRes, emplacementsRes, modelesRes] = await Promise.all([
       supabase.from("categories").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
+      supabase.from("taches_modeles").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
     ]);
 
     setCategories(categoriesRes.data || []);
+    setModeles(modelesRes.data || []);
     const list = emplacementsRes.data || [];
     setEmplacements(list);
 
@@ -67,6 +71,19 @@ export default function JourEditor({ entrepriseId, date }) {
     });
     setTexte("");
     setAddingFor(null);
+    loadTaches(emplacementId);
+  }
+
+  async function handleAddDepuisModele(modele) {
+    const valeur = (valeursModeles[modele.id] || "").trim();
+    await supabase.from("taches").insert({
+      entreprise_id: entrepriseId,
+      categorie_id: modele.categorie_id,
+      date,
+      texte: valeur ? `${modele.nom} : ${valeur}` : modele.nom,
+      emplacement_id: emplacementId,
+    });
+    setValeursModeles((prev) => ({ ...prev, [modele.id]: "" }));
     loadTaches(emplacementId);
   }
 
@@ -117,6 +134,7 @@ export default function JourEditor({ entrepriseId, date }) {
         <div className="planning-days">
           {categories.map((cat) => {
             const catTaches = taches.filter((t) => t.categorie_id === cat.id);
+            const catModeles = modeles.filter((m) => m.categorie_id === cat.id);
             return (
               <div className="planning-day" key={cat.id}>
                 <div className="planning-day-head">
@@ -125,6 +143,33 @@ export default function JourEditor({ entrepriseId, date }) {
                     + Ajouter une tâche
                   </button>
                 </div>
+
+                {catModeles.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "10px" }}>
+                    {catModeles.map((m) => (
+                      <form
+                        key={m.id}
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleAddDepuisModele(m);
+                        }}
+                        style={{ display: "flex", gap: "8px", alignItems: "center" }}
+                      >
+                        <span style={{ fontSize: "13.5px", minWidth: "0", flex: "1 1 40%" }}>{m.nom}</span>
+                        <input
+                          type="text"
+                          placeholder="Quantité ou note"
+                          value={valeursModeles[m.id] || ""}
+                          onChange={(e) => setValeursModeles((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                          style={{ flex: "1 1 auto", minWidth: 0 }}
+                        />
+                        <button type="submit" className="btn-small">
+                          Ajouter
+                        </button>
+                      </form>
+                    ))}
+                  </div>
+                )}
 
                 {catTaches.map((t) => (
                   <label className="planning-tache" key={t.id}>
