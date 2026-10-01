@@ -121,7 +121,7 @@ export default function TemperatureEmploye() {
         <input
           type="number"
           step="0.1"
-          placeholder="°C"
+          placeholder={`°${eq.unite === "F" ? "F" : "C"}`}
           style={{ width: "100%", boxSizing: "border-box" }}
           value={drafts[eq.id] ?? ""}
           onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
@@ -131,7 +131,7 @@ export default function TemperatureEmploye() {
     const r = releveExistant(eq.id, periode);
     return (
       <div style={{ textAlign: "center", fontSize: "13px", color: r ? "var(--text)" : "var(--text-dim)" }}>
-        {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°C` : "—"}
+        {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°${eq.unite === "F" ? "F" : "C"}` : "—"}
       </div>
     );
   }

@@ -153,7 +153,7 @@ export default function TemperatureContent() {
       equipement_id: eq.id,
       releve_par: displayName,
       temperature: parseFloat(drafts[eq.id]),
-      conforme: estConforme(eq.type, parseFloat(drafts[eq.id])),
+      conforme: estConforme(eq.type, parseFloat(drafts[eq.id]), eq.unite),
       date_relevee: creneau.date,
       periode: creneau.periode,
     }));
@@ -274,7 +274,7 @@ export default function TemperatureContent() {
                                   key={p}
                                   type="number"
                                   step="0.1"
-                                  placeholder="°C"
+                                  placeholder={`°${eq.unite === "F" ? "F" : "C"}`}
                                   style={{ width: "100%", boxSizing: "border-box" }}
                                   value={drafts[eq.id] ?? ""}
                                   onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
@@ -284,7 +284,7 @@ export default function TemperatureContent() {
                             const r = releveExistant(eq.id, p);
                             return (
                               <div key={p} style={{ textAlign: "center", fontSize: "13px", color: r ? "var(--text)" : "var(--text-dim)" }}>
-                                {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°C` : "—"}
+                                {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°${eq.unite === "F" ? "F" : "C"}` : "—"}
                               </div>
                             );
                           })}
@@ -357,7 +357,7 @@ export default function TemperatureContent() {
                                   const r = f.releves.find((x) => x.equipement_id === eq.id && x.periode === p);
                                   return (
                                     <div key={p} style={{ textAlign: "center", fontSize: "13px", color: r ? "var(--text)" : "var(--text-dim)" }}>
-                                      {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°C` : "—"}
+                                      {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°${eq.unite === "F" ? "F" : "C"}` : "—"}
                                       {r && <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>{r.releve_par}</div>}
                                     </div>
                                   );

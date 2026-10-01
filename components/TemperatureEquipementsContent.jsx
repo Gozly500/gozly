@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
-import { TYPES_EQUIPEMENT } from "@/lib/temperature";
+import { TYPES_EQUIPEMENT, UNITES } from "@/lib/temperature";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import SimpleSelect from "@/components/SimpleSelect";
 
@@ -22,7 +22,12 @@ export default function TemperatureEquipementsContent() {
 
   const [nomEquipement, setNomEquipement] = useState("");
   const [typeEquipement, setTypeEquipement] = useState("refrigerateur");
+  const [uniteEquipement, setUniteEquipement] = useState("C");
   const [emplacementEquipement, setEmplacementEquipement] = useState(null);
+
+  const [editingId, setEditingId] = useState(null);
+  const [editType, setEditType] = useState("refrigerateur");
+  const [editUnite, setEditUnite] = useState("C");
 
   useEffect(() => {
     let ignore = false;
@@ -91,16 +96,30 @@ export default function TemperatureEquipementsContent() {
       entreprise_id: entrepriseId,
       nom: nomEquipement.trim(),
       type: typeEquipement,
+      unite: uniteEquipement,
       emplacement_id: emplacementEquipement,
     });
     setNomEquipement("");
     setTypeEquipement("refrigerateur");
+    setUniteEquipement("C");
     setEmplacementEquipement(null);
     load();
   }
 
   async function handleDeleteEquipement(id) {
     await supabase.from("equipements_temperature").delete().eq("id", id);
+    load();
+  }
+
+  function startEdit(eq) {
+    setEditingId(eq.id);
+    setEditType(eq.type);
+    setEditUnite(eq.unite || "C");
+  }
+
+  async function handleSaveEdit(id) {
+    await supabase.from("equipements_temperature").update({ type: editType, unite: editUnite }).eq("id", id);
+    setEditingId(null);
     load();
   }
 
@@ -144,19 +163,54 @@ export default function TemperatureEquipementsContent() {
                 <h3>Équipements</h3>
                 <div className="admin-list" style={{ marginTop: "14px", maxWidth: "560px" }}>
                   {equipements.map((eq) => (
-                    <div className="admin-row" key={eq.id}>
-                      <div className="admin-row-main">
-                        <div className="admin-row-title">{eq.nom}</div>
-                        <div className="admin-row-sub">
-                          {TYPES_EQUIPEMENT.find((t) => t.id === eq.type)?.label}
-                          {eq.emplacement_id && " · " + (emplacements.find((e) => e.id === eq.emplacement_id)?.nom || "")}
+                    <div className="admin-row" style={{ flexDirection: "column", alignItems: "stretch" }} key={eq.id}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+                        <div className="admin-row-main">
+                          <div className="admin-row-title">{eq.nom}</div>
+                          <div className="admin-row-sub">
+                            {TYPES_EQUIPEMENT.find((t) => t.id === eq.type)?.label} · °{eq.unite === "F" ? "F" : "C"}
+                            {eq.emplacement_id && " · " + (emplacements.find((e) => e.id === eq.emplacement_id)?.nom || "")}
+                          </div>
+                        </div>
+                        <div className="admin-row-controls">
+                          {editingId === eq.id ? (
+                            <>
+                              <button className="admin-icon-btn" onClick={() => handleSaveEdit(eq.id)}>
+                                Enregistrer
+                              </button>
+                              <button className="admin-icon-btn" onClick={() => setEditingId(null)}>
+                                Annuler
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button className="admin-icon-btn" onClick={() => startEdit(eq)}>
+                                Modifier
+                              </button>
+                              <button className="admin-icon-btn danger" onClick={() => handleDeleteEquipement(eq.id)}>
+                                Retirer
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
-                      <div className="admin-row-controls">
-                        <button className="admin-icon-btn danger" onClick={() => handleDeleteEquipement(eq.id)}>
-                          Retirer
-                        </button>
-                      </div>
+
+                      {editingId === eq.id && (
+                        <div className="field-row" style={{ marginTop: "12px" }}>
+                          <div className="field" style={{ minWidth: "200px" }}>
+                            <label>Type</label>
+                            <SimpleSelect
+                              options={TYPES_EQUIPEMENT.map((t) => ({ id: t.id, label: t.label }))}
+                              value={editType}
+                              onChange={setEditType}
+                            />
+                          </div>
+                          <div className="field" style={{ minWidth: "180px" }}>
+                            <label>Unité</label>
+                            <SimpleSelect options={UNITES} value={editUnite} onChange={setEditUnite} />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {equipements.length === 0 && <div className="admin-empty">Aucun équipement pour l'instant.</div>}
@@ -183,6 +237,10 @@ export default function TemperatureEquipementsContent() {
                       value={typeEquipement}
                       onChange={setTypeEquipement}
                     />
+                  </div>
+                  <div className="field" style={{ minWidth: "180px" }}>
+                    <label>Unité</label>
+                    <SimpleSelect options={UNITES} value={uniteEquipement} onChange={setUniteEquipement} />
                   </div>
                   {emplacements.length > 1 && (
                     <div className="field">

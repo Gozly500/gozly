@@ -56,7 +56,7 @@ export async function POST(request) {
 
   const { data: equipement } = await service
     .from("equipements_temperature")
-    .select("id, type, entreprise_id")
+    .select("id, type, unite, entreprise_id")
     .eq("id", equipementId)
     .maybeSingle();
 
@@ -77,7 +77,7 @@ export async function POST(request) {
       employe_id: employe.id,
       releve_par: employe.nom,
       temperature: temp,
-      conforme: estConforme(equipement.type, temp),
+      conforme: estConforme(equipement.type, temp, equipement.unite),
       note: note?.trim() || null,
       date_relevee: date,
       periode,
