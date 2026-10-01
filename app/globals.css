@@ -1121,7 +1121,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
    défile en dessous ; ce fond flouté règle ça. */
 .horaire-tabs-sticky{
     z-index:8;margin:-10px -10px 24px;padding:10px;
-    background:var(--pop);
+    background:var(--glass);border:1px solid var(--glass-border);
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     border-radius:18px;
   }
@@ -1662,7 +1662,7 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
    plutôt que d'écraser chaque colonne - la liste des employés, séparée
    (flex sibling), n'est jamais concernée par ce défilement. */
 .horaire-grid{
-    flex:1;min-width:0;display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:16px;
+    flex:1;min-width:0;display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));gap:12px;
     overflow-x:auto;padding-bottom:6px;
   }
 .horaire-col{
