@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
+import TemperatureInput from "@/components/TemperatureInput";
 
 export default function TemperatureEmploye() {
   const { t } = useLangue();
@@ -111,20 +112,17 @@ export default function TemperatureEmploye() {
   }
 
   const periodeLabel = creneau?.periode === "am" ? t("temperature.matin") : creneau?.periode === "pm" ? t("temperature.soir") : "";
-  const grille = { display: "grid", gridTemplateColumns: "1fr 84px 84px", gap: "8px", alignItems: "center", padding: "10px 14px" };
+  const grille = { display: "grid", gridTemplateColumns: "1fr 104px 104px", gap: "8px", alignItems: "center", padding: "10px 14px" };
 
   // Une case AM ou PM : champ de saisie seulement pour le créneau actuel,
   // sinon la valeur déjà relevée en lecture seule (ou un tiret).
   function renderCase(eq, periode) {
     if (periode === creneau?.periode) {
       return (
-        <input
-          type="number"
-          step="0.1"
+        <TemperatureInput
           placeholder={`°${eq.unite === "F" ? "F" : "C"}`}
-          style={{ width: "100%", boxSizing: "border-box" }}
           value={drafts[eq.id] ?? ""}
-          onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
+          onChange={(v) => setDrafts((prev) => ({ ...prev, [eq.id]: v }))}
         />
       );
     }

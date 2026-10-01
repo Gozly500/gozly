@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { PERIODES, estConforme, creneauActuel, grouperParJour, relevesEnCsv, telechargerFichier } from "@/lib/temperature";
 import EmplacementSelect from "@/components/EmplacementSelect";
+import TemperatureInput from "@/components/TemperatureInput";
 
 export default function TemperatureContent() {
   const router = useRouter();
@@ -270,14 +271,11 @@ export default function TemperatureContent() {
                           {["am", "pm"].map((p) => {
                             if (p === creneau.periode) {
                               return (
-                                <input
+                                <TemperatureInput
                                   key={p}
-                                  type="number"
-                                  step="0.1"
                                   placeholder={`°${eq.unite === "F" ? "F" : "C"}`}
-                                  style={{ width: "100%", boxSizing: "border-box" }}
                                   value={drafts[eq.id] ?? ""}
-                                  onChange={(e) => setDrafts((prev) => ({ ...prev, [eq.id]: e.target.value }))}
+                                  onChange={(v) => setDrafts((prev) => ({ ...prev, [eq.id]: v }))}
                                 />
                               );
                             }
