@@ -102,7 +102,7 @@ export default function SubscribePage() {
             <div className="module-row">
               <div className="badge b-3">▥</div>
               <div className="module-row-text">
-                <h3>Planning</h3>
+                <h3>Tâches</h3>
                 <p>Prépare les tâches et ce qu&apos;il y a à faire, jour par jour - une liste claire pour ton équipe, même plusieurs jours à l&apos;avance.</p>
               </div>
             </div>

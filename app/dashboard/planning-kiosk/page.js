@@ -1,7 +1,7 @@
 import PlanningKioskContent from "@/components/PlanningKioskContent";
 
 export const metadata = {
-  title: "Gozly - Planning du jour",
+  title: "Gozly - Tâches du jour",
 };
 
 export default function PlanningKioskPage() {

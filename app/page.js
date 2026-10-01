@@ -30,7 +30,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <ParallaxSection id="modules" src="/marketing/planification.png" alt="Aperçu du module Planning de Gozly" />
+      <ParallaxSection id="modules" src="/marketing/planification.png" alt="Aperçu du module Tâches de Gozly" />
 
       <section id="process">
         <div className="wrap">

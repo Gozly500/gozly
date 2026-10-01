@@ -157,7 +157,7 @@ export default function PlanningContent() {
         <div className="dash-main-inner">
           <header className="dash-hero-inline" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
             <div>
-              <h1>Planning</h1>
+              <h1>Tâches</h1>
               <p>Les journées de tâches déjà créées.</p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

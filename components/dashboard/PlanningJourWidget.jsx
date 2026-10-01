@@ -60,7 +60,7 @@ export default function PlanningJourWidget({ entrepriseId }) {
         </table>
       </div>
       <Link href="/dashboard/planning" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
-        Voir le Planning →
+        Voir les tâches →
       </Link>
     </>
   );

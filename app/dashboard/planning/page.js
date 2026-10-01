@@ -1,7 +1,7 @@
 import PlanningContent from "@/components/PlanningContent";
 
 export const metadata = {
-  title: "Gozly - Planning",
+  title: "Gozly - Tâches",
 };
 
 export default function PlanningPage() {
