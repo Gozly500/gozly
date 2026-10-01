@@ -250,19 +250,7 @@ export default function EmployesSection({ entrepriseId }) {
             .filter(Boolean);
           const connecte = estConnecteRecemment(emp);
           return (
-            <div className="admin-row" style={{ position: "relative" }} key={emp.id}>
-              <IconTelephone
-                className="gozly-icon"
-                title={libelleConnexion(emp)}
-                style={{
-                  position: "absolute",
-                  top: "14px",
-                  right: "16px",
-                  width: "15px",
-                  height: "15px",
-                  color: connecte ? "var(--text-dim)" : "#ff8a8a",
-                }}
-              />
+            <div className="admin-row" key={emp.id}>
               <div className="admin-row-main">
                 <div className="admin-row-title">{emp.nom}</div>
                 <div className="admin-row-sub">
@@ -272,6 +260,11 @@ export default function EmployesSection({ entrepriseId }) {
                 {empEmplacements.length > 0 && <div className="admin-row-sub">📍 {empEmplacements.join(", ")}</div>}
               </div>
               <div className="admin-row-controls">
+                <IconTelephone
+                  className="gozly-icon"
+                  title={libelleConnexion(emp)}
+                  style={{ width: "15px", height: "15px", color: connecte ? "var(--text-dim)" : "#ff8a8a" }}
+                />
                 <button className="admin-icon-btn" onClick={() => setViewingEmp({ ...emp, emplacements: empEmplacements })}>
                   Voir
                 </button>
