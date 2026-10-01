@@ -1115,6 +1115,17 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;font-
 .settings-nav-item.active{background:rgba(var(--w),0.10);color:var(--fg);}
 .settings-nav-item .icon{font-size:15px;flex-shrink:0;}
 
+/* .settings-nav est déjà position:sticky (voir plus haut) - utilisé ici à
+   l'horizontale pour les onglets Horaire/Feuille de temps/Demandes. Sans
+   fond, les onglets collés flottaient à nu par-dessus le contenu qui
+   défile en dessous ; ce fond flouté règle ça. */
+.horaire-tabs-sticky{
+    z-index:8;margin:-10px -10px 24px;padding:10px;
+    background:var(--pop);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-radius:18px;
+  }
+
 .settings-panel{flex:1;min-width:0;text-align:left;}
 .settings-panel h2{font-size:22px;margin-bottom:6px;}
 .panel-hint{color:var(--text-dim);font-size:14px;margin-top:6px;margin-bottom:30px;}
@@ -1646,8 +1657,13 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
   }
 .horaire-employee-pill:active{cursor:grabbing;}
 
+/* Sur un écran trop étroit pour montrer les 7 jours confortablement, la
+   grille défile horizontalement toute seule (grâce à minmax + overflow)
+   plutôt que d'écraser chaque colonne - la liste des employés, séparée
+   (flex sibling), n'est jamais concernée par ce défilement. */
 .horaire-grid{
-    flex:1;min-width:0;display:grid;grid-template-columns:repeat(7,1fr);gap:16px;
+    flex:1;min-width:0;display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:16px;
+    overflow-x:auto;padding-bottom:6px;
   }
 .horaire-col{
     background:rgba(var(--w),0.05);border:1px solid rgba(var(--w),0.12);
