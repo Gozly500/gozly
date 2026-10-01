@@ -10,6 +10,7 @@ function ModelesSection({ entrepriseId, categorieId }) {
   const [modeles, setModeles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [nom, setNom] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     load();
@@ -29,7 +30,15 @@ function ModelesSection({ entrepriseId, categorieId }) {
   async function handleAdd(e) {
     e.preventDefault();
     if (!nom.trim()) return;
-    await supabase.from("taches_modeles").insert({ entreprise_id: entrepriseId, categorie_id: categorieId, nom: nom.trim() });
+    setError(null);
+    const { error: insertError } = await supabase
+      .from("taches_modeles")
+      .insert({ entreprise_id: entrepriseId, categorie_id: categorieId, nom: nom.trim() });
+    if (insertError) {
+      console.error("Erreur ajout tâche modèle:", insertError);
+      setError(insertError.message || "L'ajout a échoué.");
+      return;
+    }
     setNom("");
     load();
   }
@@ -68,6 +77,7 @@ function ModelesSection({ entrepriseId, categorieId }) {
           Ajouter
         </button>
       </form>
+      {error && <p className="settings-msg err">{error}</p>}
     </div>
   );
 }
