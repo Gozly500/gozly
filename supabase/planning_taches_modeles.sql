@@ -44,3 +44,14 @@ create policy "Supprimer une tâche modèle de son entreprise"
 on taches_modeles for delete
 to authenticated
 using (est_membre(entreprise_id));
+
+-- Comme pour categories/taches (planning_taches.sql) : un admin qui visite
+-- le dashboard d'un client via "Voir le dashboard" (impersonation) n'est
+-- pas membre de cette entreprise dans la table membres, donc est_membre()
+-- renvoie faux pour lui - cette policy lui donne quand même accès.
+drop policy if exists "Les admins peuvent tout faire sur taches_modeles" on taches_modeles;
+create policy "Les admins peuvent tout faire sur taches_modeles"
+on taches_modeles for all
+to authenticated
+using (is_admin())
+with check (is_admin());
