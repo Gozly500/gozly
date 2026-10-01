@@ -19,6 +19,7 @@ import {
   IconInventaire,
   IconVentes,
   IconTemperature,
+  IconCommandes,
 } from "@/components/icons/GozlyIcons";
 
 const ICONES_MODULES = {
@@ -27,6 +28,7 @@ const ICONES_MODULES = {
   inventaire: IconInventaire,
   ventes: IconVentes,
   temperature: IconTemperature,
+  commandes: IconCommandes,
 };
 
 export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout, entrepriseId }) {

@@ -184,6 +184,23 @@ export function IconVentes(props) {
   );
 }
 
+// Sac d'achat (Commandes en ligne) - dessiné maison en attendant une version
+// portée d'un SVG de l'identité visuelle.
+export function IconCommandes(props) {
+  return (
+    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <path d="M190,330L810,330C830,330 846,346 848,366L900,840C902,862 885,880 863,880L137,880C115,880 98,862 100,840L152,366C154,346 170,330 190,330Z" />
+      <path
+        d="M340,420L340,300C340,200 410,130 500,130C590,130 660,200 660,300L660,420"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="60"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function IconIntegration(props) {
   return (
     <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
