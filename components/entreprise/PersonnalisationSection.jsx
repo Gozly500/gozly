@@ -135,6 +135,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [retentionCommandes, setRetentionCommandes] = useState("12");
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
   const [commandesVersTaches, setCommandesVersTaches] = useState("active");
+  const [lieuWix, setLieuWix] = useState(""); // "" = toutes les succursales
+  const [lieuxWixDispo, setLieuxWixDispo] = useState([]);
   const [sectionsOuvertes, setSectionsOuvertes] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -151,7 +153,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles, commandes_vers_taches"
+          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles, commandes_vers_taches, wix_lieu_nom"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -169,7 +171,46 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setRetentionCommandes(String(entrepriseData?.commandes_retention_mois || 12));
     setImpressionManuelles(entrepriseData?.impression_commandes_manuelles || "desactivee");
     setCommandesVersTaches(entrepriseData?.commandes_vers_taches === false ? "desactive" : "active");
+    setLieuWix(entrepriseData?.wix_lieu_nom || "");
+
+    // Les succursales Wix qu'on a vues passer dans les commandes de ce dashboard.
+    const { data: lieuxData } = await supabase
+      .from("commandes_en_ligne")
+      .select("lieu_nom")
+      .eq("entreprise_id", entrepriseId)
+      .not("lieu_nom", "is", null)
+      .limit(2000);
+    setLieuxWixDispo([...new Set((lieuxData || []).map((l) => l.lieu_nom))].sort((a, b) => a.localeCompare(b, "fr")));
     setLoading(false);
+  }
+
+  async function handleChangeLieuWix(value) {
+    setLieuWix(value);
+    setSaving(true);
+    setMsg(null);
+
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const res = await fetch("/api/wix/lieu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.session?.access_token}` },
+        body: JSON.stringify({ entrepriseId, lieu: value || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setMsg(
+        res.ok
+          ? {
+              type: "ok",
+              text: value
+                ? `Succursale enregistrée${data.retirees ? ` (${data.retirees} commande(s) d'une autre succursale retirée(s))` : ""}.`
+                : "Toutes les succursales : la prochaine synchro ramènera toutes les commandes.",
+            }
+          : { type: "err", text: data.error || "L'enregistrement a échoué." }
+      );
+    } catch {
+      setMsg({ type: "err", text: "L'enregistrement a échoué." });
+    }
+    setSaving(false);
   }
 
   async function handleChangeCommandesVersTaches(value) {
@@ -494,6 +535,17 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   options={OPTIONS_RETENTION_COMMANDES}
                   value={retentionCommandes}
                   onChange={handleChangeRetentionCommandes}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Succursale Wix de ce dashboard"
+                  info="Si le même site Wix alimente plusieurs dashboards Gozly (une succursale chacun, ex: Pasta), choisis ici la succursale dont CE dashboard reçoit les commandes et les ventes. Les commandes d'une autre succursale sont retirées de ce dashboard. « Toutes » = aucune séparation. La liste vient des commandes déjà reçues : synchronise d'abord, ou repasse sur « Toutes » pour revoir toutes les succursales."
+                  options={[
+                    { id: "", label: "Toutes les succursales" },
+                    ...[...new Set([...lieuxWixDispo, ...(lieuWix ? [lieuWix] : [])])].map((nom) => ({ id: nom, label: nom })),
+                  ]}
+                  value={lieuWix}
+                  onChange={handleChangeLieuWix}
                   disabled={saving}
                 />
                 <ParametreSelect

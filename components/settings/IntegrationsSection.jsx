@@ -33,6 +33,8 @@ export default function IntegrationsSection({ entrepriseId }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   const pollRef = useRef(null);
+  // Autres dashboards de l'utilisateur qui ont déjà Wix connecté (même site, plusieurs succursales).
+  const [autresDashboards, setAutresDashboards] = useState([]);
 
   const [nethrisStatut, setNethrisStatut] = useState("chargement"); // "chargement" | "deconnecte" | "connecte"
   const [nethrisBusy, setNethrisBusy] = useState(false);
@@ -111,9 +113,46 @@ export default function IntegrationsSection({ entrepriseId }) {
       const data = await res.json();
       setStatut(data.connecte ? "connecte" : data.enAttente ? "en_attente" : "deconnecte");
       if (data.enAttente) demarrerSurveillance();
+      if (!data.connecte && !data.enAttente) chargerAutresDashboards();
     } catch {
       setStatut("deconnecte");
     }
+  }
+
+  async function chargerAutresDashboards() {
+    try {
+      const res = await fetch("/api/wix/autres-connexions", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify({ entrepriseId }),
+      });
+      const data = await res.json();
+      setAutresDashboards(data.entreprises || []);
+    } catch {
+      setAutresDashboards([]);
+    }
+  }
+
+  // Réutilise l'installation Wix d'un autre dashboard (même site Wix, autre succursale).
+  async function handleUtiliserMemeConnexion(depuisEntrepriseId) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/wix/copier-connexion", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify({ entrepriseId, depuisEntrepriseId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg({ type: "err", text: `${data.error || "La connexion a échoué."}${data.detail ? ` [${data.detail}]` : ""}` });
+      } else {
+        setStatut("connecte");
+      }
+    } catch {
+      setMsg({ type: "err", text: "La connexion a échoué." });
+    }
+    setBusy(false);
   }
 
   function demarrerSurveillance() {
@@ -199,6 +238,22 @@ export default function IntegrationsSection({ entrepriseId }) {
               <button type="button" className="submit-btn" onClick={handleConnecter} disabled={busy}>
                 {busy ? "..." : "Connecter Wix"}
               </button>
+
+              {autresDashboards.length > 0 && (
+                <div style={{ marginTop: "18px" }}>
+                  <p className="section-hint">
+                    Ce site Wix est déjà connecté à un autre de tes dashboards (ex: l'autre succursale)? Réutilise la même
+                    connexion, sans réinstaller l'app.
+                  </p>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {autresDashboards.map((e) => (
+                      <button key={e.id} type="button" className="admin-icon-btn" onClick={() => handleUtiliserMemeConnexion(e.id)} disabled={busy}>
+                        Utiliser la connexion de « {e.nom} »
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -219,7 +274,10 @@ export default function IntegrationsSection({ entrepriseId }) {
 
           {statut === "connecte" && (
             <>
-              <p className="section-hint">Ton inventaire Wix est connecté.</p>
+              <p className="section-hint">
+                Ton site Wix est connecté. Si le même site alimente plusieurs dashboards (une succursale chacun), choisis la
+                succursale de celui-ci dans Personnalisation → Commandes en ligne.
+              </p>
               <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
                 {busy ? "..." : "Déconnecter"}
               </button>

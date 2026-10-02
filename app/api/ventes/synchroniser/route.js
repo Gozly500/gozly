@@ -43,7 +43,7 @@ export async function POST(request) {
   }
 
   try {
-    const resultat = await synchroniserVentesWix(service, entreprise.id, connexion.instance_id, jours);
+    const resultat = await synchroniserVentesWix(service, entreprise.id, connexion.instance_id, jours, entreprise.wix_lieu_nom || null);
     return NextResponse.json({ ok: true, ...resultat });
   } catch (err) {
     console.error("Erreur import des ventes Wix:", err.message);
