@@ -13,7 +13,8 @@ export default function VentesWidget({ entrepriseId }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const aujourdhui = new Date().toISOString().slice(0, 10);
+    // Date du jour au Québec (et non en UTC, qui bascule au lendemain dès 20 h).
+    const aujourdhui = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
     supabase
       .from("ventes")
       .select("montant")

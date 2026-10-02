@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { SOURCES_VENTE } from "@/lib/modules";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
+import { IconIntegration } from "@/components/icons/GozlyIcons";
 
 const FORM_VIDE = { source: "comptant", montant: "", date: "", description: "" };
 
@@ -25,6 +26,8 @@ export default function VentesSection({ entrepriseId }) {
   const [form, setForm] = useState(FORM_VIDE);
   const [saving, setSaving] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState(null);
 
   const weekEnd = addDays(weekStart, 7);
 
@@ -56,6 +59,43 @@ export default function VentesSection({ entrepriseId }) {
     setVentes(data || []);
     setLoading(false);
   }
+
+  // Importe les ventes Wix (en ligne + point de vente). À l'ouverture de la page :
+  // silencieux, 3 derniers jours. Avec le bouton : 30 jours, avec un message.
+  async function synchroniserWix({ jours, silencieux }) {
+    if (!silencieux) {
+      setSyncing(true);
+      setSyncMsg(null);
+    }
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const res = await fetch("/api/ventes/synchroniser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.session?.access_token}` },
+        body: JSON.stringify({ entrepriseId, jours }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        await load();
+        if (!silencieux) {
+          setSyncMsg({
+            type: "ok",
+            text: `Ventes Wix importées : ${data.enLigne} commande(s) en ligne et ${data.jours} jour(s) de point de vente.`,
+          });
+        }
+      } else if (!silencieux) {
+        setSyncMsg({ type: "err", text: `${data.error || "L'import a échoué."}${data.detail ? ` [${data.detail}]` : ""}` });
+      }
+    } catch {
+      if (!silencieux) setSyncMsg({ type: "err", text: "L'import a échoué." });
+    }
+    if (!silencieux) setSyncing(false);
+  }
+
+  // Au chargement : rafraîchit les 3 derniers jours depuis Wix (muet si Wix n'est pas connecté).
+  useEffect(() => {
+    synchroniserWix({ jours: 3, silencieux: true });
+  }, [entrepriseId]);
 
   function openAdd() {
     setEditingId(null);
@@ -134,10 +174,17 @@ export default function VentesSection({ entrepriseId }) {
             Toutes tes ventes, peu importe la source, au même endroit.
           </p>
         </div>
-        <button className="submit-btn" onClick={openAdd}>
-          + Ajouter une vente
-        </button>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button className="admin-icon-btn" onClick={() => synchroniserWix({ jours: 30, silencieux: false })} disabled={syncing}>
+            <IconIntegration className="gozly-icon" /> {syncing ? "Import en cours..." : "Importer les ventes Wix (30 jours)"}
+          </button>
+          <button className="submit-btn" onClick={openAdd}>
+            + Ajouter une vente
+          </button>
+        </div>
       </div>
+
+      {syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
@@ -193,12 +240,18 @@ export default function VentesSection({ entrepriseId }) {
                   </div>
                 </div>
                 <div className="admin-row-controls">
-                  <button className="admin-icon-btn" onClick={() => openEdit(v)}>
-                    Modifier
-                  </button>
-                  <button className="admin-icon-btn danger" onClick={() => handleDelete(v.id)}>
-                    Retirer
-                  </button>
+                  {v.source_id ? (
+                    <span className="admin-row-sub">Importée de Wix</span>
+                  ) : (
+                    <>
+                      <button className="admin-icon-btn" onClick={() => openEdit(v)}>
+                        Modifier
+                      </button>
+                      <button className="admin-icon-btn danger" onClick={() => handleDelete(v.id)}>
+                        Retirer
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
