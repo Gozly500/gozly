@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { formatMontant, dateAujourdhui, bornesJour, heureCommande, etatCommande } from "@/lib/commandes";
+import {
+  formatMontant,
+  dateAujourdhui,
+  bornesJour,
+  heureCommande,
+  etatCommande,
+  filtrerParDateEffective,
+  dateEffective,
+  libelleRamassage,
+} from "@/lib/commandes";
 
 export default function CommandesWidget({ entrepriseId }) {
   const [commandes, setCommandes] = useState([]);
@@ -11,17 +20,17 @@ export default function CommandesWidget({ entrepriseId }) {
 
   useEffect(() => {
     const { debut, fin } = bornesJour(dateAujourdhui());
-    supabase
-      .from("commandes_en_ligne")
-      .select("id, numero, client_nom, total, statut, statut_preparation, etape, date_commande")
-      .eq("entreprise_id", entrepriseId)
-      .gte("date_commande", debut)
-      .lt("date_commande", fin)
-      .order("date_commande", { ascending: false })
-      .then(({ data }) => {
-        setCommandes(data || []);
-        setLoading(false);
-      });
+    filtrerParDateEffective(
+      supabase
+        .from("commandes_en_ligne")
+        .select("id, numero, client_nom, total, statut, statut_preparation, etape, date_commande, date_ramassage, date_ramassage_fin")
+        .eq("entreprise_id", entrepriseId),
+      debut,
+      fin
+    ).then(({ data }) => {
+      setCommandes((data || []).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b))));
+      setLoading(false);
+    });
   }, [entrepriseId]);
 
   if (loading) {
@@ -47,14 +56,14 @@ export default function CommandesWidget({ entrepriseId }) {
     <>
       <p style={{ fontSize: "28px", fontWeight: 700 }}>{formatMontant(total)}</p>
       <p className="section-hint" style={{ marginTop: "-4px" }}>
-        {valides.length} commande{valides.length > 1 ? "s" : ""} aujourd&apos;hui
+        {valides.length} commande{valides.length > 1 ? "s" : ""} à ramasser aujourd&apos;hui
         {aPreparer > 0 && ` · ${aPreparer} en attente`}
       </p>
 
       {valides.slice(0, 3).map((c) => (
         <div key={c.id} style={{ fontSize: "13.5px", marginTop: "6px", display: "flex", justifyContent: "space-between", gap: "10px" }}>
           <span>
-            #{c.numero || "—"} · {heureCommande(c.date_commande)}
+            #{c.numero || "—"} · {libelleRamassage(c) || heureCommande(c.date_commande)}
             {c.client_nom ? ` · ${c.client_nom}` : ""}
           </span>
           <span style={{ fontWeight: 600 }}>{formatMontant(c.total)}</span>

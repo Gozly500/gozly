@@ -13,6 +13,9 @@ import {
   bornesJour,
   heureCommande,
   libelleMode,
+  filtrerParDateEffective,
+  dateEffective,
+  libelleRamassage,
   etatCommande,
   etapeCommande,
   libellePaiement,
@@ -40,14 +43,13 @@ export default function CommandesSection({ entrepriseId }) {
 
   const charger = useCallback(async () => {
     const { debut, fin } = bornesJour(dateRef.current);
-    const { data } = await supabase
-      .from("commandes_en_ligne")
-      .select("*")
-      .eq("entreprise_id", entrepriseId)
-      .gte("date_commande", debut)
-      .lt("date_commande", fin)
-      .order("date_commande", { ascending: false });
-    setCommandes(data || []);
+    const { data } = await filtrerParDateEffective(
+      supabase.from("commandes_en_ligne").select("*").eq("entreprise_id", entrepriseId),
+      debut,
+      fin
+    );
+    // Ordre chronologique du ramassage (ou de la commande s'il n'y a pas de ramassage).
+    setCommandes((data || []).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b))));
     setLoading(false);
   }, [entrepriseId]);
 
@@ -241,12 +243,13 @@ export default function CommandesSection({ entrepriseId }) {
                 <div className="admin-row" key={c.id} style={{ alignItems: "flex-start" }}>
                   <div className="admin-row-main">
                     <div className="admin-row-title">
-                      #{c.numero || "—"} · {heureCommande(c.date_commande)}
+                      #{c.numero || "—"} · {libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}
                       {c.client_nom ? ` · ${c.client_nom}` : ""}
                     </div>
                     <div className="admin-row-sub" style={{ marginBottom: "6px" }}>
                       <span style={{ color: etat.couleur, fontWeight: 600 }}>{etat.texte}</span>
                       {mode && ` · ${mode}`}
+                      {c.lieu_nom && ` · ${c.lieu_nom}`}
                       {paiement && ` · ${paiement}`}
                       {c.source === "manuel" && " · Manuelle"}
                     </div>

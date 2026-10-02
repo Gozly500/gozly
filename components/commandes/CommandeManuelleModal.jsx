@@ -2,10 +2,26 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { formatMontant } from "@/lib/commandes";
+import { formatMontant, bornesJour } from "@/lib/commandes";
 import { imprimerCommande } from "@/lib/commandesClient";
 
 const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "" };
+
+// Date (YYYY-MM-DD) et heure (HH:MM) du Québec d'un instant ISO, pour préremplir le formulaire.
+function dateHeureQuebec(iso) {
+  if (!iso) return { date: "", heure: "" };
+  const d = new Date(iso);
+  return {
+    date: new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(d),
+    heure: new Intl.DateTimeFormat("en-GB", { timeZone: "America/Toronto", hour: "2-digit", minute: "2-digit", hour12: false }).format(d),
+  };
+}
+
+// Date + heure saisies (heure du Québec) -> instant ISO UTC.
+function versIsoQuebec(date, heure) {
+  const [h, m] = (heure || "12:00").split(":").map(Number);
+  return new Date(new Date(bornesJour(date).debut).getTime() + ((h || 0) * 60 + (m || 0)) * 60000).toISOString();
+}
 
 function BoutonsChoix({ valeur, onChange, choix }) {
   return (
@@ -36,6 +52,9 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
       ? commande.items.map((it) => ({ nom: it.nom, quantite: String(it.quantite), prix: it.prix != null ? String(it.prix) : "" }))
       : [{ ...ARTICLE_VIDE }]
   );
+  const ramassageInitial = dateHeureQuebec(commande?.date_ramassage);
+  const [dateRamassage, setDateRamassage] = useState(ramassageInitial.date);
+  const [heureRamassage, setHeureRamassage] = useState(ramassageInitial.heure);
   const [saving, setSaving] = useState(false);
   const [erreur, setErreur] = useState("");
 
@@ -65,6 +84,9 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
     const champs = {
       client_nom: clientNom.trim() || null,
       mode,
+      // Précommande : la date/heure où le client vient chercher sa commande.
+      date_ramassage: dateRamassage ? versIsoQuebec(dateRamassage, heureRamassage) : null,
+      date_ramassage_fin: null,
       statut_paiement: paye ? "PAID" : "NOT_PAID",
       total: Math.round(total * 100) / 100,
       items: articlesValides.map((a) => ({
@@ -139,6 +161,14 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
                 ["livraison", "Livraison"],
               ]}
             />
+          </div>
+
+          <div className="field">
+            <label>Date et heure de ramassage (optionnel, pour une précommande)</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: "8px" }}>
+              <input type="date" value={dateRamassage} onChange={(e) => setDateRamassage(e.target.value)} />
+              <input type="time" value={heureRamassage} onChange={(e) => setHeureRamassage(e.target.value)} disabled={!dateRamassage} />
+            </div>
           </div>
 
           <div className="field">

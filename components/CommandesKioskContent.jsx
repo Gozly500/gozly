@@ -14,6 +14,8 @@ import {
   libelleMode,
   libellePaiement,
   etapeCommande,
+  dateEffective,
+  libelleRamassage,
 } from "@/lib/commandes";
 
 const INTERVALLE_SYNC_MS = 30000;
@@ -75,14 +77,19 @@ export default function CommandesKioskContent() {
   const charger = useCallback(async () => {
     if (!entrepriseId) return;
     const depuis = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
+    // Aujourd'hui et avant seulement : une précommande pour la semaine
+    // prochaine n'a pas sa place sur l'écran de la cuisine aujourd'hui.
+    const finAujourdhui = bornesJour(dateAujourdhui()).fin;
     const { data } = await supabase
       .from("commandes_en_ligne")
       .select("*")
       .eq("entreprise_id", entrepriseId)
-      .gte("date_commande", depuis)
-      .order("date_commande", { ascending: true });
+      .or(
+        `and(date_ramassage.gte.${depuis},date_ramassage.lt.${finAujourdhui}),and(date_ramassage.is.null,date_commande.gte.${depuis})`
+      );
 
-    const liste = data || [];
+    // Ordre chronologique du ramassage (ou de la commande sans ramassage).
+    const liste = (data || []).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b)));
     setCommandes(liste);
 
   }, [entrepriseId]);
@@ -209,7 +216,7 @@ export default function CommandesKioskContent() {
       <div className="cmd-kiosk-cols">
         {COLONNES.map((col) => {
           const liste = visibles.filter(
-            (c) => etapeCommande(c) === col.id && (col.id !== "terminee" || c.date_commande >= debutAujourdhui)
+            (c) => etapeCommande(c) === col.id && (col.id !== "terminee" || dateEffective(c) >= debutAujourdhui)
           );
           return (
             <section className="cmd-kiosk-col" key={col.id}>
@@ -227,11 +234,12 @@ export default function CommandesKioskContent() {
                   <article className="cmd-kiosk-card" key={c.id}>
                     <div className="cmd-kiosk-card-top">
                       <strong>#{c.numero || "—"}</strong>
-                      <span>{heureCommande(c.date_commande)}</span>
+                      <span>{libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}</span>
                     </div>
                     {c.client_nom && <div className="cmd-kiosk-client">{c.client_nom}</div>}
                     <div className="cmd-kiosk-tags">
                       {mode && <span className="cmd-kiosk-tag">{mode}</span>}
+                      {c.lieu_nom && <span className="cmd-kiosk-tag">{c.lieu_nom}</span>}
                       {paiement && <span className="cmd-kiosk-tag">{paiement}</span>}
                       {c.source === "manuel" && <span className="cmd-kiosk-tag">Manuelle</span>}
                     </div>
