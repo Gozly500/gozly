@@ -37,6 +37,13 @@ export default function PlanningJourWidget({ entrepriseId }) {
 
   const nomCategorie = (id) => categories.find((c) => c.id === id)?.nom;
 
+  // Le widget reste court : 8 tâches au maximum, les "à faire" d'abord (pour ne
+  // pas cacher ce qui reste derrière des tâches déjà faites). Le reste est sur la page Tâches.
+  const MAX_TACHES = 8;
+  const triees = [...taches.filter((t) => !t.terminee), ...taches.filter((t) => t.terminee)];
+  const affichees = triees.slice(0, MAX_TACHES);
+  const masquees = triees.length - affichees.length;
+
   return (
     <>
       <div className="admin-table-wrap">
@@ -49,7 +56,7 @@ export default function PlanningJourWidget({ entrepriseId }) {
             </tr>
           </thead>
           <tbody>
-            {taches.map((t) => (
+            {affichees.map((t) => (
               <tr key={t.id}>
                 <td>{t.texte}</td>
                 <td>{nomCategorie(t.categorie_id) || "—"}</td>
@@ -59,6 +66,11 @@ export default function PlanningJourWidget({ entrepriseId }) {
           </tbody>
         </table>
       </div>
+      {masquees > 0 && (
+        <p style={{ color: "var(--text-dim)", fontSize: "13px", marginTop: "10px" }}>
+          + {masquees} autre{masquees > 1 ? "s" : ""} tâche{masquees > 1 ? "s" : ""}
+        </p>
+      )}
       <Link href="/dashboard/planning" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
         Voir les tâches →
       </Link>
