@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
-import { obtenirCommandesWix } from "@/lib/wixClient";
+import { obtenirCommandesWix, diagnostiquerPermissionsWix } from "@/lib/wixClient";
 
 // Copie (lecture seule) les commandes Wix récentes de l'entreprise dans
 // commandes_en_ligne. Rejouable à volonté : chaque commande est mise à jour
@@ -50,12 +50,17 @@ export async function POST(request) {
     console.error("Erreur lecture commandes Wix:", err.message);
     // 403 = la permission "Read Orders" n'est pas (encore) accordée à l'installation.
     const permission = err.message.includes("(403)");
+    let diagnostic = "";
+    if (permission) {
+      diagnostic = await diagnostiquerPermissionsWix(connexion.instance_id).catch(() => "");
+      console.error("Diagnostic permissions Wix:", diagnostic);
+    }
     return NextResponse.json(
       {
         error: permission
           ? "Gozly n'a pas la permission de lire les commandes Wix. Réinstalle l'app Gozly connect sur ton site Wix pour l'autoriser."
           : "La lecture des commandes Wix a échoué.",
-        detail: err.message,
+        detail: diagnostic ? `${err.message} | Diagnostic: ${diagnostic}` : err.message,
       },
       { status: 502 }
     );
