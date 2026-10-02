@@ -1,11 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { formatMontant, bornesJour } from "@/lib/commandes";
 import { imprimerCommande, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 
-const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "" };
+const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitId: null, sku: null, options: [] };
+
+// Un produit de l'inventaire Wix en variante s'appelle "Produit — Variante" : on
+// sépare le nom du produit et la variante pour que la commande manuelle ait la
+// même forme qu'une commande Wix (nom + option).
+function separerVariante(nomComplet) {
+  const [base, ...reste] = String(nomComplet).split(" — ");
+  return reste.length > 0 ? { nom: base.trim(), options: [reste.join(" — ").trim()] } : { nom: base.trim(), options: [] };
+}
+
+// Id du produit chez Wix (catalogue V1: "v1:<produit>:<variante>"), pour retrouver l'article.
+function produitIdWix(produit) {
+  if (produit.source === "wix" && produit.source_id?.startsWith("v1:")) return produit.source_id.split(":")[1];
+  return null;
+}
 
 // Date (YYYY-MM-DD) et heure (HH:MM) du Québec d'un instant ISO, pour préremplir le formulaire.
 function dateHeureQuebec(iso) {
@@ -49,25 +63,83 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
   const [paye, setPaye] = useState(commande ? commande.statut_paiement === "PAID" : false);
   const [articles, setArticles] = useState(
     commande?.items?.length
-      ? commande.items.map((it) => ({ nom: it.nom, quantite: String(it.quantite), prix: it.prix != null ? String(it.prix) : "" }))
+      ? commande.items.map((it) => ({
+          nom: it.options?.length ? `${it.nom} — ${it.options.join(", ")}` : it.nom,
+          quantite: String(it.quantite),
+          prix: it.prix != null ? String(it.prix) : "",
+          produit: null,
+          produitId: it.produit_id || null,
+          sku: it.sku || null,
+          options: it.options || [],
+        }))
       : [{ ...ARTICLE_VIDE }]
   );
+  const [produits, setProduits] = useState([]);
+  const [ouvert, setOuvert] = useState(null); // index de la ligne dont la liste de produits est ouverte
   const ramassageInitial = dateHeureQuebec(commande?.date_ramassage);
   const [dateRamassage, setDateRamassage] = useState(ramassageInitial.date);
   const [heureRamassage, setHeureRamassage] = useState(ramassageInitial.heure);
   const [saving, setSaving] = useState(false);
   const [erreur, setErreur] = useState("");
 
+  useEffect(() => {
+    supabase
+      .from("produits_inventaire")
+      .select("id, nom, sku, prix, source, source_id")
+      .eq("entreprise_id", entrepriseId)
+      .order("nom", { ascending: true })
+      .limit(1000)
+      .then(({ data }) => setProduits(data || []));
+  }, [entrepriseId]);
+
   function majArticle(i, champ, valeur) {
     setArticles((prev) => prev.map((a, idx) => (idx === i ? { ...a, [champ]: valeur } : a)));
   }
 
+  // Taper dans le champ efface le lien avec le produit choisi (article libre) ;
+  // choisir un produit de la liste remplit son nom, son prix et ses références.
+  function taperNom(i, texte) {
+    setArticles((prev) =>
+      prev.map((a, idx) => (idx === i ? { ...a, nom: texte, produit: null, produitId: null, sku: null, options: [] } : a))
+    );
+    setOuvert(i);
+  }
+
+  function choisirProduit(i, produit) {
+    setArticles((prev) =>
+      prev.map((a, idx) =>
+        idx === i
+          ? {
+              ...a,
+              nom: produit.nom,
+              prix: produit.prix != null ? String(produit.prix) : a.prix,
+              produit,
+              produitId: produitIdWix(produit),
+              sku: produit.sku || null,
+              options: separerVariante(produit.nom).options,
+            }
+          : a
+      )
+    );
+    setOuvert(null);
+  }
+
   const articlesValides = articles
-    .map((a) => ({
-      nom: a.nom.trim(),
-      quantite: parseInt(a.quantite, 10) || 0,
-      prix: parseFloat(String(a.prix).replace(",", ".")),
-    }))
+    .map((a) => {
+      // Un article venu de l'inventaire est séparé en nom + variante ; un
+      // article libre ou déjà enregistré garde ses options telles quelles.
+      const separe = a.produit
+        ? separerVariante(a.nom)
+        : { nom: a.options?.length ? a.nom.split(" — ")[0].trim() : a.nom.trim(), options: a.options || [] };
+      return {
+        nom: separe.nom,
+        options: separe.options,
+        produit_id: a.produitId || null,
+        sku: a.sku || null,
+        quantite: parseInt(a.quantite, 10) || 0,
+        prix: parseFloat(String(a.prix).replace(",", ".")),
+      };
+    })
     .filter((a) => a.nom && a.quantite > 0);
 
   const total = articlesValides.reduce((sum, a) => sum + a.quantite * (Number.isFinite(a.prix) ? a.prix : 0), 0);
@@ -93,7 +165,9 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
         nom: a.nom,
         quantite: a.quantite,
         prix: Number.isFinite(a.prix) ? a.prix : null,
-        options: [],
+        produit_id: a.produit_id,
+        sku: a.sku,
+        options: a.options,
       })),
       updated_at: new Date().toISOString(),
     };
@@ -176,7 +250,42 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
             <label>Articles</label>
             {articles.map((a, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 56px 80px auto", gap: "6px", marginBottom: "6px" }}>
-                <input type="text" value={a.nom} onChange={(e) => majArticle(i, "nom", e.target.value)} placeholder="Article" />
+                <div className="emplacement-select-wrap" style={{ minWidth: 0 }}>
+                  <input
+                    type="text"
+                    value={a.nom}
+                    onChange={(e) => taperNom(i, e.target.value)}
+                    onFocus={() => setOuvert(i)}
+                    onBlur={() => setTimeout(() => setOuvert((o) => (o === i ? null : o)), 150)}
+                    placeholder="Cherche un produit de l'inventaire"
+                    autoComplete="off"
+                  />
+                  {ouvert === i && (
+                    <div className="emplacement-select-options" style={{ maxHeight: "220px", overflowY: "auto" }}>
+                      {produits
+                        .filter((p) => !a.nom.trim() || a.produit?.id === p.id || p.nom.toLowerCase().includes(a.nom.trim().toLowerCase()))
+                        .slice(0, 40)
+                        .map((p) => (
+                          <div
+                            key={p.id}
+                            className={`emplacement-select-option${a.produit?.id === p.id ? " active" : ""}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              choisirProduit(i, p);
+                            }}
+                          >
+                            {p.nom}
+                            {p.prix != null && <span style={{ color: "var(--text-dim)" }}> · {formatMontant(p.prix)}</span>}
+                          </div>
+                        ))}
+                      {produits.length === 0 && (
+                        <div className="emplacement-select-option" style={{ color: "var(--text-dim)", cursor: "default" }}>
+                          Aucun produit dans l'inventaire : l'article sera libre.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <input type="number" min="1" value={a.quantite} onChange={(e) => majArticle(i, "quantite", e.target.value)} aria-label="Quantité" />
                 <input
                   type="text"

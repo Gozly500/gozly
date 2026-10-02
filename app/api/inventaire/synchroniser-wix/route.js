@@ -62,6 +62,8 @@ export async function POST(request) {
       nom,
       sku: item.product?.variantSku || null,
       quantite: typeof item.quantity === "number" ? item.quantity : item.inStock ? 9999 : 0,
+      // Le prix n'est repris de Wix que s'il est connu : sinon on garde celui entré à la main.
+      ...(item.prix != null && Number.isFinite(Number(item.prix)) ? { prix: Number(item.prix) } : {}),
       updated_at: new Date().toISOString(),
     };
   });

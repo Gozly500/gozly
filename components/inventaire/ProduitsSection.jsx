@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 
-const FORM_VIDE = { nom: "", sku: "", quantite: "", seuilAlerte: "", notes: "" };
+const FORM_VIDE = { nom: "", sku: "", quantite: "", seuilAlerte: "", prix: "", notes: "" };
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession();
@@ -106,6 +106,7 @@ export default function ProduitsSection({ entrepriseId }) {
       sku: produit.sku || "",
       quantite: String(produit.quantite),
       seuilAlerte: String(produit.seuil_alerte),
+      prix: produit.prix != null ? String(produit.prix) : "",
       notes: produit.notes || "",
     });
     setModalOpen(true);
@@ -121,6 +122,7 @@ export default function ProduitsSection({ entrepriseId }) {
       sku: form.sku.trim() || null,
       quantite: Number(form.quantite) || 0,
       seuil_alerte: Number(form.seuilAlerte) || 0,
+      prix: Number.isFinite(parseFloat(String(form.prix).replace(",", "."))) ? parseFloat(String(form.prix).replace(",", ".")) : null,
       notes: form.notes.trim() || null,
     };
 
@@ -190,6 +192,7 @@ export default function ProduitsSection({ entrepriseId }) {
                 <div className="admin-row-sub">
                   {p.sku && `SKU: ${p.sku} · `}
                   Quantité: {p.quantite} · Seuil d'alerte: {p.seuil_alerte}
+                  {p.prix != null && ` · Prix: ${Number(p.prix).toLocaleString("fr-CA", { style: "currency", currency: "CAD" })}`}
                   {p.notes && ` · ${p.notes}`}
                 </div>
               </div>
@@ -264,6 +267,17 @@ export default function ProduitsSection({ entrepriseId }) {
                     placeholder="0"
                   />
                 </div>
+              </div>
+
+              <div className="field">
+                <label>Prix de vente (optionnel)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={form.prix}
+                  onChange={(e) => setForm((f) => ({ ...f, prix: e.target.value }))}
+                  placeholder="Ex: 12.50 (utilisé pour les commandes manuelles)"
+                />
               </div>
 
               <div className="field">
