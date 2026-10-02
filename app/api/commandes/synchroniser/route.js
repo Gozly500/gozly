@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { obtenirCommandesWix, diagnostiquerPermissionsWix } from "@/lib/wixClient";
+import { synchroniserTachesCommandes } from "@/lib/tachesCommandes";
 
 // Copie (lecture seule) les commandes Wix récentes de l'entreprise dans
 // commandes_en_ligne. Rejouable à volonté : chaque commande est mise à jour
@@ -77,6 +78,12 @@ export async function POST(request) {
       return NextResponse.json({ error: "La synchronisation a échoué.", detail: error.message }, { status: 500 });
     }
   }
+
+  // Les tâches "Commandes à ramasser" suivent les commandes (nouvelles,
+  // annulées, changées de date). Une erreur ici ne doit pas faire échouer la synchro.
+  await synchroniserTachesCommandes(service, entreprise.id).catch((err) =>
+    console.error("Erreur tâches automatiques:", err.message)
+  );
 
   return NextResponse.json({ ok: true, count: lignes.length });
 }

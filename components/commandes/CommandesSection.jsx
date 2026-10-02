@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
+import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
@@ -122,6 +122,7 @@ export default function CommandesSection({ entrepriseId }) {
   async function retirer(c) {
     if (!window.confirm(`Retirer la commande #${c.numero}?`)) return;
     await supabase.from("commandes_en_ligne").delete().eq("id", c.id);
+    await mettreAJourTachesCommandes(entrepriseId);
     charger();
   }
 

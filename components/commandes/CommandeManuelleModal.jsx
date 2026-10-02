@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { formatMontant, bornesJour } from "@/lib/commandes";
-import { imprimerCommande } from "@/lib/commandesClient";
+import { imprimerCommande, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 
 const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "" };
 
@@ -132,6 +132,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
     // N'imprime que si le réglage "Impression des commandes manuelles" est
     // sur "automatique" (décidé côté serveur).
     if (nouvelId) await imprimerCommande(entrepriseId, nouvelId, "creation");
+    await mettreAJourTachesCommandes(entrepriseId);
     onSaved();
   }
 

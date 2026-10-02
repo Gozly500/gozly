@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import InfoTooltip from "@/components/InfoTooltip";
 import ImpressionCommandesBloc from "@/components/entreprise/ImpressionCommandesBloc";
+import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
 
 const OPTIONS_PREMIER_JOUR = [
   { id: "lundi", label: "Lundi" },
@@ -54,6 +55,11 @@ const OPTIONS_IMPRESSION_MANUELLES = [
   { id: "desactivee", label: "Désactivée" },
   { id: "manuelle", label: "Manuelle (bouton Imprimer)" },
   { id: "automatique", label: "Automatique" },
+];
+
+const OPTIONS_COMMANDES_VERS_TACHES = [
+  { id: "active", label: "Activées" },
+  { id: "desactive", label: "Désactivées" },
 ];
 
 const OPTIONS_RETENTION_COMMANDES = [
@@ -128,6 +134,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [retentionTemperature, setRetentionTemperature] = useState("3");
   const [retentionCommandes, setRetentionCommandes] = useState("12");
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
+  const [commandesVersTaches, setCommandesVersTaches] = useState("active");
   const [sectionsOuvertes, setSectionsOuvertes] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -144,7 +151,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles"
+          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles, commandes_vers_taches"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -161,7 +168,23 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setRetentionTemperature(String(entrepriseData?.temperature_retention_mois || 3));
     setRetentionCommandes(String(entrepriseData?.commandes_retention_mois || 12));
     setImpressionManuelles(entrepriseData?.impression_commandes_manuelles || "desactivee");
+    setCommandesVersTaches(entrepriseData?.commandes_vers_taches === false ? "desactive" : "active");
     setLoading(false);
+  }
+
+  async function handleChangeCommandesVersTaches(value) {
+    setCommandesVersTaches(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ commandes_vers_taches: value === "active" })
+      .eq("id", entrepriseId);
+
+    if (!error) await mettreAJourTachesCommandes(entrepriseId); // crée ou retire les tâches tout de suite
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
   }
 
   async function handleChangeImpressionManuelles(value) {
@@ -471,6 +494,14 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   options={OPTIONS_RETENTION_COMMANDES}
                   value={retentionCommandes}
                   onChange={handleChangeRetentionCommandes}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Tâches automatiques des commandes"
+                  info="Crée automatiquement, dans le module Tâches, une tâche par produit avec le total à préparer pour chaque jour de ramassage (ex: « Pizza au tomate × 6 »), dans la catégorie « Commandes à ramasser ». Cocher la tâche veut dire que c'est préparé. Nécessite le module Tâches."
+                  options={OPTIONS_COMMANDES_VERS_TACHES}
+                  value={commandesVersTaches}
+                  onChange={handleChangeCommandesVersTaches}
                   disabled={saving}
                 />
                 <ParametreSelect
