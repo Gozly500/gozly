@@ -45,8 +45,22 @@ export async function POST(request) {
   const depuis = new Date(Date.now() - nbJours * 24 * 60 * 60 * 1000).toISOString();
 
   let commandes;
+  let nbEnLigne = 0;
   try {
-    commandes = await obtenirCommandesWix(connexion.instance_id, depuis);
+    // Commandes en ligne : la vraie liste du module. Ventes du point de vente
+    // (POS) : copiées à part, seulement les 2 derniers jours à chaque synchro
+    // (elles sont des centaines) - elles servent au futur suivi des ventes,
+    // et une erreur de ce côté ne doit pas faire échouer la synchro.
+    const depuisPos = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const [enLigne, pos] = await Promise.all([
+      obtenirCommandesWix(connexion.instance_id, depuis, "en_ligne"),
+      obtenirCommandesWix(connexion.instance_id, depuisPos, "pos").catch((err) => {
+        console.error("Erreur lecture ventes POS Wix:", err.message);
+        return [];
+      }),
+    ]);
+    nbEnLigne = enLigne.length;
+    commandes = [...enLigne, ...pos];
   } catch (err) {
     console.error("Erreur lecture commandes Wix:", err.message);
     // 403 = la permission "Read Orders" n'est pas (encore) accordée à l'installation.
@@ -85,5 +99,5 @@ export async function POST(request) {
     console.error("Erreur tâches automatiques:", err.message)
   );
 
-  return NextResponse.json({ ok: true, count: lignes.length });
+  return NextResponse.json({ ok: true, count: nbEnLigne });
 }

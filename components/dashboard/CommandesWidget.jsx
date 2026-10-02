@@ -24,7 +24,8 @@ export default function CommandesWidget({ entrepriseId }) {
       supabase
         .from("commandes_en_ligne")
         .select("id, numero, client_nom, total, statut, statut_preparation, etape, date_commande, date_ramassage, date_ramassage_fin")
-        .eq("entreprise_id", entrepriseId),
+        .eq("entreprise_id", entrepriseId)
+        .neq("canal", "POS"),
       debut,
       fin
     ).then(({ data }) => {

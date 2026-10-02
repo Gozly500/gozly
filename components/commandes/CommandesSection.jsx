@@ -45,7 +45,7 @@ export default function CommandesSection({ entrepriseId }) {
   const charger = useCallback(async () => {
     const { debut, fin } = bornesJour(dateRef.current);
     const { data } = await filtrerParDateEffective(
-      supabase.from("commandes_en_ligne").select("*").eq("entreprise_id", entrepriseId),
+      supabase.from("commandes_en_ligne").select("*").eq("entreprise_id", entrepriseId).neq("canal", "POS"),
       debut,
       fin
     );

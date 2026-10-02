@@ -84,6 +84,7 @@ export default function CommandesKioskContent() {
       .from("commandes_en_ligne")
       .select("*")
       .eq("entreprise_id", entrepriseId)
+      .neq("canal", "POS") // les ventes du point de vente ne passent pas par la cuisine
       .or(
         `and(date_ramassage.gte.${depuis},date_ramassage.lt.${finAujourdhui}),and(date_ramassage.is.null,date_commande.gte.${depuis})`
       );
