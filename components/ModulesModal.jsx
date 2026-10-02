@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES, limiteModules } from "@/lib/modules";
+import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
 
 export default function ModulesModal({ entrepriseId, onClose, onChange }) {
   const [loading, setLoading] = useState(true);
@@ -70,6 +71,9 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
     }
 
     setBusyId(null);
+    // Les tâches automatiques "Réservations" dépendent de ces deux modules : on
+    // les crée ou on les retire (avec leur catégorie) tout de suite.
+    if (moduleId === "commandes" || moduleId === "planning") mettreAJourTachesCommandes(entrepriseId);
     onChange?.();
   }
 
