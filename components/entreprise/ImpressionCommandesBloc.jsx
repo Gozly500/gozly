@@ -1,0 +1,112 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+async function appelerImpression(entrepriseId, action) {
+  const { data } = await supabase.auth.getSession();
+  const res = await fetch("/api/commandes/impression", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${data?.session?.access_token}` },
+    body: JSON.stringify({ entrepriseId, action }),
+  });
+  const json = await res.json().catch(() => ({}));
+  return { ok: res.ok, ...json };
+}
+
+// Configuration de l'imprimante Epson (Personnalisation > Commandes en
+// ligne) : active l'impression, donne l'URL à coller dans la config de
+// l'imprimante et permet d'envoyer un bon de test.
+export default function ImpressionCommandesBloc({ entrepriseId }) {
+  const [etat, setEtat] = useState(null); // { actif, url }
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [copie, setCopie] = useState(false);
+
+  useEffect(() => {
+    appelerImpression(entrepriseId, "etat").then((r) => setEtat({ actif: !!r.actif, url: r.url || null }));
+  }, [entrepriseId]);
+
+  async function lancer(action, confirmation) {
+    if (confirmation && !window.confirm(confirmation)) return;
+    setBusy(true);
+    setMsg(null);
+    const r = await appelerImpression(entrepriseId, action);
+    setBusy(false);
+    if (!r.ok) {
+      setMsg({ type: "err", text: r.error || "L'action a échoué." });
+      return;
+    }
+    if (action === "tester") {
+      setMsg({ type: "ok", text: "Bon de test envoyé. Il devrait sortir de l'imprimante dans quelques secondes." });
+      return;
+    }
+    setEtat({ actif: !!r.actif, url: r.url || null });
+  }
+
+  async function copier() {
+    try {
+      await navigator.clipboard.writeText(etat.url);
+      setCopie(true);
+      setTimeout(() => setCopie(false), 2000);
+    } catch {}
+  }
+
+  if (!etat) return <p className="section-hint">Chargement...</p>;
+
+  return (
+    <div className="param-subgroup">
+      <div className="param-subgroup-label">Impression des bons de commande (Epson)</div>
+
+      {!etat.actif ? (
+        <>
+          <p className="section-hint">
+            Imprime automatiquement un bon de commande sur ton imprimante Epson TM-m30III quand une commande devient « Traitée ». Active
+            l&apos;impression pour obtenir l&apos;adresse à entrer dans l&apos;imprimante.
+          </p>
+          <button className="submit-btn" disabled={busy} onClick={() => lancer("activer")}>
+            Activer l&apos;impression
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="section-hint">
+            Impression activée. Dans la configuration de l&apos;imprimante (Epson Web Config : tape l&apos;adresse IP de l&apos;imprimante dans un
+            navigateur), va dans <strong>Server Direct Print</strong>, active-le, et entre cette adresse comme URL du serveur 1. Mets l&apos;intervalle
+            à 5 secondes. Laisse l&apos;ID et le mot de passe vides.
+          </p>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "12px" }}>
+            <input type="text" readOnly value={etat.url || ""} onFocus={(e) => e.target.select()} style={{ flex: 1, minWidth: "260px" }} />
+            <button className="admin-icon-btn" onClick={copier}>
+              {copie ? "Copié ✓" : "Copier"}
+            </button>
+          </div>
+          <p className="section-hint">Garde cette adresse privée : quiconque la connaît peut interroger ton imprimante.</p>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <button className="submit-btn" disabled={busy} onClick={() => lancer("tester")}>
+              Imprimer un bon de test
+            </button>
+            <button
+              className="admin-icon-btn"
+              disabled={busy}
+              onClick={() =>
+                lancer("regenerer", "Générer une nouvelle adresse? L'ancienne cessera de fonctionner : tu devras la remplacer dans l'imprimante.")
+              }
+            >
+              Nouvelle adresse
+            </button>
+            <button
+              className="admin-icon-btn danger"
+              disabled={busy}
+              onClick={() => lancer("desactiver", "Désactiver l'impression? Les bons en attente seront annulés.")}
+            >
+              Désactiver
+            </button>
+          </div>
+        </>
+      )}
+
+      {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
+    </div>
+  );
+}

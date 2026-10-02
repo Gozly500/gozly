@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { formatMontant } from "@/lib/commandes";
+import { imprimerCommande } from "@/lib/commandesClient";
 
 const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "" };
 
@@ -76,6 +77,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
     };
 
     let error;
+    let nouvelId = null;
     if (commande) {
       ({ error } = await supabase.from("commandes_en_ligne").update(champs).eq("id", commande.id));
     } else {
@@ -84,8 +86,12 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
         .select("id", { count: "exact", head: true })
         .eq("entreprise_id", entrepriseId)
         .eq("source", "manuel");
+      // Id généré ici (pas de insert().select()) pour pouvoir demander
+      // l'impression juste après sans relire la ligne.
+      nouvelId = crypto.randomUUID();
       ({ error } = await supabase.from("commandes_en_ligne").insert({
         ...champs,
+        id: nouvelId,
         entreprise_id: entrepriseId,
         source: "manuel",
         source_id: crypto.randomUUID(),
@@ -101,6 +107,9 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
       setErreur("Impossible d'enregistrer la commande. As-tu exécuté commandes_manuelles.sql dans Supabase?");
       return;
     }
+    // N'imprime que si le réglage "Impression des commandes manuelles" est
+    // sur "automatique" (décidé côté serveur).
+    if (nouvelId) await imprimerCommande(entrepriseId, nouvelId, "creation");
     onSaved();
   }
 

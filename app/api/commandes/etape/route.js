@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
+import { imprimerAutomatiquement } from "@/lib/impressionCommandes";
 
 const ETAPES = ["en_attente", "traitee", "terminee"];
 
@@ -54,6 +55,13 @@ export async function POST(request) {
   if (error) {
     console.error("Erreur changement d'étape commande:", error.message);
     return NextResponse.json({ error: "Impossible de changer l'étape." }, { status: 500 });
+  }
+
+  // Une commande qui devient "Traitée" part à l'imprimante (si configurée).
+  if (etape === "traitee") {
+    await imprimerAutomatiquement(service, entreprise.id, commande.id).catch((err) =>
+      console.error("Erreur impression automatique:", err.message)
+    );
   }
 
   return NextResponse.json({ ok: true });

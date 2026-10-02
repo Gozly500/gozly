@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import InfoTooltip from "@/components/InfoTooltip";
+import ImpressionCommandesBloc from "@/components/entreprise/ImpressionCommandesBloc";
 
 const OPTIONS_PREMIER_JOUR = [
   { id: "lundi", label: "Lundi" },
@@ -47,6 +48,12 @@ const OPTIONS_RETENTION_DEMANDES = [
   { id: "3", label: "3 mois" },
   { id: "6", label: "6 mois" },
   { id: "12", label: "12 mois" },
+];
+
+const OPTIONS_IMPRESSION_MANUELLES = [
+  { id: "desactivee", label: "Désactivée" },
+  { id: "manuelle", label: "Manuelle (bouton Imprimer)" },
+  { id: "automatique", label: "Automatique" },
 ];
 
 const OPTIONS_RETENTION_COMMANDES = [
@@ -120,6 +127,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [retentionDemandes, setRetentionDemandes] = useState("6");
   const [retentionTemperature, setRetentionTemperature] = useState("3");
   const [retentionCommandes, setRetentionCommandes] = useState("12");
+  const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
   const [sectionsOuvertes, setSectionsOuvertes] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -136,7 +144,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois"
+          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -152,7 +160,22 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setRetentionDemandes(String(entrepriseData?.demandes_retention_mois || 6));
     setRetentionTemperature(String(entrepriseData?.temperature_retention_mois || 3));
     setRetentionCommandes(String(entrepriseData?.commandes_retention_mois || 12));
+    setImpressionManuelles(entrepriseData?.impression_commandes_manuelles || "desactivee");
     setLoading(false);
+  }
+
+  async function handleChangeImpressionManuelles(value) {
+    setImpressionManuelles(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ impression_commandes_manuelles: value })
+      .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
   }
 
   async function handleChangeRetentionCommandes(value) {
@@ -450,7 +473,16 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   onChange={handleChangeRetentionCommandes}
                   disabled={saving}
                 />
+                <ParametreSelect
+                  label="Impression des commandes manuelles"
+                  info="Pour les commandes que tu entres à la main dans Gozly (nécessite l'impression activée plus bas). Désactivée : jamais imprimées. Manuelle : tu imprimes avec le bouton Imprimer. Automatique : le bon sort dès que la commande est créée. Les commandes Wix s'impriment quand elles passent à « Traitée »."
+                  options={OPTIONS_IMPRESSION_MANUELLES}
+                  value={impressionManuelles}
+                  onChange={handleChangeImpressionManuelles}
+                  disabled={saving}
+                />
               </div>
+              <ImpressionCommandesBloc entrepriseId={entrepriseId} />
             </div>
           )}
         </div>

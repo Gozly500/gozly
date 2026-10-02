@@ -50,5 +50,9 @@ export async function GET(request) {
     .lt("date_commande", seuilBrut.toISOString())
     .not("brut", "is", null);
 
+  // La file d'impression ne sert qu'à court terme : on garde 7 jours d'historique.
+  const seuilBons = new Date(maintenant.getTime() - 7 * 24 * 60 * 60 * 1000);
+  await service.from("bons_impression").delete().lt("created_at", seuilBons.toISOString());
+
   return NextResponse.json({ ok: true, commandesSupprimees: supprimees });
 }

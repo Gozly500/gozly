@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { changerEtapeCommande } from "@/lib/commandesClient";
+import { changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
@@ -34,6 +34,7 @@ export default function CommandesSection({ entrepriseId }) {
   const [syncMsg, setSyncMsg] = useState(null);
   const [filtre, setFiltre] = useState("toutes");
   const [modal, setModal] = useState(null);
+  const [imprimanteActive, setImprimanteActive] = useState(false);
   const dateRef = useRef(date);
   dateRef.current = date;
 
@@ -96,6 +97,19 @@ export default function CommandesSection({ entrepriseId }) {
     }, INTERVALLE_SYNC_MS);
     return () => clearInterval(id);
   }, [synchroniser]);
+
+  useEffect(() => {
+    impressionActive(entrepriseId).then(setImprimanteActive);
+  }, [entrepriseId]);
+
+  async function imprimer(c) {
+    const { ok, error } = await imprimerCommande(entrepriseId, c.id, "manuel");
+    setSyncMsg(
+      ok
+        ? { type: "ok", text: `Bon de la commande #${c.numero} envoyé à l'imprimante.` }
+        : { type: "err", text: error || "L'impression a échoué." }
+    );
+  }
 
   async function passerEtape(c, etape) {
     await changerEtapeCommande(entrepriseId, c.id, etape);
@@ -255,6 +269,11 @@ export default function CommandesSection({ entrepriseId }) {
                       {etat.id === "traitee" && (
                         <button className="admin-icon-btn" onClick={() => passerEtape(c, "terminee")}>
                           Terminer
+                        </button>
+                      )}
+                      {imprimanteActive && etat.id !== "annulee" && (
+                        <button className="admin-icon-btn" onClick={() => imprimer(c)}>
+                          {c.imprime_le ? "Réimprimer" : "Imprimer"}
                         </button>
                       )}
                       {(etat.id === "traitee" || etat.id === "terminee") && (

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
-import { synchroniserCommandes, changerEtapeCommande } from "@/lib/commandesClient";
+import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
 import {
   formatMontant,
   dateAujourdhui,
@@ -50,6 +50,8 @@ export default function CommandesKioskContent() {
   const [commandes, setCommandes] = useState([]);
   const [modal, setModal] = useState(false);
   const [enCours, setEnCours] = useState(null);
+  const [imprimanteActive, setImprimanteActive] = useState(false);
+  const [message, setMessage] = useState(null);
   const dejaVuesRef = useRef(null);
 
   useEffect(() => {
@@ -122,6 +124,20 @@ export default function CommandesKioskContent() {
     };
   }, [entrepriseId, charger]);
 
+  useEffect(() => {
+    if (entrepriseId) impressionActive(entrepriseId).then(setImprimanteActive);
+  }, [entrepriseId]);
+
+  async function imprimer(commande) {
+    const { ok, error } = await imprimerCommande(entrepriseId, commande.id, "manuel");
+    setMessage(
+      ok
+        ? { type: "ok", text: `Bon #${commande.numero} envoyé à l'imprimante.` }
+        : { type: "err", text: error || "L'impression a échoué." }
+    );
+    setTimeout(() => setMessage(null), 4000);
+  }
+
   async function passer(commande, etape) {
     setEnCours(commande.id);
     // Mise à jour immédiate à l'écran, puis confirmation du serveur.
@@ -161,6 +177,8 @@ export default function CommandesKioskContent() {
           + Nouvelle commande
         </button>
       </header>
+
+      {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
 
       <div className="cmd-kiosk-cols">
         {COLONNES.map((col) => {
@@ -202,6 +220,11 @@ export default function CommandesKioskContent() {
                     <div className="cmd-kiosk-total">{formatMontant(c.total)}</div>
 
                     <div className="cmd-kiosk-actions">
+                      {imprimanteActive && (
+                        <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
+                          🖨
+                        </button>
+                      )}
                       {col.id !== "en_attente" && (
                         <button
                           className="admin-icon-btn"
