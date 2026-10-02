@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 
 // Liste des tâches "modèles" d'une catégorie (ex: les sortes de pizza) -
 // repliée sous chaque catégorie, voir JourEditor.jsx pour leur utilisation
@@ -152,12 +153,18 @@ export default function CategoriesSection({ entrepriseId }) {
                 />
               ) : (
                 <div className="admin-row-main">
-                  <div className="admin-row-title">{cat.nom}</div>
+                  <div className="admin-row-title">
+                    {cat.nom}
+                    {cat.nom === NOM_CATEGORIE_COMMANDES && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px", marginLeft: "10px" }}>Géré par un module</span>}
+                  </div>
+                  {cat.nom === NOM_CATEGORIE_COMMANDES && (
+                    <div className="admin-row-sub">Remplie automatiquement par le module Commandes en ligne.</div>
+                  )}
                 </div>
               )}
 
               <div className="admin-row-controls">
-                {editingId === cat.id ? (
+                {cat.nom === NOM_CATEGORIE_COMMANDES ? null : editingId === cat.id ? (
                   <>
                     <button className="admin-icon-btn" onClick={() => handleSaveEdit(cat.id)}>
                       Enregistrer

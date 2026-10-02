@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import EmplacementSelect from "@/components/EmplacementSelect";
 
@@ -139,7 +140,10 @@ export default function JourEditor({ entrepriseId, date }) {
             return (
               <div className="planning-day" key={cat.id}>
                 <div className="planning-day-head">
-                  <span className="planning-day-title">{cat.nom}</span>
+                  <span className="planning-day-title">
+                    {cat.nom}
+                    {cat.nom === NOM_CATEGORIE_COMMANDES && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px", marginLeft: "10px" }}>Géré par un module</span>}
+                  </span>
                   <div style={{ display: "flex", gap: "8px" }}>
                     {catModeles.length > 0 && (
                       <button className="admin-icon-btn" onClick={() => setModelesPourCategorie(cat.id)}>
@@ -156,16 +160,18 @@ export default function JourEditor({ entrepriseId, date }) {
                   <label className="planning-tache" key={t.id}>
                     <input type="checkbox" checked={t.terminee} onChange={() => handleToggle(t)} />
                     <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{t.texte}</span>
-                    <button
-                      type="button"
-                      className="admin-icon-btn danger"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDelete(t.id);
-                      }}
-                    >
-                      Retirer
-                    </button>
+                    {t.source !== "commande" && (
+                      <button
+                        type="button"
+                        className="admin-icon-btn danger"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDelete(t.id);
+                        }}
+                      >
+                        Retirer
+                      </button>
+                    )}
                   </label>
                 ))}
 
