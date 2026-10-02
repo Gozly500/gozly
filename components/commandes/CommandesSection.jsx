@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
+import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
 import {
   formatMontant,
   dateAujourdhui,
@@ -29,6 +30,7 @@ export default function CommandesSection({ entrepriseId }) {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState(null);
   const [filtre, setFiltre] = useState("toutes");
+  const [modal, setModal] = useState(null);
   const dateRef = useRef(date);
   dateRef.current = date;
 
@@ -56,13 +58,15 @@ export default function CommandesSection({ entrepriseId }) {
         });
         const data = await res.json();
         if (!res.ok) {
-          setSyncMsg({ type: "err", text: data.error || "La synchronisation a échoué." });
+          // La synchro automatique reste muette (ex: Wix pas connecté, mais
+          // des commandes manuelles à afficher) ; seul le bouton montre l'erreur.
+          if (!silencieux) setSyncMsg({ type: "err", text: data.error || "La synchronisation a échoué." });
         } else {
           setSyncMsg(silencieux ? null : { type: "ok", text: `${data.count} commande(s) synchronisée(s) depuis Wix.` });
           await charger();
         }
       } catch {
-        setSyncMsg({ type: "err", text: "La synchronisation a échoué." });
+        if (!silencieux) setSyncMsg({ type: "err", text: "La synchronisation a échoué." });
       }
       if (!silencieux) setSyncing(false);
     },
@@ -84,6 +88,21 @@ export default function CommandesSection({ entrepriseId }) {
     }, INTERVALLE_SYNC_MS);
     return () => clearInterval(id);
   }, [synchroniser]);
+
+  async function basculerTerminee(c) {
+    const termine = c.statut_preparation === "FULFILLED";
+    await supabase
+      .from("commandes_en_ligne")
+      .update({ statut_preparation: termine ? "NOT_FULFILLED" : "FULFILLED", updated_at: new Date().toISOString() })
+      .eq("id", c.id);
+    charger();
+  }
+
+  async function retirer(c) {
+    if (!window.confirm(`Retirer la commande #${c.numero}?`)) return;
+    await supabase.from("commandes_en_ligne").delete().eq("id", c.id);
+    charger();
+  }
 
   const aujourdhui = dateAujourdhui();
   const dateLabel = new Date(`${date}T00:00:00`).toLocaleDateString("fr-CA", {
@@ -119,9 +138,14 @@ export default function CommandesSection({ entrepriseId }) {
             Les commandes reçues sur ton site Wix, mises à jour automatiquement.
           </p>
         </div>
-        <button className="submit-btn" onClick={() => synchroniser()} disabled={syncing}>
-          <IconIntegration className="gozly-icon" /> {syncing ? "Synchronisation..." : "Synchroniser"}
-        </button>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button className="submit-btn" onClick={() => setModal({ commande: null })}>
+            + Nouvelle commande
+          </button>
+          <button className="admin-icon-btn" onClick={() => synchroniser()} disabled={syncing}>
+            <IconIntegration className="gozly-icon" /> {syncing ? "Synchronisation..." : "Synchroniser Wix"}
+          </button>
+        </div>
       </div>
 
       {syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
@@ -203,6 +227,7 @@ export default function CommandesSection({ entrepriseId }) {
                       <span style={{ color: etat.couleur, fontWeight: 600 }}>{etat.texte}</span>
                       {mode && ` · ${mode}`}
                       {paiement && ` · ${paiement}`}
+                      {c.source === "manuel" && " · Manuelle"}
                     </div>
                     {(c.items || []).map((it, i) => (
                       <div key={i} style={{ fontSize: "13.5px" }}>
@@ -213,14 +238,39 @@ export default function CommandesSection({ entrepriseId }) {
                       </div>
                     ))}
                   </div>
-                  <div className="admin-row-controls" style={{ fontWeight: 700 }}>
-                    {formatMontant(c.total)}
+                  <div className="admin-row-controls" style={{ flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+                    <span style={{ fontWeight: 700 }}>{formatMontant(c.total)}</span>
+                    {c.source === "manuel" && (
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                        <button className="admin-icon-btn" onClick={() => basculerTerminee(c)}>
+                          {c.statut_preparation === "FULFILLED" ? "Rouvrir" : "Terminée"}
+                        </button>
+                        <button className="admin-icon-btn" onClick={() => setModal({ commande: c })}>
+                          Modifier
+                        </button>
+                        <button className="admin-icon-btn danger" onClick={() => retirer(c)}>
+                          Retirer
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         </>
+      )}
+
+      {modal && (
+        <CommandeManuelleModal
+          entrepriseId={entrepriseId}
+          commande={modal.commande}
+          onClose={() => setModal(null)}
+          onSaved={() => {
+            setModal(null);
+            charger();
+          }}
+        />
       )}
     </div>
   );
