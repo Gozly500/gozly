@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { supabase } from "@/lib/supabaseClient";
-import { IconIntegration } from "@/components/icons/GozlyIcons";
+import { IconIntegration, IconTableauDeBord, IconCommandes } from "@/components/icons/GozlyIcons";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
 import {
   formatMontant,
@@ -36,6 +36,7 @@ export default function CommandesSection({ entrepriseId }) {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState(null);
   const [filtre, setFiltre] = useState("toutes");
+  const [vue, setVue] = useState("apercu"); // "apercu" ou "commandes"
   const [modal, setModal] = useState(null);
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const dateRef = useRef(date);
@@ -138,6 +139,25 @@ export default function CommandesSection({ entrepriseId }) {
     return etapeCommande(c) === filtre;
   });
   const valides = commandes.filter((c) => c.statut !== "CANCELED");
+
+  // Total à préparer par produit (nom + valeurs d'options) pour la page Aperçu,
+  // même regroupement que les tâches automatiques.
+  const totauxProduits = [];
+  const indexProduits = new Map();
+  for (const c of valides) {
+    for (const it of c.items || []) {
+      const options = (it.options || []).join(", ");
+      const valeurs = (it.options || []).map((o) => String(o).split(": ").pop()).join(", ").toLowerCase();
+      const cle = `${String(it.nom).toLowerCase()}|${valeurs}`;
+      if (!indexProduits.has(cle)) {
+        const ligne = { cle, nom: options ? `${it.nom} (${options})` : it.nom, quantite: 0 };
+        indexProduits.set(cle, ligne);
+        totauxProduits.push(ligne);
+      }
+      indexProduits.get(cle).quantite += Number(it.quantite) || 0;
+    }
+  }
+  totauxProduits.sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
   const totalJour = valides.reduce((sum, c) => sum + Number(c.total), 0);
 
   return (
@@ -173,6 +193,25 @@ export default function CommandesSection({ entrepriseId }) {
 
       {syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
 
+      <div className="settings-nav horaire-tabs-sticky" style={{ flexDirection: "row", width: "fit-content" }}>
+        {[
+          { id: "apercu", label: "Aperçu", Icone: IconTableauDeBord },
+          { id: "commandes", label: "Commandes", Icone: IconCommandes },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={`settings-nav-item${vue === tab.id ? " active" : ""}`}
+            onClick={() => setVue(tab.id)}
+          >
+            <span className="icon">
+              <tab.Icone className="gozly-icon" />
+            </span>{" "}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, -1))}>
           ‹ Jour précédent
@@ -196,7 +235,7 @@ export default function CommandesSection({ entrepriseId }) {
         <div className="admin-list" style={{ maxWidth: "700px" }}>
           <div className="admin-empty">Aucune commande ce jour-là.</div>
         </div>
-      ) : (
+      ) : vue === "apercu" ? (
         <>
           <div className="admin-list" style={{ maxWidth: "500px", marginBottom: "16px" }}>
             <div className="admin-row">
@@ -215,6 +254,53 @@ export default function CommandesSection({ entrepriseId }) {
             </div>
           </div>
 
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "10px", maxWidth: "700px", marginBottom: "24px" }}>
+            {[
+              ["en_attente", "En attente"],
+              ["traitee", "Traitées"],
+              ["terminee", "Terminées"],
+              ["annulee", "Annulées"],
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className="settings-section"
+                style={{ margin: 0, padding: "14px 16px", textAlign: "left", cursor: "pointer", color: "inherit", font: "inherit" }}
+                onClick={() => {
+                  setFiltre(id);
+                  setVue("commandes");
+                }}
+              >
+                <div style={{ fontSize: "26px", fontWeight: 700 }}>{commandes.filter((c) => etapeCommande(c) === id).length}</div>
+                <div className="section-hint" style={{ margin: 0 }}>
+                  {label}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <h3 style={{ marginBottom: "10px" }}>À préparer ce jour-là</h3>
+          {totauxProduits.length === 0 ? (
+            <div className="admin-list" style={{ maxWidth: "700px" }}>
+              <div className="admin-empty">Aucun produit à préparer.</div>
+            </div>
+          ) : (
+            <div className="admin-list" style={{ maxWidth: "700px" }}>
+              {totauxProduits.map((p) => (
+                <div className="admin-row" key={p.cle}>
+                  <div className="admin-row-main">
+                    <div className="admin-row-title">{p.nom}</div>
+                  </div>
+                  <div className="admin-row-controls" style={{ fontWeight: 700 }}>
+                    × {p.quantite}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
             {[
               ["toutes", "Toutes"],

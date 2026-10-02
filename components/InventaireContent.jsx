@@ -108,7 +108,7 @@ export default function InventaireContent() {
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
           ) : (
             <>
-              <div className="settings-nav" style={{ flexDirection: "row", marginBottom: "28px", width: "fit-content" }}>
+              <div className="settings-nav horaire-tabs-sticky" style={{ flexDirection: "row", width: "fit-content" }}>
                 {TABS.map((tab) => (
                   <button
                     key={tab.id}
