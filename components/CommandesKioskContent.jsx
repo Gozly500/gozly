@@ -24,23 +24,8 @@ const COLONNES = [
   { id: "terminee", titre: "Terminées", suivante: null, libelleBouton: null, couleur: "#7ee2a8" },
 ];
 
-// Petit bip pour signaler une nouvelle commande (les navigateurs exigent
-// qu'on ait déjà touché la page une fois pour jouer un son - sans effet sinon).
-function bip() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    for (let i = 0; i < 2; i++) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      gain.gain.value = 0.15;
-      osc.start(ctx.currentTime + i * 0.25);
-      osc.stop(ctx.currentTime + i * 0.25 + 0.15);
-    }
-  } catch {}
-}
+const SON_NOUVELLE_COMMANDE = "/sons/nouvelle-commande.mp3";
+const PAUSE_ENTRE_SONS_MS = 5000;
 
 export default function CommandesKioskContent() {
   const router = useRouter();
@@ -52,7 +37,8 @@ export default function CommandesKioskContent() {
   const [enCours, setEnCours] = useState(null);
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const [message, setMessage] = useState(null);
-  const dejaVuesRef = useRef(null);
+  const [sonActif, setSonActif] = useState(false);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     let ignore = false;
@@ -99,11 +85,6 @@ export default function CommandesKioskContent() {
     const liste = data || [];
     setCommandes(liste);
 
-    // Bip pour toute commande en attente qu'on n'avait pas encore vue
-    // (pas au tout premier chargement de la page).
-    const attente = liste.filter((c) => etapeCommande(c) === "en_attente").map((c) => c.id);
-    if (dejaVuesRef.current !== null && attente.some((id) => !dejaVuesRef.current.has(id))) bip();
-    dejaVuesRef.current = new Set([...(dejaVuesRef.current || []), ...attente]);
   }, [entrepriseId]);
 
   useEffect(() => {
@@ -127,6 +108,38 @@ export default function CommandesKioskContent() {
   useEffect(() => {
     if (entrepriseId) impressionActive(entrepriseId).then(setImprimanteActive);
   }, [entrepriseId]);
+
+  const nbEnAttente = commandes.filter((c) => etapeCommande(c) === "en_attente").length;
+
+  // Son en boucle tant qu'une commande attend : on le joue, et 5 secondes
+  // après la fin on le rejoue, jusqu'à ce que plus rien ne soit "En attente".
+  // (Un navigateur n'autorise le son qu'après un toucher : bouton "Activer le son".)
+  useEffect(() => {
+    if (!sonActif || nbEnAttente === 0) return;
+    if (!audioRef.current) audioRef.current = new Audio(SON_NOUVELLE_COMMANDE);
+    const audio = audioRef.current;
+    let minuteur;
+    let actif = true;
+
+    function jouer() {
+      if (!actif) return;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+    function apresFin() {
+      if (actif) minuteur = setTimeout(jouer, PAUSE_ENTRE_SONS_MS);
+    }
+
+    audio.addEventListener("ended", apresFin);
+    jouer();
+
+    return () => {
+      actif = false;
+      clearTimeout(minuteur);
+      audio.removeEventListener("ended", apresFin);
+      audio.pause();
+    };
+  }, [sonActif, nbEnAttente > 0]);
 
   async function imprimer(commande) {
     const { ok, error } = await imprimerCommande(entrepriseId, commande.id, "manuel");
@@ -177,9 +190,18 @@ export default function CommandesKioskContent() {
           <div className="kiosk-entreprise">{entrepriseNom}</div>
           <h2>Commandes en ligne</h2>
         </div>
-        <button className="submit-btn" onClick={() => setModal(true)}>
-          + Nouvelle commande
-        </button>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <button
+            className="admin-icon-btn"
+            onClick={() => setSonActif((v) => !v)}
+            style={!sonActif ? { background: "rgba(255,212,121,0.25)", borderColor: "rgba(255,212,121,0.6)" } : undefined}
+          >
+            {sonActif ? "🔔 Son activé" : "🔕 Activer le son"}
+          </button>
+          <button className="submit-btn" onClick={() => setModal(true)}>
+            + Nouvelle commande
+          </button>
+        </div>
       </header>
 
       {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
