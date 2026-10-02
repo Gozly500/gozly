@@ -74,7 +74,7 @@ export async function POST(request) {
     const { error } = await service.from("commandes_en_ligne").upsert(lignes, { onConflict: "entreprise_id,source,source_id" });
     if (error) {
       console.error("Erreur synchronisation commandes Wix:", error.message);
-      return NextResponse.json({ error: "La synchronisation a échoué." }, { status: 500 });
+      return NextResponse.json({ error: "La synchronisation a échoué.", detail: error.message }, { status: 500 });
     }
   }
 
