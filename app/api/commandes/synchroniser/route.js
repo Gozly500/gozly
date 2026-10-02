@@ -88,7 +88,7 @@ export async function POST(request) {
     }
   }
 
-  // Les tâches "Commandes à ramasser" suivent les commandes (nouvelles,
+  // Les tâches "Réservations" suivent les commandes (nouvelles,
   // annulées, changées de date). Une erreur ici ne doit pas faire échouer la synchro.
   await synchroniserTachesCommandes(service, entreprise.id).catch((err) =>
     console.error("Erreur tâches automatiques:", err.message)

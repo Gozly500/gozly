@@ -550,7 +550,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 />
                 <ParametreSelect
                   label="Tâches automatiques des commandes"
-                  info="Crée automatiquement, dans le module Tâches, une tâche par produit avec le total à préparer pour chaque jour de ramassage (ex: « Pizza au tomate × 6 »), dans la catégorie « Commandes à ramasser ». Cocher la tâche veut dire que c'est préparé. Nécessite le module Tâches."
+                  info="Crée automatiquement, dans le module Tâches, une tâche par produit avec le total à préparer pour chaque jour de ramassage (ex: « Pizza au tomate × 6 »), dans la catégorie « Réservations ». Cocher la tâche veut dire que c'est préparé. Nécessite le module Tâches."
                   options={OPTIONS_COMMANDES_VERS_TACHES}
                   value={commandesVersTaches}
                   onChange={handleChangeCommandesVersTaches}
