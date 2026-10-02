@@ -55,6 +55,7 @@ export async function POST(request) {
         error: permission
           ? "Gozly n'a pas la permission de lire les commandes Wix. Réinstalle l'app Gozly connect sur ton site Wix pour l'autoriser."
           : "La lecture des commandes Wix a échoué.",
+        detail: err.message,
       },
       { status: 502 }
     );

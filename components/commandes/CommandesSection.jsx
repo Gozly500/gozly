@@ -60,7 +60,12 @@ export default function CommandesSection({ entrepriseId }) {
         if (!res.ok) {
           // La synchro automatique reste muette (ex: Wix pas connecté, mais
           // des commandes manuelles à afficher) ; seul le bouton montre l'erreur.
-          if (!silencieux) setSyncMsg({ type: "err", text: data.error || "La synchronisation a échoué." });
+          if (!silencieux) {
+            setSyncMsg({
+              type: "err",
+              text: `${data.error || "La synchronisation a échoué."}${data.detail ? ` [${data.detail}]` : ""}`,
+            });
+          }
         } else {
           setSyncMsg(silencieux ? null : { type: "ok", text: `${data.count} commande(s) synchronisée(s) depuis Wix.` });
           await charger();
