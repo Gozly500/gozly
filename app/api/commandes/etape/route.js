@@ -54,7 +54,7 @@ export async function POST(request) {
   const { error } = await service.from("commandes_en_ligne").update(champs).eq("id", commande.id);
   if (error) {
     console.error("Erreur changement d'étape commande:", error.message);
-    return NextResponse.json({ error: "Impossible de changer l'étape." }, { status: 500 });
+    return NextResponse.json({ error: "Impossible de changer l'étape.", detail: error.message }, { status: 500 });
   }
 
   // Une commande qui devient "Traitée" part à l'imprimante (si configurée).

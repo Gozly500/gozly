@@ -142,7 +142,11 @@ export default function CommandesKioskContent() {
     setEnCours(commande.id);
     // Mise à jour immédiate à l'écran, puis confirmation du serveur.
     setCommandes((prev) => prev.map((c) => (c.id === commande.id ? { ...c, etape } : c)));
-    await changerEtapeCommande(entrepriseId, commande.id, etape);
+    const { ok, error } = await changerEtapeCommande(entrepriseId, commande.id, etape);
+    if (!ok) {
+      setMessage({ type: "err", text: error });
+      setTimeout(() => setMessage(null), 8000);
+    }
     await charger();
     setEnCours(null);
   }

@@ -112,7 +112,8 @@ export default function CommandesSection({ entrepriseId }) {
   }
 
   async function passerEtape(c, etape) {
-    await changerEtapeCommande(entrepriseId, c.id, etape);
+    const { ok, error } = await changerEtapeCommande(entrepriseId, c.id, etape);
+    if (!ok) setSyncMsg({ type: "err", text: error });
     charger();
   }
 
