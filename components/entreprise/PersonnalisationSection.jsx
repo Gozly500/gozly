@@ -49,6 +49,12 @@ const OPTIONS_RETENTION_DEMANDES = [
   { id: "12", label: "12 mois" },
 ];
 
+const OPTIONS_RETENTION_COMMANDES = [
+  { id: "6", label: "6 mois" },
+  { id: "12", label: "12 mois" },
+  { id: "24", label: "24 mois" },
+];
+
 const OPTIONS_RETENTION_TEMPERATURE = [
   { id: "3", label: "3 mois" },
   { id: "6", label: "6 mois" },
@@ -113,6 +119,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [visibiliteFeuilleTemps, setVisibiliteFeuilleTemps] = useState("manuelle");
   const [retentionDemandes, setRetentionDemandes] = useState("6");
   const [retentionTemperature, setRetentionTemperature] = useState("3");
+  const [retentionCommandes, setRetentionCommandes] = useState("12");
   const [sectionsOuvertes, setSectionsOuvertes] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -129,7 +136,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois"
+          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -144,7 +151,22 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setVisibiliteFeuilleTemps(entrepriseData?.feuille_temps_visible_sans_approbation ? "automatique" : "manuelle");
     setRetentionDemandes(String(entrepriseData?.demandes_retention_mois || 6));
     setRetentionTemperature(String(entrepriseData?.temperature_retention_mois || 3));
+    setRetentionCommandes(String(entrepriseData?.commandes_retention_mois || 12));
     setLoading(false);
+  }
+
+  async function handleChangeRetentionCommandes(value) {
+    setRetentionCommandes(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ commandes_retention_mois: Number(value) })
+      .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
   }
 
   async function handleChangeRetentionTemperature(value) {
@@ -275,6 +297,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const horaireActif = modulesActifs.includes("horaire");
   const inventaireActif = modulesActifs.includes("inventaire");
   const temperatureActif = modulesActifs.includes("temperature");
+  const commandesActif = modulesActifs.includes("commandes");
 
   return (
     <div>
@@ -283,7 +306,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
-      {!horaireActif && !inventaireActif && !temperatureActif ? (
+      {!horaireActif && !inventaireActif && !temperatureActif && !commandesActif ? (
         <p className="section-hint">
           Active un module (ex: Horaire &amp; Pointage) pour voir apparaître ici ses options de personnalisation.
         </p>
@@ -398,6 +421,33 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   options={OPTIONS_RETENTION_TEMPERATURE}
                   value={retentionTemperature}
                   onChange={handleChangeRetentionTemperature}
+                  disabled={saving}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {commandesActif && (
+        <div className="integration-item">
+          <button
+            type="button"
+            className={`integration-header${sectionsOuvertes.commandes ? " open" : ""}`}
+            onClick={() => toggleSection("commandes")}
+          >
+            <span className="ih-label">Commandes en ligne</span>
+            <span className="ih-arrow">▾</span>
+          </button>
+          {sectionsOuvertes.commandes && (
+            <div className="integration-body">
+              <div className="param-grid">
+                <ParametreSelect
+                  label="Conservation des commandes"
+                  info="Combien de temps garder la copie des commandes reçues de Wix avant sa suppression automatique. Ton registre officiel reste dans ton tableau de bord Wix. Les commandes que tu entres à la main dans Gozly ne sont jamais supprimées automatiquement."
+                  options={OPTIONS_RETENTION_COMMANDES}
+                  value={retentionCommandes}
+                  onChange={handleChangeRetentionCommandes}
                   disabled={saving}
                 />
               </div>
