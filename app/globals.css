@@ -2002,3 +2002,23 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .accent-choice.selected{color:var(--fg);}
 .accent-choice.selected .accent-dot{border-color:var(--fg);box-shadow:0 0 0 3px rgba(var(--w),0.18);}
 .accent-choice:disabled{opacity:.5;cursor:default;}
+
+/* ============ Kiosque des commandes en ligne ============ */
+.cmd-kiosk{min-height:100vh;padding:22px 24px;display:flex;flex-direction:column;gap:18px;}
+.cmd-kiosk-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.cmd-kiosk-cols{flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start;}
+.cmd-kiosk-col{background:rgba(var(--w),0.04);border:1px solid rgba(var(--w),0.12);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:12px;}
+.cmd-kiosk-col-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:17px;padding-bottom:10px;border-bottom:3px solid;}
+.cmd-kiosk-count{background:rgba(var(--w),0.12);border-radius:20px;padding:2px 12px;font-size:15px;}
+.cmd-kiosk-vide{color:var(--text-dim);text-align:center;font-size:14px;padding:18px 0;}
+.cmd-kiosk-card{background:rgba(var(--w),0.07);border:1px solid rgba(var(--w),0.14);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;}
+.cmd-kiosk-card-top{display:flex;justify-content:space-between;font-size:18px;}
+.cmd-kiosk-client{font-weight:600;}
+.cmd-kiosk-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.cmd-kiosk-tag{background:rgba(var(--w),0.12);border-radius:20px;padding:2px 10px;font-size:12.5px;}
+.cmd-kiosk-items{font-size:15px;display:flex;flex-direction:column;gap:3px;}
+.cmd-kiosk-options{color:var(--text-dim);font-size:13px;}
+.cmd-kiosk-total{font-weight:700;font-size:16px;}
+.cmd-kiosk-actions{display:flex;gap:8px;margin-top:4px;}
+.cmd-kiosk-actions .submit-btn{flex:1;padding:14px;font-size:16px;}
+@media (max-width:900px){.cmd-kiosk-cols{grid-template-columns:minmax(0,1fr);}}

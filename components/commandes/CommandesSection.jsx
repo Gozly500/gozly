@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { changerEtapeCommande } from "@/lib/commandesClient";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
@@ -12,6 +14,7 @@ import {
   heureCommande,
   libelleMode,
   etatCommande,
+  etapeCommande,
   libellePaiement,
 } from "@/lib/commandes";
 
@@ -94,12 +97,8 @@ export default function CommandesSection({ entrepriseId }) {
     return () => clearInterval(id);
   }, [synchroniser]);
 
-  async function basculerTerminee(c) {
-    const termine = c.statut_preparation === "FULFILLED";
-    await supabase
-      .from("commandes_en_ligne")
-      .update({ statut_preparation: termine ? "NOT_FULFILLED" : "FULFILLED", updated_at: new Date().toISOString() })
-      .eq("id", c.id);
+  async function passerEtape(c, etape) {
+    await changerEtapeCommande(entrepriseId, c.id, etape);
     charger();
   }
 
@@ -117,10 +116,8 @@ export default function CommandesSection({ entrepriseId }) {
   });
 
   const visibles = commandes.filter((c) => {
-    if (filtre === "a-preparer") return etatCommande(c).texte === "À préparer";
-    if (filtre === "terminees") return etatCommande(c).texte === "Terminée";
-    if (filtre === "annulees") return c.statut === "CANCELED";
-    return true;
+    if (filtre === "toutes") return true;
+    return etapeCommande(c) === filtre;
   });
   const valides = commandes.filter((c) => c.statut !== "CANCELED");
   const totalJour = valides.reduce((sum, c) => sum + Number(c.total), 0);
@@ -147,6 +144,9 @@ export default function CommandesSection({ entrepriseId }) {
           <button className="submit-btn" onClick={() => setModal({ commande: null })}>
             + Nouvelle commande
           </button>
+          <Link href="/dashboard/commandes-kiosk" target="_blank" className="admin-icon-btn">
+            Ouvrir le kiosque
+          </Link>
           <button className="admin-icon-btn" onClick={() => synchroniser()} disabled={syncing}>
             <IconIntegration className="gozly-icon" /> {syncing ? "Synchronisation..." : "Synchroniser Wix"}
           </button>
@@ -200,9 +200,10 @@ export default function CommandesSection({ entrepriseId }) {
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
             {[
               ["toutes", "Toutes"],
-              ["a-preparer", "À préparer"],
-              ["terminees", "Terminées"],
-              ["annulees", "Annulées"],
+              ["en_attente", "En attente"],
+              ["traitee", "Traitées"],
+              ["terminee", "Terminées"],
+              ["annulee", "Annulées"],
             ].map(([id, label]) => (
               <button
                 key={id}
@@ -245,19 +246,33 @@ export default function CommandesSection({ entrepriseId }) {
                   </div>
                   <div className="admin-row-controls" style={{ flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
                     <span style={{ fontWeight: 700 }}>{formatMontant(c.total)}</span>
-                    {c.source === "manuel" && (
-                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                        <button className="admin-icon-btn" onClick={() => basculerTerminee(c)}>
-                          {c.statut_preparation === "FULFILLED" ? "Rouvrir" : "Terminée"}
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      {etat.id === "en_attente" && (
+                        <button className="admin-icon-btn" onClick={() => passerEtape(c, "traitee")}>
+                          Traiter
                         </button>
-                        <button className="admin-icon-btn" onClick={() => setModal({ commande: c })}>
-                          Modifier
+                      )}
+                      {etat.id === "traitee" && (
+                        <button className="admin-icon-btn" onClick={() => passerEtape(c, "terminee")}>
+                          Terminer
                         </button>
-                        <button className="admin-icon-btn danger" onClick={() => retirer(c)}>
-                          Retirer
+                      )}
+                      {(etat.id === "traitee" || etat.id === "terminee") && (
+                        <button className="admin-icon-btn" onClick={() => passerEtape(c, "en_attente")}>
+                          Rouvrir
                         </button>
-                      </div>
-                    )}
+                      )}
+                      {c.source === "manuel" && (
+                        <>
+                          <button className="admin-icon-btn" onClick={() => setModal({ commande: c })}>
+                            Modifier
+                          </button>
+                          <button className="admin-icon-btn danger" onClick={() => retirer(c)}>
+                            Retirer
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

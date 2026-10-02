@@ -13,7 +13,7 @@ export default function CommandesWidget({ entrepriseId }) {
     const { debut, fin } = bornesJour(dateAujourdhui());
     supabase
       .from("commandes_en_ligne")
-      .select("id, numero, client_nom, total, statut, statut_preparation, date_commande")
+      .select("id, numero, client_nom, total, statut, statut_preparation, etape, date_commande")
       .eq("entreprise_id", entrepriseId)
       .gte("date_commande", debut)
       .lt("date_commande", fin)
@@ -29,7 +29,7 @@ export default function CommandesWidget({ entrepriseId }) {
   }
 
   const valides = commandes.filter((c) => c.statut !== "CANCELED");
-  const aPreparer = valides.filter((c) => etatCommande(c).texte === "À préparer").length;
+  const aPreparer = valides.filter((c) => etatCommande(c).id === "en_attente").length;
   const total = valides.reduce((sum, c) => sum + Number(c.total), 0);
 
   if (commandes.length === 0) {
@@ -48,7 +48,7 @@ export default function CommandesWidget({ entrepriseId }) {
       <p style={{ fontSize: "28px", fontWeight: 700 }}>{formatMontant(total)}</p>
       <p className="section-hint" style={{ marginTop: "-4px" }}>
         {valides.length} commande{valides.length > 1 ? "s" : ""} aujourd&apos;hui
-        {aPreparer > 0 && ` · ${aPreparer} à préparer`}
+        {aPreparer > 0 && ` · ${aPreparer} en attente`}
       </p>
 
       {valides.slice(0, 3).map((c) => (
