@@ -6,6 +6,7 @@ import { getOrCreateEquipeConversation, getOrCreateDirecteConversation } from "@
 
 import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
+import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
 
 export default function DiscussionSection({ entrepriseId, userId }) {
   const [conversations, setConversations] = useState([]);
@@ -23,6 +24,9 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const [confirmation, setConfirmation] = useState(null);
   const messagesEndRef = useRef(null);
   const dernierMessageIdRef = useRef(null);
+  const [reactions, setReactions] = useState({}); // { [messageId]: [{ emoji, nom, mine }] }
+  const [messageOuvertId, setMessageOuvertId] = useState(null);
+  const [repondreA, setRepondreA] = useState(null); // { id, auteur, contenu }
   const presence = useChatPresence(activeId, async (corps) => {
     const {
       data: { session },
@@ -184,6 +188,33 @@ export default function DiscussionSection({ entrepriseId, userId }) {
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true });
     setMessages(data || []);
+
+    // Réactions (route serveur : employés et dashboard n'ont pas le même système d'identité).
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const res = await fetch(`/api/chat/reactions?conversationId=${conversationId}`, {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.ok) setReactions((await res.json()).reactions || {});
+    } catch {}
+  }
+
+  async function reagir(m, emoji) {
+    setMessageOuvertId(null);
+    setReactions((cur) => ({ ...cur, [m.id]: appliquerReactionLocale(cur[m.id], emoji) }));
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      await fetch("/api/chat/reactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ messageId: m.id, emoji }),
+      });
+    } catch {}
+    chargerMessages(activeId);
   }
 
   async function handleEnvoyer(e) {
@@ -192,14 +223,19 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     const contenu = texte.trim();
     setTexte("");
     presence.arreterEcriture();
+    const citation = repondreA;
+    setRepondreA(null);
 
     // Le message apparaît tout de suite ; le rechargement le remplace par le vrai.
     setMessages((actuels) => [
       ...actuels,
-      { id: `tmp-${Date.now()}`, conversation_id: activeId, user_id: userId, contenu, created_at: new Date().toISOString() },
+      { id: `tmp-${Date.now()}`, conversation_id: activeId, user_id: userId, contenu, created_at: new Date().toISOString(), reponse_a: citation?.id || null },
     ]);
 
-    const { error } = await supabase.from("messages").insert({ conversation_id: activeId, user_id: userId, contenu });
+    const base = { conversation_id: activeId, user_id: userId, contenu };
+    let { error } = await supabase.from("messages").insert(citation ? { ...base, reponse_a: citation.id } : base);
+    // Colonne reponse_a pas encore créée (SQL pas exécuté) : on envoie sans la citation.
+    if (error && citation) ({ error } = await supabase.from("messages").insert(base));
     if (error) {
       setErreur("L'envoi a échoué.");
       setTexte(contenu);
@@ -457,23 +493,50 @@ export default function DiscussionSection({ entrepriseId, userId }) {
                 {messages.length === 0 && <p className="chat-empty">Aucun message pour l'instant.</p>}
                 {(() => {
                   const dernierDeMoi = [...messages].reverse().find((m) => m.user_id === userId);
-                  return messages.map((m) => (
+                  return messages.map((m) => {
+                    const parent = m.reponse_a ? messages.find((x) => x.id === m.reponse_a) : null;
+                    return (
                     <div key={m.id} style={{ display: "flex", flexDirection: "column" }}>
-                      <div className={`chat-bubble-row${m.user_id === userId ? " mine" : ""}`}>
-                        <div className="chat-bubble-auteur">{nomExpediteur(m)}</div>
-                        <div className="chat-bubble">{m.contenu}</div>
-                      </div>
+                      <BulleMessage
+                        m={{
+                          id: m.id,
+                          auteur: nomExpediteur(m),
+                          mine: m.user_id === userId,
+                          contenu: m.contenu,
+                          reponse: parent ? { auteur: nomExpediteur(parent), contenu: parent.contenu.slice(0, 140) } : null,
+                          reactions: reactions[m.id] || [],
+                          tmp: String(m.id).startsWith("tmp-"),
+                        }}
+                        ouvert={messageOuvertId === m.id}
+                        onToggle={() => setMessageOuvertId((cur) => (cur === m.id ? null : m.id))}
+                        onReagir={(emoji) => reagir(m, emoji)}
+                        onRepondre={() => {
+                          setRepondreA({ id: m.id, auteur: nomExpediteur(m), contenu: m.contenu.slice(0, 140) });
+                          setMessageOuvertId(null);
+                        }}
+                      />
                       {m === dernierDeMoi && !String(m.id).startsWith("tmp-") && (
                         <LigneVu
                           vu={libelleVu({ vus: presence.vus, dernierMessageIso: m.created_at, directe: conversationActive?.type === "directe" })}
                         />
                       )}
                     </div>
-                  ));
+                    );
+                  });
                 })()}
                 <IndicateurEcriture ecrivent={presence.ecrivent} />
                 <div ref={messagesEndRef} />
               </div>
+              {repondreA && (
+                <div className="chat-reponse-banniere">
+                  <span>
+                    Réponse à {repondreA.auteur} : {repondreA.contenu}
+                  </span>
+                  <button type="button" className="admin-icon-btn" onClick={() => setRepondreA(null)}>
+                    ✕
+                  </button>
+                </div>
+              )}
               <form className="chat-compose" onSubmit={handleEnvoyer}>
                 <input
                   type="text"

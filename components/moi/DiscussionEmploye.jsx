@@ -11,6 +11,7 @@ const CLE_LUS = "gozly_chat_lus";
 
 import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
+import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
 
 export default function DiscussionEmploye() {
   const { t } = useLangue();
@@ -30,6 +31,8 @@ export default function DiscussionEmploye() {
   const dernierIdRef = useRef(null);
   const presDuBasRef = useRef(true);
   const pollRef = useRef(null);
+  const [messageOuvertId, setMessageOuvertId] = useState(null);
+  const [repondreA, setRepondreA] = useState(null); // { id, auteur, contenu }
   const presence = useChatPresence(vue === "thread" ? activeId : null, async (corps) => {
     const res = await employeFetch("/api/employe-app/chat/presence", { method: "POST", body: JSON.stringify(corps) });
     return res.ok ? res.json() : null;
@@ -150,11 +153,7 @@ export default function DiscussionEmploye() {
     const dernierRecu = nouveaux[nouveaux.length - 1];
     if (dernierRecu && vueRef.current === "thread") marquerLu(conversationId, dernierRecu.createdAt);
     // Même liste qu'avant : on garde la référence pour ne pas re-rendre.
-    setMessages((actuels) =>
-      actuels.length === nouveaux.length && actuels[actuels.length - 1]?.id === nouveaux[nouveaux.length - 1]?.id
-        ? actuels
-        : nouveaux
-    );
+    setMessages((actuels) => (JSON.stringify(actuels) === JSON.stringify(nouveaux) ? actuels : nouveaux));
   }
 
   function ouvrirConversation(c) {
@@ -165,24 +164,43 @@ export default function DiscussionEmploye() {
     setVue("thread");
   }
 
+  async function reagir(m, emoji) {
+    setMessageOuvertId(null);
+    setMessages((actuels) => actuels.map((x) => (x.id === m.id ? { ...x, reactions: appliquerReactionLocale(x.reactions, emoji) } : x)));
+    try {
+      await employeFetch("/api/employe-app/chat/reactions", { method: "POST", body: JSON.stringify({ messageId: m.id, emoji }) });
+    } catch {}
+    chargerMessages(activeId);
+  }
+
   async function handleEnvoyer(e) {
     e.preventDefault();
     if (!texte.trim() || !activeId) return;
     const contenu = texte.trim();
     setTexte("");
     presence.arreterEcriture();
+    const citation = repondreA;
+    setRepondreA(null);
 
     // Le message apparaît tout de suite (sans rechargement), puis est remplacé par le vrai.
     const idTemporaire = `tmp-${Date.now()}`;
     setMessages((actuels) => [
       ...actuels,
-      { id: idTemporaire, contenu, createdAt: new Date().toISOString(), expediteurNom: "", deMoi: true },
+      {
+        id: idTemporaire,
+        contenu,
+        createdAt: new Date().toISOString(),
+        expediteurNom: "",
+        deMoi: true,
+        reponse: citation ? { auteur: citation.auteur, contenu: citation.contenu } : null,
+        reactions: [],
+      },
     ]);
 
     try {
       const res = await employeFetch("/api/employe-app/chat/messages", {
         method: "POST",
-        body: JSON.stringify({ conversationId: activeId, contenu }),
+        body: JSON.stringify({ conversationId: activeId, contenu, reponseA: citation?.id }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.message) throw new Error("envoi");
@@ -290,10 +308,25 @@ export default function DiscussionEmploye() {
                   <>
                     {messages.map((m) => (
                       <div key={m.id} style={{ display: "flex", flexDirection: "column" }}>
-                        <div className={`chat-bubble-row${m.deMoi ? " mine" : ""}`}>
-                          <div className="chat-bubble-auteur">{m.deMoi ? t("chat.toi") : m.expediteurNom}</div>
-                          <div className="chat-bubble">{m.contenu}</div>
-                        </div>
+                        <BulleMessage
+                          m={{
+                            id: m.id,
+                            auteur: m.deMoi ? t("chat.toi") : m.expediteurNom,
+                            mine: m.deMoi,
+                            contenu: m.contenu,
+                            reponse: m.reponse ? { auteur: m.reponse.deMoi ? t("chat.toi") : m.reponse.auteur, contenu: m.reponse.contenu } : null,
+                            reactions: m.reactions || [],
+                            tmp: String(m.id).startsWith("tmp-"),
+                          }}
+                          ouvert={messageOuvertId === m.id}
+                          onToggle={() => setMessageOuvertId((cur) => (cur === m.id ? null : m.id))}
+                          onReagir={(emoji) => reagir(m, emoji)}
+                          onRepondre={() => {
+                            setRepondreA({ id: m.id, auteur: m.deMoi ? t("chat.toi") : m.expediteurNom, contenu: m.contenu.slice(0, 140) });
+                            setMessageOuvertId(null);
+                          }}
+                          texteRepondre={t("chat.repondre")}
+                        />
                         {m === dernierDeMoi && !String(m.id).startsWith("tmp-") && (
                           <LigneVu vu={libelleVu({ vus: presence.vus, dernierMessageIso: m.createdAt, directe, textes: textesChat })} />
                         )}
@@ -304,6 +337,16 @@ export default function DiscussionEmploye() {
                 );
               })()}
             </div>
+            {repondreA && (
+              <div className="chat-reponse-banniere">
+                <span>
+                  {t("chat.reponseA", { nom: repondreA.auteur })} : {repondreA.contenu}
+                </span>
+                <button type="button" className="admin-icon-btn" onClick={() => setRepondreA(null)}>
+                  ✕
+                </button>
+              </div>
+            )}
             <form className="chat-compose" onSubmit={handleEnvoyer}>
               <input
                 type="text"

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { notifierNouveauMessage } from "@/lib/pushServer";
+import { reactionsDe } from "@/lib/chatReactions";
 
 async function aAcces(service, employe, conversationId) {
   const { data: conversation } = await service
@@ -38,13 +39,20 @@ async function resoudreNoms(service, messages, employeIdCourant) {
     return "Compte supprimé";
   }
 
-  return messages.map((m) => ({
-    id: m.id,
-    contenu: m.contenu,
-    createdAt: m.created_at,
-    expediteurNom: expediteurNom(m),
-    deMoi: m.employe_id === employeIdCourant,
-  }));
+  const parId = new Map(messages.map((m) => [m.id, m]));
+  return messages.map((m) => {
+    const parent = m.reponse_a ? parId.get(m.reponse_a) : null;
+    return {
+      id: m.id,
+      contenu: m.contenu,
+      createdAt: m.created_at,
+      expediteurNom: expediteurNom(m),
+      deMoi: m.employe_id === employeIdCourant,
+      reponse: parent
+        ? { auteur: expediteurNom(parent), deMoi: parent.employe_id === employeIdCourant, contenu: String(parent.contenu).slice(0, 140) }
+        : null,
+    };
+  });
 }
 
 export async function GET(request) {
@@ -71,7 +79,8 @@ export async function GET(request) {
   const { data: messages } = await query;
   const resolus = await resoudreNoms(service, messages || [], employe.id);
 
-  return NextResponse.json({ messages: resolus });
+  const reactions = await reactionsDe(service, resolus.map((m) => m.id), `e:${employe.id}`);
+  return NextResponse.json({ messages: resolus.map((m) => ({ ...m, reactions: reactions[m.id] || [] })) });
 }
 
 export async function POST(request) {
@@ -80,7 +89,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Session invalide." }, { status: 401 });
   }
 
-  const { conversationId, contenu } = await request.json().catch(() => ({}));
+  const { conversationId, contenu, reponseA } = await request.json().catch(() => ({}));
   if (!conversationId || !contenu?.trim()) {
     return NextResponse.json({ error: "Message vide." }, { status: 400 });
   }
@@ -90,11 +99,24 @@ export async function POST(request) {
     return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
   }
 
-  const { data: message, error } = await service
+  // Réponse à un message précis : il doit être dans la même conversation.
+  let parent = null;
+  if (reponseA) {
+    const { data } = await service.from("messages").select("*").eq("id", reponseA).eq("conversation_id", conversationId).maybeSingle();
+    parent = data || null;
+  }
+
+  const base = { conversation_id: conversationId, employe_id: employe.id, contenu: contenu.trim() };
+  let { data: message, error } = await service
     .from("messages")
-    .insert({ conversation_id: conversationId, employe_id: employe.id, contenu: contenu.trim() })
+    .insert(parent ? { ...base, reponse_a: parent.id } : base)
     .select("*")
     .single();
+  // Colonne reponse_a pas encore créée (SQL pas exécuté) : on envoie sans la citation.
+  if (error && parent) {
+    parent = null;
+    ({ data: message, error } = await service.from("messages").insert(base).select("*").single());
+  }
 
   if (error) {
     console.error("Erreur envoi message employé:", error);
@@ -108,7 +130,13 @@ export async function POST(request) {
     exclureEmployeId: employe.id,
   }).catch((err) => console.error("Erreur notification push:", err));
 
+  let reponse = null;
+  if (parent) {
+    const [p] = await resoudreNoms(service, [parent], employe.id);
+    reponse = { auteur: p.expediteurNom, deMoi: p.deMoi, contenu: String(parent.contenu).slice(0, 140) };
+  }
+
   return NextResponse.json({
-    message: { id: message.id, contenu: message.contenu, createdAt: message.created_at, expediteurNom: employe.nom, deMoi: true },
+    message: { id: message.id, contenu: message.contenu, createdAt: message.created_at, expediteurNom: employe.nom, deMoi: true, reponse, reactions: [] },
   });
 }

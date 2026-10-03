@@ -1943,6 +1943,19 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .chat-messages{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px;}
 .chat-bubble-row{display:flex;flex-direction:column;max-width:70%;}
 .chat-bubble-row.mine{align-self:flex-end;align-items:flex-end;}
+.chat-bubble-cliquable{cursor:pointer;}
+.chat-citation{display:flex;flex-direction:column;gap:1px;font-size:11.5px;border-left:3px solid rgba(var(--w),0.45);background:rgba(var(--w),0.08);border-radius:6px;padding:4px 8px;margin-bottom:6px;opacity:.85;}
+.chat-citation strong{font-size:11px;}
+.chat-citation span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.chat-reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px;}
+.chat-bubble-row.mine .chat-reactions{justify-content:flex-end;}
+.chat-reaction-chip{background:rgba(var(--w),0.1);border:1px solid rgba(var(--w),0.18);border-radius:12px;padding:1px 8px;font-size:12px;color:inherit;cursor:pointer;}
+.chat-reaction-chip.mine{border-color:var(--violet);background:rgba(122,63,224,0.28);}
+.chat-actions{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin-top:4px;background:rgba(var(--w),0.1);border:1px solid rgba(var(--w),0.18);border-radius:18px;padding:3px 6px;}
+.chat-action-emoji{background:none;border:none;font-size:18px;padding:2px 4px;cursor:pointer;}
+.chat-action-repondre{background:none;border:none;color:inherit;font-size:12.5px;font-weight:600;padding:4px 8px;cursor:pointer;}
+.chat-reponse-banniere{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;padding:6px 12px;border-top:1px solid rgba(var(--w),0.12);background:rgba(var(--w),0.06);}
+.chat-reponse-banniere span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .chat-vu{align-self:flex-end;font-size:11px;color:var(--text-dim);padding:0 6px;margin-top:-4px;}
 .chat-vu-bloc{align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;max-width:80%;}
 .chat-vu-bouton{background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px;margin-top:0;}
