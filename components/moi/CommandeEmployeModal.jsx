@@ -150,9 +150,9 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
             </div>
 
             <div className="field">
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 110px", gap: "8px" }}>
-                <input type="date" value={dateRamassage} onChange={(e) => setDateRamassage(e.target.value)} aria-label={t("commandes.date")} />
-                <input type="time" value={heureRamassage} onChange={(e) => setHeureRamassage(e.target.value)} disabled={!dateRamassage} aria-label={t("commandes.heure")} />
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 110px", gap: "6px" }}>
+                <input type="date" value={dateRamassage} onChange={(e) => setDateRamassage(e.target.value)} aria-label={t("commandes.date")} style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }} />
+                <input type="time" value={heureRamassage} onChange={(e) => setHeureRamassage(e.target.value)} disabled={!dateRamassage} aria-label={t("commandes.heure")} style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }} />
               </div>
             </div>
 
@@ -203,7 +203,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
 
             {articles.map((a, i) => (
               <div key={i} style={{ marginBottom: "14px" }}>
-                <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                <div style={{ display: "flex", gap: "6px", alignItems: "stretch" }}>
                   <div className="emplacement-select-wrap" style={{ minWidth: 0, flex: 1 }}>
                     <input
                       type="text"
@@ -238,11 +238,12 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
                     className="admin-icon-btn danger"
                     onClick={() => setArticles((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== i) : [{ ...ARTICLE_VIDE }]))}
                     aria-label={t("commandes.retirerArticle")}
+                    style={{ aspectRatio: "1 / 1", flexShrink: 0, padding: 0, borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}
                   >
                     ✕
                   </button>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "8px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "6px", marginTop: "6px" }}>
                   <input
                     type="number"
                     min="1"
@@ -250,6 +251,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
                     onChange={(e) => majArticle(i, "quantite", e.target.value)}
                     placeholder={t("commandes.quantite")}
                     aria-label={t("commandes.quantite")}
+                    style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}
                   />
                   <input
                     type="text"
@@ -258,6 +260,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
                     onChange={(e) => majArticle(i, "prix", e.target.value)}
                     placeholder={t("commandes.prix")}
                     aria-label={t("commandes.prix")}
+                    style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}
                   />
                 </div>
               </div>
