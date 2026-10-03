@@ -151,8 +151,8 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
 
             <div className="field">
               <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 110px", gap: "6px" }}>
-                <input type="date" value={dateRamassage} onChange={(e) => setDateRamassage(e.target.value)} aria-label={t("commandes.date")} style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }} />
-                <input type="time" value={heureRamassage} onChange={(e) => setHeureRamassage(e.target.value)} disabled={!dateRamassage} aria-label={t("commandes.heure")} style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }} />
+                <input type="date" value={dateRamassage} onChange={(e) => setDateRamassage(e.target.value)} aria-label={t("commandes.date")} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }} />
+                <input type="time" value={heureRamassage} onChange={(e) => setHeureRamassage(e.target.value)} disabled={!dateRamassage} aria-label={t("commandes.heure")} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }} />
               </div>
             </div>
 
@@ -203,8 +203,8 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
 
             {articles.map((a, i) => (
               <div key={i} style={{ marginBottom: "14px" }}>
-                <div style={{ display: "flex", gap: "6px", alignItems: "stretch" }}>
-                  <div className="emplacement-select-wrap" style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ display: "flex", gap: "6px", alignItems: "flex-start" }}>
+                  <div className="emplacement-select-wrap" style={{ minWidth: 0, flex: 1, width: "auto", marginBottom: 0 }}>
                     <input
                       type="text"
                       value={a.nom}
@@ -213,6 +213,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
                       onBlur={() => setTimeout(() => setOuvert((o) => (o === i ? null : o)), 300)}
                       placeholder={t("commandes.produit")}
                       autoComplete="off"
+                      style={{ width: "100%", boxSizing: "border-box", margin: 0 }}
                     />
                     {ouvert === i && (
                       <div className="emplacement-select-options" style={{ maxHeight: "220px", overflowY: "auto" }}>
@@ -238,7 +239,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
                     className="admin-icon-btn danger"
                     onClick={() => setArticles((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== i) : [{ ...ARTICLE_VIDE }]))}
                     aria-label={t("commandes.retirerArticle")}
-                    style={{ aspectRatio: "1 / 1", flexShrink: 0, padding: 0, borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    style={{ width: "46px", height: "46px", flexShrink: 0, padding: 0, margin: 0, borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}
                   >
                     ✕
                   </button>
@@ -251,7 +252,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
                     onChange={(e) => majArticle(i, "quantite", e.target.value)}
                     placeholder={t("commandes.quantite")}
                     aria-label={t("commandes.quantite")}
-                    style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}
+                    style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }}
                   />
                   <input
                     type="text"
@@ -260,7 +261,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
                     onChange={(e) => majArticle(i, "prix", e.target.value)}
                     placeholder={t("commandes.prix")}
                     aria-label={t("commandes.prix")}
-                    style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}
+                    style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }}
                   />
                 </div>
               </div>
