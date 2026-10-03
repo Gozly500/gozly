@@ -43,7 +43,7 @@ export default function JourEditor({ entrepriseId, date, integre = false }) {
   async function load() {
     setLoading(true);
     const [categoriesRes, emplacementsRes, modelesRes] = await Promise.all([
-      supabase.from("categories").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
+      supabase.from("categories").select("*").eq("entreprise_id", entrepriseId).order("ordre", { ascending: true }).order("created_at", { ascending: true }),
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
       supabase.from("taches_modeles").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
     ]);

@@ -153,6 +153,12 @@ export default function TachesEmploye() {
     parCategorie.get(cle).push(tache);
   }
 
+  // Catégories dans l'ordre choisi par le gestionnaire ("Autres" / sans catégorie en dernier).
+  groupes.sort((a, b) => {
+    const ordre = (g) => (g.id === "sans-categorie" ? Infinity : categories.find((c) => c.id === g.id)?.ordre ?? Infinity);
+    return ordre(a) - ordre(b);
+  });
+
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>

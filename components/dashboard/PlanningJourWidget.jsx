@@ -19,7 +19,7 @@ export default function PlanningJourWidget({ entrepriseId }) {
     const date = todayISO();
     Promise.all([
       supabase.from("taches").select("*").eq("entreprise_id", entrepriseId).eq("date", date).order("created_at", { ascending: true }),
-      supabase.from("categories").select("*").eq("entreprise_id", entrepriseId),
+      supabase.from("categories").select("*").eq("entreprise_id", entrepriseId).order("ordre", { ascending: true }).order("created_at", { ascending: true }),
     ]).then(([tachesRes, categoriesRes]) => {
       setTaches(tachesRes.data || []);
       setCategories(categoriesRes.data || []);
@@ -41,7 +41,12 @@ export default function PlanningJourWidget({ entrepriseId }) {
   // pas cacher ce qui reste derrière des tâches déjà faites). Le reste est sur la page Tâches.
   const MAX_TACHES = 8;
   const triees = [...taches.filter((t) => !t.terminee), ...taches.filter((t) => t.terminee)];
-  const affichees = triees.slice(0, MAX_TACHES);
+  const rangCategorie = (id) => {
+    const i = categories.findIndex((c) => c.id === id);
+    return i === -1 ? 9999 : i;
+  };
+  // Les 8 tâches retenues (les "à faire" d'abord) sont présentées dans l'ordre des catégories.
+  const affichees = triees.slice(0, MAX_TACHES).sort((a, b) => rangCategorie(a.categorie_id) - rangCategorie(b.categorie_id));
   const masquees = triees.length - affichees.length;
 
   return (

@@ -86,6 +86,7 @@ export default function PlanningKioskContent() {
       .from("categories")
       .select("*")
       .eq("entreprise_id", entrepriseId)
+      .order("ordre", { ascending: true })
       .order("created_at", { ascending: true });
 
     let query = supabase.from("taches").select("*").eq("entreprise_id", entrepriseId).eq("date", date);

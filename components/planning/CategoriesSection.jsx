@@ -101,6 +101,7 @@ export default function CategoriesSection({ entrepriseId }) {
       .from("categories")
       .select("*")
       .eq("entreprise_id", entrepriseId)
+      .order("ordre", { ascending: true })
       .order("created_at", { ascending: true });
     setCategories(data || []);
     setLoading(false);
@@ -109,9 +110,27 @@ export default function CategoriesSection({ entrepriseId }) {
   async function handleAdd(e) {
     e.preventDefault();
     if (!nom.trim()) return;
-    await supabase.from("categories").insert({ entreprise_id: entrepriseId, nom: nom.trim() });
+    // Une nouvelle catégorie se place à la fin de la liste.
+    const dernierOrdre = categories.reduce((max, c) => Math.max(max, c.ordre || 0), 0);
+    await supabase.from("categories").insert({ entreprise_id: entrepriseId, nom: nom.trim(), ordre: dernierOrdre + 1 });
     setNom("");
     load();
+  }
+
+  // Monte (-1) ou descend (+1) une catégorie : on renumérote toute la liste
+  // (1, 2, 3...) pour ne jamais dépendre d'anciens numéros en double.
+  async function deplacer(index, sens) {
+    const cible = index + sens;
+    if (cible < 0 || cible >= categories.length) return;
+    const nouvelle = [...categories];
+    [nouvelle[index], nouvelle[cible]] = [nouvelle[cible], nouvelle[index]];
+    const avecOrdre = nouvelle.map((c, i) => ({ ...c, ordre: i + 1 }));
+    setCategories(avecOrdre); // affichage immédiat
+    await Promise.all(
+      avecOrdre.filter((c, i) => c.id !== categories[i]?.id || c.ordre !== categories[i]?.ordre).map((c) =>
+        supabase.from("categories").update({ ordre: c.ordre }).eq("id", c.id)
+      )
+    );
   }
 
   function startEdit(cat) {
@@ -141,7 +160,7 @@ export default function CategoriesSection({ entrepriseId }) {
       <p className="panel-hint">Les catégories dans lesquelles tes tâches sont classées (ex: Cuisine, Ménage).</p>
 
       <div className="admin-list" style={{ marginBottom: "20px", maxWidth: "560px" }}>
-        {categories.map((cat) => (
+        {categories.map((cat, index) => (
           <div className="admin-row" style={{ flexDirection: "column", alignItems: "stretch" }} key={cat.id}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
               {editingId === cat.id ? (
@@ -164,7 +183,22 @@ export default function CategoriesSection({ entrepriseId }) {
               )}
 
               <div className="admin-row-controls">
-                {cat.nom === NOM_CATEGORIE_COMMANDES ? null : editingId === cat.id ? (
+                {cat.nom === NOM_CATEGORIE_COMMANDES ? (
+                  <>
+                    <button className="admin-icon-btn" onClick={() => deplacer(index, -1)} disabled={index === 0} title="Monter" aria-label="Monter la catégorie">
+                      ↑
+                    </button>
+                    <button
+                      className="admin-icon-btn"
+                      onClick={() => deplacer(index, 1)}
+                      disabled={index === categories.length - 1}
+                      title="Descendre"
+                      aria-label="Descendre la catégorie"
+                    >
+                      ↓
+                    </button>
+                  </>
+                ) : editingId === cat.id ? (
                   <>
                     <button className="admin-icon-btn" onClick={() => handleSaveEdit(cat.id)}>
                       Enregistrer
@@ -175,6 +209,24 @@ export default function CategoriesSection({ entrepriseId }) {
                   </>
                 ) : (
                   <>
+                    <button
+                      className="admin-icon-btn"
+                      onClick={() => deplacer(index, -1)}
+                      disabled={index === 0}
+                      title="Monter"
+                      aria-label="Monter la catégorie"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      className="admin-icon-btn"
+                      onClick={() => deplacer(index, 1)}
+                      disabled={index === categories.length - 1}
+                      title="Descendre"
+                      aria-label="Descendre la catégorie"
+                    >
+                      ↓
+                    </button>
                     <button
                       className="admin-icon-btn"
                       onClick={() => setModelesOuvertId((cur) => (cur === cat.id ? null : cat.id))}

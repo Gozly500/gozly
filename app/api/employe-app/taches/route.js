@@ -32,16 +32,31 @@ export async function GET(request) {
   const dateParam = new URL(request.url).searchParams.get("date");
   const date = dateParam && DATE_REGEX.test(dateParam) ? dateParam : aujourdhuiLocal();
 
-  const [{ data: taches }, { data: categories }] = await Promise.all([
-    service
-      .from("taches")
-      .select("id, texte, terminee, categorie:categorie_id(id, nom)")
-      .eq("entreprise_id", employe.entreprise_id)
-      .eq("date", date)
-      .in("emplacement_id", emplacements.map((e) => e.id))
-      .order("created_at", { ascending: true }),
-    service.from("categories").select("id, nom").eq("entreprise_id", employe.entreprise_id).order("nom", { ascending: true }),
-  ]);
+  const chargerTout = (avecOrdre) =>
+    Promise.all([
+      service
+        .from("taches")
+        .select(`id, texte, terminee, categorie:categorie_id(id, nom${avecOrdre ? ", ordre" : ""})`)
+        .eq("entreprise_id", employe.entreprise_id)
+        .eq("date", date)
+        .in("emplacement_id", emplacements.map((e) => e.id))
+        .order("created_at", { ascending: true }),
+      avecOrdre
+        ? service
+            .from("categories")
+            .select("id, nom, ordre")
+            .eq("entreprise_id", employe.entreprise_id)
+            .order("ordre", { ascending: true })
+            .order("nom", { ascending: true })
+        : service.from("categories").select("id, nom").eq("entreprise_id", employe.entreprise_id).order("nom", { ascending: true }),
+    ]);
+
+  let [{ data: taches, error: erreurTaches }, { data: categories, error: erreurCategories }] = await chargerTout(true);
+  // Colonne "ordre" pas encore créée (categories_ordre.sql pas exécuté) : on relit à l'ancienne
+  // plutôt que de laisser les employés sans tâches.
+  if (erreurTaches || erreurCategories) {
+    [{ data: taches }, { data: categories }] = await chargerTout(false);
+  }
 
   return NextResponse.json({ taches: taches || [], categories: categories || [], emplacements });
 }
