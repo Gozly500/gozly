@@ -14,6 +14,8 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState(null);
+  const [groupeModal, setGroupeModal] = useState(null); // { nom, ids: Set d'employés } quand la fenêtre de création est ouverte
+  const [groupeBusy, setGroupeBusy] = useState(false);
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -58,8 +60,17 @@ export default function DiscussionSection({ entrepriseId, userId }) {
       .select("conversation_id")
       .eq("user_id", userId);
 
-    const directeIds = (mesParticipations || []).map((p) => p.conversation_id);
-    const conversationIds = [equipeId, ...directeIds];
+    const privesIds = (mesParticipations || []).map((p) => p.conversation_id);
+    const conversationIds = [equipeId, ...privesIds];
+
+    // Type (directe / groupe) et nom des conversations privées.
+    const { data: infos } =
+      privesIds.length > 0
+        ? await supabase.from("conversations").select("id, type, titre").in("id", privesIds)
+        : { data: [] };
+    const infoPar = Object.fromEntries((infos || []).map((c) => [c.id, c]));
+    const directeIds = privesIds.filter((id) => infoPar[id]?.type === "directe");
+    const groupeIds = privesIds.filter((id) => infoPar[id]?.type === "groupe");
 
     const { data: dernierMessages } = await supabase
       .from("messages")
@@ -72,29 +83,41 @@ export default function DiscussionSection({ entrepriseId, userId }) {
       if (!dernierPar[m.conversation_id]) dernierPar[m.conversation_id] = m;
     }
 
+    // Tous les participants des conversations privées (sans .neq : voir la note
+    // sur NULL dans la mémoire du projet) ; "moi" est exclu en JS.
     let autresParticipants = [];
-    if (directeIds.length > 0) {
+    if (privesIds.length > 0) {
       const { data } = await supabase
         .from("conversation_participants")
         .select("conversation_id, employe_id, user_id")
-        .in("conversation_id", directeIds);
+        .in("conversation_id", privesIds);
       autresParticipants = (data || []).filter((p) => p.user_id !== userId);
     }
 
     const employeIds = autresParticipants.filter((p) => p.employe_id).map((p) => p.employe_id);
     const userIds = autresParticipants.filter((p) => p.user_id).map((p) => p.user_id);
-    setEmployeIdsEnDiscussion(new Set(employeIds));
+    // Pour le sélecteur "Démarrer avec..." : seulement les conversations 1 à 1.
+    setEmployeIdsEnDiscussion(
+      new Set(autresParticipants.filter((p) => p.employe_id && directeIds.includes(p.conversation_id)).map((p) => p.employe_id))
+    );
 
     const [{ data: employesAutres }, { data: profilsAutres }] = await Promise.all([
       employeIds.length > 0 ? supabase.from("employes").select("id, nom").in("id", employeIds) : Promise.resolve({ data: [] }),
       userIds.length > 0 ? supabase.from("profils").select("id, full_name").in("id", userIds) : Promise.resolve({ data: [] }),
     ]);
 
-    function nomAutre(conversationId) {
-      const p = autresParticipants.find((a) => a.conversation_id === conversationId);
-      if (!p) return "Conversation";
+    function nomParticipant(p) {
       if (p.employe_id) return employesAutres?.find((e) => e.id === p.employe_id)?.nom || "Employé";
       return profilsAutres?.find((pr) => pr.id === p.user_id)?.full_name || "Administration";
+    }
+
+    function nomAutre(conversationId) {
+      const p = autresParticipants.find((a) => a.conversation_id === conversationId);
+      return p ? nomParticipant(p) : "Conversation";
+    }
+
+    function membresDuGroupe(conversationId) {
+      return autresParticipants.filter((a) => a.conversation_id === conversationId).map(nomParticipant);
     }
 
     const liste = [
@@ -112,10 +135,19 @@ export default function DiscussionSection({ entrepriseId, userId }) {
         dernierMessage: dernierPar[id]?.contenu || null,
         dernierMessageDate: dernierPar[id]?.created_at || null,
       })),
+      ...groupeIds.map((id) => ({
+        id,
+        type: "groupe",
+        titre: infoPar[id]?.titre || "Groupe",
+        membres: membresDuGroupe(id),
+        dernierMessage: dernierPar[id]?.contenu || null,
+        dernierMessageDate: dernierPar[id]?.created_at || null,
+      })),
     ].sort((a, b) => new Date(b.dernierMessageDate || 0) - new Date(a.dernierMessageDate || 0));
 
     setConversations(liste);
-    setActiveId((cur) => cur || equipeId);
+    // Si la conversation affichée n'existe plus (supprimée), on revient au fil d'équipe.
+    setActiveId((cur) => (cur && liste.some((c) => c.id === cur) ? cur : equipeId));
   }
 
   async function chargerMessages(conversationId) {
@@ -162,13 +194,63 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     setActiveId(conversationId);
   }
 
+  async function creerGroupe(e) {
+    e.preventDefault();
+    const nom = groupeModal.nom.trim();
+    if (!nom || groupeModal.ids.size === 0) return;
+    setGroupeBusy(true);
+    setErreur(null);
+
+    // Id généré ici (pas de insert().select()) : juste après la création, le
+    // groupe n'a encore aucun participant, donc sa policy de lecture le cacherait.
+    const conversationId = crypto.randomUUID();
+    const { error } = await supabase
+      .from("conversations")
+      .insert({ id: conversationId, entreprise_id: entrepriseId, type: "groupe", titre: nom, cree_par: userId });
+    if (error) {
+      setErreur("Impossible de créer le groupe. As-tu exécuté chat_groupes.sql dans Supabase?");
+      setGroupeBusy(false);
+      return;
+    }
+
+    const { error: erreurParticipants } = await supabase.from("conversation_participants").insert([
+      { conversation_id: conversationId, user_id: userId },
+      ...[...groupeModal.ids].map((employeId) => ({ conversation_id: conversationId, employe_id: employeId })),
+    ]);
+    if (erreurParticipants) {
+      setErreur("Le groupe a été créé, mais ses membres n'ont pas pu être ajoutés.");
+    }
+
+    setGroupeBusy(false);
+    setGroupeModal(null);
+    await chargerConversations();
+    setActiveId(conversationId);
+  }
+
+  async function supprimerConversation(conversation) {
+    const message =
+      conversation.type === "groupe"
+        ? `Supprimer le groupe « ${conversation.titre} »? Tous les messages seront perdus, pour tout le monde. Pour reparler, il faudra créer un nouveau groupe.`
+        : `Supprimer la conversation avec ${conversation.titre}? Tous les messages seront perdus, pour vous deux. Pour reparler, il faudra démarrer une nouvelle conversation.`;
+    if (!window.confirm(message)) return;
+
+    const { error } = await supabase.from("conversations").delete().eq("id", conversation.id);
+    if (error) {
+      setErreur("Impossible de supprimer la conversation. As-tu exécuté chat_groupes.sql dans Supabase?");
+      return;
+    }
+    setMessages([]);
+    setActiveId(null);
+    await chargerConversations();
+  }
+
   function nomExpediteur(m) {
     if (m.user_id === userId) return "Toi";
     if (m.employe_id) {
-      return conversationActive?.type === "equipe" ? employes.find((e) => e.id === m.employe_id)?.nom || "Employé" : conversationActive?.titre;
+      return conversationActive?.type === "directe" ? conversationActive?.titre : employes.find((e) => e.id === m.employe_id)?.nom || "Employé";
     }
     if (m.user_id) {
-      return conversationActive?.type === "equipe" ? "Administration" : conversationActive?.titre;
+      return conversationActive?.type === "directe" ? conversationActive?.titre : "Administration";
     }
     return "Compte supprimé";
   }
@@ -199,6 +281,16 @@ export default function DiscussionSection({ entrepriseId, userId }) {
           </div>
           {pickerOpen && (
             <div className="chat-picker">
+              <button
+                type="button"
+                className="chat-conv-item"
+                onClick={() => {
+                  setPickerOpen(false);
+                  setGroupeModal({ nom: "", ids: new Set() });
+                }}
+              >
+                👥 Créer un groupe
+              </button>
               <div className="chat-section-label">Démarrer avec...</div>
               {employes.filter((e) => !employeIdsEnDiscussion.has(e.id)).length === 0 ? (
                 <p className="chat-empty">Tu discutes déjà avec tout le monde.</p>
@@ -221,8 +313,12 @@ export default function DiscussionSection({ entrepriseId, userId }) {
               className={`chat-conv-item${activeId === c.id ? " active" : ""}`}
               onClick={() => setActiveId(c.id)}
             >
-              <div className="chat-conv-titre">{c.type === "equipe" ? "👥 " : ""}{c.titre}</div>
-              {c.dernierMessage && <div className="chat-conv-apercu">{c.dernierMessage}</div>}
+              <div className="chat-conv-titre">{c.type === "equipe" || c.type === "groupe" ? "👥 " : ""}{c.titre}</div>
+              {c.dernierMessage ? (
+                <div className="chat-conv-apercu">{c.dernierMessage}</div>
+              ) : (
+                c.type === "groupe" && <div className="chat-conv-apercu">Groupe · {(c.membres?.length || 0) + 1} membres</div>
+              )}
             </button>
           ))}
         </div>
@@ -232,6 +328,21 @@ export default function DiscussionSection({ entrepriseId, userId }) {
             <p className="chat-empty">Sélectionne une conversation.</p>
           ) : (
             <>
+              {conversationActive && conversationActive.type !== "equipe" && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", padding: "10px 14px", borderBottom: "1px solid rgba(var(--w),0.12)" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <strong>{conversationActive.type === "groupe" ? "👥 " : ""}{conversationActive.titre}</strong>
+                    {conversationActive.type === "groupe" && (
+                      <div className="section-hint" style={{ margin: 0, fontSize: "12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {conversationActive.membres?.length ? `Toi, ${conversationActive.membres.join(", ")}` : "Toi seulement"}
+                      </div>
+                    )}
+                  </div>
+                  <button type="button" className="admin-icon-btn danger" onClick={() => supprimerConversation(conversationActive)}>
+                    Supprimer
+                  </button>
+                </div>
+              )}
               <div className="chat-messages">
                 {messages.length === 0 && <p className="chat-empty">Aucun message pour l'instant.</p>}
                 {messages.map((m) => (
@@ -252,6 +363,73 @@ export default function DiscussionSection({ entrepriseId, userId }) {
           )}
         </div>
       </div>
+
+      {groupeModal && (
+        <div className="modal-overlay" onClick={() => setGroupeModal(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Nouveau groupe</h3>
+              <button className="admin-icon-btn" onClick={() => setGroupeModal(null)}>
+                Fermer
+              </button>
+            </div>
+            <form onSubmit={creerGroupe}>
+              <div className="field">
+                <label>Nom du groupe</label>
+                <input
+                  type="text"
+                  value={groupeModal.nom}
+                  onChange={(e) => setGroupeModal((m) => ({ ...m, nom: e.target.value }))}
+                  placeholder="Ex: Équipe du dimanche"
+                  maxLength={60}
+                  autoFocus
+                  required
+                />
+              </div>
+              <div className="field">
+                <label>
+                  Membres ({groupeModal.ids.size})
+                  <button
+                    type="button"
+                    className="admin-icon-btn"
+                    style={{ marginLeft: "10px" }}
+                    onClick={() =>
+                      setGroupeModal((m) => ({ ...m, ids: m.ids.size === employes.length ? new Set() : new Set(employes.map((emp) => emp.id)) }))
+                    }
+                  >
+                    {groupeModal.ids.size === employes.length ? "Tout décocher" : "Tout cocher"}
+                  </button>
+                </label>
+                <div style={{ maxHeight: "260px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {employes.map((emp) => (
+                    <label key={emp.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 4px" }}>
+                      <input
+                        type="checkbox"
+                        checked={groupeModal.ids.has(emp.id)}
+                        onChange={() =>
+                          setGroupeModal((m) => {
+                            const ids = new Set(m.ids);
+                            if (ids.has(emp.id)) ids.delete(emp.id);
+                            else ids.add(emp.id);
+                            return { ...m, ids };
+                          })
+                        }
+                      />
+                      {emp.nom}
+                    </label>
+                  ))}
+                  {employes.length === 0 && <p className="chat-empty">Aucun employé pour l&apos;instant.</p>}
+                </div>
+              </div>
+              <div className="admin-edit-actions">
+                <button type="submit" className="submit-btn" disabled={groupeBusy || !groupeModal.nom.trim() || groupeModal.ids.size === 0}>
+                  {groupeBusy ? "Création..." : "Créer le groupe"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

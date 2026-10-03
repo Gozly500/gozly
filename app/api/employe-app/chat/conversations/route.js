@@ -17,9 +17,18 @@ export async function GET(request) {
     .select("conversation_id")
     .eq("employe_id", employe.id);
 
-  const directeIds = (mesParticipations || []).map((p) => p.conversation_id);
+  const privesIds = (mesParticipations || []).map((p) => p.conversation_id);
 
-  const conversationIds = [equipeId, ...directeIds];
+  // Type (directe / groupe) et nom des groupes.
+  const { data: infos } =
+    privesIds.length > 0
+      ? await service.from("conversations").select("id, type, titre").in("id", privesIds)
+      : { data: [] };
+  const infoPar = Object.fromEntries((infos || []).map((c) => [c.id, c]));
+  const directeIds = privesIds.filter((id) => infoPar[id]?.type !== "groupe");
+  const groupeIds = privesIds.filter((id) => infoPar[id]?.type === "groupe");
+
+  const conversationIds = [equipeId, ...privesIds];
 
   const { data: dernierMessages } = await service
     .from("messages")
@@ -76,6 +85,13 @@ export async function GET(request) {
       id,
       type: "directe",
       titre: nomAutreParticipant(id),
+      dernierMessage: dernierParConversation[id]?.contenu || null,
+      dernierMessageDate: dernierParConversation[id]?.created_at || null,
+    })),
+    ...groupeIds.map((id) => ({
+      id,
+      type: "groupe",
+      titre: infoPar[id]?.titre || "Groupe",
       dernierMessage: dernierParConversation[id]?.contenu || null,
       dernierMessageDate: dernierParConversation[id]?.created_at || null,
     })),

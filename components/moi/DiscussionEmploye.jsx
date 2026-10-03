@@ -85,6 +85,14 @@ export default function DiscussionEmploye() {
 
   async function chargerMessages(conversationId) {
     const res = await employeFetch(`/api/employe-app/chat/messages?conversationId=${conversationId}`);
+    if (res.status === 403 || res.status === 404) {
+      // La conversation n'existe plus (supprimée) : on revient à la liste.
+      setActiveId(null);
+      setMessages([]);
+      setVue("liste");
+      chargerConversations();
+      return;
+    }
     const data = await res.json();
     const nouveaux = data.messages || [];
     // Même liste qu'avant : on garde la référence pour ne pas re-rendre.
