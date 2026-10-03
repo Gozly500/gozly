@@ -6,6 +6,7 @@ import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTa
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration, IconTableauDeBord, IconCommandes } from "@/components/icons/GozlyIcons";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
+import PlanificationBoite from "@/components/commandes/PlanificationBoite";
 import {
   formatMontant,
   dateAujourdhui,
@@ -37,6 +38,10 @@ export default function CommandesSection({ entrepriseId }) {
   const [syncMsg, setSyncMsg] = useState(null);
   const [filtre, setFiltre] = useState("toutes");
   const [vue, setVue] = useState("apercu"); // "apercu" ou "commandes"
+  // Boîte "Planification" (Personnalisation > Commandes en ligne) : seulement si
+  // le réglage est activé ET que le module Tâches est actif.
+  const [planifActive, setPlanifActive] = useState(false);
+  const [premierJourDimanche, setPremierJourDimanche] = useState(false);
   const [modal, setModal] = useState(null);
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const dateRef = useRef(date);
@@ -103,6 +108,14 @@ export default function CommandesSection({ entrepriseId }) {
 
   useEffect(() => {
     impressionActive(entrepriseId).then(setImprimanteActive);
+
+    Promise.all([
+      supabase.from("entreprises").select("commandes_planning_integre, premier_jour_semaine").eq("id", entrepriseId).maybeSingle(),
+      supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId).eq("module", "planning"),
+    ]).then(([{ data: entreprise }, { data: modules }]) => {
+      setPlanifActive(!!entreprise?.commandes_planning_integre && (modules || []).length > 0);
+      setPremierJourDimanche(entreprise?.premier_jour_semaine === "dimanche");
+    });
   }, [entrepriseId]);
 
   async function imprimer(c) {
@@ -161,7 +174,8 @@ export default function CommandesSection({ entrepriseId }) {
   const totalJour = valides.reduce((sum, c) => sum + Number(c.total), 0);
 
   return (
-    <div>
+    <div className={planifActive ? "cmd-avec-planif" : undefined}>
+      <div className="cmd-principal">
       <div
         style={{
           display: "flex",
@@ -389,6 +403,18 @@ export default function CommandesSection({ entrepriseId }) {
             })}
           </div>
         </>
+      )}
+
+      </div>
+
+      {planifActive && (
+        <PlanificationBoite
+          entrepriseId={entrepriseId}
+          date={date}
+          onChangerDate={setDate}
+          versionCommandes={commandes.length}
+          premierJourDimanche={premierJourDimanche}
+        />
       )}
 
       {modal && (

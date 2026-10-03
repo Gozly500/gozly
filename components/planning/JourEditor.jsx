@@ -7,7 +7,7 @@ import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import EmplacementSelect from "@/components/EmplacementSelect";
 
-export default function JourEditor({ entrepriseId, date }) {
+export default function JourEditor({ entrepriseId, date, integre = false }) {
   const [categories, setCategories] = useState([]);
   const [taches, setTaches] = useState([]);
   const [modeles, setModeles] = useState([]);
@@ -112,15 +112,19 @@ export default function JourEditor({ entrepriseId, date }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
-        <div>
-          <h2 style={{ textTransform: "capitalize" }}>{dateLabel}</h2>
-          <p className="panel-hint">Les tâches à faire ce jour-là, par catégorie.</p>
+      {integre ? (
+        <p style={{ textTransform: "capitalize", fontWeight: 600, margin: "4px 0 12px" }}>{dateLabel}</p>
+      ) : (
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+          <div>
+            <h2 style={{ textTransform: "capitalize" }}>{dateLabel}</h2>
+            <p className="panel-hint">Les tâches à faire ce jour-là, par catégorie.</p>
+          </div>
+          <Link href="/dashboard/planning" className="submit-btn" style={{ textDecoration: "none" }}>
+            ✓ Terminé
+          </Link>
         </div>
-        <Link href="/dashboard/planning" className="submit-btn" style={{ textDecoration: "none" }}>
-          ✓ Terminé
-        </Link>
-      </div>
+      )}
 
       <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={changerEmplacement} />
 

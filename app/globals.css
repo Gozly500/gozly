@@ -2022,3 +2022,22 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .cmd-kiosk-actions{display:flex;gap:8px;margin-top:4px;}
 .cmd-kiosk-actions .submit-btn{flex:1;padding:14px;font-size:16px;}
 @media (max-width:900px){.cmd-kiosk-cols{grid-template-columns:minmax(0,1fr);}}
+
+/* ============ Page Commandes : boîte "Planification" ============ */
+.cmd-avec-planif{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:28px;align-items:start;}
+.cmd-principal{min-width:0;}
+.cmd-planif{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow-y:auto;background:rgba(var(--w),0.05);border:1px solid rgba(var(--w),0.14);border-radius:22px;padding:18px;}
+.cmd-planif-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.cmd-planif-head h3{font-size:16px;font-weight:600;}
+.cmd-planif-jours{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:14px;}
+.cmd-planif-jour{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border-radius:12px;border:1px solid transparent;background:rgba(var(--w),0.05);color:inherit;font:inherit;cursor:pointer;}
+.cmd-planif-jour:hover{background:rgba(var(--w),0.10);}
+.cmd-planif-jour.aujourdhui{border-color:rgba(var(--w),0.25);}
+.cmd-planif-jour.actif{background:rgba(122,63,224,0.35);border-color:rgba(122,63,224,0.6);}
+.cmd-planif-jour-nom{font-size:11.5px;text-transform:capitalize;color:var(--text-dim);}
+.cmd-planif-jour-num{font-size:16px;font-weight:700;}
+.cmd-planif-jour-nb{font-size:10.5px;color:var(--text-dim);white-space:nowrap;}
+@media (max-width:1250px){
+  .cmd-avec-planif{grid-template-columns:minmax(0,1fr);}
+  .cmd-planif{position:static;max-height:none;}
+}

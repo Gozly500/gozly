@@ -57,6 +57,11 @@ const OPTIONS_IMPRESSION_MANUELLES = [
   { id: "automatique", label: "Automatique" },
 ];
 
+const OPTIONS_PLANIF_COMMANDES = [
+  { id: "active", label: "Activée" },
+  { id: "desactive", label: "Désactivée" },
+];
+
 const OPTIONS_COMMANDES_VERS_TACHES = [
   { id: "active", label: "Activées" },
   { id: "desactive", label: "Désactivées" },
@@ -135,6 +140,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [retentionCommandes, setRetentionCommandes] = useState("12");
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
   const [commandesVersTaches, setCommandesVersTaches] = useState("active");
+  const [planifDansCommandes, setPlanifDansCommandes] = useState("desactive");
   const [lieuWix, setLieuWix] = useState(""); // "" = toutes les succursales
   const [lieuxWixDispo, setLieuxWixDispo] = useState([]);
   const [sectionsOuvertes, setSectionsOuvertes] = useState({});
@@ -153,7 +159,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles, commandes_vers_taches, wix_lieu_nom"
+          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles, commandes_vers_taches, wix_lieu_nom, commandes_planning_integre"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -172,6 +178,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setImpressionManuelles(entrepriseData?.impression_commandes_manuelles || "desactivee");
     setCommandesVersTaches(entrepriseData?.commandes_vers_taches === false ? "desactive" : "active");
     setLieuWix(entrepriseData?.wix_lieu_nom || "");
+    setPlanifDansCommandes(entrepriseData?.commandes_planning_integre ? "active" : "desactive");
 
     // Les succursales Wix qu'on a vues passer dans les commandes de ce dashboard.
     const { data: lieuxData } = await supabase
@@ -182,6 +189,20 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .limit(2000);
     setLieuxWixDispo([...new Set((lieuxData || []).map((l) => l.lieu_nom))].sort((a, b) => a.localeCompare(b, "fr")));
     setLoading(false);
+  }
+
+  async function handleChangePlanifDansCommandes(value) {
+    setPlanifDansCommandes(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ commandes_planning_integre: value === "active" })
+      .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
   }
 
   async function handleChangeLieuWix(value) {
@@ -546,6 +567,14 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   ]}
                   value={lieuWix}
                   onChange={handleChangeLieuWix}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Planification dans les commandes"
+                  info="Ajoute une boîte « Planification » à droite de la page Commandes : les jours de la semaine (avec le nombre de réservations), et pour le jour choisi les catégories de tâches où tu peux ajouter ta production, sans quitter les réservations. Nécessite le module Tâches."
+                  options={OPTIONS_PLANIF_COMMANDES}
+                  value={planifDansCommandes}
+                  onChange={handleChangePlanifDansCommandes}
                   disabled={saving}
                 />
                 <ParametreSelect

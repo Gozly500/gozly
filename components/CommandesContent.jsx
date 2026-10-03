@@ -81,7 +81,7 @@ export default function CommandesContent() {
       />
 
       <main className="dash-main">
-        <div className="dash-main-inner">
+        <div className="dash-main-inner dash-main-wide">
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
           ) : (
