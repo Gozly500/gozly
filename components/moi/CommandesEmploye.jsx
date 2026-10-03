@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
+import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
 import { dateAujourdhui, decalerJour, heureCommande, libelleRamassage, formatMontant } from "@/lib/commandes";
 
 // Les téléphones se rafraîchissent tout seuls à cet intervalle tant que la page est visible.
@@ -16,6 +17,7 @@ export default function CommandesEmploye() {
   const [date, setDate] = useState(dateAujourdhui);
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalOuvert, setModalOuvert] = useState(false);
 
   async function charger({ silencieux = false } = {}) {
     try {
@@ -75,7 +77,12 @@ export default function CommandesEmploye() {
 
   return (
     <div>
-      <h2>{t("commandes.titre")}</h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+        <h2 style={{ margin: 0 }}>{t("commandes.titre")}</h2>
+        <button type="button" className="btn-small" onClick={() => setModalOuvert(true)}>
+          + {t("commandes.ajouter")}
+        </button>
+      </div>
       <p className="panel-hint">{t("commandes.hint")}</p>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "14px" }}>
@@ -153,6 +160,17 @@ export default function CommandesEmploye() {
             );
           })}
         </div>
+      )}
+
+      {modalOuvert && (
+        <CommandeEmployeModal
+          dateParDefaut={date}
+          onClose={() => setModalOuvert(false)}
+          onSaved={() => {
+            setModalOuvert(false);
+            charger();
+          }}
+        />
       )}
     </div>
   );
