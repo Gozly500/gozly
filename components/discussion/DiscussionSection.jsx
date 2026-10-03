@@ -8,9 +8,11 @@ import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
 import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
 
-export default function DiscussionSection({ entrepriseId, userId }) {
+// mobile : une seule colonne à la fois (liste des conversations OU conversation ouverte), pour l'app /gestion.
+export default function DiscussionSection({ entrepriseId, userId, mobile = false }) {
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
+  const [vueMobile, setVueMobile] = useState("liste"); // "liste" | "thread" (mobile seulement)
   const [messages, setMessages] = useState([]);
   const [texte, setTexte] = useState("");
   const [employes, setEmployes] = useState([]);
@@ -267,6 +269,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     }
     await chargerConversations();
     setActiveId(conversationId);
+    setVueMobile("thread");
   }
 
   async function creerGroupe(e) {
@@ -300,6 +303,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     setGroupeModal(null);
     await chargerConversations();
     setActiveId(conversationId);
+    setVueMobile("thread");
   }
 
   // Un seul message écrit, envoyé à chaque employé coché DANS SA PROPRE
@@ -362,6 +366,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     }
     setMessages([]);
     setActiveId(null);
+    setVueMobile("liste");
     await chargerConversations();
   }
 
@@ -401,13 +406,13 @@ export default function DiscussionSection({ entrepriseId, userId }) {
 
   return (
     <div>
-      <h2>Discussion</h2>
-      <p className="panel-hint">Le fil d'équipe, une conversation avec chacun de tes employés, et tes groupes.</p>
+      {!mobile && <h2>Discussion</h2>}
+      {!mobile && <p className="panel-hint">Le fil d'équipe, une conversation avec chacun de tes employés, et tes groupes.</p>}
       {erreur && <p className="settings-msg err">{erreur}</p>}
       {confirmation && <p className="settings-msg ok">{confirmation}</p>}
 
-      <div className="chat-layout">
-        <div className="chat-conv-list">
+      <div className={`chat-layout${mobile ? " chat-layout-mobile" : ""}`}>
+        <div className={`chat-conv-list${mobile && vueMobile === "thread" ? " hidden-mobile" : ""}`}>
           <div className="chat-conv-list-head">
             <strong style={{ fontSize: "13px" }}>Conversations</strong>
             <button type="button" className="admin-icon-btn" onClick={() => setMenuNouveauOuvert((v) => !v)}>
@@ -454,7 +459,13 @@ export default function DiscussionSection({ entrepriseId, userId }) {
               key={c.id}
               type="button"
               className={`chat-conv-item${activeId === c.id ? " active" : ""}`}
-              onClick={() => (c.type === "employe" ? ouvrirConversationAvec(c.employeId) : setActiveId(c.id))}
+              onClick={() => {
+                if (c.type === "employe") ouvrirConversationAvec(c.employeId);
+                else {
+                  setActiveId(c.id);
+                  setVueMobile("thread");
+                }
+              }}
             >
               <div className="chat-conv-titre">{c.type === "equipe" || c.type === "groupe" ? "👥 " : ""}{c.titre}</div>
               {c.dernierMessage ? (
@@ -467,15 +478,20 @@ export default function DiscussionSection({ entrepriseId, userId }) {
           ))}
         </div>
 
-        <div className="chat-thread">
+        <div className={`chat-thread${mobile && vueMobile === "liste" ? " hidden-mobile" : ""}`}>
           {!activeId ? (
             <p className="chat-empty">Sélectionne une conversation.</p>
           ) : (
             <>
-              {conversationActive && conversationActive.type !== "equipe" && (
+              {conversationActive && (mobile || conversationActive.type !== "equipe") && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", padding: "10px 14px", borderBottom: "1px solid rgba(var(--w),0.12)" }}>
-                  <div style={{ minWidth: 0 }}>
-                    <strong>{conversationActive.type === "groupe" ? "👥 " : ""}{conversationActive.titre}</strong>
+                  {mobile && (
+                    <button type="button" className="admin-icon-btn" onClick={() => setVueMobile("liste")} aria-label="Retour">
+                      ‹
+                    </button>
+                  )}
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <strong>{conversationActive.type === "groupe" || conversationActive.type === "equipe" ? "👥 " : ""}{conversationActive.titre}</strong>
                     {conversationActive.type === "groupe" && (
                       <div className="section-hint" style={{ margin: 0, fontSize: "12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {conversationActive.membres?.length ? `Toi, ${conversationActive.membres.join(", ")}` : "Toi seulement"}

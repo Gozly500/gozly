@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
-import { IconTableauDeBord, IconHoraire, IconCommandes, IconDemande } from "@/components/icons/GozlyIcons";
+import { IconTableauDeBord, IconHoraire, IconCommandes, IconDemande, IconDiscussion } from "@/components/icons/GozlyIcons";
 
 const GestionContexte = createContext(null);
 export function useGestion() {
@@ -103,13 +103,14 @@ export default function GestionShell({ actif, children }) {
     { id: "horaire", href: "/gestion/horaire", label: "Horaire", Icone: IconHoraire, visible: horaireActif },
     { id: "commandes", href: "/gestion/commandes", label: "Commandes", Icone: IconCommandes, visible: commandesActif },
     { id: "demandes", href: "/gestion/demandes", label: "Demandes", Icone: IconDemande, visible: horaireActif },
+    { id: "discussion", href: "/gestion/discussion", label: "Discussion", Icone: IconDiscussion, visible: true },
   ].filter((o) => o.visible);
 
   const contexte = { user, entrepriseId, entrepriseNom, modulesActifs, mesPermissions, a, peutVoirFeuille, onglets };
 
   return (
     <GestionContexte.Provider value={contexte}>
-      <div className="moi-shell">
+      <div className={`moi-shell${actif === "discussion" ? " moi-shell-chat" : ""}`}>
         <header className="moi-header">
           <Link href="/gestion" className="moi-header-identite" style={{ textDecoration: "none" }}>
             <div className="moi-header-nom">{entrepriseNom || "Gozly"}</div>
@@ -127,7 +128,7 @@ export default function GestionShell({ actif, children }) {
           </div>
         </header>
 
-        <main className="moi-main">
+        <main className={`moi-main${actif === "discussion" ? " moi-main-chat" : ""}`}>
           {entrepriseId ? children : <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>}
         </main>
 
