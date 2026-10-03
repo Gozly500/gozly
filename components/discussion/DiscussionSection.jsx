@@ -465,7 +465,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
                       </div>
                       {m === dernierDeMoi && !String(m.id).startsWith("tmp-") && (
                         <LigneVu
-                          texte={libelleVu({ vus: presence.vus, dernierMessageIso: m.created_at, directe: conversationActive?.type === "directe" })}
+                          vu={libelleVu({ vus: presence.vus, dernierMessageIso: m.created_at, directe: conversationActive?.type === "directe" })}
                         />
                       )}
                     </div>

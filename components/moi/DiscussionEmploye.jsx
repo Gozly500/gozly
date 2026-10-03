@@ -280,6 +280,7 @@ export default function DiscussionEmploye() {
                 const textesChat = {
                   vu: t("chat.vu"),
                   vuPar: (noms) => t("chat.vuPar", { noms }),
+                  vuNombre: (n) => t("chat.vuNombre", { n }),
                   ecrit: (nom) => t("chat.ecrit", { nom }),
                   ecritDeux: (a, b) => t("chat.ecritDeux", { a, b }),
                   ecritPlusieurs: t("chat.ecritPlusieurs"),
@@ -294,7 +295,7 @@ export default function DiscussionEmploye() {
                           <div className="chat-bubble">{m.contenu}</div>
                         </div>
                         {m === dernierDeMoi && !String(m.id).startsWith("tmp-") && (
-                          <LigneVu texte={libelleVu({ vus: presence.vus, dernierMessageIso: m.createdAt, directe, textes: textesChat })} />
+                          <LigneVu vu={libelleVu({ vus: presence.vus, dernierMessageIso: m.createdAt, directe, textes: textesChat })} />
                         )}
                       </div>
                     ))}

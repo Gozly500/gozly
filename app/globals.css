@@ -1944,6 +1944,9 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .chat-bubble-row{display:flex;flex-direction:column;max-width:70%;}
 .chat-bubble-row.mine{align-self:flex-end;align-items:flex-end;}
 .chat-vu{align-self:flex-end;font-size:11px;color:var(--text-dim);padding:0 6px;margin-top:-4px;}
+.chat-vu-bloc{align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;max-width:80%;}
+.chat-vu-bouton{background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px;margin-top:0;}
+.chat-vu-noms{font-size:11px;color:var(--text-dim);text-align:right;padding:2px 6px 0;}
 .chat-ecrit{align-self:flex-start;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);padding:2px 6px;}
 .chat-ecrit-points{display:inline-flex;gap:3px;}
 .chat-ecrit-points i{width:5px;height:5px;border-radius:50%;background:var(--text-dim);animation:chat-point 1.2s infinite ease-in-out;}

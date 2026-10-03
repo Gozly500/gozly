@@ -1,27 +1,45 @@
 "use client";
 
+import { useState } from "react";
+
 const TEXTES_FR = {
   vu: "Vu",
   vuPar: (noms) => `Vu par ${noms}`,
+  vuNombre: (n) => `Vu par ${n} personnes`,
   ecrit: (nom) => `${nom} écrit`,
   ecritDeux: (a, b) => `${a} et ${b} écrivent`,
   ecritPlusieurs: "Plusieurs personnes écrivent",
 };
 
-// Texte "Vu" sous mon dernier message, ou null s'il n'a pas encore été vu.
-// directe : conversation à deux (juste "Vu"), sinon les noms de ceux qui l'ont vu.
+// "Vu" sous mon dernier message : { texte, noms } ou null s'il n'a pas encore été vu.
+// directe : conversation à deux (juste "Vu"). Sinon les noms (3 au maximum),
+// et au-delà "Vu par N personnes" (on appuie dessus pour voir qui).
 export function libelleVu({ vus, dernierMessageIso, directe, textes = TEXTES_FR }) {
   if (!dernierMessageIso) return null;
   const limite = new Date(dernierMessageIso).getTime();
   const noms = vus.filter((v) => new Date(v.luAt).getTime() >= limite).map((v) => v.nom);
   if (noms.length === 0) return null;
-  if (directe) return textes.vu;
-  const affiches = noms.length > 3 ? `${noms.slice(0, 2).join(", ")} +${noms.length - 2}` : noms.join(", ");
-  return textes.vuPar(affiches);
+  if (directe) return { texte: textes.vu, noms: [] };
+  return { texte: noms.length > 3 ? textes.vuNombre(noms.length) : textes.vuPar(noms.join(", ")), noms };
 }
 
-export function LigneVu({ texte }) {
-  return texte ? <div className="chat-vu">{texte}</div> : null;
+export function LigneVu({ vu }) {
+  const [ouvert, setOuvert] = useState(false);
+  if (!vu) return null;
+  // Cliquable seulement quand les noms ne sont pas déjà tous affichés.
+  const cliquable = vu.noms.length > 3;
+  return (
+    <div className="chat-vu-bloc">
+      {cliquable ? (
+        <button type="button" className="chat-vu chat-vu-bouton" onClick={() => setOuvert((o) => !o)}>
+          {vu.texte}
+        </button>
+      ) : (
+        <div className="chat-vu">{vu.texte}</div>
+      )}
+      {cliquable && ouvert && <div className="chat-vu-noms">{vu.noms.join(", ")}</div>}
+    </div>
+  );
 }
 
 export function IndicateurEcriture({ ecrivent, textes = TEXTES_FR }) {
