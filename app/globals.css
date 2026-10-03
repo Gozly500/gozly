@@ -2047,3 +2047,6 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .chat-conv-item.non-lu .chat-conv-titre{font-weight:800;}
 .chat-conv-item.non-lu .chat-conv-apercu{color:var(--fg);font-weight:700;}
 .chat-conv-pastille{display:inline-block;width:9px;height:9px;border-radius:50%;background:#a07bff;margin-left:8px;vertical-align:middle;box-shadow:0 0 0 3px rgba(160,123,255,0.25);}
+
+/* Cases des modules de l'accueil employé : image (SVG carré) au-dessus du nom traduit. */
+.moi-accueil-card-image{width:64px;height:64px;border-radius:16px;display:block;}

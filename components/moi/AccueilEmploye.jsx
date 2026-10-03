@@ -23,9 +23,9 @@ const PRINCIPAUX = [
 
 // Boutons de modules, affichés seulement si le module est actif.
 const MODULES = [
-  { id: "taches", cle: "nav.taches", Icone: IconPlanning, href: "/moi/taches", module: "planning" },
-  { id: "temperature", cle: "nav.temperature", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
-  { id: "commandes", cle: "nav.commandes", Icone: IconCommandes, href: "/moi/commandes", module: "commandes" },
+  { id: "taches", cle: "nav.taches", Icone: IconPlanning, image: "/moi/taches.svg", href: "/moi/taches", module: "planning" },
+  { id: "temperature", cle: "nav.temperature", Icone: IconTemperature, image: "/moi/temperature.svg", href: "/moi/temperature", module: "temperature" },
+  { id: "commandes", cle: "nav.commandes", Icone: IconCommandes, image: "/moi/commandes.svg", href: "/moi/commandes", module: "commandes" },
 ];
 
 export default function AccueilEmploye() {
@@ -69,9 +69,13 @@ export default function AccueilEmploye() {
           <div className="moi-accueil-grid" style={{ marginTop: 0 }}>
             {modules.map((r) => (
               <button key={r.id} type="button" className="moi-accueil-card" onClick={() => router.push(r.href)}>
-                <span className="moi-accueil-card-icon">
-                  <r.Icone className="gozly-icon" />
-                </span>
+                {r.image ? (
+                  <img src={r.image} alt="" className="moi-accueil-card-image" />
+                ) : (
+                  <span className="moi-accueil-card-icon">
+                    <r.Icone className="gozly-icon" />
+                  </span>
+                )}
                 <span>{t(r.cle)}</span>
               </button>
             ))}
