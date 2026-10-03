@@ -48,7 +48,9 @@ export default function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
+    // ?retour=/gestion : revient là où on voulait aller (chemins internes seulement).
+    const retour = new URLSearchParams(window.location.search).get("retour");
+    router.push(retour && retour.startsWith("/") && !retour.startsWith("//") ? retour : "/dashboard");
   }
 
   function ouvrirMotDePasseOublie() {

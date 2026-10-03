@@ -2111,3 +2111,47 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .moi-accueil-card-fond{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
 .moi-accueil-card-texte{position:relative;z-index:1;width:100%;padding:0 10px 12px;color:#fff;font-size:14px;font-weight:700;text-shadow:0 1px 8px rgba(0,0,0,0.65);}
 .moi-accueil-card.avec-image:active{filter:brightness(1.12);}
+
+/* ============ App mobile du gestionnaire (/gestion) ============ */
+.gestion-page .admin-list{max-width:none !important;}
+.gestion-page .admin-row{flex-wrap:wrap;gap:10px;}
+.gestion-page .admin-row-controls{flex-wrap:wrap;gap:8px;}
+.gestion-page .settings-section{margin-bottom:22px;}
+.gestion-approbation{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0 14px;flex-wrap:wrap;}
+.gestion-approuvee{color:#7ee2a8;font-weight:600;font-size:14px;}
+.gestion-resume{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;font-size:14px;}
+.gestion-cartes{display:flex;flex-direction:column;gap:10px;}
+.gestion-carte{padding:0 !important;overflow:hidden;}
+.gestion-carte-tete{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;color:inherit;padding:14px 16px;cursor:pointer;text-align:left;font:inherit;}
+.gestion-carte-nom{flex:1;font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.gestion-carte-total{font-weight:700;font-size:15px;white-space:nowrap;}
+.gestion-chevron{color:var(--text-dim);width:14px;text-align:center;}
+.gestion-jours{border-top:1px solid rgba(var(--w),0.1);padding:6px 16px 12px;}
+.gestion-jour{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid rgba(var(--w),0.06);font-size:13.5px;}
+.gestion-jour:last-child{border-bottom:none;}
+.gestion-jour-nom{color:var(--text-dim);flex-shrink:0;}
+.gestion-jour-valeurs{text-align:right;display:flex;flex-direction:column;gap:3px;align-items:flex-end;}
+.gestion-pointage{background:none;border:none;color:inherit;font:inherit;padding:0;text-align:right;}
+.gestion-pointage.corrigeable{cursor:pointer;text-decoration:underline;text-decoration-color:rgba(var(--w),0.3);text-underline-offset:3px;}
+.gestion-oubli{color:#ffd479;font-size:11.5px;margin-left:6px;white-space:nowrap;}
+.gestion-tableau{overflow-x:auto;}
+.gestion-tableau .admin-table th:first-child,.gestion-tableau .admin-table td:first-child{position:sticky;left:0;background:var(--navy);z-index:1;}
+.gestion-filtres{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px;}
+.gestion-filtres .admin-icon-btn{white-space:nowrap;}
+.gestion-apreparer{margin-bottom:14px;padding:12px 16px !important;}
+.gestion-apreparer summary{cursor:pointer;font-weight:600;font-size:14px;}
+.gestion-ligne-produit{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:13.5px;border-bottom:1px solid rgba(var(--w),0.06);}
+.gestion-ligne-produit:last-child{border-bottom:none;}
+.gestion-commande{padding:14px 16px !important;display:flex;flex-direction:column;gap:6px;}
+.gestion-commande-tete{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14.5px;}
+.gestion-commande-client{font-size:13.5px;}
+.gestion-commande-sous{font-size:12.5px;color:var(--text-dim);}
+.gestion-commande-items{font-size:14px;display:flex;flex-direction:column;gap:2px;margin-top:2px;}
+.gestion-commande-pied{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;}
+.gestion-commande-actions .btn-small{padding:10px 18px;font-size:14.5px;}
+.gestion-commande-secondaire{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+.gestion-accueil-cartes{display:flex;flex-direction:column;gap:12px;}
+.gestion-accueil-carte{display:block;text-decoration:none;color:inherit;padding:16px 18px !important;}
+.gestion-accueil-titre{font-size:12.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;}
+.gestion-accueil-valeur{font-size:32px;font-weight:700;margin:2px 0;}
+.gestion-accueil-detail{font-size:13.5px;color:var(--text-dim);}

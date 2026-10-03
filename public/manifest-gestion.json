@@ -1,0 +1,14 @@
+{
+  "name": "Gozly Gestion",
+  "short_name": "Gozly Gestion",
+  "description": "Ton tableau de bord Gozly, version téléphone : heures, commandes et demandes.",
+  "start_url": "/gestion",
+  "scope": "/gestion",
+  "display": "standalone",
+  "background_color": "#0d0d3f",
+  "theme_color": "#191960",
+  "icons": [
+    { "src": "/icone-app-192", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icone-app-512", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
