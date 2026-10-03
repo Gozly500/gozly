@@ -48,7 +48,7 @@ export default function GestionShell({ actif, children }) {
         return;
       }
       if (besoinChoix) {
-        router.replace("/dashboards");
+        router.replace("/dashboards?retour=/gestion");
         return;
       }
       setPlusieursEntreprises((entreprises || []).length > 1);
@@ -125,7 +125,7 @@ export default function GestionShell({ actif, children }) {
           </Link>
           <div className="moi-header-actions">
             {plusieursEntreprises && (
-              <Link href="/dashboards" className="admin-icon-btn">
+              <Link href="/dashboards?retour=/gestion" className="admin-icon-btn">
                 Changer
               </Link>
             )}

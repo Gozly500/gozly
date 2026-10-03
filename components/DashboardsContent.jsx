@@ -36,7 +36,9 @@ export default function DashboardsContent() {
 
   function choisir(entrepriseId) {
     setEntrepriseSelectionnee(entrepriseId);
-    router.push("/dashboard");
+    // ?retour=/gestion : on revient dans l'app gestionnaire plutôt qu'au dashboard (chemins internes seulement).
+    const retour = new URLSearchParams(window.location.search).get("retour");
+    router.push(retour && retour.startsWith("/") && !retour.startsWith("//") ? retour : "/dashboard");
   }
 
   if (checking) {
