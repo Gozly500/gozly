@@ -56,6 +56,7 @@ function combineDateHeure(date, heure) {
 export default function FeuilleTempsSection({ entrepriseId }) {
   const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
   const [employes, setEmployes] = useState([]);
+  const [assignes, setAssignes] = useState(null); // ids des employés de la succursale choisie (null = tous)
   const [pointages, setPointages] = useState([]);
   const [quarts, setQuarts] = useState([]);
   const [calculPointage, setCalculPointage] = useState("reel");
@@ -202,6 +203,15 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       .gte("date", dateStr(weekStart))
       .lt("date", dateStr(weekEnd));
 
+    // Avec une succursale choisie : on affiche ses employés (même sans pointage
+    // cette semaine) ; sinon tous les employés.
+    if (emplacementId) {
+      const { data: liens } = await supabase.from("employe_emplacements").select("employe_id").eq("emplacement_id", emplacementId);
+      setAssignes(new Set((liens || []).map((l) => l.employe_id)));
+    } else {
+      setAssignes(null);
+    }
+
     setEmployes(employesData || []);
     setPointages(pointagesData || []);
     setQuarts(quartsData || []);
@@ -241,6 +251,21 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const lignes = employes.flatMap((emp) =>
     sessionsPour(emp.id).map((s) => ({ employe: emp.nom, ...s }))
   );
+
+  // Tableau croisé : une ligne par employé, une colonne par jour de la semaine.
+  const jours = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const employesAffiches = employes.filter(
+    (emp) => (assignes === null || assignes.has(emp.id)) || sessionsPour(emp.id).length > 0
+  );
+
+  function libelleJour(d) {
+    const nom = d.toLocaleDateString("fr-CA", { weekday: "long" });
+    return nom.charAt(0).toUpperCase() + nom.slice(1);
+  }
+
+  function heureCourte(iso) {
+    return new Date(iso).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+  }
 
   function openEdit(ligne) {
     setModal({
@@ -408,42 +433,69 @@ export default function FeuilleTempsSection({ entrepriseId }) {
 
       {loading ? (
         <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
-      ) : lignes.length === 0 ? (
-        <p style={{ color: "var(--text-dim)" }}>
-          {seulementVoir && !autoVisible
-            ? "Rien à afficher : cette semaine n'a pas encore été approuvée, ou il n'y a aucun pointage."
-            : "Aucun pointage cette semaine."}
-        </p>
+      ) : lignes.length === 0 && seulementVoir && !autoVisible ? (
+        <p style={{ color: "var(--text-dim)" }}>Rien à afficher : cette semaine n'a pas encore été approuvée, ou il n'y a aucun pointage.</p>
+      ) : employesAffiches.length === 0 ? (
+        <p style={{ color: "var(--text-dim)" }}>Aucun employé à afficher.</p>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
                 <th>Employé</th>
-                <th>Date</th>
-                <th>Début</th>
-                <th>Fin</th>
-                <th>Heures</th>
-                <th></th>
+                {jours.map((d) => (
+                  <th key={dateStr(d)} style={{ whiteSpace: "nowrap", textAlign: "center" }}>
+                    {libelleJour(d)}
+                    <div style={{ fontWeight: 400, fontSize: "11.5px", color: "var(--text-dim)" }}>
+                      {d.toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}
+                    </div>
+                  </th>
+                ))}
+                <th style={{ whiteSpace: "nowrap", textAlign: "center" }}>Total de la semaine</th>
               </tr>
             </thead>
             <tbody>
-              {lignes.map((l, i) => (
-                <tr key={i}>
-                  <td>{l.employe}</td>
-                  <td>{new Date(l.debut).toLocaleDateString("fr-CA")}</td>
-                  <td>{new Date(l.debut).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}</td>
-                  <td>{l.fin ? new Date(l.fin).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" }) : "en cours"}</td>
-                  <td>{heuresDecimal(l.minutes)}</td>
-                  <td>
-                    {peutCorriger && (
-                      <button className="admin-icon-btn" onClick={() => openEdit(l)}>
-                        Modifier
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {employesAffiches.map((emp) => {
+                const sessions = sessionsPour(emp.id);
+                const totalMinutes = sessions.reduce((sum, x) => sum + x.minutes, 0);
+                return (
+                  <tr key={emp.id}>
+                    <td style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{emp.nom}</td>
+                    {jours.map((d) => {
+                      const duJour = sessions.filter((x) => dateStr(new Date(x.debut)) === dateStr(d));
+                      return (
+                        <td key={dateStr(d)} style={{ textAlign: "center", whiteSpace: "nowrap", fontSize: "13px" }}>
+                          {duJour.length === 0 ? (
+                            <span style={{ color: "var(--text-dim)" }}>—</span>
+                          ) : (
+                            duJour.map((x) => (
+                              <div key={x.pointageId}>
+                                {peutCorriger ? (
+                                  <button
+                                    type="button"
+                                    title="Corriger ce pointage"
+                                    onClick={() => openEdit({ ...x, employe: emp.nom })}
+                                    style={{ background: "none", border: "none", color: "inherit", font: "inherit", cursor: "pointer", padding: 0 }}
+                                  >
+                                    {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>en cours</em>}
+                                  </button>
+                                ) : (
+                                  <>
+                                    {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>en cours</em>}
+                                  </>
+                                )}
+                              </div>
+                            ))
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td style={{ textAlign: "center", fontWeight: 700, whiteSpace: "nowrap" }}>
+                      {totalMinutes > 0 ? `${heuresDecimal(totalMinutes)} h` : <span style={{ color: "var(--text-dim)" }}>—</span>}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
