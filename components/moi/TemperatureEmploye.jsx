@@ -112,7 +112,9 @@ export default function TemperatureEmploye() {
   }
 
   const periodeLabel = creneau?.periode === "am" ? t("temperature.matin") : creneau?.periode === "pm" ? t("temperature.soir") : "";
-  const grille = { display: "grid", gridTemplateColumns: "1fr 104px 104px", gap: "8px", alignItems: "center", padding: "10px 14px" };
+  // Sur téléphone la place est comptée : colonnes AM/PM étroites, nom qui peut passer à la ligne
+  // (minmax(0, 1fr)), et très peu de marge autour (la carte ET la grille en ajoutaient chacune).
+  const grille = { display: "grid", gridTemplateColumns: "minmax(0, 1fr) 90px 90px", gap: "6px", alignItems: "center", padding: "8px 0" };
 
   // Une case AM ou PM : champ de saisie seulement pour le créneau actuel,
   // sinon la valeur déjà relevée en lecture seule (ou un tiret).
@@ -139,7 +141,7 @@ export default function TemperatureEmploye() {
       <h2>{t("temperature.titre")}</h2>
       <p className="panel-hint">{t("temperature.creneauActuel", { periode: periodeLabel })}</p>
 
-      <div className="planning-day" style={{ marginBottom: "14px" }}>
+      <div className="planning-day" style={{ marginBottom: "14px", padding: "12px 10px" }}>
         <div style={{ ...grille, paddingBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)" }}>
           <div>{t("temperature.equipement")}</div>
           {["am", "pm"].map((p) => (
@@ -153,7 +155,7 @@ export default function TemperatureEmploye() {
           const actuel = releveExistant(eq.id, creneau?.periode);
           return (
             <div key={eq.id} style={grille}>
-              <div style={{ fontSize: "13.5px", fontWeight: 600, minWidth: 0 }}>
+              <div style={{ fontSize: "13.5px", fontWeight: 600, minWidth: 0, overflowWrap: "anywhere" }}>
                 {eq.nom}
                 {actuel && (
                   <div style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-dim)" }}>

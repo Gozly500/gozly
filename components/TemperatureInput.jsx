@@ -20,13 +20,13 @@ export default function TemperatureInput({ value, onChange, placeholder }) {
   }
 
   return (
-    <div style={{ position: "relative", width: "100%" }}>
+    <div style={{ position: "relative", width: "100%", minWidth: 0 }}>
       <input
         type="text"
         inputMode="decimal"
         autoComplete="off"
         placeholder={placeholder}
-        style={{ width: "100%", boxSizing: "border-box", paddingRight: "34px" }}
+        style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: "10px 32px 10px 10px", fontSize: "14px" }}
         value={value ?? ""}
         onChange={(e) => onChange(nettoyer(e.target.value))}
       />
@@ -39,8 +39,8 @@ export default function TemperatureInput({ value, onChange, placeholder }) {
           right: "4px",
           top: "50%",
           transform: "translateY(-50%)",
-          width: "28px",
-          height: "28px",
+          width: "26px",
+          height: "26px",
           borderRadius: "8px",
           border: "1px solid rgba(var(--w),0.25)",
           background: "rgba(var(--w),0.1)",
