@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import RappelNotifications from "@/components/moi/RappelNotifications";
+import PointageMobileBloc from "@/components/moi/PointageMobileBloc";
 import { useLangue } from "@/components/moi/LangueContext";
 import { localeDate } from "@/lib/i18n/moi";
 
@@ -27,6 +28,24 @@ export default function HoraireEmploye() {
   const [quarts, setQuarts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [joursOuverts, setJoursOuverts] = useState({});
+  const [pointageActif, setPointageActif] = useState(false);
+  const [enPoste, setEnPoste] = useState(false);
+  const [pointageOuvert, setPointageOuvert] = useState(false);
+
+  // Le bouton Pointer est toujours là (même sans quart prévu) si le pointage mobile est activé.
+  async function chargerEtatPointage() {
+    try {
+      const res = await employeFetch("/api/employe-app/pointage-mobile");
+      if (!res.ok) return;
+      const data = await res.json();
+      setPointageActif(!!data.actif);
+      setEnPoste(!!data.pointageOuvert);
+    } catch {}
+  }
+
+  useEffect(() => {
+    chargerEtatPointage();
+  }, []);
 
   useEffect(() => {
     employeFetch("/api/employe-app/moi").then(async (res) => {
@@ -58,6 +77,30 @@ export default function HoraireEmploye() {
   return (
     <div className="moi-horaire">
       <RappelNotifications types={["notif_semaine_publiee"]} sujet="horaire" />
+      {pointageActif && (
+        <button type="button" className="moi-pointer-flottant" onClick={() => setPointageOuvert(true)}>
+          {enPoste ? t("pointage.terminer") : t("pointage.pointer")}
+        </button>
+      )}
+      {pointageOuvert && (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            setPointageOuvert(false);
+            chargerEtatPointage();
+          }}
+        >
+          <div style={{ width: "100%", maxWidth: "420px" }} onClick={(e) => e.stopPropagation()}>
+            <PointageMobileBloc
+              forcer
+              onTermine={() => {
+                setPointageOuvert(false);
+                chargerEtatPointage();
+              }}
+            />
+          </div>
+        </div>
+      )}
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
           ‹

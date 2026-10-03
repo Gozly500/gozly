@@ -1887,6 +1887,11 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
   }
 .moi-rappel a{flex-shrink:0;font-weight:700;color:var(--fg);text-decoration:underline;}
 
+.moi-pointer-flottant{
+  position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:40;
+  padding:12px 20px;border:none;border-radius:30px;cursor:pointer;font-weight:700;font-size:14.5px;color:#fff;
+  background:linear-gradient(150deg,var(--violet),var(--indigo));box-shadow:0 6px 18px rgba(0,0,0,0.35);
+}
 .moi-week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
 .moi-week-label{font-weight:600;font-size:14px;text-transform:capitalize;}
 

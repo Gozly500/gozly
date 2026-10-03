@@ -10,7 +10,9 @@ function formatHeure(iso, langue) {
   return new Date(iso).toLocaleTimeString(localeDate(langue), { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function PointageMobileBloc() {
+// forcer : affiche le bloc même sans quart aujourd'hui (bouton "Pointer" de l'horaire) ;
+// onTermine : appelé quand l'animation de succès est finie.
+export default function PointageMobileBloc({ forcer = false, onTermine } = {}) {
   const { t, langue } = useLangue();
   const [etat, setEtat] = useState(null);
   const [emplacementChoisi, setEmplacementChoisi] = useState(null);
@@ -56,6 +58,7 @@ export default function PointageMobileBloc() {
     const minuteur = setTimeout(() => {
       setSucces(null);
       charger();
+      onTermine?.();
     }, 4000);
 
     return () => {
@@ -112,7 +115,7 @@ export default function PointageMobileBloc() {
 
   const enPoste = !!etat.pointageOuvert;
   if (enPoste && !etat.pointageOuvert.gpsDisponible) return null;
-  if (!enPoste && (!etat.aQuartAujourdhui || etat.emplacements.length === 0)) return null;
+  if (!enPoste && ((!forcer && !etat.aQuartAujourdhui) || etat.emplacements.length === 0)) return null;
 
   const nomChoisi = enPoste
     ? etat.pointageOuvert.emplacementNom
