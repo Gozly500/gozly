@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { resoudreEntrepriseActive } from "@/lib/entreprise";
+import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
 import { IconTableauDeBord, IconHoraire, IconCommandes, IconDemande, IconDiscussion } from "@/components/icons/GozlyIcons";
 
@@ -27,9 +27,11 @@ export default function GestionShell({ actif, children }) {
   const [plusieursEntreprises, setPlusieursEntreprises] = useState(false);
   const [modulesActifs, setModulesActifs] = useState([]);
   const [mesPermissions, setMesPermissions] = useState(null); // null = propriétaire (tout permis)
+  const [impersonation, setImpersonation] = useState(null); // mode admin : on regarde l'entreprise d'un client
 
   useEffect(() => {
     let ignore = false;
+    setImpersonation(getImpersonation());
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
@@ -80,6 +82,11 @@ export default function GestionShell({ actif, children }) {
     };
   }, [router]);
 
+  function quitterModeAdmin() {
+    arreterImpersonation();
+    router.push("/admin");
+  }
+
   async function deconnexion() {
     await supabase.auth.signOut();
     router.replace("/login?retour=/gestion");
@@ -127,6 +134,18 @@ export default function GestionShell({ actif, children }) {
             </button>
           </div>
         </header>
+
+        {impersonation && (
+          <div className="impersonation-banner" style={{ margin: 0, borderRadius: 0 }}>
+            <div>
+              <strong>Mode admin</strong>
+              <div>{impersonation.nom}</div>
+            </div>
+            <button type="button" onClick={quitterModeAdmin}>
+              Quitter
+            </button>
+          </div>
+        )}
 
         <main className={`moi-main${actif === "discussion" ? " moi-main-chat" : ""}`}>
           {entrepriseId ? children : <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>}
