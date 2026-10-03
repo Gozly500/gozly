@@ -239,7 +239,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
                     className="admin-icon-btn danger"
                     onClick={() => setArticles((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== i) : [{ ...ARTICLE_VIDE }]))}
                     aria-label={t("commandes.retirerArticle")}
-                    style={{ width: "46px", height: "46px", flexShrink: 0, padding: 0, margin: 0, borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    style={{ width: "40px", height: "40px", boxSizing: "border-box", flexShrink: 0, padding: 0, margin: 0, borderRadius: "12px", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}
                   >
                     ✕
                   </button>
