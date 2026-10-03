@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLangue } from "@/components/moi/LangueContext";
 import { LANGUES } from "@/lib/i18n/moi";
 
-// Pasta a eu un cas où un employé a refusé l'accès à la localisation par
+// Cas rencontré en test : un employé a refusé l'accès à la localisation par
 // accident au tout premier pointage mobile, et ne pouvait plus jamais
 // pointer ensuite - une fois "refusé", le navigateur ne redemande jamais
 // automatiquement. Ce bouton tente de redéclencher la demande (ça marche

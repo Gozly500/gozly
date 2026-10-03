@@ -5,7 +5,7 @@ import { getBearerToken, verifierSession } from "@/lib/employeSession";
 // Tous les quarts publiés à venir de l'employé (pas juste ceux de la
 // semaine courante, contrairement à /api/employe-app/horaire) - utilisé
 // pour choisir quel quart proposer en échange, voir DemandesEmploye.jsx.
-// Pasta voulait pouvoir échanger n'importe quel quart déjà sorti, pas
+// Un employé doit pouvoir échanger n'importe quel quart déjà sorti, pas
 // seulement ceux de la semaine affichée.
 export async function GET(request) {
   const employe = await verifierSession(getBearerToken(request));

@@ -1,6 +1,6 @@
 -- ============================================================
 -- Ajout : unité (Celsius ou Fahrenheit) par équipement de température.
--- Pasta a des frigos qui affichent en Celsius et d'autres en Fahrenheit -
+-- Certains clients ont des frigos qui affichent en Celsius et d'autres en Fahrenheit -
 -- sans ça, un relevé en Fahrenheit (ex: 40°F, parfaitement correct) était
 -- jugé non conforme parce que la vérification supposait toujours du
 -- Celsius (seuils 0-4°C pour un frigo).

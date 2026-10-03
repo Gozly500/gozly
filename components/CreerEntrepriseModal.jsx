@@ -130,7 +130,7 @@ export default function CreerEntrepriseModal({ onClose }) {
                 type="text"
                 value={nom}
                 onChange={(e) => setNom(e.target.value)}
-                placeholder="Ex: Pasta Sainte-Marthe"
+                placeholder="Ex: Mon restaurant - Centre-ville"
                 required
                 autoFocus
               />

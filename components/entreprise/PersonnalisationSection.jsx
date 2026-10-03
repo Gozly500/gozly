@@ -560,7 +560,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 />
                 <ParametreSelect
                   label="Succursale Wix de ce dashboard"
-                  info="Si le même site Wix alimente plusieurs dashboards Gozly (une succursale chacun, ex: Pasta), choisis ici la succursale dont CE dashboard reçoit les commandes et les ventes. Les commandes d'une autre succursale sont retirées de ce dashboard. « Toutes » = aucune séparation. La liste vient des commandes déjà reçues : synchronise d'abord, ou repasse sur « Toutes » pour revoir toutes les succursales."
+                  info="Si le même site Wix alimente plusieurs dashboards Gozly (une succursale chacun), choisis ici la succursale dont CE dashboard reçoit les commandes et les ventes. Les commandes d'une autre succursale sont retirées de ce dashboard. « Toutes » = aucune séparation. La liste vient des commandes déjà reçues : synchronise d'abord, ou repasse sur « Toutes » pour revoir toutes les succursales."
                   options={[
                     { id: "", label: "Toutes les succursales" },
                     ...[...new Set([...lieuxWixDispo, ...(lieuWix ? [lieuWix] : [])])].map((nom) => ({ id: nom, label: nom })),

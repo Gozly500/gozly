@@ -1,6 +1,6 @@
 -- ============================================================
 -- Ajout : tâches "modèles" pré-enregistrées par catégorie (Planning).
--- Exemple Pasta : la catégorie "Pizzas" a un modèle par sorte de pizza
+-- Exemple : pour une pizzeria, la catégorie "Pizzas" a un modèle par sorte de pizza
 -- (Margherita, Pepperoni, etc.) - en créant la journée, on voit la liste
 -- déjà prête avec juste un champ texte à côté pour noter la quantité, au
 -- lieu de retaper le nom de chaque pizza à la main chaque jour.

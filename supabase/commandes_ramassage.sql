@@ -1,6 +1,6 @@
 -- ============================================================
 -- Ajout : date/heure de ramassage et lieu des commandes en ligne.
--- Pour un restaurant avec précommandes (ex: Pasta), la date qui compte
+-- Pour un restaurant avec précommandes (ex: une pizzeria), la date qui compte
 -- n'est pas celle où la commande a été passée, mais celle où le client
 -- vient la chercher. Wix Restaurants la donne dans le créneau choisi
 -- (shippingInfo.logistics.deliveryTimeSlot) et le lieu dans

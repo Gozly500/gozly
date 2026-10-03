@@ -3,7 +3,7 @@
 -- ============================================================
 -- Idée centrale : chaque table de données "métier" a une colonne
 -- entreprise_id. Même si aujourd'hui il n'y a qu'une seule entreprise
--- (ex. Pasta Deliziosa) dans le système, cette colonne fait qu'on
+-- dans le système, cette colonne fait qu'on
 -- n'a jamais besoin de réécrire les tables quand on ajoute un
 -- deuxième client plus tard.
 --

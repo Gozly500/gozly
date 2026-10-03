@@ -1,6 +1,6 @@
 -- ============================================================
--- Ajout : un même site Wix lié à PLUSIEURS dashboards Gozly (ex: Pasta,
--- une entreprise Gozly par succursale mais un seul site Wix).
+-- Ajout : un même site Wix lié à PLUSIEURS dashboards Gozly (ex: un restaurant
+-- avec deux succursales : une entreprise Gozly par succursale, un seul site Wix).
 --
 -- - wix_connexions.instance_id n'est plus unique : plusieurs entreprises
 --   peuvent partager la même installation de l'app Wix (une ligne par
