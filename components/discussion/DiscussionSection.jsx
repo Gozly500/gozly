@@ -11,7 +11,8 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const [texte, setTexte] = useState("");
   const [employes, setEmployes] = useState([]);
   const [employeIdsEnDiscussion, setEmployeIdsEnDiscussion] = useState(new Set());
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [recherche, setRecherche] = useState("");
+  const [idsAvecMessage, setIdsAvecMessage] = useState(new Set()); // conversations dont un message contient la recherche
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [groupeModal, setGroupeModal] = useState(null); // { nom, ids: Set d'employés } quand la fenêtre de création est ouverte
@@ -28,6 +29,19 @@ export default function DiscussionSection({ entrepriseId, userId }) {
       .order("nom", { ascending: true })
       .then(({ data }) => setEmployes(data || []));
   }, [entrepriseId]);
+
+  useEffect(() => {
+    const q = recherche.trim();
+    if (q.length < 3) {
+      setIdsAvecMessage(new Set());
+      return;
+    }
+    const delai = setTimeout(async () => {
+      const { data } = await supabase.from("messages").select("conversation_id").ilike("contenu", `%${q}%`).limit(300);
+      setIdsAvecMessage(new Set((data || []).map((m) => m.conversation_id)));
+    }, 300);
+    return () => clearTimeout(delai);
+  }, [recherche]);
 
   useEffect(() => {
     if (!activeId) return;
@@ -180,7 +194,6 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   }
 
   async function ouvrirConversationAvec(employeId) {
-    setPickerOpen(false);
     setErreur(null);
     let conversationId;
     try {
@@ -257,6 +270,21 @@ export default function DiscussionSection({ entrepriseId, userId }) {
 
   const conversationActive = conversations.find((c) => c.id === activeId);
 
+  // Tous les employés sont dans la liste d'office (même sans conversation encore) ;
+  // un clic sur l'un d'eux ouvre (ou crée) sa conversation. La recherche filtre
+  // par nom, par dernier message, et par tout message contenant le texte (3 lettres min).
+  const sansAccents = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const employesSansConversation = employes
+    .filter((e) => !employeIdsEnDiscussion.has(e.id))
+    .map((e) => ({ id: `emp:${e.id}`, type: "employe", employeId: e.id, titre: e.nom, dernierMessage: null, dernierMessageDate: null }));
+  const tousLesElements = [...conversations, ...employesSansConversation];
+  const q = sansAccents(recherche.trim());
+  const elementsVisibles = q
+    ? tousLesElements.filter(
+        (c) => sansAccents(c.titre).includes(q) || sansAccents(c.dernierMessage).includes(q) || idsAvecMessage.has(c.id)
+      )
+    : tousLesElements;
+
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
@@ -268,56 +296,41 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   return (
     <div>
       <h2>Discussion</h2>
-      <p className="panel-hint">Le fil d'équipe et tes conversations privées avec les employés.</p>
+      <p className="panel-hint">Le fil d'équipe, une conversation avec chacun de tes employés, et tes groupes.</p>
       {erreur && <p className="settings-msg err">{erreur}</p>}
 
       <div className="chat-layout">
         <div className="chat-conv-list">
           <div className="chat-conv-list-head">
             <strong style={{ fontSize: "13px" }}>Conversations</strong>
-            <button type="button" className="admin-icon-btn" onClick={() => setPickerOpen((v) => !v)}>
-              + Nouveau
+            <button type="button" className="admin-icon-btn" onClick={() => setGroupeModal({ nom: "", ids: new Set() })}>
+              + Nouveau groupe
             </button>
           </div>
-          {pickerOpen && (
-            <div className="chat-picker">
-              <button
-                type="button"
-                className="chat-conv-item"
-                onClick={() => {
-                  setPickerOpen(false);
-                  setGroupeModal({ nom: "", ids: new Set() });
-                }}
-              >
-                👥 Créer un groupe
-              </button>
-              <div className="chat-section-label">Démarrer avec...</div>
-              {employes.filter((e) => !employeIdsEnDiscussion.has(e.id)).length === 0 ? (
-                <p className="chat-empty">Tu discutes déjà avec tout le monde.</p>
-              ) : (
-                employes
-                  .filter((e) => !employeIdsEnDiscussion.has(e.id))
-                  .map((e) => (
-                    <button key={e.id} type="button" className="chat-conv-item" onClick={() => ouvrirConversationAvec(e.id)}>
-                      {e.nom}
-                    </button>
-                  ))
-              )}
-            </div>
-          )}
-          <div className="chat-section-label">Conversations</div>
-          {conversations.map((c) => (
+          <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(var(--w),0.08)" }}>
+            <input
+              type="search"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              placeholder="Rechercher une discussion..."
+              style={{ width: "100%", boxSizing: "border-box" }}
+            />
+          </div>
+          <div className="chat-section-label">{recherche.trim() ? "Résultats" : "Conversations"}</div>
+          {elementsVisibles.length === 0 && <p className="chat-empty">Aucune discussion trouvée.</p>}
+          {elementsVisibles.map((c) => (
             <button
               key={c.id}
               type="button"
               className={`chat-conv-item${activeId === c.id ? " active" : ""}`}
-              onClick={() => setActiveId(c.id)}
+              onClick={() => (c.type === "employe" ? ouvrirConversationAvec(c.employeId) : setActiveId(c.id))}
             >
               <div className="chat-conv-titre">{c.type === "equipe" || c.type === "groupe" ? "👥 " : ""}{c.titre}</div>
               {c.dernierMessage ? (
                 <div className="chat-conv-apercu">{c.dernierMessage}</div>
               ) : (
-                c.type === "groupe" && <div className="chat-conv-apercu">Groupe · {(c.membres?.length || 0) + 1} membres</div>
+                (c.type === "groupe" && <div className="chat-conv-apercu">Groupe · {(c.membres?.length || 0) + 1} membres</div>) ||
+                (c.type === "employe" && <div className="chat-conv-apercu">Pas encore de message</div>)
               )}
             </button>
           ))}
@@ -338,9 +351,11 @@ export default function DiscussionSection({ entrepriseId, userId }) {
                       </div>
                     )}
                   </div>
-                  <button type="button" className="admin-icon-btn danger" onClick={() => supprimerConversation(conversationActive)}>
-                    Supprimer
-                  </button>
+                  {conversationActive.type === "groupe" && (
+                    <button type="button" className="admin-icon-btn danger" onClick={() => supprimerConversation(conversationActive)}>
+                      Supprimer le groupe
+                    </button>
+                  )}
                 </div>
               )}
               <div className="chat-messages">
