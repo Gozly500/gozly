@@ -5,8 +5,15 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import DashSidebar from "@/components/DashSidebar";
 import EmplacementSelect from "@/components/EmplacementSelect";
+import JourEditor from "@/components/planning/JourEditor";
 import { supabase } from "@/lib/supabaseClient";
+import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { resoudreEntrepriseActive, getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
+
+function dateStr(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 export default function PlanningContent() {
   const router = useRouter();
@@ -16,7 +23,9 @@ export default function PlanningContent() {
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [days, setDays] = useState([]);
   const [loadingDays, setLoadingDays] = useState(true);
-  const [pickingDate, setPickingDate] = useState(false);
+  const [date, setDate] = useState(() => dateStr(new Date())); // jour affiché sous le calendrier
+  const [creees, setCreees] = useState(new Set()); // jours "créés" ici mais encore sans tâche
+  const [premierJourDimanche, setPremierJourDimanche] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(null);
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementIdState] = useState(null);
@@ -61,6 +70,13 @@ export default function PlanningContent() {
       setChecking(false);
 
       if (eid) {
+        supabase
+          .from("entreprises")
+          .select("premier_jour_semaine")
+          .eq("id", eid)
+          .maybeSingle()
+          .then(({ data }) => setPremierJourDimanche(data?.premier_jour_semaine === "dimanche"));
+
         const { data: emplacementsData } = await supabase
           .from("emplacements")
           .select("*")
@@ -87,8 +103,8 @@ export default function PlanningContent() {
     };
   }, [router]);
 
-  async function loadDays(eid, filtreEmplacementId) {
-    setLoadingDays(true);
+  async function loadDays(eid, filtreEmplacementId, { silencieux = false } = {}) {
+    if (!silencieux) setLoadingDays(true);
     let query = supabase.from("taches").select("date, terminee").eq("entreprise_id", eid);
     if (filtreEmplacementId) query = query.eq("emplacement_id", filtreEmplacementId);
     const { data } = await query;
@@ -114,11 +130,6 @@ export default function PlanningContent() {
     router.push("/login");
   }
 
-  function handlePickDate(e) {
-    const date = e.target.value;
-    if (date) router.push(`/dashboard/planning/${date}`);
-  }
-
   function handleChangeEmplacement(id) {
     setEmplacementId(id);
     loadDays(entrepriseId, id);
@@ -142,6 +153,14 @@ export default function PlanningContent() {
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.entreprise || user?.email;
 
+  // Calendrier de la semaine qui contient le jour affiché.
+  const debutSemaine = getDebutSemaine(new Date(`${date}T00:00:00`), premierJourDimanche);
+  const jours = Array.from({ length: 7 }, (_, i) => addDays(debutSemaine, i));
+  const aujourdhui = dateStr(new Date());
+  const statsJour = days.find((d) => d.date === date);
+  const jourExiste = (statsJour?.total || 0) > 0 || creees.has(date);
+  const decalerSemaine = (n) => setDate(dateStr(addDays(new Date(`${date}T00:00:00`), n * 7)));
+
   return (
     <div className="dash-layout">
       <DashSidebar
@@ -158,30 +177,80 @@ export default function PlanningContent() {
           <header className="dash-hero-inline" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
             <div>
               <h1>Tâches</h1>
-              <p>Les journées de tâches déjà créées.</p>
+              <p>Choisis un jour pour voir ou préparer ses tâches.</p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <Link href="/dashboard/planning-kiosk" target="_blank" className="admin-icon-btn">
                 🖥 Ouvrir le kiosque
               </Link>
-              <div style={{ position: "relative" }}>
-                <button className="submit-btn" onClick={() => setPickingDate((v) => !v)}>
-                  + Nouvelle journée
-                </button>
-                {pickingDate && (
-                  <input
-                    type="date"
-                    autoFocus
-                    className="planning-date-picker"
-                    onChange={handlePickDate}
-                    onBlur={() => setPickingDate(false)}
-                  />
-                )}
-              </div>
             </div>
           </header>
 
           <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={handleChangeEmplacement} />
+
+          {entrepriseId && (
+            <div className="cmd-planif" style={{ position: "static", maxHeight: "none", marginBottom: "26px" }}>
+              <div className="cmd-planif-head">
+                <h3 style={{ textTransform: "capitalize" }}>
+                  {debutSemaine.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} –{" "}
+                  {addDays(debutSemaine, 6).toLocaleDateString("fr-CA", { day: "numeric", month: "long" })}
+                </h3>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {date !== aujourdhui && (
+                    <button className="admin-icon-btn" onClick={() => setDate(aujourdhui)}>
+                      Aujourd&apos;hui
+                    </button>
+                  )}
+                  <button className="admin-icon-btn" aria-label="Semaine précédente" onClick={() => decalerSemaine(-1)}>
+                    ‹
+                  </button>
+                  <button className="admin-icon-btn" aria-label="Semaine suivante" onClick={() => decalerSemaine(1)}>
+                    ›
+                  </button>
+                </div>
+              </div>
+
+              <div className="cmd-planif-jours">
+                {jours.map((d) => {
+                  const id = dateStr(d);
+                  const stats = days.find((x) => x.date === id);
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`cmd-planif-jour${id === date ? " actif" : ""}${id === aujourdhui ? " aujourdhui" : ""}`}
+                      onClick={() => setDate(id)}
+                    >
+                      <span className="cmd-planif-jour-nom">{d.toLocaleDateString("fr-CA", { weekday: "short" }).replace(".", "")}</span>
+                      <span className="cmd-planif-jour-num">{d.getDate()}</span>
+                      <span className="cmd-planif-jour-nb">{stats ? `${stats.faites}/${stats.total}` : "—"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {jourExiste ? (
+                <JourEditor
+                  key={`${date}-${emplacementId || "toutes"}`}
+                  entrepriseId={entrepriseId}
+                  date={date}
+                  integre
+                  sansEmplacement
+                  onChange={() => loadDays(entrepriseId, emplacementId, { silencieux: true })}
+                />
+              ) : (
+                <div style={{ textAlign: "center", padding: "26px 10px" }}>
+                  <p style={{ color: "var(--text-dim)", marginBottom: "14px" }}>
+                    Aucune tâche pour le{" "}
+                    {new Date(`${date}T00:00:00`).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}.
+                  </p>
+                  <button className="submit-btn" onClick={() => setCreees((prev) => new Set(prev).add(date))}>
+                    Créer cette journée
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
@@ -205,7 +274,13 @@ export default function PlanningContent() {
                     </div>
                   </div>
                   <div className="admin-row-controls">
-                    <button className="admin-icon-btn" onClick={() => router.push(`/dashboard/planning/${day.date}`)}>
+                    <button
+                      className="admin-icon-btn"
+                      onClick={() => {
+                        setDate(day.date);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
                       Modifier
                     </button>
                     {confirmingDelete === day.date ? (
@@ -226,7 +301,7 @@ export default function PlanningContent() {
                 </div>
               ))}
               {days.length === 0 && (
-                <div className="admin-empty">Aucune journée créée. Clique "Nouvelle journée" pour commencer.</div>
+                <div className="admin-empty">Aucune journée créée. Choisis un jour dans le calendrier pour commencer.</div>
               )}
             </div>
           )}

@@ -7,7 +7,11 @@ import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import EmplacementSelect from "@/components/EmplacementSelect";
 
-export default function JourEditor({ entrepriseId, date, integre = false }) {
+// integre : version sans titre ni bouton "Terminé" (boîte intégrée à une autre page).
+// sansEmplacement : cache le sélecteur de succursale (la page qui l'intègre a le sien).
+// onChange : appelé chaque fois que la liste des tâches est (re)lue, pour que la page
+// qui l'intègre garde ses compteurs à jour.
+export default function JourEditor({ entrepriseId, date, integre = false, sansEmplacement = false, onChange }) {
   const [categories, setCategories] = useState([]);
   const [taches, setTaches] = useState([]);
   const [modeles, setModeles] = useState([]);
@@ -69,6 +73,7 @@ export default function JourEditor({ entrepriseId, date, integre = false }) {
     if (filtreEmplacementId) query = query.eq("emplacement_id", filtreEmplacementId);
     const { data } = await query.order("created_at", { ascending: true });
     setTaches(data || []);
+    onChange?.();
   }
 
   async function handleAdd(categorieId, e) {
@@ -137,7 +142,7 @@ export default function JourEditor({ entrepriseId, date, integre = false }) {
         </div>
       )}
 
-      <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={changerEmplacement} />
+      {!sansEmplacement && <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={changerEmplacement} />}
 
       {categories.length === 0 ? (
         <p style={{ color: "var(--text-dim)" }}>
