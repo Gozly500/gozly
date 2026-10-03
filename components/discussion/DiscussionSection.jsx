@@ -12,7 +12,6 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const [employes, setEmployes] = useState([]);
   const [employeIdsEnDiscussion, setEmployeIdsEnDiscussion] = useState(new Set());
   const [recherche, setRecherche] = useState("");
-  const [idsAvecMessage, setIdsAvecMessage] = useState(new Set()); // conversations dont un message contient la recherche
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [groupeModal, setGroupeModal] = useState(null); // { nom, ids: Set d'employés } quand la fenêtre de création est ouverte
@@ -29,19 +28,6 @@ export default function DiscussionSection({ entrepriseId, userId }) {
       .order("nom", { ascending: true })
       .then(({ data }) => setEmployes(data || []));
   }, [entrepriseId]);
-
-  useEffect(() => {
-    const q = recherche.trim();
-    if (q.length < 3) {
-      setIdsAvecMessage(new Set());
-      return;
-    }
-    const delai = setTimeout(async () => {
-      const { data } = await supabase.from("messages").select("conversation_id").ilike("contenu", `%${q}%`).limit(300);
-      setIdsAvecMessage(new Set((data || []).map((m) => m.conversation_id)));
-    }, 300);
-    return () => clearTimeout(delai);
-  }, [recherche]);
 
   useEffect(() => {
     if (!activeId) return;
@@ -272,7 +258,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
 
   // Tous les employés sont dans la liste d'office (même sans conversation encore) ;
   // un clic sur l'un d'eux ouvre (ou crée) sa conversation. La recherche filtre
-  // par nom, par dernier message, et par tout message contenant le texte (3 lettres min).
+  // seulement par NOM (employé, groupe, équipe), pour retrouver quelqu'un vite.
   const sansAccents = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const employesSansConversation = employes
     .filter((e) => !employeIdsEnDiscussion.has(e.id))
@@ -280,9 +266,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const tousLesElements = [...conversations, ...employesSansConversation];
   const q = sansAccents(recherche.trim());
   const elementsVisibles = q
-    ? tousLesElements.filter(
-        (c) => sansAccents(c.titre).includes(q) || sansAccents(c.dernierMessage).includes(q) || idsAvecMessage.has(c.id)
-      )
+    ? tousLesElements.filter((c) => sansAccents(c.titre).includes(q))
     : tousLesElements;
 
   if (loading) {
@@ -312,12 +296,12 @@ export default function DiscussionSection({ entrepriseId, userId }) {
               type="search"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher une discussion..."
+              placeholder="Rechercher un employé ou un groupe..."
               style={{ width: "100%", boxSizing: "border-box" }}
             />
           </div>
           <div className="chat-section-label">{recherche.trim() ? "Résultats" : "Conversations"}</div>
-          {elementsVisibles.length === 0 && <p className="chat-empty">Aucune discussion trouvée.</p>}
+          {elementsVisibles.length === 0 && <p className="chat-empty">Aucun employé ou groupe trouvé.</p>}
           {elementsVisibles.map((c) => (
             <button
               key={c.id}
