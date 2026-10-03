@@ -68,15 +68,21 @@ export default function AccueilEmploye() {
           <p className="moi-accueil-section">{t("home.modules")}</p>
           <div className="moi-accueil-grid" style={{ marginTop: 0 }}>
             {modules.map((r) => (
-              <button key={r.id} type="button" className="moi-accueil-card" onClick={() => router.push(r.href)}>
+              <button
+                key={r.id}
+                type="button"
+                className={`moi-accueil-card${r.image ? " avec-image" : ""}`}
+                onClick={() => router.push(r.href)}
+              >
                 {r.image ? (
-                  <img src={r.image} alt="" className="moi-accueil-card-image" />
+                  // L'image est la case entière ; le nom (traduit) s'écrit par-dessus.
+                  <img src={r.image} alt="" className="moi-accueil-card-fond" />
                 ) : (
                   <span className="moi-accueil-card-icon">
                     <r.Icone className="gozly-icon" />
                   </span>
                 )}
-                <span>{t(r.cle)}</span>
+                <span className={r.image ? "moi-accueil-card-texte" : undefined}>{t(r.cle)}</span>
               </button>
             ))}
           </div>
