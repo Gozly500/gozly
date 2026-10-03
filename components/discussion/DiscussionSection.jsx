@@ -16,6 +16,8 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const [erreur, setErreur] = useState(null);
   const [groupeModal, setGroupeModal] = useState(null); // { nom, ids: Set d'employés } quand la fenêtre de création est ouverte
   const [groupeBusy, setGroupeBusy] = useState(false);
+  const [menuNouveauOuvert, setMenuNouveauOuvert] = useState(false);
+  const [confirmation, setConfirmation] = useState(null);
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -226,6 +228,52 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     setActiveId(conversationId);
   }
 
+  // Un seul message écrit, envoyé à chaque employé coché DANS SA PROPRE
+  // conversation privée avec toi : ce n'est pas un groupe, les destinataires ne
+  // se voient pas entre eux et leurs réponses restent séparées.
+  async function envoyerDiffusion(e) {
+    e.preventDefault();
+    const contenu = groupeModal.message.trim();
+    if (!contenu || groupeModal.ids.size === 0) return;
+    setGroupeBusy(true);
+    setErreur(null);
+
+    try {
+      const destinataires = [...groupeModal.ids];
+      const conversationIds = await Promise.all(
+        destinataires.map((employeId) => getOrCreateDirecteConversation(supabase, entrepriseId, { userId }, { employeId }))
+      );
+
+      const { error } = await supabase
+        .from("messages")
+        .insert(conversationIds.map((conversation_id) => ({ conversation_id, user_id: userId, contenu })));
+      if (error) throw error;
+
+      // Notification push à chacun (échecs ignorés : le message est déjà envoyé).
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      await Promise.all(
+        conversationIds.map((conversationId) =>
+          fetch("/api/notifications/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+            body: JSON.stringify({ conversationId, contenu }),
+          }).catch(() => {})
+        )
+      );
+
+      setConfirmation(`Message envoyé à ${destinataires.length} employé${destinataires.length > 1 ? "s" : ""}.`);
+      setTimeout(() => setConfirmation(null), 5000);
+      setGroupeModal(null);
+      await chargerConversations();
+    } catch (err) {
+      console.error("Erreur envoi à plusieurs:", err);
+      setErreur("L'envoi à plusieurs a échoué.");
+    }
+    setGroupeBusy(false);
+  }
+
   async function supprimerConversation(conversation) {
     const message =
       conversation.type === "groupe"
@@ -282,15 +330,40 @@ export default function DiscussionSection({ entrepriseId, userId }) {
       <h2>Discussion</h2>
       <p className="panel-hint">Le fil d'équipe, une conversation avec chacun de tes employés, et tes groupes.</p>
       {erreur && <p className="settings-msg err">{erreur}</p>}
+      {confirmation && <p className="settings-msg ok">{confirmation}</p>}
 
       <div className="chat-layout">
         <div className="chat-conv-list">
           <div className="chat-conv-list-head">
             <strong style={{ fontSize: "13px" }}>Conversations</strong>
-            <button type="button" className="admin-icon-btn" onClick={() => setGroupeModal({ nom: "", ids: new Set() })}>
+            <button type="button" className="admin-icon-btn" onClick={() => setMenuNouveauOuvert((v) => !v)}>
               + Nouveau
             </button>
           </div>
+          {menuNouveauOuvert && (
+            <div className="chat-picker">
+              <button
+                type="button"
+                className="chat-conv-item"
+                onClick={() => {
+                  setMenuNouveauOuvert(false);
+                  setGroupeModal({ mode: "groupe", nom: "", message: "", ids: new Set() });
+                }}
+              >
+                👥 Nouveau groupe
+              </button>
+              <button
+                type="button"
+                className="chat-conv-item"
+                onClick={() => {
+                  setMenuNouveauOuvert(false);
+                  setGroupeModal({ mode: "diffusion", nom: "", message: "", ids: new Set() });
+                }}
+              >
+                📣 Message à plusieurs
+              </button>
+            </div>
+          )}
           <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(var(--w),0.08)" }}>
             <input
               type="search"
@@ -367,24 +440,44 @@ export default function DiscussionSection({ entrepriseId, userId }) {
         <div className="modal-overlay" onClick={() => setGroupeModal(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Nouveau groupe</h3>
+              <h3>{groupeModal.mode === "diffusion" ? "Message à plusieurs" : "Nouveau groupe"}</h3>
               <button className="admin-icon-btn" onClick={() => setGroupeModal(null)}>
                 Fermer
               </button>
             </div>
-            <form onSubmit={creerGroupe}>
-              <div className="field">
-                <label>Nom du groupe</label>
-                <input
-                  type="text"
-                  value={groupeModal.nom}
-                  onChange={(e) => setGroupeModal((m) => ({ ...m, nom: e.target.value }))}
-                  placeholder="Ex: Équipe du dimanche"
-                  maxLength={60}
-                  autoFocus
-                  required
-                />
-              </div>
+            <form onSubmit={groupeModal.mode === "diffusion" ? envoyerDiffusion : creerGroupe}>
+              {groupeModal.mode === "diffusion" ? (
+                <div className="field">
+                  <label>Message</label>
+                  <textarea
+                    value={groupeModal.message}
+                    onChange={(e) => setGroupeModal((m) => ({ ...m, message: e.target.value }))}
+                    placeholder="Ex: Réunion dimanche à 9 h, merci de confirmer ta présence."
+                    rows={4}
+                    maxLength={2000}
+                    autoFocus
+                    required
+                    style={{ width: "100%", boxSizing: "border-box", resize: "vertical" }}
+                  />
+                  <p className="section-hint" style={{ marginTop: "6px" }}>
+                    Chaque personne cochée reçoit ce message dans sa propre conversation avec toi. Elles ne se voient pas entre
+                    elles, et leurs réponses restent séparées.
+                  </p>
+                </div>
+              ) : (
+                <div className="field">
+                  <label>Nom du groupe</label>
+                  <input
+                    type="text"
+                    value={groupeModal.nom}
+                    onChange={(e) => setGroupeModal((m) => ({ ...m, nom: e.target.value }))}
+                    placeholder="Ex: Équipe du dimanche"
+                    maxLength={60}
+                    autoFocus
+                    required
+                  />
+                </div>
+              )}
               <div className="field">
                 <label>
                   Membres ({groupeModal.ids.size})
@@ -421,8 +514,22 @@ export default function DiscussionSection({ entrepriseId, userId }) {
                 </div>
               </div>
               <div className="admin-edit-actions">
-                <button type="submit" className="submit-btn" disabled={groupeBusy || !groupeModal.nom.trim() || groupeModal.ids.size === 0}>
-                  {groupeBusy ? "Création..." : "Créer le groupe"}
+                <button
+                  type="submit"
+                  className="submit-btn"
+                  disabled={
+                    groupeBusy ||
+                    groupeModal.ids.size === 0 ||
+                    (groupeModal.mode === "diffusion" ? !groupeModal.message.trim() : !groupeModal.nom.trim())
+                  }
+                >
+                  {groupeModal.mode === "diffusion"
+                    ? groupeBusy
+                      ? "Envoi..."
+                      : `Envoyer à ${groupeModal.ids.size} personne${groupeModal.ids.size > 1 ? "s" : ""}`
+                    : groupeBusy
+                    ? "Création..."
+                    : "Créer le groupe"}
                 </button>
               </div>
             </form>
