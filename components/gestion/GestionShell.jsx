@@ -80,31 +80,6 @@ export default function GestionShell({ actif, children }) {
     };
   }, [router]);
 
-  // Une fois l'entreprise connue : le manifeste, l'icône et le nom de l'app deviennent ceux
-  // de l'entreprise (logo + nom) pour l'installation sur l'écran d'accueil.
-  useEffect(() => {
-    if (!entrepriseId || !entrepriseNom) return;
-    const e = encodeURIComponent(entrepriseId);
-    const lien = (rel) => {
-      let el = document.querySelector(`link[rel="${rel}"]`);
-      if (!el) {
-        el = document.createElement("link");
-        el.rel = rel;
-        document.head.appendChild(el);
-      }
-      return el;
-    };
-    lien("manifest").href = `/api/gestion/manifest?e=${e}`;
-    lien("apple-touch-icon").href = `/api/gestion/icone?e=${e}&taille=192`;
-    let titre = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-    if (!titre) {
-      titre = document.createElement("meta");
-      titre.name = "apple-mobile-web-app-title";
-      document.head.appendChild(titre);
-    }
-    titre.content = entrepriseNom.slice(0, 12);
-  }, [entrepriseId, entrepriseNom]);
-
   async function deconnexion() {
     await supabase.auth.signOut();
     router.replace("/login?retour=/gestion");
