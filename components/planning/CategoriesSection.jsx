@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 
@@ -90,6 +90,27 @@ export default function CategoriesSection({ entrepriseId }) {
   const [editingId, setEditingId] = useState(null);
   const [editNom, setEditNom] = useState("");
   const [modelesOuvertId, setModelesOuvertId] = useState(null);
+  // Pour animer le déplacement d'une catégorie : on retient la position de chaque
+  // ligne avant le changement, puis on la fait glisser de l'ancienne à la nouvelle.
+  const lignesRef = useRef(new Map());
+  const positionsAvantRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const avant = positionsAvantRef.current;
+    if (!avant) return;
+    positionsAvantRef.current = null;
+    for (const [id, el] of lignesRef.current) {
+      const precedent = avant.get(id);
+      if (precedent == null) continue;
+      const ecart = precedent - el.getBoundingClientRect().top;
+      if (!ecart) continue;
+      el.style.transition = "none";
+      el.style.transform = `translateY(${ecart}px)`;
+      el.getBoundingClientRect(); // force le recalcul avant de lancer la transition
+      el.style.transition = "transform 280ms ease";
+      el.style.transform = "";
+    }
+  }, [categories]);
 
   useEffect(() => {
     load();
@@ -125,6 +146,7 @@ export default function CategoriesSection({ entrepriseId }) {
     const nouvelle = [...categories];
     [nouvelle[index], nouvelle[cible]] = [nouvelle[cible], nouvelle[index]];
     const avecOrdre = nouvelle.map((c, i) => ({ ...c, ordre: i + 1 }));
+    positionsAvantRef.current = new Map([...lignesRef.current].map(([id, el]) => [id, el.getBoundingClientRect().top]));
     setCategories(avecOrdre); // affichage immédiat
     await Promise.all(
       avecOrdre.filter((c, i) => c.id !== categories[i]?.id || c.ordre !== categories[i]?.ordre).map((c) =>
@@ -161,7 +183,15 @@ export default function CategoriesSection({ entrepriseId }) {
 
       <div className="admin-list" style={{ marginBottom: "20px", maxWidth: "560px" }}>
         {categories.map((cat, index) => (
-          <div className="admin-row" style={{ flexDirection: "column", alignItems: "stretch" }} key={cat.id}>
+          <div
+            className="admin-row"
+            style={{ flexDirection: "column", alignItems: "stretch" }}
+            key={cat.id}
+            ref={(el) => {
+              if (el) lignesRef.current.set(cat.id, el);
+              else lignesRef.current.delete(cat.id);
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
               {editingId === cat.id ? (
                 <input

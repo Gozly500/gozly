@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { supabase } from "@/lib/supabaseClient";
 
 const FORFAITS = [
@@ -14,6 +15,8 @@ const FORFAITS = [
 // que ce compte possède, pas à une seule en particulier.
 export default function AbonnementSection({ profil }) {
   const [forfaitOpen, setForfaitOpen] = useState(false);
+  const forfaitRef = useRef(null);
+  useFermerAuClicExterieur(forfaitRef, forfaitOpen, () => setForfaitOpen(false));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [checkoutMsg, setCheckoutMsg] = useState(null);
@@ -132,7 +135,7 @@ export default function AbonnementSection({ profil }) {
 
         <div style={{ marginTop: "18px" }}>
           <label>{current ? "Changer de forfait" : "Choisir un forfait"}</label>
-          <div className="forfait-select-wrap" style={{ maxWidth: "360px" }}>
+          <div className="forfait-select-wrap" style={{ maxWidth: "360px" }} ref={forfaitRef}>
             <div
               className={`forfait-select-trigger${forfaitOpen ? " open" : ""}`}
               onClick={() => setForfaitOpen((v) => !v)}

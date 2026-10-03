@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import InfoTooltip from "@/components/InfoTooltip";
+import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import ImpressionCommandesBloc from "@/components/entreprise/ImpressionCommandesBloc";
 import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
 
@@ -85,14 +86,7 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  useEffect(() => {
-    if (!open) return;
-    function fermerSiDehors(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener("mousedown", fermerSiDehors);
-    return () => document.removeEventListener("mousedown", fermerSiDehors);
-  }, [open]);
+  useFermerAuClicExterieur(ref, open, () => setOpen(false));
 
   return (
     <div className="field param-field" ref={ref}>

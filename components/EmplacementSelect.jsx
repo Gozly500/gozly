@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 
 // Menu déroulant "maison" pour choisir l'emplacement actif - un <select>
 // natif ne peut pas être stylé proprement (le menu ouvert reste blanc,
 // dessiné par le navigateur), donc on reconstruit l'UI nous-mêmes.
 export default function EmplacementSelect({ emplacements, value, onChange, includeToutes }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useFermerAuClicExterieur(ref, open, () => setOpen(false));
 
   if (emplacements.length <= 1) return null;
 
@@ -14,7 +17,7 @@ export default function EmplacementSelect({ emplacements, value, onChange, inclu
   const current = options.find((o) => o.id === value) || options[0];
 
   return (
-    <div className="emplacement-select-wrap">
+    <div className="emplacement-select-wrap" ref={ref}>
       <div className={`emplacement-select-trigger${open ? " open" : ""}`} onClick={() => setOpen((v) => !v)}>
         <span>{current?.id ? `📍 ${current.nom}` : current?.nom}</span>
         <span className="fs-arrow">▾</span>

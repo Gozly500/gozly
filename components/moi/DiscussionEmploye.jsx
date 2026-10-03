@@ -5,8 +5,14 @@ import { employeFetch } from "@/lib/employeAuth";
 import RappelNotifications from "@/components/moi/RappelNotifications";
 import { useLangue } from "@/components/moi/LangueContext";
 
+// Dernier message vu par conversation, mémorisé sur l'appareil (les employés n'ont
+// pas de compte où l'enregistrer) : sert à mettre en évidence les messages non lus.
+const CLE_LUS = "gozly_chat_lus";
+
 export default function DiscussionEmploye() {
   const { t } = useLangue();
+  const [lus, setLus] = useState({});
+  const vueRef = useRef("liste");
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [activeTitre, setActiveTitre] = useState("");
@@ -23,12 +29,49 @@ export default function DiscussionEmploye() {
   const pollRef = useRef(null);
 
   useEffect(() => {
+    try {
+      setLus(JSON.parse(window.localStorage.getItem(CLE_LUS) || "{}"));
+    } catch {}
+
+    // La liste se met à jour toute seule (nouveau message d'un collègue) tant qu'on la regarde.
+    const idListe = setInterval(() => {
+      if (document.visibilityState === "visible" && vueRef.current === "liste") chargerConversations({ silencieux: true });
+    }, 10000);
+
     chargerConversations();
     employeFetch("/api/employe-app/chat/collegues").then(async (res) => {
       const data = await res.json();
       setCollegues(data.collegues || []);
     });
+
+    return () => clearInterval(idListe);
   }, []);
+
+  vueRef.current = vue;
+
+  function marquerLu(conversationId, dateIso) {
+    if (!dateIso) return;
+    setLus((precedent) => {
+      if (precedent[conversationId] && new Date(precedent[conversationId]) >= new Date(dateIso)) return precedent;
+      const suivant = { ...precedent, [conversationId]: dateIso };
+      try {
+        window.localStorage.setItem(CLE_LUS, JSON.stringify(suivant));
+      } catch {}
+      return suivant;
+    });
+  }
+
+  // Première utilisation sur cet appareil : tout ce qui existe déjà compte comme lu
+  // (sinon toutes les conversations seraient en gras d'un coup).
+  function initialiserLus(liste) {
+    try {
+      if (window.localStorage.getItem(CLE_LUS) !== null) return;
+      const initial = {};
+      for (const c of liste) if (c.dernierMessageDate) initial[c.id] = c.dernierMessageDate;
+      window.localStorage.setItem(CLE_LUS, JSON.stringify(initial));
+      setLus(initial);
+    } catch {}
+  }
 
   useEffect(() => {
     if (!activeId) return;
@@ -65,9 +108,9 @@ export default function DiscussionEmploye() {
     presDuBasRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
   }
 
-  async function chargerConversations() {
-    setLoading(true);
-    setErreur(null);
+  async function chargerConversations({ silencieux = false } = {}) {
+    if (!silencieux) setLoading(true);
+    if (!silencieux) setErreur(null);
     try {
       const res = await employeFetch("/api/employe-app/chat/conversations");
       const data = await res.json();
@@ -75,6 +118,7 @@ export default function DiscussionEmploye() {
         setErreur(data.error || t("chat.erreurChargement"));
       } else {
         setConversations(data.conversations || []);
+        initialiserLus(data.conversations || []);
       }
     } catch (err) {
       console.error("Erreur chargement conversations:", err);
@@ -95,6 +139,9 @@ export default function DiscussionEmploye() {
     }
     const data = await res.json();
     const nouveaux = data.messages || [];
+    // On regarde cette conversation : son dernier message compte comme lu.
+    const dernierRecu = nouveaux[nouveaux.length - 1];
+    if (dernierRecu && vueRef.current === "thread") marquerLu(conversationId, dernierRecu.createdAt);
     // Même liste qu'avant : on garde la référence pour ne pas re-rendre.
     setMessages((actuels) =>
       actuels.length === nouveaux.length && actuels[actuels.length - 1]?.id === nouveaux[nouveaux.length - 1]?.id
@@ -104,6 +151,7 @@ export default function DiscussionEmploye() {
   }
 
   function ouvrirConversation(c) {
+    marquerLu(c.id, c.dernierMessageDate);
     if (c.id !== activeId) setMessages([]);
     setActiveId(c.id);
     setActiveTitre(c.titre);
@@ -166,20 +214,28 @@ export default function DiscussionEmploye() {
             <strong style={{ fontSize: "13px" }}>{t("chat.titre")}</strong>
           </div>
           <div className="chat-section-label">{t("chat.conversations")}</div>
-          {conversations.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`chat-conv-item${activeId === c.id ? " active" : ""}`}
-              onClick={() => ouvrirConversation(c)}
-            >
-              <div className="chat-conv-titre">
-                {c.type === "equipe" ? "👥 " : ""}
-                {c.titre}
-              </div>
-              {c.dernierMessage && <div className="chat-conv-apercu">{c.dernierMessage}</div>}
-            </button>
-          ))}
+          {conversations.map((c) => {
+            // Non lu : un message d'un AUTRE, plus récent que le dernier que j'ai vu.
+            const nonLu =
+              !!c.dernierMessageDate &&
+              !c.dernierDeMoi &&
+              (!lus[c.id] || new Date(c.dernierMessageDate) > new Date(lus[c.id]));
+            return (
+              <button
+                key={c.id}
+                type="button"
+                className={`chat-conv-item${activeId === c.id && vue === "thread" ? " active" : ""}${nonLu ? " non-lu" : ""}`}
+                onClick={() => ouvrirConversation(c)}
+              >
+                <div className="chat-conv-titre">
+                  {c.type === "equipe" || c.type === "groupe" ? "👥 " : ""}
+                  {c.titre}
+                  {nonLu && <span className="chat-conv-pastille" aria-label="Nouveau message" />}
+                </div>
+                {c.dernierMessage && <div className="chat-conv-apercu">{c.dernierMessage}</div>}
+              </button>
+            );
+          })}
         </div>
 
         {vue === "thread" && (

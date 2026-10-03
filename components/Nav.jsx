@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -12,6 +13,8 @@ export default function Nav() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef(null);
+  useFermerAuClicExterieur(accountRef, accountOpen, () => setAccountOpen(false));
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -90,7 +93,7 @@ export default function Nav() {
 
         <div className="desktop-only">
           {user ? (
-            <div className="account-wrap">
+            <div className="account-wrap" ref={accountRef}>
               <button className="account-btn" onClick={() => setAccountOpen((v) => !v)}>
                 Mon compte ▾
               </button>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { supabase } from "@/lib/supabaseClient";
 import { SOURCES_VENTE } from "@/lib/modules";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
@@ -26,6 +27,8 @@ export default function VentesSection({ entrepriseId }) {
   const [form, setForm] = useState(FORM_VIDE);
   const [saving, setSaving] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+  const sourceRef = useRef(null);
+  useFermerAuClicExterieur(sourceRef, sourceOpen, () => setSourceOpen(false));
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState(null);
 
@@ -273,7 +276,7 @@ export default function VentesSection({ entrepriseId }) {
               <div className="field-row">
                 <div className="field">
                   <label>Source</label>
-                  <div className="emplacement-select-wrap" style={{ minWidth: 0 }}>
+                  <div className="emplacement-select-wrap" style={{ minWidth: 0 }} ref={sourceRef}>
                     <div
                       className={`emplacement-select-trigger${sourceOpen ? " open" : ""}`}
                       onClick={() => setSourceOpen((v) => !v)}

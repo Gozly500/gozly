@@ -32,7 +32,7 @@ export async function GET(request) {
 
   const { data: dernierMessages } = await service
     .from("messages")
-    .select("conversation_id, contenu, created_at")
+    .select("conversation_id, contenu, created_at, employe_id")
     .in("conversation_id", conversationIds)
     .order("created_at", { ascending: false });
 
@@ -80,6 +80,7 @@ export async function GET(request) {
       titre: "Équipe",
       dernierMessage: dernierParConversation[equipeId]?.contenu || null,
       dernierMessageDate: dernierParConversation[equipeId]?.created_at || null,
+      dernierDeMoi: dernierParConversation[equipeId]?.employe_id === employe.id,
     },
     ...directeIds.map((id) => ({
       id,
@@ -87,6 +88,7 @@ export async function GET(request) {
       titre: nomAutreParticipant(id),
       dernierMessage: dernierParConversation[id]?.contenu || null,
       dernierMessageDate: dernierParConversation[id]?.created_at || null,
+      dernierDeMoi: dernierParConversation[id]?.employe_id === employe.id,
     })),
     ...groupeIds.map((id) => ({
       id,
@@ -94,6 +96,7 @@ export async function GET(request) {
       titre: infoPar[id]?.titre || "Groupe",
       dernierMessage: dernierParConversation[id]?.contenu || null,
       dernierMessageDate: dernierParConversation[id]?.created_at || null,
+      dernierDeMoi: dernierParConversation[id]?.employe_id === employe.id,
     })),
   ].sort((a, b) => new Date(b.dernierMessageDate || 0) - new Date(a.dernierMessageDate || 0));
 

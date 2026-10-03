@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { SERVICES_PAIE } from "@/lib/servicesPaie";
@@ -66,6 +67,8 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [modal, setModal] = useState(null); // { pointageId, employeNom, entree, sortie }
   const [saving, setSaving] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const exportRef = useRef(null);
+  useFermerAuClicExterieur(exportRef, exportOpen, () => setExportOpen(false));
   const [nethrisConnecte, setNethrisConnecte] = useState(false);
   const [envoiNethris, setEnvoiNethris] = useState(false);
   const [nethrisMsg, setNethrisMsg] = useState(null);
@@ -414,7 +417,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
           ))}
 
         {peutExporter && (
-          <div className="account-wrap">
+          <div className="account-wrap" ref={exportRef}>
             <button
               className="submit-btn"
               onClick={() => setExportOpen((v) => !v)}
