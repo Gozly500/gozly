@@ -7,7 +7,7 @@ import {
   IconHoraire,
   IconDemande,
   IconDiscussion,
-  IconTaches,
+  IconPlanning,
   IconTemperature,
   IconCommandes,
 } from "@/components/icons/GozlyIcons";
@@ -23,7 +23,7 @@ const PRINCIPAUX = [
 
 // Boutons de modules, affichés seulement si le module est actif.
 const MODULES = [
-  { id: "taches", cle: "nav.taches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
+  { id: "taches", cle: "nav.taches", Icone: IconPlanning, href: "/moi/taches", module: "planning" },
   { id: "temperature", cle: "nav.temperature", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
   { id: "commandes", cle: "nav.commandes", Icone: IconCommandes, href: "/moi/commandes", module: "commandes" },
 ];
