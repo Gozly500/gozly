@@ -164,12 +164,31 @@ export default function DiscussionEmploye() {
     const contenu = texte.trim();
     setTexte("");
 
-    await employeFetch("/api/employe-app/chat/messages", {
-      method: "POST",
-      body: JSON.stringify({ conversationId: activeId, contenu }),
-    });
-    chargerMessages(activeId);
-    chargerConversations();
+    // Le message apparaît tout de suite (sans rechargement), puis est remplacé par le vrai.
+    const idTemporaire = `tmp-${Date.now()}`;
+    setMessages((actuels) => [
+      ...actuels,
+      { id: idTemporaire, contenu, createdAt: new Date().toISOString(), expediteurNom: "", deMoi: true },
+    ]);
+
+    try {
+      const res = await employeFetch("/api/employe-app/chat/messages", {
+        method: "POST",
+        body: JSON.stringify({ conversationId: activeId, contenu }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.message) throw new Error("envoi");
+      setMessages((actuels) => {
+        const sansDoublon = actuels.filter((m) => m.id !== data.message.id);
+        return sansDoublon.map((m) => (m.id === idTemporaire ? data.message : m));
+      });
+    } catch {
+      // Échec : on retire le message et on remet le texte pour réessayer.
+      setMessages((actuels) => actuels.filter((m) => m.id !== idTemporaire));
+      setTexte(contenu);
+      return;
+    }
+    chargerConversations({ silencieux: true });
   }
 
   async function demarrerConversation(collegueId, nom) {

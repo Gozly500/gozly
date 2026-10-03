@@ -19,6 +19,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const [menuNouveauOuvert, setMenuNouveauOuvert] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const messagesEndRef = useRef(null);
+  const dernierMessageIdRef = useRef(null);
   const pollRef = useRef(null);
 
   useEffect(() => {
@@ -38,12 +39,22 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     return () => clearInterval(pollRef.current);
   }, [activeId]);
 
+  // On descend seulement quand le dernier message change (nouveau message ou
+  // conversation ouverte), pas à chaque rechargement automatique.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ block: "end" });
+    const dernierId = messages[messages.length - 1]?.id ?? null;
+    if (dernierId !== dernierMessageIdRef.current) {
+      dernierMessageIdRef.current = dernierId;
+      messagesEndRef.current?.scrollIntoView({ block: "end" });
+    }
   }, [messages]);
 
-  async function chargerConversations() {
-    setLoading(true);
+  useEffect(() => {
+    dernierMessageIdRef.current = null;
+  }, [activeId]);
+
+  async function chargerConversations({ silencieux = false } = {}) {
+    if (!silencieux) setLoading(true);
     setErreur(null);
     try {
       await chargerConversationsImpl();
@@ -167,9 +178,21 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     const contenu = texte.trim();
     setTexte("");
 
-    await supabase.from("messages").insert({ conversation_id: activeId, user_id: userId, contenu });
+    // Le message apparaît tout de suite ; le rechargement le remplace par le vrai.
+    setMessages((actuels) => [
+      ...actuels,
+      { id: `tmp-${Date.now()}`, conversation_id: activeId, user_id: userId, contenu, created_at: new Date().toISOString() },
+    ]);
+
+    const { error } = await supabase.from("messages").insert({ conversation_id: activeId, user_id: userId, contenu });
+    if (error) {
+      setErreur("L'envoi a échoué.");
+      setTexte(contenu);
+      chargerMessages(activeId);
+      return;
+    }
     chargerMessages(activeId);
-    chargerConversations();
+    chargerConversations({ silencieux: true });
 
     const {
       data: { session },
