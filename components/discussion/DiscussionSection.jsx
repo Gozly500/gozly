@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateEquipeConversation, getOrCreateDirecteConversation } from "@/lib/chatServer";
 
+import { useChatPresence } from "@/lib/useChatPresence";
+import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
+
 export default function DiscussionSection({ entrepriseId, userId }) {
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
@@ -20,6 +23,17 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const [confirmation, setConfirmation] = useState(null);
   const messagesEndRef = useRef(null);
   const dernierMessageIdRef = useRef(null);
+  const presence = useChatPresence(activeId, async (corps) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const res = await fetch("/api/chat/presence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify(corps),
+    });
+    return res.ok ? res.json() : null;
+  });
   const pollRef = useRef(null);
 
   useEffect(() => {
@@ -177,6 +191,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
     if (!texte.trim() || !activeId) return;
     const contenu = texte.trim();
     setTexte("");
+    presence.arreterEcriture();
 
     // Le message apparaît tout de suite ; le rechargement le remplace par le vrai.
     setMessages((actuels) => [
@@ -440,16 +455,36 @@ export default function DiscussionSection({ entrepriseId, userId }) {
               )}
               <div className="chat-messages">
                 {messages.length === 0 && <p className="chat-empty">Aucun message pour l'instant.</p>}
-                {messages.map((m) => (
-                  <div key={m.id} className={`chat-bubble-row${m.user_id === userId ? " mine" : ""}`}>
-                    <div className="chat-bubble-auteur">{nomExpediteur(m)}</div>
-                    <div className="chat-bubble">{m.contenu}</div>
-                  </div>
-                ))}
+                {(() => {
+                  const dernierDeMoi = [...messages].reverse().find((m) => m.user_id === userId);
+                  return messages.map((m) => (
+                    <div key={m.id} style={{ display: "flex", flexDirection: "column" }}>
+                      <div className={`chat-bubble-row${m.user_id === userId ? " mine" : ""}`}>
+                        <div className="chat-bubble-auteur">{nomExpediteur(m)}</div>
+                        <div className="chat-bubble">{m.contenu}</div>
+                      </div>
+                      {m === dernierDeMoi && !String(m.id).startsWith("tmp-") && (
+                        <LigneVu
+                          texte={libelleVu({ vus: presence.vus, dernierMessageIso: m.created_at, directe: conversationActive?.type === "directe" })}
+                        />
+                      )}
+                    </div>
+                  ));
+                })()}
+                <IndicateurEcriture ecrivent={presence.ecrivent} />
                 <div ref={messagesEndRef} />
               </div>
               <form className="chat-compose" onSubmit={handleEnvoyer}>
-                <input type="text" value={texte} onChange={(e) => setTexte(e.target.value)} placeholder="Écrire un message..." />
+                <input
+                  type="text"
+                  value={texte}
+                  onChange={(e) => {
+                    setTexte(e.target.value);
+                    if (e.target.value.trim()) presence.signalerEcriture();
+                    else presence.arreterEcriture();
+                  }}
+                  placeholder="Écrire un message..."
+                />
                 <button type="submit" className="chat-send-btn" disabled={!texte.trim()} aria-label="Envoyer">
                   ➤
                 </button>

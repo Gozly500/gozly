@@ -9,6 +9,9 @@ import { useLangue } from "@/components/moi/LangueContext";
 // pas de compte où l'enregistrer) : sert à mettre en évidence les messages non lus.
 const CLE_LUS = "gozly_chat_lus";
 
+import { useChatPresence } from "@/lib/useChatPresence";
+import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
+
 export default function DiscussionEmploye() {
   const { t } = useLangue();
   const [lus, setLus] = useState({});
@@ -27,6 +30,10 @@ export default function DiscussionEmploye() {
   const dernierIdRef = useRef(null);
   const presDuBasRef = useRef(true);
   const pollRef = useRef(null);
+  const presence = useChatPresence(vue === "thread" ? activeId : null, async (corps) => {
+    const res = await employeFetch("/api/employe-app/chat/presence", { method: "POST", body: JSON.stringify(corps) });
+    return res.ok ? res.json() : null;
+  });
 
   useEffect(() => {
     try {
@@ -163,6 +170,7 @@ export default function DiscussionEmploye() {
     if (!texte.trim() || !activeId) return;
     const contenu = texte.trim();
     setTexte("");
+    presence.arreterEcriture();
 
     // Le message apparaît tout de suite (sans rechargement), puis est remplacé par le vrai.
     const idTemporaire = `tmp-${Date.now()}`;
@@ -267,15 +275,45 @@ export default function DiscussionEmploye() {
             </div>
             <div className="chat-messages" ref={messagesRef} onScroll={surDefilement}>
               {messages.length === 0 && <p className="chat-empty">{t("chat.aucunMessage")}</p>}
-              {messages.map((m) => (
-                <div key={m.id} className={`chat-bubble-row${m.deMoi ? " mine" : ""}`}>
-                  <div className="chat-bubble-auteur">{m.deMoi ? t("chat.toi") : m.expediteurNom}</div>
-                  <div className="chat-bubble">{m.contenu}</div>
-                </div>
-              ))}
+              {(() => {
+                const dernierDeMoi = [...messages].reverse().find((m) => m.deMoi);
+                const textesChat = {
+                  vu: t("chat.vu"),
+                  vuPar: (noms) => t("chat.vuPar", { noms }),
+                  ecrit: (nom) => t("chat.ecrit", { nom }),
+                  ecritDeux: (a, b) => t("chat.ecritDeux", { a, b }),
+                  ecritPlusieurs: t("chat.ecritPlusieurs"),
+                };
+                const directe = conversations.find((c) => c.id === activeId)?.type === "directe";
+                return (
+                  <>
+                    {messages.map((m) => (
+                      <div key={m.id} style={{ display: "flex", flexDirection: "column" }}>
+                        <div className={`chat-bubble-row${m.deMoi ? " mine" : ""}`}>
+                          <div className="chat-bubble-auteur">{m.deMoi ? t("chat.toi") : m.expediteurNom}</div>
+                          <div className="chat-bubble">{m.contenu}</div>
+                        </div>
+                        {m === dernierDeMoi && !String(m.id).startsWith("tmp-") && (
+                          <LigneVu texte={libelleVu({ vus: presence.vus, dernierMessageIso: m.createdAt, directe, textes: textesChat })} />
+                        )}
+                      </div>
+                    ))}
+                    <IndicateurEcriture ecrivent={presence.ecrivent} textes={textesChat} />
+                  </>
+                );
+              })()}
             </div>
             <form className="chat-compose" onSubmit={handleEnvoyer}>
-              <input type="text" value={texte} onChange={(e) => setTexte(e.target.value)} placeholder={t("chat.placeholder")} />
+              <input
+                type="text"
+                value={texte}
+                onChange={(e) => {
+                  setTexte(e.target.value);
+                  if (e.target.value.trim()) presence.signalerEcriture();
+                  else presence.arreterEcriture();
+                }}
+                placeholder={t("chat.placeholder")}
+              />
               <button type="submit" className="chat-send-btn" disabled={!texte.trim()} aria-label="Envoyer">
                 ➤
               </button>
