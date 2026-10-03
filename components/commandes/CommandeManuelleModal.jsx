@@ -198,6 +198,8 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
         numero: `M${(count || 0) + 1}`,
         statut: "APPROVED",
         statut_preparation: "NOT_FULFILLED",
+        // Saisie par un employé : déjà prise en charge.
+        etape: "traitee",
         date_commande: new Date().toISOString(),
       }));
     }

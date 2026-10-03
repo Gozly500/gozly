@@ -1706,6 +1706,16 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 /* ============ Écran kiosque (pointage) ============ */
 .kiosk-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
 .kiosk-inner{width:100%;max-width:420px;text-align:center;}
+.kiosk-taches-inner{max-width:1150px;}
+.kiosk-taches-grille{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;text-align:left;align-items:start;}
+.kiosk-taches-grille.avec-reservations{grid-template-columns:minmax(0,5fr) minmax(0,7fr);}
+.kiosk-taches-colonnes{column-count:2;column-gap:20px;}
+.kiosk-taches-boite{break-inside:avoid;margin-bottom:20px;}
+.kiosk-taches-reservations .kiosk-taches-boite{margin-bottom:0;}
+@media (max-width:760px){
+  .kiosk-taches-grille.avec-reservations{grid-template-columns:minmax(0,1fr);}
+  .kiosk-taches-colonnes{column-count:1;}
+}
 .kiosk-entreprise{color:var(--text-dim);font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
 
 /* ============ Écran kiosque (liste à préparer - Inventaire) ============ */

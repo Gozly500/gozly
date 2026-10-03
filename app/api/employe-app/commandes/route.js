@@ -131,6 +131,8 @@ export async function POST(request) {
     statut: "APPROVED",
     statut_paiement: corps.paye ? "PAID" : "NOT_PAID",
     statut_preparation: "NOT_FULFILLED",
+    // Saisie par un employé : déjà prise en charge (Traitée).
+    etape: "traitee",
     mode,
     client_nom: String(corps.client_nom || "").trim().slice(0, 120) || null,
     // Seulement s'il est saisi : la colonne vient de commandes_telephone.sql.

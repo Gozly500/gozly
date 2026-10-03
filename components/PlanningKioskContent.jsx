@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 
 function todayISO() {
   const d = new Date();
@@ -22,7 +23,7 @@ export default function PlanningKioskContent() {
   const [loadingTaches, setLoadingTaches] = useState(true);
 
   const storageKeyBase = "gozly_emplacement_id_";
-  const date = todayISO();
+  const [date, setDate] = useState(todayISO());
 
   useEffect(() => {
     let ignore = false;
@@ -73,11 +74,17 @@ export default function PlanningKioskContent() {
     };
   }, [router]);
 
+  // L'écran passe au jour suivant tout seul à minuit.
+  useEffect(() => {
+    const id = setInterval(() => setDate((d) => (d === todayISO() ? d : todayISO())), 30000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     if (!entrepriseId) return;
     if (emplacements.length > 0 && !emplacementId) return; // en attente du choix
     loadTaches();
-  }, [entrepriseId, emplacementId]);
+  }, [entrepriseId, emplacementId, date]);
 
   async function loadTaches() {
     setLoadingTaches(true);
@@ -156,7 +163,7 @@ export default function PlanningKioskContent() {
 
   return (
     <div className="kiosk-screen">
-      <div className="kiosk-inner" style={{ maxWidth: "520px" }}>
+      <div className="kiosk-inner kiosk-taches-inner">
         {entrepriseNom && <p className="kiosk-entreprise">{entrepriseNom}</p>}
         <h2 style={{ textTransform: "capitalize", marginBottom: "24px" }}>{dateLabel}</h2>
 
@@ -165,13 +172,12 @@ export default function PlanningKioskContent() {
         ) : categories.length === 0 ? (
           <p style={{ color: "var(--text-dim)" }}>Aucune catégorie configurée.</p>
         ) : (
-          <div className="planning-days">
-            {categories.map((cat) => {
+          (() => {
+            const boite = (cat) => {
               const catTaches = taches.filter((t) => t.categorie_id === cat.id);
               if (catTaches.length === 0) return null;
-
               return (
-                <div className="planning-day" key={cat.id}>
+                <div className="planning-day kiosk-taches-boite" key={cat.id}>
                   <div className="planning-day-head">
                     <span className="planning-day-title">{cat.nom}</span>
                   </div>
@@ -183,11 +189,24 @@ export default function PlanningKioskContent() {
                   ))}
                 </div>
               );
-            })}
-            {taches.length === 0 && (
-              <p style={{ color: "var(--text-dim)", textAlign: "center" }}>Aucune tâche pour aujourd'hui.</p>
-            )}
-          </div>
+            };
+            // Réservations (gérée par le module Commandes) à gauche ; les catégories
+            // créées par le compte en colonnes à droite.
+            const reservations = categories.find((c) => c.nom === NOM_CATEGORIE_COMMANDES);
+            const autres = categories.filter((c) => c !== reservations);
+            const boiteReservations = reservations ? boite(reservations) : null;
+            return (
+              <>
+                <div className={`kiosk-taches-grille${boiteReservations ? " avec-reservations" : ""}`}>
+                  {boiteReservations && <div className="kiosk-taches-reservations">{boiteReservations}</div>}
+                  <div className="kiosk-taches-colonnes">{autres.map(boite)}</div>
+                </div>
+                {taches.length === 0 && (
+                  <p style={{ color: "var(--text-dim)", textAlign: "center" }}>Aucune tâche pour aujourd'hui.</p>
+                )}
+              </>
+            );
+          })()
         )}
       </div>
     </div>
