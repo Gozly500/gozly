@@ -59,6 +59,7 @@ function BoutonsChoix({ valeur, onChange, choix }) {
 // `commande` = la ligne à modifier, ou null pour une nouvelle commande.
 export default function CommandeManuelleModal({ entrepriseId, commande, onClose, onSaved }) {
   const [clientNom, setClientNom] = useState(commande?.client_nom || "");
+  const [telephone, setTelephone] = useState(commande?.client_telephone || "");
   const [mode, setMode] = useState(commande?.mode || "ramassage");
   const [paye, setPaye] = useState(commande ? commande.statut_paiement === "PAID" : false);
   const [articles, setArticles] = useState(
@@ -155,6 +156,8 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
 
     const champs = {
       client_nom: clientNom.trim() || null,
+      // Seulement s'il est saisi (colonne ajoutée par commandes_telephone.sql).
+      ...(telephone.trim() ? { client_telephone: telephone.trim() } : commande?.client_telephone ? { client_telephone: null } : {}),
       mode,
       // Précommande : la date/heure où le client vient chercher sa commande.
       date_ramassage: dateRamassage ? versIsoQuebec(dateRamassage, heureRamassage) : null,
@@ -225,6 +228,11 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
           <div className="field">
             <label>Nom du client (optionnel)</label>
             <input type="text" value={clientNom} onChange={(e) => setClientNom(e.target.value)} placeholder="Ex: Marie Tremblay" />
+          </div>
+
+          <div className="field">
+            <label>Téléphone (optionnel)</label>
+            <input type="tel" value={telephone} onChange={(e) => setTelephone(e.target.value)} placeholder="Ex: 514 555-0123" maxLength={40} />
           </div>
 
           <div className="field">

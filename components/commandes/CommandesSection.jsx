@@ -346,6 +346,7 @@ export default function CommandesSection({ entrepriseId }) {
                     <div className="admin-row-title">
                       #{c.numero || "—"} · {libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}
                       {c.client_nom ? ` · ${c.client_nom}` : ""}
+                      {c.client_telephone ? ` · ${c.client_telephone}` : ""}
                     </div>
                     <div className="admin-row-sub" style={{ marginBottom: "6px" }}>
                       <span style={{ color: etat.couleur, fontWeight: 600 }}>{etat.texte}</span>

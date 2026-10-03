@@ -140,6 +140,13 @@ export default function CommandesEmploye() {
                   )}
                 </div>
                 {c.client_nom && <div style={{ fontWeight: 600, marginBottom: "4px" }}>{c.client_nom}</div>}
+                {c.client_telephone && (
+                  <div style={{ marginBottom: "4px", fontSize: "13.5px" }}>
+                    <a href={`tel:${c.client_telephone}`} style={{ color: "inherit", textDecoration: "underline" }}>
+                      {c.client_telephone}
+                    </a>
+                  </div>
+                )}
                 {(c.mode === "ramassage" || c.mode === "livraison" || c.lieu_nom) && (
                   <div className="section-hint" style={{ margin: "0 0 8px" }}>
                     {[c.mode === "ramassage" ? t("commandes.ramassage") : c.mode === "livraison" ? t("commandes.livraison") : null, c.lieu_nom]

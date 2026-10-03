@@ -34,15 +34,21 @@ export async function GET(request) {
   const date = dateParam && DATE_REGEX.test(dateParam) ? dateParam : aujourdhuiLocal();
   const { debut, fin } = bornesJour(date);
 
-  const { data: commandes } = await service
-    .from("commandes_en_ligne")
-    .select("id, numero, client_nom, mode, lieu_nom, items, total, statut, statut_paiement, statut_preparation, etape, date_commande, date_ramassage, date_ramassage_fin")
-    .eq("entreprise_id", employe.entreprise_id)
-    .neq("canal", "POS")
-    .neq("statut", "CANCELED")
-    .or(
-      `and(date_ramassage.gte.${debut},date_ramassage.lt.${fin}),and(date_ramassage.is.null,date_commande.gte.${debut},date_commande.lt.${fin})`
-    );
+  const lireCommandes = (colonnes) =>
+    service
+      .from("commandes_en_ligne")
+      .select(colonnes)
+      .eq("entreprise_id", employe.entreprise_id)
+      .neq("canal", "POS")
+      .neq("statut", "CANCELED")
+      .or(
+        `and(date_ramassage.gte.${debut},date_ramassage.lt.${fin}),and(date_ramassage.is.null,date_commande.gte.${debut},date_commande.lt.${fin})`
+      );
+
+  const colonnes = "id, numero, client_nom, mode, lieu_nom, items, total, statut, statut_paiement, statut_preparation, etape, date_commande, date_ramassage, date_ramassage_fin";
+  let { data: commandes, error: erreurLecture } = await lireCommandes(`${colonnes}, client_telephone`);
+  // Colonne téléphone pas encore créée (commandes_telephone.sql pas exécuté) : on relit sans elle.
+  if (erreurLecture) ({ data: commandes } = await lireCommandes(colonnes));
 
   // Ordre chronologique du ramassage (ou de la commande s'il n'y a pas de ramassage).
   const triees = (commandes || []).sort(
@@ -84,6 +90,7 @@ export async function POST(request) {
   }
 
   const mode = corps.mode === "livraison" ? "livraison" : "ramassage";
+  const telephone = String(corps.client_telephone || "").trim().slice(0, 40);
   let dateRamassage = null;
   if (corps.date_ramassage) {
     const ms = Date.parse(corps.date_ramassage);
@@ -126,6 +133,8 @@ export async function POST(request) {
     statut_preparation: "NOT_FULFILLED",
     mode,
     client_nom: String(corps.client_nom || "").trim().slice(0, 120) || null,
+    // Seulement s'il est saisi : la colonne vient de commandes_telephone.sql.
+    ...(telephone ? { client_telephone: telephone } : {}),
     total,
     items: articles,
     date_commande: new Date().toISOString(),
