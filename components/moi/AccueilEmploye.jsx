@@ -9,6 +9,7 @@ import {
   IconDiscussion,
   IconTaches,
   IconTemperature,
+  IconCommandes,
 } from "@/components/icons/GozlyIcons";
 import PointageMobileBloc from "@/components/moi/PointageMobileBloc";
 import { useLangue } from "@/components/moi/LangueContext";
@@ -24,6 +25,7 @@ const PRINCIPAUX = [
 const MODULES = [
   { id: "taches", cle: "nav.taches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
   { id: "temperature", cle: "nav.temperature", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
+  { id: "commandes", cle: "nav.commandes", Icone: IconCommandes, href: "/moi/commandes", module: "commandes" },
 ];
 
 export default function AccueilEmploye() {

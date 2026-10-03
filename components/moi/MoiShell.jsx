@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
-import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches, IconParametres } from "@/components/icons/GozlyIcons";
+import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconTaches, IconParametres, IconCommandes } from "@/components/icons/GozlyIcons";
 import MoiChargement from "@/components/moi/MoiChargement";
 import { useLangue } from "@/components/moi/LangueContext";
 
@@ -20,6 +20,7 @@ const ONGLETS_PRINCIPAUX = [
 const ONGLETS_MENU = [
   { id: "taches", cle: "nav.taches", Icone: IconTaches, href: "/moi/taches", module: "planning" },
   { id: "temperature", cle: "nav.temperature", Icone: IconTemperature, href: "/moi/temperature", module: "temperature" },
+  { id: "commandes", cle: "nav.commandes", Icone: IconCommandes, href: "/moi/commandes", module: "commandes" },
 ];
 
 // MoiShell remonte à chaque changement de page (chaque route sous /moi a
