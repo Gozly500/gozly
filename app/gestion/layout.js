@@ -1,4 +1,5 @@
 import DashboardThemeLayout from "@/app/dashboard/layout";
+import { LangueProvider } from "@/components/moi/LangueContext";
 
 export const metadata = {
   title: "Gozly Gestion",
@@ -15,7 +16,9 @@ export const viewport = {
 export default function GestionLayout({ children }) {
   return (
     <DashboardThemeLayout>
-      <div className="page moi-page gestion-page">{children}</div>
+      <div className="page moi-page gestion-page">
+        <LangueProvider>{children}</LangueProvider>
+      </div>
     </DashboardThemeLayout>
   );
 }

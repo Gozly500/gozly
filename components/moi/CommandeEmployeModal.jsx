@@ -14,7 +14,10 @@ const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitI
 // 2. les produits seulement (produit, quantité, prix), avec "Ajouter" et
 //    "Enregistrer" - qui ramène au 1er écran, où le bouton affiche alors le
 //    nombre d'articles.
-export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }) {
+//
+// Par défaut il parle aux routes de l'app employé ; l'app gestionnaire lui passe ses
+// propres fonctions : chargerProduits() -> liste de produits, enregistrer(commande) -> { ok, error }.
+export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, chargerProduits, enregistrer }) {
   const { t } = useLangue();
   const [vue, setVue] = useState("infos"); // "infos" | "articles"
   const [clientNom, setClientNom] = useState("");
@@ -30,9 +33,13 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
   const [erreur, setErreur] = useState("");
 
   useEffect(() => {
-    employeFetch("/api/employe-app/commandes/produits")
-      .then((res) => res.json())
-      .then((data) => setProduits(data.produits || []))
+    const source = chargerProduits
+      ? chargerProduits()
+      : employeFetch("/api/employe-app/commandes/produits")
+          .then((res) => res.json())
+          .then((data) => data.produits || []);
+    Promise.resolve(source)
+      .then((liste) => setProduits(liste || []))
       .catch(() => {});
   }, []);
 
@@ -102,21 +109,26 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved }
     setBusy(true);
     setErreur("");
 
+    const commande = {
+      client_nom: clientNom,
+      client_telephone: telephone,
+      mode,
+      paye,
+      date_ramassage: dateRamassage ? versIsoQuebec(dateRamassage, heureRamassage) : null,
+      items: articlesValides.map((a) => ({ ...a, prix: Number.isFinite(a.prix) ? a.prix : null })),
+    };
+
     try {
-      const res = await employeFetch("/api/employe-app/commandes", {
-        method: "POST",
-        body: JSON.stringify({
-          client_nom: clientNom,
-          client_telephone: telephone,
-          mode,
-          paye,
-          date_ramassage: dateRamassage ? versIsoQuebec(dateRamassage, heureRamassage) : null,
-          items: articlesValides.map((a) => ({ ...a, prix: Number.isFinite(a.prix) ? a.prix : null })),
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setErreur(data.error || t("commandes.erreurEnregistrement"));
+      let resultat;
+      if (enregistrer) {
+        resultat = await enregistrer(commande);
+      } else {
+        const res = await employeFetch("/api/employe-app/commandes", { method: "POST", body: JSON.stringify(commande) });
+        const data = await res.json().catch(() => ({}));
+        resultat = { ok: res.ok, error: data.error };
+      }
+      if (!resultat.ok) {
+        setErreur(resultat.error || t("commandes.erreurEnregistrement"));
         setBusy(false);
         return;
       }

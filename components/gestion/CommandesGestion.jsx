@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useGestion } from "@/components/gestion/GestionShell";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
+import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
 import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import {
   formatMontant,
@@ -38,7 +39,8 @@ export default function CommandesGestion() {
   const [loading, setLoading] = useState(true);
   const [filtre, setFiltre] = useState("toutes");
   const [message, setMessage] = useState(null);
-  const [modal, setModal] = useState(null);
+  const [modal, setModal] = useState(null); // modification d'une commande manuelle
+  const [nouvelle, setNouvelle] = useState(false); // formulaire de nouvelle commande
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const dateRef = useRef(date);
@@ -118,6 +120,55 @@ export default function CommandesGestion() {
     charger();
   }
 
+  // Fonctions du formulaire de nouvelle commande (même écrans que l'app employé,
+  // mais avec la session du gestionnaire plutôt que les routes employé).
+  async function chargerProduits() {
+    const { data } = await supabase
+      .from("produits_inventaire")
+      .select("id, nom, sku, prix, source, source_id")
+      .eq("entreprise_id", entrepriseId)
+      .order("nom", { ascending: true })
+      .limit(1000);
+    return data || [];
+  }
+
+  async function enregistrerNouvelle(c) {
+    const { count } = await supabase
+      .from("commandes_en_ligne")
+      .select("id", { count: "exact", head: true })
+      .eq("entreprise_id", entrepriseId)
+      .eq("source", "manuel");
+    const total = Math.round(c.items.reduce((somme, it) => somme + it.quantite * (it.prix || 0), 0) * 100) / 100;
+    const id = crypto.randomUUID(); // pas de insert().select() : on garde l'id pour l'impression
+    const maintenant = new Date().toISOString();
+    const telephone = String(c.client_telephone || "").trim();
+    const { error } = await supabase.from("commandes_en_ligne").insert({
+      id,
+      entreprise_id: entrepriseId,
+      source: "manuel",
+      canal: "MANUEL",
+      source_id: crypto.randomUUID(),
+      numero: `M${(count || 0) + 1}`,
+      statut: "APPROVED",
+      statut_paiement: c.paye ? "PAID" : "NOT_PAID",
+      statut_preparation: "NOT_FULFILLED",
+      etape: "traitee", // saisie par un employé : déjà prise en charge
+      mode: c.mode,
+      client_nom: String(c.client_nom || "").trim() || null,
+      ...(telephone ? { client_telephone: telephone } : {}),
+      total,
+      items: c.items,
+      date_commande: maintenant,
+      date_ramassage: c.date_ramassage,
+      date_ramassage_fin: null,
+      updated_at: maintenant,
+    });
+    if (error) return { ok: false, error: "Impossible d'enregistrer la commande." };
+    await imprimerCommande(entrepriseId, id, "creation");
+    await mettreAJourTachesCommandes(entrepriseId);
+    return { ok: true };
+  }
+
   const aujourdhui = dateAujourdhui();
   const dateLabel = new Date(`${date}T00:00:00`).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" });
   const valides = commandes.filter((c) => c.statut !== "CANCELED");
@@ -146,7 +197,7 @@ export default function CommandesGestion() {
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "10px" }}>
         <h2 style={{ margin: 0 }}>Commandes</h2>
-        <button type="button" className="btn-small" onClick={() => setModal({ commande: null })}>
+        <button type="button" className="btn-small" onClick={() => setNouvelle(true)}>
           + Nouvelle
         </button>
       </div>
@@ -290,6 +341,19 @@ export default function CommandesGestion() {
             );
           })}
         </div>
+      )}
+
+      {nouvelle && (
+        <CommandeEmployeModal
+          dateParDefaut={date}
+          chargerProduits={chargerProduits}
+          enregistrer={enregistrerNouvelle}
+          onClose={() => setNouvelle(false)}
+          onSaved={() => {
+            setNouvelle(false);
+            charger();
+          }}
+        />
       )}
 
       {modal && (
