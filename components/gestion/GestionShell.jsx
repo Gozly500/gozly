@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
-import { IconTableauDeBord, IconHoraire, IconFeuilleTemps, IconCommandes, IconDemande } from "@/components/icons/GozlyIcons";
+import { IconTableauDeBord, IconHoraire, IconCommandes, IconDemande } from "@/components/icons/GozlyIcons";
 
 const GestionContexte = createContext(null);
 export function useGestion() {
@@ -100,7 +100,7 @@ export default function GestionShell({ actif, children }) {
 
   const onglets = [
     { id: "accueil", href: "/gestion", label: "Accueil", Icone: IconTableauDeBord, visible: true },
-    { id: "heures", href: "/gestion/heures", label: "Heures", Icone: IconFeuilleTemps, visible: horaireActif && peutVoirFeuille },
+    { id: "horaire", href: "/gestion/horaire", label: "Horaire", Icone: IconHoraire, visible: horaireActif },
     { id: "commandes", href: "/gestion/commandes", label: "Commandes", Icone: IconCommandes, visible: commandesActif },
     { id: "demandes", href: "/gestion/demandes", label: "Demandes", Icone: IconDemande, visible: horaireActif },
   ].filter((o) => o.visible);

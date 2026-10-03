@@ -65,7 +65,7 @@ export default function AccueilGestion() {
 
       <div className="gestion-accueil-cartes">
         {horaire && (
-          <Link href="/gestion/heures" className="planning-day gestion-accueil-carte">
+          <Link href="/gestion/horaire" className="planning-day gestion-accueil-carte">
             <div className="gestion-accueil-titre">En poste maintenant</div>
             {enPoste === null ? (
               <div className="gestion-accueil-valeur">…</div>
@@ -106,11 +106,6 @@ export default function AccueilGestion() {
       </div>
 
       {onglets.length <= 1 && <p className="chat-empty">Aucun module disponible pour l&apos;instant.</p>}
-
-      <p className="section-hint" style={{ marginTop: "22px" }}>
-        Cette app est une version réduite du tableau de bord. Pour installer, utilise « Ajouter à l&apos;écran d&apos;accueil » dans le menu de ton navigateur.
-        Les fonctions plus lourdes (construire l&apos;horaire, l&apos;inventaire, les réglages) restent sur l&apos;ordinateur.
-      </p>
     </div>
   );
 }

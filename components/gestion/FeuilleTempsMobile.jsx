@@ -56,7 +56,6 @@ export default function FeuilleTempsMobile() {
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
   const [ouvertId, setOuvertId] = useState(null);
-  const [vueTableau, setVueTableau] = useState(false);
   const [modal, setModal] = useState(null); // { pointageId, employeNom, entree, sortie }
   const [saving, setSaving] = useState(false);
 
@@ -242,8 +241,6 @@ export default function FeuilleTempsMobile() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: "10px" }}>Heures</h2>
-
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
           ‹
@@ -295,54 +292,9 @@ export default function FeuilleTempsMobile() {
             <span>
               Total de la semaine : <strong>{heures(totalGeneral)}</strong>
             </span>
-            <button type="button" className="admin-icon-btn" onClick={() => setVueTableau((v) => !v)}>
-              {vueTableau ? "Vue cartes" : "Vue tableau"}
-            </button>
           </div>
 
-          {vueTableau ? (
-            <div className="admin-table-wrap gestion-tableau">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Employé</th>
-                    {jours.map((d) => (
-                      <th key={dateStr(d)} style={{ whiteSpace: "nowrap", textAlign: "center" }}>
-                        {d.toLocaleDateString("fr-CA", { weekday: "short" })}
-                        <div style={{ fontWeight: 400, fontSize: "11px", color: "var(--text-dim)" }}>{d.getDate()}</div>
-                      </th>
-                    ))}
-                    <th style={{ whiteSpace: "nowrap" }}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {employesAffiches.map((emp) => {
-                    const sessions = sessionsPour(emp.id);
-                    const total = sessions.reduce((s, x) => s + x.minutes, 0);
-                    return (
-                      <tr key={emp.id}>
-                        <td style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{emp.nom}</td>
-                        {jours.map((d) => {
-                          const duJour = sessions.filter((x) => dateStr(new Date(x.debut)) === dateStr(d));
-                          return (
-                            <td key={dateStr(d)} style={{ textAlign: "center", whiteSpace: "nowrap", fontSize: "12.5px" }}>
-                              {duJour.length === 0 ? (
-                                <span style={{ color: "var(--text-dim)" }}>—</span>
-                              ) : (
-                                duJour.map((x) => <Pointage key={x.pointageId} x={x} nom={emp.nom} />)
-                              )}
-                            </td>
-                          );
-                        })}
-                        <td style={{ textAlign: "center", fontWeight: 700, whiteSpace: "nowrap" }}>{total > 0 ? heures(total) : "—"}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="gestion-cartes">
+          <div className="gestion-cartes">
               {employesAffiches.map((emp) => {
                 const sessions = sessionsPour(emp.id);
                 const total = sessions.reduce((s, x) => s + x.minutes, 0);
@@ -380,8 +332,7 @@ export default function FeuilleTempsMobile() {
                   </div>
                 );
               })}
-            </div>
-          )}
+          </div>
         </>
       )}
 
