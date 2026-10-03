@@ -11,7 +11,8 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 // sansEmplacement : cache le sélecteur de succursale (la page qui l'intègre a le sien).
 // onChange : appelé chaque fois que la liste des tâches est (re)lue, pour que la page
 // qui l'intègre garde ses compteurs à jour.
-export default function JourEditor({ entrepriseId, date, integre = false, sansEmplacement = false, onChange }) {
+// suppressionJournee : affiche, après la date, un petit texte "Supprimer cette journée".
+export default function JourEditor({ entrepriseId, date, integre = false, sansEmplacement = false, suppressionJournee = false, onChange }) {
   const [categories, setCategories] = useState([]);
   const [taches, setTaches] = useState([]);
   const [modeles, setModeles] = useState([]);
@@ -21,6 +22,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
   const emplacementIdRef = useRef(null);
   emplacementIdRef.current = emplacementId;
   const [loading, setLoading] = useState(true);
+  const [confirmerSuppression, setConfirmerSuppression] = useState(false);
   const [addingFor, setAddingFor] = useState(null);
   const [texte, setTexte] = useState("");
   const [modelesPourCategorie, setModelesPourCategorie] = useState(null); // categorie_id dont la popup de modèles est ouverte
@@ -110,6 +112,15 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
     await supabase.from("taches").update({ terminee: !tache.terminee }).eq("id", tache.id);
   }
 
+  // Retire toutes les tâches du jour (de la succursale choisie s'il y en a plusieurs).
+  async function supprimerJournee() {
+    let query = supabase.from("taches").delete().eq("entreprise_id", entrepriseId).eq("date", date);
+    if (emplacementId) query = query.eq("emplacement_id", emplacementId);
+    await query;
+    setConfirmerSuppression(false);
+    loadTaches(emplacementId);
+  }
+
   async function handleDelete(id) {
     await supabase.from("taches").delete().eq("id", id);
     loadTaches(emplacementId);
@@ -129,7 +140,30 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
   return (
     <div>
       {integre ? (
-        <p style={{ textTransform: "capitalize", fontWeight: 600, margin: "4px 0 12px" }}>{dateLabel}</p>
+        <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "6px 14px", margin: "4px 0 12px" }}>
+          <span style={{ textTransform: "capitalize", fontWeight: 600 }}>{dateLabel}</span>
+          {suppressionJournee &&
+            (confirmerSuppression ? (
+              <span style={{ fontSize: "13px" }}>
+                Supprimer toutes les tâches de ce jour ?{" "}
+                <button type="button" onClick={supprimerJournee} style={{ background: "none", border: "none", padding: 0, color: "#ff9494", fontWeight: 700, cursor: "pointer", font: "inherit", textDecoration: "underline" }}>
+                  Confirmer
+                </button>{" "}
+                ·{" "}
+                <button type="button" onClick={() => setConfirmerSuppression(false)} style={{ background: "none", border: "none", padding: 0, color: "var(--text-dim)", cursor: "pointer", font: "inherit", textDecoration: "underline" }}>
+                  Annuler
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmerSuppression(true)}
+                style={{ background: "none", border: "none", padding: 0, color: "var(--text-dim)", fontSize: "13px", cursor: "pointer", textDecoration: "underline" }}
+              >
+                Supprimer cette journée
+              </button>
+            ))}
+        </div>
       ) : (
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
           <div>

@@ -224,6 +224,7 @@ export default function PlanningContent() {
                   date={date}
                   integre
                   sansEmplacement
+                  suppressionJournee
                   onChange={() => loadDays(entrepriseId, emplacementId)}
                 />
               ) : (
