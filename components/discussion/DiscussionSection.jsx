@@ -258,7 +258,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
 
   // Tous les employés sont dans la liste d'office (même sans conversation encore) ;
   // un clic sur l'un d'eux ouvre (ou crée) sa conversation. La recherche filtre
-  // seulement par NOM (employé, groupe, équipe), pour retrouver quelqu'un vite.
+  // seulement par NOM d'employé (les groupes et le fil d'équipe sont masqués pendant la recherche).
   const sansAccents = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const employesSansConversation = employes
     .filter((e) => !employeIdsEnDiscussion.has(e.id))
@@ -266,7 +266,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
   const tousLesElements = [...conversations, ...employesSansConversation];
   const q = sansAccents(recherche.trim());
   const elementsVisibles = q
-    ? tousLesElements.filter((c) => sansAccents(c.titre).includes(q))
+    ? tousLesElements.filter((c) => (c.type === "directe" || c.type === "employe") && sansAccents(c.titre).includes(q))
     : tousLesElements;
 
   if (loading) {
@@ -288,7 +288,7 @@ export default function DiscussionSection({ entrepriseId, userId }) {
           <div className="chat-conv-list-head">
             <strong style={{ fontSize: "13px" }}>Conversations</strong>
             <button type="button" className="admin-icon-btn" onClick={() => setGroupeModal({ nom: "", ids: new Set() })}>
-              + Nouveau groupe
+              + Nouveau
             </button>
           </div>
           <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(var(--w),0.08)" }}>
@@ -296,12 +296,12 @@ export default function DiscussionSection({ entrepriseId, userId }) {
               type="search"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher un employé ou un groupe..."
+              placeholder="Rechercher un employé..."
               style={{ width: "100%", boxSizing: "border-box" }}
             />
           </div>
           <div className="chat-section-label">{recherche.trim() ? "Résultats" : "Conversations"}</div>
-          {elementsVisibles.length === 0 && <p className="chat-empty">Aucun employé ou groupe trouvé.</p>}
+          {elementsVisibles.length === 0 && <p className="chat-empty">Aucun employé trouvé.</p>}
           {elementsVisibles.map((c) => (
             <button
               key={c.id}
