@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 
 function dateAujourdhui() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
 }
+
+// Les téléphones se resynchronisent tout seuls à cet intervalle tant que la page est visible.
+const INTERVALLE_RAFRAICHISSEMENT_MS = 15000;
 
 function decalerJour(date, delta) {
   const d = new Date(`${date}T00:00:00Z`);
@@ -28,33 +31,76 @@ export default function TachesEmploye() {
   const [nouvelEmplacement, setNouvelEmplacement] = useState("");
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState("");
+  const [erreurCoche, setErreurCoche] = useState(false);
+  // Cases cochées/décochées dont l'envoi au serveur n'est pas terminé : un
+  // rafraîchissement ne doit pas les écraser avec l'ancienne valeur.
+  const enAttenteRef = useRef(new Map());
 
+  // Relit les tâches du jour affiché. En mode silencieux (rafraîchissement
+  // automatique) : pas de "Chargement...", et on garde l'état des cases dont
+  // l'envoi est en cours.
+  async function charger({ silencieux = false } = {}) {
+    try {
+      const res = await employeFetch(`/api/employe-app/taches?date=${date}`);
+      const data = await res.json();
+      const recues = (data.taches || []).map((tk) =>
+        enAttenteRef.current.has(tk.id) ? { ...tk, terminee: enAttenteRef.current.get(tk.id) } : tk
+      );
+      setTaches(recues);
+      setCategories(data.categories || []);
+      setEmplacements(data.emplacements || []);
+    } catch {
+      // Échec silencieux : on garde ce qui est affiché, le prochain cycle réessaiera.
+    }
+    if (!silencieux) setLoading(false);
+  }
+
+  // Au changement de jour : chargement complet, puis rafraîchissement automatique
+  // (toutes les 15 s et dès que l'app revient au premier plan) pour que tous les
+  // téléphones voient ce que les collègues ont coché.
   useEffect(() => {
-    let annule = false;
     setLoading(true);
-    employeFetch(`/api/employe-app/taches?date=${date}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (annule) return;
-        setTaches(data.taches || []);
-        setCategories(data.categories || []);
-        setEmplacements(data.emplacements || []);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!annule) setLoading(false);
-      });
+    charger();
+
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") charger({ silencieux: true });
+    }, INTERVALLE_RAFRAICHISSEMENT_MS);
+    const auRetour = () => {
+      if (document.visibilityState === "visible") charger({ silencieux: true });
+    };
+    document.addEventListener("visibilitychange", auRetour);
+    window.addEventListener("focus", auRetour);
+
     return () => {
-      annule = true;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", auRetour);
+      window.removeEventListener("focus", auRetour);
     };
   }, [date]);
 
   async function toggle(tache) {
-    setTaches((prev) => prev.map((tk) => (tk.id === tache.id ? { ...tk, terminee: !tk.terminee } : tk)));
-    await employeFetch(`/api/employe-app/taches/${tache.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ terminee: !tache.terminee }),
-    });
+    const nouvelleValeur = !tache.terminee;
+    enAttenteRef.current.set(tache.id, nouvelleValeur);
+    setErreurCoche(false);
+    setTaches((prev) => prev.map((tk) => (tk.id === tache.id ? { ...tk, terminee: nouvelleValeur } : tk)));
+
+    let ok = false;
+    try {
+      const res = await employeFetch(`/api/employe-app/taches/${tache.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ terminee: nouvelleValeur }),
+      });
+      ok = res.ok;
+    } catch {}
+
+    enAttenteRef.current.delete(tache.id);
+
+    if (!ok) {
+      // L'envoi a échoué (réseau coupé, session expirée...) : on remet la case
+      // dans son vrai état au lieu de laisser croire que c'est enregistré.
+      setTaches((prev) => prev.map((tk) => (tk.id === tache.id ? { ...tk, terminee: tache.terminee } : tk)));
+      setErreurCoche(true);
+    }
   }
 
   function ouvrirPopup() {
@@ -118,6 +164,7 @@ export default function TachesEmploye() {
         )}
       </div>
       <p className="panel-hint">{t("taches.hint")}</p>
+      {erreurCoche && <p style={{ color: "var(--danger, #ff6b6b)", fontSize: "13px", marginTop: "-14px" }}>{t("taches.erreurCoche")}</p>}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "14px" }}>
         <button

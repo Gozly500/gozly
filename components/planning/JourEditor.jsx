@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
@@ -14,6 +14,8 @@ export default function JourEditor({ entrepriseId, date, integre = false }) {
   const [valeursModeles, setValeursModeles] = useState({});
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementIdState] = useState(null);
+  const emplacementIdRef = useRef(null);
+  emplacementIdRef.current = emplacementId;
   const [loading, setLoading] = useState(true);
   const [addingFor, setAddingFor] = useState(null);
   const [texte, setTexte] = useState("");
@@ -21,6 +23,15 @@ export default function JourEditor({ entrepriseId, date, integre = false }) {
 
   useEffect(() => {
     load();
+  }, [entrepriseId, date]);
+
+  // Les employés cochent leurs tâches sur leur téléphone : on relit les tâches toutes les
+  // 20 s (page visible) pour voir leur avancement sans recharger la page.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") loadTaches(emplacementIdRef.current);
+    }, 20000);
+    return () => clearInterval(id);
   }, [entrepriseId, date]);
 
   function changerEmplacement(id) {
