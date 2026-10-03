@@ -4,7 +4,7 @@ export const metadata = {
   title: "Gozly Gestion",
   manifest: "/manifest-gestion.json",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Gozly Gestion" },
-  icons: { icon: "/icone-gestion-192", apple: "/icone-gestion-192" },
+  icons: { icon: "/icone-gestion-192?v=2", apple: "/icone-gestion-192?v=2" },
 };
 
 export const viewport = {
