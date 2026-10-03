@@ -102,6 +102,16 @@ export default function PointageSection({ entrepriseId }) {
       return;
     }
 
+    // Ferme d'abord les pointages oubliés (succursale fermée depuis plus d'1 h 30).
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      await fetch("/api/pointage/fermer-oublies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData?.session?.access_token}` },
+        body: JSON.stringify({ entrepriseId }),
+      });
+    } catch {}
+
     // Un quart "ouvert" (entree posée, sortie pas encore posée) = l'employé
     // est actuellement au travail. On le termine plutôt que d'en créer un
     // nouveau.

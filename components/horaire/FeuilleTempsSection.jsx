@@ -178,6 +178,17 @@ export default function FeuilleTempsSection({ entrepriseId }) {
 
   async function load() {
     setLoading(true);
+
+    // Ferme d'abord les pointages oubliés (voir Entreprise > Emplacements > Horaires).
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      await fetch("/api/pointage/fermer-oublies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData?.session?.access_token}` },
+        body: JSON.stringify({ entrepriseId }),
+      });
+    } catch {}
+
     const { data: employesData } = await supabase
       .from("employes")
       .select("*")
@@ -244,7 +255,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         // l'horaire quand le mode "horaire" est actif.
         const fin = p.sortie ? new Date(p.sortie) : new Date();
         const debutCalcul = debutEffectif(p);
-        return { pointageId: p.id, debut: p.entree, fin: p.sortie, minutes: (fin - debutCalcul) / 60000 };
+        return { pointageId: p.id, debut: p.entree, fin: p.sortie, auto: !!p.sortie_auto, minutes: (fin - debutCalcul) / 60000 };
       });
   }
 
@@ -257,6 +268,11 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const employesAffiches = employes.filter(
     (emp) => (assignes === null || assignes.has(emp.id)) || sessionsPour(emp.id).length > 0
   );
+
+  // Un jour sur deux est très légèrement plus foncé : sépare les colonnes d'un coup d'œil.
+  function fondJour(i) {
+    return i % 2 === 1 ? { background: "rgba(var(--w), 0.05)" } : undefined;
+  }
 
   function libelleJour(d) {
     const nom = d.toLocaleDateString("fr-CA", { weekday: "long" });
@@ -285,6 +301,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       .update({
         entree: new Date(modal.entree).toISOString(),
         sortie: modal.sortie ? new Date(modal.sortie).toISOString() : null,
+        sortie_auto: false, // corrigé à la main : plus un « oubli potentiel »
       })
       .eq("id", modal.pointageId);
 
@@ -443,8 +460,8 @@ export default function FeuilleTempsSection({ entrepriseId }) {
             <thead>
               <tr>
                 <th>Employé</th>
-                {jours.map((d) => (
-                  <th key={dateStr(d)} style={{ whiteSpace: "nowrap", textAlign: "center" }}>
+                {jours.map((d, i) => (
+                  <th key={dateStr(d)} style={{ whiteSpace: "nowrap", textAlign: "center", ...fondJour(i) }}>
                     {libelleJour(d)}
                     <div style={{ fontWeight: 400, fontSize: "11.5px", color: "var(--text-dim)" }}>
                       {d.toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}
@@ -461,10 +478,10 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                 return (
                   <tr key={emp.id}>
                     <td style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{emp.nom}</td>
-                    {jours.map((d) => {
+                    {jours.map((d, i) => {
                       const duJour = sessions.filter((x) => dateStr(new Date(x.debut)) === dateStr(d));
                       return (
-                        <td key={dateStr(d)} style={{ textAlign: "center", whiteSpace: "nowrap", fontSize: "13px" }}>
+                        <td key={dateStr(d)} style={{ textAlign: "center", whiteSpace: "nowrap", fontSize: "13px", ...fondJour(i) }}>
                           {duJour.length === 0 ? (
                             <span style={{ color: "var(--text-dim)" }}>—</span>
                           ) : (
@@ -478,10 +495,26 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                                     style={{ background: "none", border: "none", color: "inherit", font: "inherit", cursor: "pointer", padding: 0 }}
                                   >
                                     {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>en cours</em>}
+                                    {x.auto && (
+                                      <span
+                                        title="Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin."
+                                        style={{ color: "#ffd479", fontSize: "11.5px", marginLeft: "6px" }}
+                                      >
+                                        ⚠ oubli potentiel
+                                      </span>
+                                    )}
                                   </button>
                                 ) : (
                                   <>
                                     {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>en cours</em>}
+                                    {x.auto && (
+                                      <span
+                                        title="Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin."
+                                        style={{ color: "#ffd479", fontSize: "11.5px", marginLeft: "6px" }}
+                                      >
+                                        ⚠ oubli potentiel
+                                      </span>
+                                    )}
                                   </>
                                 )}
                               </div>

@@ -4,7 +4,21 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { geocoderAdresse } from "@/lib/geocode";
 
+// Jours dans l'ordre d'affichage ; l'id est le numéro de jour JS (0 = dimanche).
+const JOURS_OUVERTURE = [
+  { id: "1", label: "Lundi" },
+  { id: "2", label: "Mardi" },
+  { id: "3", label: "Mercredi" },
+  { id: "4", label: "Jeudi" },
+  { id: "5", label: "Vendredi" },
+  { id: "6", label: "Samedi" },
+  { id: "0", label: "Dimanche" },
+];
+
 export default function EmplacementsSection({ entrepriseId }) {
+  const [horairesModal, setHorairesModal] = useState(null); // { emp, draft: { "1": { ouvert, debut, fin }, ... } }
+  const [horairesSaving, setHorairesSaving] = useState(false);
+
   const [emplacements, setEmplacements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [nom, setNom] = useState("");
@@ -78,6 +92,32 @@ export default function EmplacementsSection({ entrepriseId }) {
     load();
   }
 
+  function ouvrirHoraires(emp) {
+    const draft = {};
+    for (const j of JOURS_OUVERTURE) {
+      const h = emp.horaires_ouverture?.[j.id];
+      draft[j.id] = { ouvert: !!h, debut: h?.debut || "09:00", fin: h?.fin || "17:00" };
+    }
+    setHorairesModal({ emp, draft });
+  }
+
+  async function enregistrerHoraires(e) {
+    e.preventDefault();
+    setHorairesSaving(true);
+    const horaires = {};
+    for (const j of JOURS_OUVERTURE) {
+      const h = horairesModal.draft[j.id];
+      if (h.ouvert && h.debut && h.fin) horaires[j.id] = { debut: h.debut, fin: h.fin };
+    }
+    await supabase
+      .from("emplacements")
+      .update({ horaires_ouverture: Object.keys(horaires).length > 0 ? horaires : null })
+      .eq("id", horairesModal.emp.id);
+    setHorairesSaving(false);
+    setHorairesModal(null);
+    load();
+  }
+
   async function handleDelete(id) {
     await supabase.from("emplacements").delete().eq("id", id);
     load();
@@ -133,6 +173,9 @@ export default function EmplacementsSection({ entrepriseId }) {
                 </>
               ) : (
                 <>
+                  <button className="admin-icon-btn" onClick={() => ouvrirHoraires(emp)}>
+                    {emp.horaires_ouverture ? "Horaires ✓" : "Horaires"}
+                  </button>
                   <button className="admin-icon-btn" onClick={() => startEdit(emp)}>
                     Modifier
                   </button>
@@ -146,6 +189,45 @@ export default function EmplacementsSection({ entrepriseId }) {
         ))}
         {emplacements.length === 0 && <div className="admin-empty">Un seul emplacement implicite pour l'instant.</div>}
       </div>
+
+      {horairesModal && (
+        <div className="modal-overlay" onClick={() => setHorairesModal(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Horaires d&apos;ouverture — {horairesModal.emp.nom}</h3>
+              <button className="admin-icon-btn" onClick={() => setHorairesModal(null)}>
+                Fermer
+              </button>
+            </div>
+            <p className="section-hint">
+              Si un employé oublie de pointer son départ, il est pointé automatiquement 1 h 30 après la fermeture (avec l&apos;heure de
+              fermeture comme départ) et la feuille de temps affiche « oubli potentiel ». Laisse tous les jours fermés pour désactiver.
+            </p>
+            <form onSubmit={enregistrerHoraires}>
+              {JOURS_OUVERTURE.map((j) => {
+                const h = horairesModal.draft[j.id];
+                const maj = (champ, valeur) =>
+                  setHorairesModal((m) => ({ ...m, draft: { ...m.draft, [j.id]: { ...m.draft[j.id], [champ]: valeur } } }));
+                return (
+                  <div key={j.id} style={{ display: "grid", gridTemplateColumns: "110px 90px 1fr 1fr", gap: "8px", alignItems: "center", marginBottom: "8px" }}>
+                    <span>{j.label}</span>
+                    <label style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "13px" }}>
+                      <input type="checkbox" checked={h.ouvert} onChange={(e) => maj("ouvert", e.target.checked)} /> Ouvert
+                    </label>
+                    <input type="time" value={h.debut} onChange={(e) => maj("debut", e.target.value)} disabled={!h.ouvert} />
+                    <input type="time" value={h.fin} onChange={(e) => maj("fin", e.target.value)} disabled={!h.ouvert} />
+                  </div>
+                );
+              })}
+              <div className="admin-edit-actions">
+                <button type="submit" className="submit-btn" disabled={horairesSaving}>
+                  {horairesSaving ? "Enregistrement..." : "Enregistrer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <form className="admin-add-form" onSubmit={handleAdd}>
         <input type="text" placeholder="Nom de la succursale" value={nom} onChange={(e) => setNom(e.target.value)} required />

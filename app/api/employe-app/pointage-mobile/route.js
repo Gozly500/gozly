@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
+import { fermerPointagesOublies } from "@/lib/pointageAuto";
 import { distanceMetres } from "@/lib/geocode";
 import { aujourdhuiLocal } from "@/lib/dates";
 
@@ -28,6 +29,10 @@ const ID_ENTREPRISE_VIRTUELLE = "entreprise";
 // (id "entreprise") - sans ça, le pointage mobile serait tout simplement
 // impossible pour ces entreprises.
 async function resoudreEtat(service, employe, entreprise) {
+  // Un pointage oublié (succursale fermée depuis plus d'1 h 30) est fermé avant de
+  // déterminer si l'employé est "en poste", sinon il verrait "Terminer" au lieu de "Débuter".
+  await fermerPointagesOublies(service, employe.entreprise_id).catch(() => {});
+
   const { data: toutesEmplacements } = await service
     .from("emplacements")
     .select("id, nom, latitude, longitude")
