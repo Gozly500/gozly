@@ -22,11 +22,9 @@ export default function PlanningContent() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [days, setDays] = useState([]);
-  const [loadingDays, setLoadingDays] = useState(true);
   const [date, setDate] = useState(() => dateStr(new Date())); // jour affiché sous le calendrier
   const [creees, setCreees] = useState(new Set()); // jours "créés" ici mais encore sans tâche
   const [premierJourDimanche, setPremierJourDimanche] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(null);
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementIdState] = useState(null);
 
@@ -103,8 +101,7 @@ export default function PlanningContent() {
     };
   }, [router]);
 
-  async function loadDays(eid, filtreEmplacementId, { silencieux = false } = {}) {
-    if (!silencieux) setLoadingDays(true);
+  async function loadDays(eid, filtreEmplacementId) {
     let query = supabase.from("taches").select("date, terminee").eq("entreprise_id", eid);
     if (filtreEmplacementId) query = query.eq("emplacement_id", filtreEmplacementId);
     const { data } = await query;
@@ -122,7 +119,6 @@ export default function PlanningContent() {
       .sort((a, b) => (a.date < b.date ? 1 : -1));
 
     setDays(list);
-    setLoadingDays(false);
   }
 
   async function handleLogout() {
@@ -133,14 +129,6 @@ export default function PlanningContent() {
   function handleChangeEmplacement(id) {
     setEmplacementId(id);
     loadDays(entrepriseId, id);
-  }
-
-  async function handleDeleteDay(date) {
-    let query = supabase.from("taches").delete().eq("entreprise_id", entrepriseId).eq("date", date);
-    if (emplacementId) query = query.eq("emplacement_id", emplacementId);
-    await query;
-    setConfirmingDelete(null);
-    setDays((prev) => prev.filter((d) => d.date !== date));
   }
 
   if (checking) {
@@ -236,7 +224,7 @@ export default function PlanningContent() {
                   date={date}
                   integre
                   sansEmplacement
-                  onChange={() => loadDays(entrepriseId, emplacementId, { silencieux: true })}
+                  onChange={() => loadDays(entrepriseId, emplacementId)}
                 />
               ) : (
                 <div style={{ textAlign: "center", padding: "26px 10px" }}>
@@ -252,59 +240,7 @@ export default function PlanningContent() {
             </div>
           )}
 
-          {!entrepriseId ? (
-            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
-          ) : loadingDays ? (
-            <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
-          ) : (
-            <div className="admin-list">
-              {days.map((day) => (
-                <div className="admin-row" key={day.date}>
-                  <div className="admin-row-main">
-                    <div className="admin-row-title" style={{ textTransform: "capitalize" }}>
-                      {new Date(day.date + "T00:00:00").toLocaleDateString("fr-CA", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </div>
-                    <div className="admin-row-sub">
-                      {day.faites}/{day.total} tâche{day.total > 1 ? "s" : ""} terminée{day.faites > 1 ? "s" : ""}
-                    </div>
-                  </div>
-                  <div className="admin-row-controls">
-                    <button
-                      className="admin-icon-btn"
-                      onClick={() => {
-                        setDate(day.date);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                    >
-                      Modifier
-                    </button>
-                    {confirmingDelete === day.date ? (
-                      <>
-                        <button className="btn-danger" onClick={() => handleDeleteDay(day.date)}>
-                          Confirmer
-                        </button>
-                        <button className="admin-icon-btn" onClick={() => setConfirmingDelete(null)}>
-                          Annuler
-                        </button>
-                      </>
-                    ) : (
-                      <button className="admin-icon-btn danger" onClick={() => setConfirmingDelete(day.date)}>
-                        Supprimer
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {days.length === 0 && (
-                <div className="admin-empty">Aucune journée créée. Choisis un jour dans le calendrier pour commencer.</div>
-              )}
-            </div>
-          )}
+          {!entrepriseId && <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>}
         </div>
       </main>
     </div>
