@@ -24,6 +24,14 @@ export default function DiscussionEmploye() {
   const [texte, setTexte] = useState("");
   const [collegues, setCollegues] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [tous, setTous] = useState([]); // tous les collègues (groupes + recherche)
+  const [menuNouveau, setMenuNouveau] = useState(false);
+  const [groupeOuvert, setGroupeOuvert] = useState(false);
+  const [groupeNom, setGroupeNom] = useState("");
+  const [groupeIds, setGroupeIds] = useState(() => new Set());
+  const [groupeBusy, setGroupeBusy] = useState(false);
+  const [groupeErreur, setGroupeErreur] = useState("");
+  const [recherche, setRecherche] = useState("");
   const [loading, setLoading] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [vue, setVue] = useState("liste"); // "liste" | "thread"
@@ -52,6 +60,7 @@ export default function DiscussionEmploye() {
     employeFetch("/api/employe-app/chat/collegues").then(async (res) => {
       const data = await res.json();
       setCollegues(data.collegues || []);
+      setTous(data.tous || []);
     });
 
     return () => clearInterval(idListe);
@@ -217,6 +226,43 @@ export default function DiscussionEmploye() {
     chargerConversations({ silencieux: true });
   }
 
+  async function creerGroupe(e) {
+    e.preventDefault();
+    if (!groupeNom.trim() || groupeIds.size === 0) return;
+    setGroupeBusy(true);
+    setGroupeErreur("");
+    try {
+      const res = await employeFetch("/api/employe-app/chat/conversations/groupe", {
+        method: "POST",
+        body: JSON.stringify({ titre: groupeNom.trim(), employeIds: [...groupeIds] }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.conversationId) {
+        setGroupeErreur(data.error || t("chat.erreurGroupe"));
+        setGroupeBusy(false);
+        return;
+      }
+      setGroupeOuvert(false);
+      setGroupeNom("");
+      setGroupeIds(new Set());
+      await chargerConversations();
+      setMessages([]);
+      setActiveId(data.conversationId);
+      setActiveTitre(data.titre || groupeNom.trim());
+      setVue("thread");
+    } catch {
+      setGroupeErreur(t("chat.erreurGroupe"));
+    }
+    setGroupeBusy(false);
+  }
+
+  // Sans accents ni majuscules, pour que « eve » trouve « Ève ».
+  const normaliser = (x) => String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  const terme = normaliser(recherche);
+  const conversationsVisibles = terme ? conversations.filter((c) => normaliser(c.titre).includes(terme)) : conversations;
+  // Collègues pas encore en discussion directe : on peut démarrer avec eux depuis la recherche.
+  const colleguesTrouves = terme ? tous.filter((c) => !c.dejaEnDiscussion && normaliser(c.nom).includes(terme)) : [];
+
   async function demarrerConversation(collegueId, nom) {
     setPickerOpen(false);
     setErreur(null);
@@ -258,8 +304,18 @@ export default function DiscussionEmploye() {
           <div className="chat-conv-list-head">
             <strong style={{ fontSize: "13px" }}>{t("chat.titre")}</strong>
           </div>
-          <div className="chat-section-label">{t("chat.conversations")}</div>
-          {conversations.map((c) => {
+          <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(var(--w),0.08)" }}>
+            <input
+              type="search"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              placeholder={t("chat.rechercher")}
+              style={{ width: "100%", boxSizing: "border-box" }}
+            />
+          </div>
+          <div className="chat-section-label">{terme ? t("chat.resultats") : t("chat.conversations")}</div>
+          {terme && conversationsVisibles.length === 0 && colleguesTrouves.length === 0 && <p className="chat-empty">{t("chat.aucunResultat")}</p>}
+          {conversationsVisibles.map((c) => {
             // Non lu : un message d'un AUTRE, plus récent que le dernier que j'ai vu.
             const nonLu =
               !!c.dernierMessageDate &&
@@ -281,6 +337,16 @@ export default function DiscussionEmploye() {
               </button>
             );
           })}
+          {colleguesTrouves.length > 0 && (
+            <>
+              <div className="chat-section-label">{t("chat.autresCollegues")}</div>
+              {colleguesTrouves.map((c) => (
+                <button key={c.id} type="button" className="chat-conv-item" onClick={() => demarrerConversation(c.id, c.nom)}>
+                  <div className="chat-conv-titre">{c.nom}</div>
+                </button>
+              ))}
+            </>
+          )}
         </div>
 
         {vue === "thread" && (
@@ -367,9 +433,99 @@ export default function DiscussionEmploye() {
       </div>
 
       {vue === "liste" && (
-        <button type="button" className="moi-discussion-add-btn" onClick={() => setPickerOpen(true)}>
-          {t("chat.ajouter")}
+        <button type="button" className="moi-discussion-add-btn" onClick={() => setMenuNouveau(true)}>
+          {t("chat.nouveau")}
         </button>
+      )}
+
+      {menuNouveau && (
+        <div className="modal-overlay" onClick={() => setMenuNouveau(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("chat.nouveauTitre")}</h3>
+              <button className="admin-icon-btn" onClick={() => setMenuNouveau(false)}>
+                {t("nav.fermer")}
+              </button>
+            </div>
+            <div className="dash-nav">
+              <button
+                type="button"
+                className="dash-nav-item"
+                onClick={() => {
+                  setMenuNouveau(false);
+                  setPickerOpen(true);
+                }}
+              >
+                👤 {t("chat.unContact")}
+              </button>
+              <button
+                type="button"
+                className="dash-nav-item"
+                onClick={() => {
+                  setMenuNouveau(false);
+                  setGroupeErreur("");
+                  setGroupeOuvert(true);
+                }}
+              >
+                👥 {t("chat.unGroupe")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {groupeOuvert && (
+        <div className="modal-overlay" onClick={() => setGroupeOuvert(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("chat.unGroupe")}</h3>
+              <button className="admin-icon-btn" onClick={() => setGroupeOuvert(false)}>
+                {t("nav.fermer")}
+              </button>
+            </div>
+            <form onSubmit={creerGroupe}>
+              <div className="field">
+                <input
+                  type="text"
+                  value={groupeNom}
+                  onChange={(e) => setGroupeNom(e.target.value)}
+                  placeholder={t("chat.nomGroupe")}
+                  maxLength={60}
+                />
+              </div>
+              <p className="section-hint" style={{ margin: "0 0 6px" }}>
+                {t("chat.choisirMembres")}
+              </p>
+              {tous.length === 0 ? (
+                <p className="chat-empty">{t("chat.aucunCollegue")}</p>
+              ) : (
+                <div className="moi-picker-list">
+                  {tous.map((c) => (
+                    <label className="moi-picker-row" key={c.id} style={{ cursor: "pointer" }}>
+                      <span>{c.nom}</span>
+                      <input
+                        type="checkbox"
+                        checked={groupeIds.has(c.id)}
+                        onChange={() =>
+                          setGroupeIds((prev) => {
+                            const suivant = new Set(prev);
+                            if (suivant.has(c.id)) suivant.delete(c.id);
+                            else suivant.add(c.id);
+                            return suivant;
+                          })
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+              {groupeErreur && <p className="settings-msg err">{groupeErreur}</p>}
+              <button type="submit" className="submit-btn" style={{ width: "100%", marginTop: "10px" }} disabled={groupeBusy || !groupeNom.trim() || groupeIds.size === 0}>
+                {groupeBusy ? t("chat.creation") : t("chat.creerGroupe")}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
 
       {pickerOpen && (

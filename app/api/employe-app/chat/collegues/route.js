@@ -38,5 +38,9 @@ export async function GET(request) {
 
   const disponibles = (collegues || []).filter((c) => !dejaEnDiscussionAvec.has(c.id));
 
-  return NextResponse.json({ collegues: disponibles });
+  // `collegues` : ceux pas encore contactés (« Démarrer avec... ») ; `tous` : tout le monde (groupes, recherche).
+  return NextResponse.json({
+    collegues: disponibles,
+    tous: (collegues || []).map((c) => ({ id: c.id, nom: c.nom, dejaEnDiscussion: dejaEnDiscussionAvec.has(c.id) })),
+  });
 }

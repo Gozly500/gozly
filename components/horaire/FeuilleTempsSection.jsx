@@ -454,22 +454,27 @@ export default function FeuilleTempsSection({ entrepriseId }) {
           ))}
 
         {peutExporter && (
-          <button className="admin-icon-btn" onClick={handleExportPdf} disabled={employesAffiches.length === 0 || exportPdfEnCours}>
-            {exportPdfEnCours ? "PDF..." : "⬇ PDF"}
-          </button>
-        )}
-
-        {peutExporter && (
           <div className="account-wrap" ref={exportRef}>
             <button
               className="submit-btn"
               onClick={() => setExportOpen((v) => !v)}
               disabled={lignes.length === 0 || envoiNethris}
             >
-              {envoiNethris ? "Envoi..." : "⬇ Exporter ▾"}
+              {envoiNethris ? "Envoi..." : exportPdfEnCours ? "PDF..." : "⬇ Exporter ▾"}
             </button>
             {exportOpen && (
               <div className="account-dropdown open">
+                <button
+                  type="button"
+                  className="menu-item"
+                  disabled={employesAffiches.length === 0 || exportPdfEnCours}
+                  onClick={() => {
+                    setExportOpen(false);
+                    handleExportPdf();
+                  }}
+                >
+                  PDF
+                </button>
                 {SERVICES_PAIE.map((s) => (
                   <button
                     key={s.id}

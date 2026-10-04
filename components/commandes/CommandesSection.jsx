@@ -8,6 +8,7 @@ import { IconIntegration, IconTableauDeBord, IconCommandes } from "@/components/
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
 import PlanificationBoite from "@/components/commandes/PlanificationBoite";
 import { telechargerPdfCommandes } from "@/lib/exportPdf";
+import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import {
   formatMontant,
   dateAujourdhui,
@@ -47,6 +48,9 @@ export default function CommandesSection({ entrepriseId }) {
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const [entrepriseNom, setEntrepriseNom] = useState("");
   const [exportEnCours, setExportEnCours] = useState(false);
+  const [exportOuvert, setExportOuvert] = useState(false);
+  const exportRef = useRef(null);
+  useFermerAuClicExterieur(exportRef, exportOuvert, () => setExportOuvert(false));
   const dateRef = useRef(date);
   dateRef.current = date;
 
@@ -214,9 +218,25 @@ export default function CommandesSection({ entrepriseId }) {
           <Link href="/dashboard/commandes-kiosk" target="_blank" className="admin-icon-btn">
             Ouvrir le kiosque
           </Link>
-          <button className="admin-icon-btn" onClick={exporterPdf} disabled={exportEnCours || commandes.length === 0}>
-            {exportEnCours ? "PDF..." : "⬇ PDF du jour"}
-          </button>
+          <div className="account-wrap" ref={exportRef}>
+            <button className="admin-icon-btn" onClick={() => setExportOuvert((v) => !v)} disabled={exportEnCours || commandes.length === 0}>
+              {exportEnCours ? "PDF..." : "⬇ Exporter ▾"}
+            </button>
+            {exportOuvert && (
+              <div className="account-dropdown open">
+                <button
+                  type="button"
+                  className="menu-item"
+                  onClick={() => {
+                    setExportOuvert(false);
+                    exporterPdf();
+                  }}
+                >
+                  PDF (commandes du jour)
+                </button>
+              </div>
+            )}
+          </div>
           <button className="admin-icon-btn" onClick={() => synchroniser()} disabled={syncing}>
             <IconIntegration className="gozly-icon" /> {syncing ? "Synchronisation..." : "Synchroniser Wix"}
           </button>
