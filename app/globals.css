@@ -1461,7 +1461,11 @@ input.planning-date-picker{
 .pointage-key.confirm:hover:not(:disabled){background:rgba(126,231,135,0.28);}
 .pointage-key:disabled{opacity:.4;}
 .pointage-success{display:flex;flex-direction:column;align-items:center;gap:10px;}
-.pointage-lottie{width:240px;max-width:100%;}
+/* Animation 640x360 dont le bas contient un filigrane : on ne montre que la bande du milieu
+   (44 px rognés en haut et en bas = 640x272), l'animation reste centrée. Les !important
+   battent le style en ligne que lottie pose sur son <svg>. */
+.pointage-lottie{width:240px;max-width:100%;aspect-ratio:640/272;overflow:hidden;position:relative;}
+.pointage-lottie svg{position:absolute!important;left:0!important;top:-16.176%!important;width:100%!important;height:132.353%!important;}
 
 /* ============ Sélecteur de dashboard ============ */
 .dashboard-picker-grid{
