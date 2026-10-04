@@ -4,6 +4,7 @@ import { getServiceClient } from "@/lib/adminServer";
 import { obtenirCommandesWix, diagnostiquerPermissionsWix } from "@/lib/wixClient";
 import { synchroniserTachesCommandes } from "@/lib/tachesCommandes";
 import { correspondAuLieu } from "@/lib/wixLieu";
+import { bornesJour, dateAujourdhui, dateEffective } from "@/lib/commandes";
 
 // Copie (lecture seule) les commandes Wix récentes de l'entreprise dans
 // commandes_en_ligne. Rejouable à volonté : chaque commande est mise à jour
@@ -79,6 +80,27 @@ export async function POST(request) {
   const lignes = commandes
     .filter((c) => c.source_id && c.date_commande)
     .map((c) => ({ ...c, entreprise_id: entreprise.id, updated_at: new Date().toISOString() }));
+
+  // Une commande Wix qui arrive déjà "préparée" (c'est le cas des éléments de menu Wix Restaurants)
+  // est quand même NOUVELLE pour l'équipe : on la place "En attente" à son arrivée, sinon elle
+  // atterrirait directement dans "Terminées". On ne touche qu'aux nouvelles commandes d'aujourd'hui
+  // ou à venir ; les anciennes déjà préparées restent "Terminées", et une commande déjà connue
+  // garde son étape (le upsert ne l'écrase pas).
+  if (lignes.length > 0) {
+    const { data: connues } = await service
+      .from("commandes_en_ligne")
+      .select("source_id")
+      .eq("entreprise_id", entreprise.id)
+      .eq("source", "wix")
+      .in("source_id", lignes.map((l) => l.source_id));
+    const dejaConnues = new Set((connues || []).map((c) => c.source_id));
+    const debutAujourdhui = bornesJour(dateAujourdhui()).debut;
+    for (const l of lignes) {
+      if (!dejaConnues.has(l.source_id) && l.statut_preparation === "FULFILLED" && new Date(dateEffective(l)) >= new Date(debutAujourdhui)) {
+        l.etape = "en_attente";
+      }
+    }
+  }
 
   if (lignes.length > 0) {
     const { error } = await service.from("commandes_en_ligne").upsert(lignes, { onConflict: "entreprise_id,source,source_id" });
