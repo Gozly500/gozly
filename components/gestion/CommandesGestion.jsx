@@ -6,6 +6,7 @@ import { useGestion } from "@/components/gestion/GestionShell";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
 import { chargerProduitsInventaire, creerCommandeManuelle } from "@/lib/commandesNouvelle";
+import { telechargerPdfCommandes } from "@/lib/exportPdf";
 import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import {
   formatMontant,
@@ -34,7 +35,8 @@ const FILTRES = [
 // Commandes pour le téléphone : une carte par commande avec le bouton de l'étape suivante
 // bien visible, navigation par jour, filtres, total à préparer par produit.
 export default function CommandesGestion() {
-  const { entrepriseId } = useGestion();
+  const { entrepriseId, entrepriseNom } = useGestion();
+  const [exportEnCours, setExportEnCours] = useState(false);
   const [date, setDate] = useState(dateAujourdhui);
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,6 +123,16 @@ export default function CommandesGestion() {
     charger();
   }
 
+  async function exporterPdf() {
+    setExportEnCours(true);
+    try {
+      const dateLongue = new Date(`${date}T00:00:00`).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      await telechargerPdfCommandes({ entrepriseNom, dateLabel: dateLongue, dateIso: date, commandes, totauxProduits });
+    } finally {
+      setExportEnCours(false);
+    }
+  }
+
   const aujourdhui = dateAujourdhui();
   const dateLabel = new Date(`${date}T00:00:00`).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" });
   const valides = commandes.filter((c) => c.statut !== "CANCELED");
@@ -179,9 +191,14 @@ export default function CommandesGestion() {
         <span>
           {valides.length} commande{valides.length > 1 ? "s" : ""} · <strong>{formatMontant(totalJour)}</strong>
         </span>
-        <button type="button" className="admin-icon-btn" onClick={() => synchroniser()} disabled={syncing}>
-          {syncing ? "..." : "↻ Actualiser"}
-        </button>
+        <span style={{ display: "flex", gap: "6px" }}>
+          <button type="button" className="admin-icon-btn" onClick={exporterPdf} disabled={exportEnCours || commandes.length === 0}>
+            {exportEnCours ? "PDF..." : "⬇ PDF"}
+          </button>
+          <button type="button" className="admin-icon-btn" onClick={() => synchroniser()} disabled={syncing}>
+            {syncing ? "..." : "↻ Actualiser"}
+          </button>
+        </span>
       </div>
 
       {totauxProduits.length > 0 && (

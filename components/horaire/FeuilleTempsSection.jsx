@@ -8,6 +8,7 @@ import { SERVICES_PAIE } from "@/lib/servicesPaie";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { PERMISSIONS } from "@/lib/permissions";
+import { telechargerPdfFeuilleTemps } from "@/lib/exportPdf";
 
 function heuresDecimal(minutes) {
   return (minutes / 60).toFixed(2);
@@ -74,6 +75,8 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [nethrisMsg, setNethrisMsg] = useState(null);
   const [mesPermissions, setMesPermissions] = useState([]);
   const [autoVisible, setAutoVisible] = useState(false);
+  const [entrepriseNom, setEntrepriseNom] = useState("");
+  const [exportPdfEnCours, setExportPdfEnCours] = useState(false);
   const [semainesApprouvees, setSemainesApprouvees] = useState([]);
   const [approving, setApproving] = useState(false);
 
@@ -95,7 +98,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   useEffect(() => {
     supabase
       .from("entreprises")
-      .select("premier_jour_semaine, pointage_calcul_mode, feuille_temps_visible_sans_approbation")
+      .select("nom, premier_jour_semaine, pointage_calcul_mode, feuille_temps_visible_sans_approbation")
       .eq("id", entrepriseId)
       .maybeSingle()
       .then(({ data }) => {
@@ -103,6 +106,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         setWeekStart((w) => getDebutSemaine(addDays(w, 3), dimanche));
         setCalculPointage(data?.pointage_calcul_mode || "reel");
         setAutoVisible(!!data?.feuille_temps_visible_sans_approbation);
+        setEntrepriseNom(data?.nom || "");
       });
   }, [entrepriseId]);
 
@@ -375,6 +379,39 @@ export default function FeuilleTempsSection({ entrepriseId }) {
     setEnvoiNethris(false);
   }
 
+  // PDF de la semaine affichée : une ligne par employé, une colonne par jour.
+  async function handleExportPdf() {
+    setExportPdfEnCours(true);
+    try {
+      const lignesPdf = employesAffiches.map((emp) => {
+        const sessions = sessionsPour(emp.id);
+        const total = sessions.reduce((sum, x) => sum + x.minutes, 0);
+        return {
+          nom: emp.nom,
+          parJour: jours.map((d) =>
+            sessions
+              .filter((x) => dateStr(new Date(x.debut)) === dateStr(d))
+              .map((x) => `${heureCourte(x.debut)} - ${x.fin ? heureCourte(x.fin) : "en cours"}${x.auto ? " *" : ""}`)
+          ),
+          total: total > 0 ? `${heuresDecimal(total)} h` : "-",
+        };
+      });
+      const totalMinutes = employesAffiches.reduce((somme, emp) => somme + sessionsPour(emp.id).reduce((t, x) => t + x.minutes, 0), 0);
+      await telechargerPdfFeuilleTemps({
+        entrepriseNom,
+        succursaleNom: emplacements.find((e) => e.id === emplacementId)?.nom || (emplacements.length > 1 ? "Toutes les succursales" : ""),
+        semaineLabel: weekLabel,
+        jours: jours.map((d) => `${libelleJour(d)} ${d.getDate()}`),
+        lignes: lignesPdf,
+        totalGeneral: `${heuresDecimal(totalMinutes)} h`,
+        approuvee: !!approbationActuelle,
+        aOublis: lignesPdf.some((l) => l.parJour.some((j) => j.some((t) => t.endsWith(" *")))),
+      });
+    } finally {
+      setExportPdfEnCours(false);
+    }
+  }
+
   const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${addDays(
     weekStart,
     6
@@ -415,6 +452,12 @@ export default function FeuilleTempsSection({ entrepriseId }) {
               Approuver cette semaine
             </button>
           ))}
+
+        {peutExporter && (
+          <button className="admin-icon-btn" onClick={handleExportPdf} disabled={employesAffiches.length === 0 || exportPdfEnCours}>
+            {exportPdfEnCours ? "PDF..." : "⬇ PDF"}
+          </button>
+        )}
 
         {peutExporter && (
           <div className="account-wrap" ref={exportRef}>

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration, IconTableauDeBord, IconCommandes } from "@/components/icons/GozlyIcons";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
 import PlanificationBoite from "@/components/commandes/PlanificationBoite";
+import { telechargerPdfCommandes } from "@/lib/exportPdf";
 import {
   formatMontant,
   dateAujourdhui,
@@ -44,6 +45,8 @@ export default function CommandesSection({ entrepriseId }) {
   const [premierJourDimanche, setPremierJourDimanche] = useState(false);
   const [modal, setModal] = useState(null);
   const [imprimanteActive, setImprimanteActive] = useState(false);
+  const [entrepriseNom, setEntrepriseNom] = useState("");
+  const [exportEnCours, setExportEnCours] = useState(false);
   const dateRef = useRef(date);
   dateRef.current = date;
 
@@ -110,11 +113,12 @@ export default function CommandesSection({ entrepriseId }) {
     impressionActive(entrepriseId).then(setImprimanteActive);
 
     Promise.all([
-      supabase.from("entreprises").select("commandes_planning_integre, premier_jour_semaine").eq("id", entrepriseId).maybeSingle(),
+      supabase.from("entreprises").select("nom, commandes_planning_integre, premier_jour_semaine").eq("id", entrepriseId).maybeSingle(),
       supabase.from("modules_actifs").select("module").eq("entreprise_id", entrepriseId).eq("module", "planning"),
     ]).then(([{ data: entreprise }, { data: modules }]) => {
       setPlanifActive(!!entreprise?.commandes_planning_integre && (modules || []).length > 0);
       setPremierJourDimanche(entreprise?.premier_jour_semaine === "dimanche");
+      setEntrepriseNom(entreprise?.nom || "");
     });
   }, [entrepriseId]);
 
@@ -138,6 +142,17 @@ export default function CommandesSection({ entrepriseId }) {
     await supabase.from("commandes_en_ligne").delete().eq("id", c.id);
     await mettreAJourTachesCommandes(entrepriseId);
     charger();
+  }
+
+  const dateLabelPdf = () => new Date(`${date}T00:00:00`).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  async function exporterPdf() {
+    setExportEnCours(true);
+    try {
+      await telechargerPdfCommandes({ entrepriseNom, dateLabel: dateLabelPdf(), dateIso: date, commandes, totauxProduits });
+    } finally {
+      setExportEnCours(false);
+    }
   }
 
   const aujourdhui = dateAujourdhui();
@@ -199,6 +214,9 @@ export default function CommandesSection({ entrepriseId }) {
           <Link href="/dashboard/commandes-kiosk" target="_blank" className="admin-icon-btn">
             Ouvrir le kiosque
           </Link>
+          <button className="admin-icon-btn" onClick={exporterPdf} disabled={exportEnCours || commandes.length === 0}>
+            {exportEnCours ? "PDF..." : "⬇ PDF du jour"}
+          </button>
           <button className="admin-icon-btn" onClick={() => synchroniser()} disabled={syncing}>
             <IconIntegration className="gozly-icon" /> {syncing ? "Synchronisation..." : "Synchroniser Wix"}
           </button>

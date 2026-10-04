@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { useGestion } from "@/components/gestion/GestionShell";
+import { telechargerPdfFeuilleTemps } from "@/lib/exportPdf";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -38,9 +39,11 @@ function versDatetimeLocal(iso) {
 // qu'on ouvre pour voir ses 7 jours, plus l'approbation de la semaine.
 // Mêmes données et mêmes règles de calcul que la feuille de temps du dashboard.
 export default function FeuilleTempsMobile() {
-  const { entrepriseId, a, user } = useGestion();
+  const { entrepriseId, entrepriseNom, a, user } = useGestion();
   const peutApprouver = a("approuver_feuille_temps");
   const peutCorriger = a("corriger_feuille_temps");
+  const peutExporter = a("exporter_feuille_temps");
+  const [exportEnCours, setExportEnCours] = useState(false);
   const seulementVoir = a("voir_feuille_temps") && !peutCorriger && !peutApprouver;
 
   const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
@@ -192,6 +195,37 @@ export default function FeuilleTempsMobile() {
     setApproving(false);
   }
 
+  async function exporterPdf() {
+    setExportEnCours(true);
+    try {
+      const lignesPdf = employesAffiches.map((emp) => {
+        const sessions = sessionsPour(emp.id);
+        const total = sessions.reduce((somme, x) => somme + x.minutes, 0);
+        return {
+          nom: emp.nom,
+          parJour: jours.map((d) =>
+            sessions
+              .filter((x) => dateStr(new Date(x.debut)) === dateStr(d))
+              .map((x) => `${heureCourte(x.debut)} - ${x.fin ? heureCourte(x.fin) : "en cours"}${x.auto ? " *" : ""}`)
+          ),
+          total: total > 0 ? heures(total) : "-",
+        };
+      });
+      await telechargerPdfFeuilleTemps({
+        entrepriseNom,
+        succursaleNom: emplacements.find((e) => e.id === emplacementId)?.nom || (emplacements.length > 1 ? "Toutes les succursales" : ""),
+        semaineLabel: libelleSemaine,
+        jours: jours.map((d) => `${d.toLocaleDateString("fr-CA", { weekday: "short" })} ${d.getDate()}`),
+        lignes: lignesPdf,
+        totalGeneral: heures(totalGeneral),
+        approuvee: !!approbationActuelle,
+        aOublis: lignesPdf.some((l) => l.parJour.some((j) => j.some((t) => t.endsWith(" *")))),
+      });
+    } finally {
+      setExportEnCours(false);
+    }
+  }
+
   function ouvrirCorrection(x, employeNom) {
     if (!peutCorriger) return;
     setModal({ pointageId: x.pointageId, employeNom, entree: versDatetimeLocal(x.debut), sortie: versDatetimeLocal(x.fin) });
@@ -292,6 +326,11 @@ export default function FeuilleTempsMobile() {
             <span>
               Total de la semaine : <strong>{heures(totalGeneral)}</strong>
             </span>
+            {peutExporter && (
+              <button type="button" className="admin-icon-btn" onClick={exporterPdf} disabled={exportEnCours}>
+                {exportEnCours ? "PDF..." : "⬇ PDF"}
+              </button>
+            )}
           </div>
 
           <div className="gestion-cartes">
