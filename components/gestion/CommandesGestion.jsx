@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useGestion } from "@/components/gestion/GestionShell";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
+import { chargerProduitsInventaire, creerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import {
   formatMontant,
@@ -118,55 +119,6 @@ export default function CommandesGestion() {
     await supabase.from("commandes_en_ligne").delete().eq("id", c.id);
     await mettreAJourTachesCommandes(entrepriseId);
     charger();
-  }
-
-  // Fonctions du formulaire de nouvelle commande (même écrans que l'app employé,
-  // mais avec la session du gestionnaire plutôt que les routes employé).
-  async function chargerProduits() {
-    const { data } = await supabase
-      .from("produits_inventaire")
-      .select("id, nom, sku, prix, source, source_id")
-      .eq("entreprise_id", entrepriseId)
-      .order("nom", { ascending: true })
-      .limit(1000);
-    return data || [];
-  }
-
-  async function enregistrerNouvelle(c) {
-    const { count } = await supabase
-      .from("commandes_en_ligne")
-      .select("id", { count: "exact", head: true })
-      .eq("entreprise_id", entrepriseId)
-      .eq("source", "manuel");
-    const total = Math.round(c.items.reduce((somme, it) => somme + it.quantite * (it.prix || 0), 0) * 100) / 100;
-    const id = crypto.randomUUID(); // pas de insert().select() : on garde l'id pour l'impression
-    const maintenant = new Date().toISOString();
-    const telephone = String(c.client_telephone || "").trim();
-    const { error } = await supabase.from("commandes_en_ligne").insert({
-      id,
-      entreprise_id: entrepriseId,
-      source: "manuel",
-      canal: "MANUEL",
-      source_id: crypto.randomUUID(),
-      numero: `M${(count || 0) + 1}`,
-      statut: "APPROVED",
-      statut_paiement: c.paye ? "PAID" : "NOT_PAID",
-      statut_preparation: "NOT_FULFILLED",
-      etape: "traitee", // saisie par un employé : déjà prise en charge
-      mode: c.mode,
-      client_nom: String(c.client_nom || "").trim() || null,
-      ...(telephone ? { client_telephone: telephone } : {}),
-      total,
-      items: c.items,
-      date_commande: maintenant,
-      date_ramassage: c.date_ramassage,
-      date_ramassage_fin: null,
-      updated_at: maintenant,
-    });
-    if (error) return { ok: false, error: "Impossible d'enregistrer la commande." };
-    await imprimerCommande(entrepriseId, id, "creation");
-    await mettreAJourTachesCommandes(entrepriseId);
-    return { ok: true };
   }
 
   const aujourdhui = dateAujourdhui();
@@ -346,8 +298,8 @@ export default function CommandesGestion() {
       {nouvelle && (
         <CommandeEmployeModal
           dateParDefaut={date}
-          chargerProduits={chargerProduits}
-          enregistrer={enregistrerNouvelle}
+          chargerProduits={() => chargerProduitsInventaire(entrepriseId)}
+          enregistrer={(c) => creerCommandeManuelle(entrepriseId, c)}
           onClose={() => setNouvelle(false)}
           onSaved={() => {
             setNouvelle(false);

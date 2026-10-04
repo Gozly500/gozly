@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
-import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
+import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
+import { LangueProvider } from "@/components/moi/LangueContext";
+import { chargerProduitsInventaire, creerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
 import {
   formatMontant,
@@ -288,15 +290,18 @@ export default function CommandesKioskContent() {
       </div>
 
       {modal && (
-        <CommandeManuelleModal
-          entrepriseId={entrepriseId}
-          commande={null}
-          onClose={() => setModal(false)}
-          onSaved={() => {
-            setModal(false);
-            charger();
-          }}
-        />
+        <LangueProvider>
+          <CommandeEmployeModal
+            dateParDefaut={dateAujourdhui()}
+            chargerProduits={() => chargerProduitsInventaire(entrepriseId)}
+            enregistrer={(c) => creerCommandeManuelle(entrepriseId, c)}
+            onClose={() => setModal(false)}
+            onSaved={() => {
+              setModal(false);
+              charger();
+            }}
+          />
+        </LangueProvider>
       )}
     </div>
   );
