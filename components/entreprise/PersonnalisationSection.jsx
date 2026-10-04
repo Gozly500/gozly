@@ -579,16 +579,20 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   onChange={handleChangeCommandesVersTaches}
                   disabled={saving}
                 />
-                <ParametreSelect
-                  label="Impression des commandes manuelles"
-                  info="Pour les commandes que tu entres à la main dans Gozly (nécessite l'impression activée plus bas). Désactivée : jamais imprimées. Manuelle : tu imprimes avec le bouton Imprimer. Automatique : le bon sort dès que la commande est créée. Les commandes Wix s'impriment quand elles passent à « Traitée »."
-                  options={OPTIONS_IMPRESSION_MANUELLES}
-                  value={impressionManuelles}
-                  onChange={handleChangeImpressionManuelles}
-                  disabled={saving}
-                />
               </div>
-              <ImpressionCommandesBloc entrepriseId={entrepriseId} />
+              <ImpressionCommandesBloc
+                entrepriseId={entrepriseId}
+                selecteur={
+                      <ParametreSelect
+                        label="Impression des commandes manuelles"
+                        info="Pour les commandes que tu entres à la main dans Gozly (nécessite l'impression activée avec le bouton à côté). Désactivée : jamais imprimées. Manuelle : tu imprimes avec le bouton Imprimer. Automatique : le bon sort dès que la commande est créée. Les commandes Wix s'impriment quand elles passent à « Traitée »."
+                        options={OPTIONS_IMPRESSION_MANUELLES}
+                        value={impressionManuelles}
+                        onChange={handleChangeImpressionManuelles}
+                        disabled={saving}
+                      />
+                }
+              />
             </div>
           )}
         </div>
