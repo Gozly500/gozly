@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
-import { IconTableauDeBord, IconHoraire, IconCommandes, IconDemande, IconDiscussion } from "@/components/icons/GozlyIcons";
+import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion } from "@/components/icons/GozlyIcons";
 
 const GestionContexte = createContext(null);
 export function useGestion() {
@@ -104,9 +104,11 @@ export default function GestionShell({ actif, children }) {
   const peutVoirFeuille = mesPermissions === null || PERMISSIONS_FEUILLE.some((p) => mesPermissions.includes(p));
   const horaireActif = modulesActifs.includes("horaire");
   const commandesActif = modulesActifs.includes("commandes");
+  const tachesActif = modulesActifs.includes("planning");
 
   const onglets = [
     { id: "accueil", href: "/gestion", label: "Accueil", Icone: IconTableauDeBord, visible: true },
+    { id: "taches", href: "/gestion/taches", label: "Tâches", Icone: IconPlanning, visible: tachesActif },
     { id: "horaire", href: "/gestion/horaire", label: "Horaire", Icone: IconHoraire, visible: horaireActif },
     { id: "commandes", href: "/gestion/commandes", label: "Commandes", Icone: IconCommandes, visible: commandesActif },
     { id: "demandes", href: "/gestion/demandes", label: "Demandes", Icone: IconDemande, visible: horaireActif },

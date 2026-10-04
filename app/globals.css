@@ -2173,3 +2173,10 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .chat-layout-mobile{flex:1;min-height:0;height:auto;border:none;border-radius:0;background:none;}
 .chat-layout-mobile .chat-conv-list{width:100%;border-right:none;}
 .chat-layout-mobile .hidden-mobile,.chat-conv-list.hidden-mobile,.chat-thread.hidden-mobile{display:none;}
+.gestion-tache-categorie{padding:14px 16px !important;}
+.gestion-tache-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.gestion-tache-ligne{display:flex;align-items:center;gap:8px;}
+.gestion-tache-retirer{padding:4px 9px !important;font-size:12px;flex-shrink:0;}
+.gestion-tache-ajout{display:flex;gap:6px;align-items:center;margin-top:8px;}
+.gestion-tache-ajout input{flex:1;min-width:0;box-sizing:border-box;margin:0;}
+.gestion-tache-plus{background:none;border:none;color:var(--text-dim);font:inherit;font-size:13.5px;font-weight:600;padding:8px 0 0;cursor:pointer;}
