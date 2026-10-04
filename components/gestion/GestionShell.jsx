@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
-import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion } from "@/components/icons/GozlyIcons";
+import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu } from "@/components/icons/GozlyIcons";
 
 const GestionContexte = createContext(null);
 export function useGestion() {
@@ -27,6 +27,7 @@ export default function GestionShell({ actif, children }) {
   const [plusieursEntreprises, setPlusieursEntreprises] = useState(false);
   const [modulesActifs, setModulesActifs] = useState([]);
   const [mesPermissions, setMesPermissions] = useState(null); // null = propriétaire (tout permis)
+  const [menuOuvert, setMenuOuvert] = useState(false); // fenêtre des autres modules
   const [impersonation, setImpersonation] = useState(null); // mode admin : on regarde l'entreprise d'un client
 
   useEffect(() => {
@@ -115,6 +116,12 @@ export default function GestionShell({ actif, children }) {
     { id: "discussion", href: "/gestion/discussion", label: "Discussion", Icone: IconDiscussion, visible: true },
   ].filter((o) => o.visible);
 
+  // Barre du bas : Accueil, Demandes, Discussion + Menu (Tâches, Horaire, Commandes...).
+  const IDS_PRINCIPAUX = ["accueil", "demandes", "discussion"];
+  const ongletsPrincipaux = IDS_PRINCIPAUX.map((id) => onglets.find((o) => o.id === id)).filter(Boolean);
+  const ongletsMenu = onglets.filter((o) => !IDS_PRINCIPAUX.includes(o.id));
+  const menuActif = ongletsMenu.some((o) => o.id === actif);
+
   const contexte = { user, entrepriseId, entrepriseNom, modulesActifs, mesPermissions, a, peutVoirFeuille, onglets };
 
   return (
@@ -154,7 +161,7 @@ export default function GestionShell({ actif, children }) {
         </main>
 
         <nav className="moi-tabbar">
-          {onglets.map((o) => (
+          {ongletsPrincipaux.map((o) => (
             <Link key={o.id} href={o.href} className={`moi-tab${actif === o.id ? " active" : ""}`} style={{ textDecoration: "none" }}>
               <span className="moi-tab-icon">
                 <o.Icone className="gozly-icon" />
@@ -162,7 +169,41 @@ export default function GestionShell({ actif, children }) {
               <span>{o.label}</span>
             </Link>
           ))}
+          {ongletsMenu.length > 0 && (
+            <button type="button" className={`moi-tab${menuActif ? " active" : ""}`} onClick={() => setMenuOuvert(true)}>
+              <span className="moi-tab-icon">
+                <IconMenu className="gozly-icon" />
+              </span>
+              <span>Menu</span>
+            </button>
+          )}
         </nav>
+
+        {menuOuvert && (
+          <div className="modal-overlay" onClick={() => setMenuOuvert(false)}>
+            <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-head">
+                <h3>Menu</h3>
+                <button className="admin-icon-btn" onClick={() => setMenuOuvert(false)}>
+                  Fermer
+                </button>
+              </div>
+              <div className="dash-nav">
+                {ongletsMenu.map((o) => (
+                  <Link
+                    key={o.id}
+                    href={o.href}
+                    className={`dash-nav-item${actif === o.id ? " active" : ""}`}
+                    onClick={() => setMenuOuvert(false)}
+                    style={{ textDecoration: "none" }}
+                  >
+                    <o.Icone className="gozly-icon" /> {o.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </GestionContexte.Provider>
   );
