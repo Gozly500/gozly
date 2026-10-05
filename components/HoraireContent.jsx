@@ -134,9 +134,6 @@ export default function HoraireContent() {
               <h1>Horaire & Pointage</h1>
               <p>Planifie qui travaille quand, et suis les heures réelles.</p>
             </div>
-            <Link href="/dashboard/pointage" target="_blank" className="admin-icon-btn">
-              🖥 Ouvrir l'écran de pointage
-            </Link>
           </header>
 
           {!entrepriseId ? (

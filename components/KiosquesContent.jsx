@@ -4,24 +4,19 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import DashSidebar from "@/components/DashSidebar";
-import ProduitsSection from "@/components/inventaire/ProduitsSection";
-import DemandeReapproSection from "@/components/inventaire/DemandeReapproSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
-import { IconInventaire, IconDemande } from "@/components/icons/GozlyIcons";
+import { MODULES } from "@/lib/modules";
+import { KIOSQUES } from "@/lib/kiosques";
 
-const TABS = [
-  { id: "produits", label: "Produits", Icone: IconInventaire },
-  { id: "reappro", label: "Liste à préparer", Icone: IconDemande },
-];
-
-export default function InventaireContent() {
+// Tous les écrans kiosque de l'entreprise, au même endroit (un par module actif qui en a un).
+export default function KiosquesContent() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [entrepriseId, setEntrepriseId] = useState(null);
-  const [activeTab, setActiveTab] = useState("produits");
+  const [actifs, setActifs] = useState([]);
 
   useEffect(() => {
     let ignore = false;
@@ -48,13 +43,16 @@ export default function InventaireContent() {
         router.push("/invitations");
         return;
       }
-
       if (besoinChoix) {
         router.push("/dashboards");
         return;
       }
 
       setEntrepriseId(eid);
+      if (eid) {
+        const { data } = await supabase.from("modules_actifs").select("module").eq("entreprise_id", eid);
+        if (!ignore) setActifs((data || []).map((m) => m.module));
+      }
       setChecking(false);
     });
 
@@ -77,11 +75,12 @@ export default function InventaireContent() {
   }
 
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.entreprise || user?.email;
+  const disponibles = KIOSQUES.filter((k) => actifs.includes(k.module));
 
   return (
     <div className="dash-layout">
       <DashSidebar
-        active="inventaire"
+        active="dashboard"
         displayName={displayName}
         userEmail={user?.email}
         isAdmin={isAdmin}
@@ -91,36 +90,39 @@ export default function InventaireContent() {
 
       <main className="dash-main">
         <div className="dash-main-inner">
-          <header
-            className="dash-hero-inline"
-            style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}
-          >
-            <div>
-              <h1>Inventaire</h1>
-              <p>Tes produits et la liste de ce qu'il faut aller chercher.</p>
-            </div>
+          <header className="dash-hero-inline">
+            <h1>Mode kiosque</h1>
+            <p>Les écrans à laisser ouverts sur une tablette ou un écran du commerce. Chacun s&apos;ouvre dans un nouvel onglet.</p>
           </header>
 
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+          ) : disponibles.length === 0 ? (
+            <p className="chat-empty">Aucun kiosque disponible : active un module (Horaire &amp; Pointage, Tâches, Inventaire ou Commandes) avec « Gérer les modules ».</p>
           ) : (
-            <>
-              <div className="settings-nav horaire-tabs-sticky" style={{ flexDirection: "row", width: "fit-content" }}>
-                {TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {activeTab === "produits" && <ProduitsSection entrepriseId={entrepriseId} />}
-              {activeTab === "reappro" && <DemandeReapproSection entrepriseId={entrepriseId} />}
-            </>
+            <div className="admin-list" style={{ maxWidth: "720px" }}>
+              {disponibles.map((k) => {
+                const module = MODULES.find((m) => m.id === k.module);
+                return (
+                  <div className="admin-row" key={k.id}>
+                    {module?.image ? (
+                      <img src={module.image} alt="" width={44} height={44} style={{ flexShrink: 0, borderRadius: "10px" }} />
+                    ) : (
+                      <span style={{ fontSize: "28px", flexShrink: 0 }}>{module?.icon || "🖥"}</span>
+                    )}
+                    <div className="admin-row-main">
+                      <div className="admin-row-title">{k.nom}</div>
+                      <div className="admin-row-sub">{k.description}</div>
+                    </div>
+                    <div className="admin-row-controls">
+                      <Link href={k.href} target="_blank" className="submit-btn" style={{ textDecoration: "none" }}>
+                        🖥 Ouvrir
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </main>

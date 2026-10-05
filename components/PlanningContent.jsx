@@ -167,11 +167,6 @@ export default function PlanningContent() {
               <h1>Tâches</h1>
               <p>Choisis un jour pour voir ou préparer ses tâches.</p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <Link href="/dashboard/planning-kiosk" target="_blank" className="admin-icon-btn">
-                🖥 Ouvrir le kiosque
-              </Link>
-            </div>
           </header>
 
           <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={handleChangeEmplacement} />

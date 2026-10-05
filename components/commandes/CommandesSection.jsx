@@ -216,9 +216,6 @@ export default function CommandesSection({ entrepriseId }) {
           <button className="submit-btn" onClick={() => setModal({ commande: null })}>
             + Nouvelle commande
           </button>
-          <Link href="/dashboard/commandes-kiosk" target="_blank" className="admin-icon-btn">
-            Ouvrir le kiosque
-          </Link>
           <div className="account-wrap" ref={exportRef}>
             <button className="admin-icon-btn" onClick={() => setExportOuvert((v) => !v)} disabled={exportEnCours || commandes.length === 0}>
               {exportEnCours ? "PDF..." : "⬇ Exporter ▾"}

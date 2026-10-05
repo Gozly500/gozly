@@ -287,6 +287,10 @@ export default function DashboardContent() {
               <h1>Bienvenue{displayName ? `, ${displayName}` : ""}</h1>
               <p>Voici ton espace. Active un module pour commencer.</p>
             </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Link href="/dashboard/kiosques" className="admin-icon-btn">
+              🖥 Mode kiosque
+            </Link>
             <button
               type="button"
               className={`admin-icon-btn dash-edit-btn${editMode ? " active" : ""}`}
@@ -295,6 +299,7 @@ export default function DashboardContent() {
             >
               <IconCrayon className="gozly-icon" />
             </button>
+            </div>
           </header>
 
           <div className={editMode ? "dash-edit-layout" : undefined}>
