@@ -52,6 +52,11 @@ const OPTIONS_RETENTION_DEMANDES = [
   { id: "12", label: "12 mois" },
 ];
 
+const OPTIONS_KIOSQUE_COMMANDES = [
+  { id: "liste", label: "Liste (cartes des commandes du jour)" },
+  { id: "sections", label: "3 sections (En attente, Traitées, Terminées)" },
+];
+
 const OPTIONS_IMPRESSION_MANUELLES = [
   { id: "desactivee", label: "Désactivée" },
   { id: "manuelle", label: "Manuelle (bouton Imprimer)" },
@@ -133,6 +138,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [retentionTemperature, setRetentionTemperature] = useState("3");
   const [retentionCommandes, setRetentionCommandes] = useState("12");
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
+  const [kiosqueCommandes, setKiosqueCommandes] = useState("liste");
   const [commandesVersTaches, setCommandesVersTaches] = useState("active");
   const [planifDansCommandes, setPlanifDansCommandes] = useState("desactive");
   const [lieuWix, setLieuWix] = useState(""); // "" = toutes les succursales
@@ -173,6 +179,10 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setCommandesVersTaches(entrepriseData?.commandes_vers_taches === false ? "desactive" : "active");
     setLieuWix(entrepriseData?.wix_lieu_nom || "");
     setPlanifDansCommandes(entrepriseData?.commandes_planning_integre ? "active" : "desactive");
+
+    // Mode d'affichage du kiosque : lu à part (colonne de commandes_kiosque_mode.sql, absente tant que le SQL n'est pas exécuté).
+    const { data: kiosqueData, error: kiosqueErreur } = await supabase.from("entreprises").select("commandes_kiosque_mode").eq("id", entrepriseId).maybeSingle();
+    if (!kiosqueErreur) setKiosqueCommandes(kiosqueData?.commandes_kiosque_mode === "sections" ? "sections" : "liste");
 
     // Les succursales Wix qu'on a vues passer dans les commandes de ce dashboard.
     const { data: lieuxData } = await supabase
@@ -241,6 +251,21 @@ export default function PersonnalisationSection({ entrepriseId }) {
     if (!error) await mettreAJourTachesCommandes(entrepriseId); // crée ou retire les tâches tout de suite
     setSaving(false);
     setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+  }
+
+  async function handleChangeKiosqueCommandes(value) {
+    setKiosqueCommandes(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase.from("entreprises").update({ commandes_kiosque_mode: value }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(
+      error
+        ? { type: "err", text: "L'enregistrement a échoué. As-tu exécuté commandes_kiosque_mode.sql dans Supabase?" }
+        : { type: "ok", text: "Préférence enregistrée. Recharge le kiosque pour l'appliquer." }
+    );
   }
 
   async function handleChangeImpressionManuelles(value) {
@@ -569,6 +594,14 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   options={OPTIONS_PLANIF_COMMANDES}
                   value={planifDansCommandes}
                   onChange={handleChangePlanifDansCommandes}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Affichage du kiosque des commandes"
+                  info="Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »). 3 sections : toutes les commandes arrivent dans « En attente », puis passent à « Traitées » et « Terminées », peu importe leur date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées (bouton Vider, et celles d'avant hier disparaissent seules). Recharge le kiosque après un changement."
+                  options={OPTIONS_KIOSQUE_COMMANDES}
+                  value={kiosqueCommandes}
+                  onChange={handleChangeKiosqueCommandes}
                   disabled={saving}
                 />
                 <ParametreSelect

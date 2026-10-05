@@ -104,13 +104,13 @@ export default function KiosquesContent() {
               {disponibles.map((k) => {
                 const module = MODULES.find((m) => m.id === k.module);
                 return (
-                  <div className="admin-row" key={k.id}>
+                  <div className="admin-row" key={k.id} style={{ justifyContent: "flex-start", gap: "14px" }}>
                     {module?.image ? (
                       <img src={module.image} alt="" width={44} height={44} style={{ flexShrink: 0, borderRadius: "10px" }} />
                     ) : (
                       <span style={{ fontSize: "28px", flexShrink: 0 }}>{module?.icon || "🖥"}</span>
                     )}
-                    <div className="admin-row-main">
+                    <div className="admin-row-main" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                       <div className="admin-row-title">{k.nom}</div>
                       <div className="admin-row-sub">{k.description}</div>
                     </div>

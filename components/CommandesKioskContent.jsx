@@ -66,7 +66,11 @@ export default function CommandesKioskContent() {
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const [message, setMessage] = useState(null);
   const [sonActif, setSonActif] = useState(false);
-  const [vue, setVue] = useState("jour"); // "jour" | "avenir"
+  const [vue, setVue] = useState("jour"); // "jour" | "avenir" (mode liste seulement)
+  // Affichage choisi dans Personnalisation : "liste" (cartes, commandes du jour) ou "sections" (En attente / Traitées / Terminées).
+  const [modeKiosque, setModeKiosque] = useState("liste");
+  const [filtreListe, setFiltreListe] = useState("en_cours"); // "en_cours" | "terminee" | "toutes"
+  const [masquees, setMasquees] = useState(() => new Set()); // commandes terminées « vidées » de l'écran (mode sections)
   const [recherche, setRecherche] = useState("");
   const [avenir, setAvenir] = useState([]); // commandes dont le ramassage est après aujourd'hui
   const [du, setDu] = useState("");
@@ -91,9 +95,17 @@ export default function CommandesKioskContent() {
       }
 
       if (eid) {
-        setEntrepriseId(eid);
         const { data } = await supabase.from("entreprises").select("nom").eq("id", eid).maybeSingle();
         if (!ignore) setEntrepriseNom(data?.nom || "");
+        // Colonne ajoutée par commandes_kiosque_mode.sql : tant qu'elle n'existe pas, mode liste.
+        const { data: reglage, error: erreurReglage } = await supabase.from("entreprises").select("commandes_kiosque_mode").eq("id", eid).maybeSingle();
+        if (!ignore && !erreurReglage && reglage?.commandes_kiosque_mode === "sections") setModeKiosque("sections");
+        try {
+          const ids = JSON.parse(window.localStorage.getItem(`gozly_cmd_masquees_${eid}`) || "[]");
+          if (!ignore && Array.isArray(ids)) setMasquees(new Set(ids));
+        } catch {}
+        // Seulement une fois le mode connu : sinon un premier chargement en mode liste pourrait écraser les données du mode 3 sections.
+        if (!ignore) setEntrepriseId(eid);
       }
       setChecking(false);
     });
@@ -108,27 +120,39 @@ export default function CommandesKioskContent() {
   const charger = useCallback(async () => {
     if (!entrepriseId) return;
     const depuis = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
-    // Aujourd'hui et avant seulement : une précommande pour la semaine
-    // prochaine n'a pas sa place sur l'écran de la cuisine aujourd'hui.
-    const finAujourdhui = bornesJour(dateAujourdhui()).fin;
-    const { data } = await supabase
+    let requete = supabase
       .from("commandes_en_ligne")
       .select("*")
       .eq("entreprise_id", entrepriseId)
-      .neq("canal", "POS") // les ventes du point de vente ne passent pas par la cuisine
-      .or(
+      .neq("canal", "POS"); // les ventes du point de vente ne passent pas par la cuisine
+    if (modeKiosque === "sections") {
+      // 3 sections : toutes les commandes récentes ou à venir, peu importe leur date (elles arrivent
+      // dans « En attente »). Les 14 derniers jours suffisent pour ne pas traîner tout l'historique.
+      const depuis14 = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
+      requete = requete
+        .or(`date_ramassage.gte.${depuis14},and(date_ramassage.is.null,date_commande.gte.${depuis14})`)
+        .limit(400);
+    } else {
+      // Liste : aujourd'hui et avant seulement (les précommandes sont dans « Commandes à venir »).
+      const finAujourdhui = bornesJour(dateAujourdhui()).fin;
+      requete = requete.or(
         `and(date_ramassage.gte.${depuis},date_ramassage.lt.${finAujourdhui}),and(date_ramassage.is.null,date_commande.gte.${depuis})`
       );
+    }
+    const { data } = await requete;
 
     // Ordre chronologique du ramassage (ou de la commande sans ramassage).
     const liste = (data || []).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b)));
     setCommandes(liste);
-
-  }, [entrepriseId]);
+  }, [entrepriseId, modeKiosque]);
 
   // Commandes à venir : ramassage à partir de demain (jusqu'à 500, les plus proches d'abord).
   const chargerAvenir = useCallback(async () => {
     if (!entrepriseId) return;
+    if (modeKiosque !== "liste") {
+      setAvenir([]);
+      return;
+    }
     const debutDemain = bornesJour(dateAujourdhui()).fin;
     const { data } = await supabase
       .from("commandes_en_ligne")
@@ -139,7 +163,7 @@ export default function CommandesKioskContent() {
       .order("date_ramassage", { ascending: true })
       .limit(500);
     setAvenir((data || []).filter((c) => c.statut !== "CANCELED"));
-  }, [entrepriseId]);
+  }, [entrepriseId, modeKiosque]);
 
   useEffect(() => {
     if (!entrepriseId) return;
@@ -167,7 +191,7 @@ export default function CommandesKioskContent() {
     if (entrepriseId) impressionActive(entrepriseId).then(setImprimanteActive);
   }, [entrepriseId]);
 
-  const nbAvenirEnAttente = avenir.filter((c) => etapeCommande(c) === "en_attente").length;
+  const nbAvenirEnAttente = modeKiosque === "liste" ? avenir.filter((c) => etapeCommande(c) === "en_attente").length : 0;
   const nbEnAttente = commandes.filter((c) => etapeCommande(c) === "en_attente").length + nbAvenirEnAttente;
 
   // Son en boucle tant qu'une commande attend : on le joue, et 5 secondes
@@ -208,6 +232,16 @@ export default function CommandesKioskContent() {
         : { type: "err", text: error || "L'impression a échoué." }
     );
     setTimeout(() => setMessage(null), 4000);
+  }
+
+  // Mode 3 sections : « Vider » cache les commandes terminées affichées (mémorisé sur cet appareil).
+  function viderTerminees(liste) {
+    const suivant = new Set(masquees);
+    for (const c of liste) suivant.add(c.id);
+    setMasquees(suivant);
+    try {
+      window.localStorage.setItem(`gozly_cmd_masquees_${entrepriseId}`, JSON.stringify([...suivant].slice(-400)));
+    } catch {}
   }
 
   async function passer(commande, etape) {
@@ -262,6 +296,82 @@ export default function CommandesKioskContent() {
     groupe.commandes.push(c);
   }
   const demain = decalerJour(dateAujourdhui(), 1);
+  const debutHier = bornesJour(decalerJour(dateAujourdhui(), -1)).debut;
+
+  // Terminées affichées : mode liste = celles d'aujourd'hui ; 3 sections = celles d'hier et d'aujourd'hui,
+  // sauf celles « vidées » (le nettoyage : les plus anciennes disparaissent toutes seules).
+  const terminesAffichees = (c) =>
+    etapeCommande(c) === "terminee" &&
+    (modeKiosque === "sections"
+      ? new Date(dateEffective(c)) >= new Date(debutHier) && !masquees.has(c.id)
+      : new Date(dateEffective(c)) >= new Date(debutAujourdhui));
+
+  // Mode liste : une seule liste de cartes ; les commandes à faire d'abord, les terminées à la demande.
+  const enCoursListe = visibles.filter((c) => ["en_attente", "traitee"].includes(etapeCommande(c)));
+  const terminesListe = visibles.filter(terminesAffichees);
+  const ORDRE_ETAPE = { en_attente: 0, traitee: 1, terminee: 2 };
+  const aAfficherListe = (filtreListe === "en_cours" ? enCoursListe : filtreListe === "terminee" ? terminesListe : [...enCoursListe, ...terminesListe]).sort(
+    (a, b) => ORDRE_ETAPE[etapeCommande(a)] - ORDRE_ETAPE[etapeCommande(b)] || new Date(dateEffective(a)) - new Date(dateEffective(b))
+  );
+
+  function renderCarte(c, col, avecEtat = false) {
+    const modeTexte = libelleMode(c.mode);
+    const paiement = libellePaiement(c);
+    const etat = etatCommande(c);
+    return (
+      <article className="cmd-kiosk-card" key={c.id}>
+        <div className="cmd-kiosk-card-top">
+          <strong>#{c.numero || "—"}</strong>
+          <span>{libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}</span>
+        </div>
+        {c.client_nom && <div className="cmd-kiosk-client">{c.client_nom}</div>}
+        {noteCommande(c) && <div className="cmd-kiosk-note">📝 {noteCommande(c)}</div>}
+        <div className="cmd-kiosk-tags">
+          {avecEtat && (
+            <span className="cmd-kiosk-tag" style={{ color: etat.couleur, fontWeight: 700 }}>
+              {etat.texte}
+            </span>
+          )}
+          {modeTexte && <span className="cmd-kiosk-tag">{modeTexte}</span>}
+          {c.lieu_nom && <span className="cmd-kiosk-tag">{c.lieu_nom}</span>}
+          {paiement && <span className="cmd-kiosk-tag">{paiement}</span>}
+          {c.source === "manuel" && <span className="cmd-kiosk-tag">Manuelle</span>}
+          {c.date_ramassage && jourQuebec(c.date_ramassage) !== dateAujourdhui() && (
+            <span className="cmd-kiosk-tag">
+              {new Date(`${jourQuebec(c.date_ramassage)}T12:00:00`).toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" })}
+            </span>
+          )}
+        </div>
+        <div className="cmd-kiosk-items">
+          {(c.items || []).map((it, i) => (
+            <div key={i}>
+              <strong>{it.quantite} ×</strong> {it.nom}
+              {it.options?.length > 0 && <div className="cmd-kiosk-options">{it.options.join(", ")}</div>}
+            </div>
+          ))}
+        </div>
+        <div className="cmd-kiosk-total">{formatMontant(c.total)}</div>
+
+        <div className="cmd-kiosk-actions">
+          {imprimanteActive && (
+            <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
+              🖨 Imprimer
+            </button>
+          )}
+          {col.id !== "en_attente" && (
+            <button className="admin-icon-btn" disabled={enCours === c.id} onClick={() => passer(c, col.id === "terminee" ? "traitee" : "en_attente")}>
+              ← Retour
+            </button>
+          )}
+          {col.suivante && (
+            <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, col.suivante)}>
+              {col.libelleBouton}
+            </button>
+          )}
+        </div>
+      </article>
+    );
+  }
 
   return (
     <div className="cmd-kiosk">
@@ -278,6 +388,7 @@ export default function CommandesKioskContent() {
             onChange={(e) => setRecherche(e.target.value)}
             placeholder="Rechercher (nom, téléphone, no)"
           />
+          {modeKiosque === "liste" && (
           <button
             className={`admin-icon-btn${vue === "avenir" ? " active" : ""}`}
             style={vue === "avenir" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
@@ -285,6 +396,7 @@ export default function CommandesKioskContent() {
           >
             {vue === "avenir" ? "← Commandes du jour" : `📅 Commandes à venir (${avenir.length})`}
           </button>
+          )}
           <button
             className="admin-icon-btn"
             onClick={() => setSonActif((v) => !v)}
@@ -300,77 +412,56 @@ export default function CommandesKioskContent() {
 
       {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
 
-      {vue === "jour" ? (
+      {modeKiosque === "liste" && vue === "jour" ? (
+        <div className="cmd-kiosk-liste-wrap">
+          <div className="cmd-kiosk-chips">
+            {[
+              ["en_cours", "En cours", enCoursListe.length],
+              ["terminee", "Terminées", terminesListe.length],
+              ["toutes", "Toutes", enCoursListe.length + terminesListe.length],
+            ].map(([id, label, n]) => (
+              <button
+                key={id}
+                className="admin-icon-btn"
+                style={filtreListe === id ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
+                onClick={() => setFiltreListe(id)}
+              >
+                {label} ({n})
+              </button>
+            ))}
+          </div>
+          <div className="cmd-kiosk-liste">
+            {aAfficherListe.length === 0 ? (
+              <p className="cmd-kiosk-vide">Aucune commande{recherche.trim() ? " pour cette recherche" : ""}.</p>
+            ) : (
+              aAfficherListe.map((c) => renderCarte(c, COLONNES.find((col) => col.id === etapeCommande(c)), true))
+            )}
+          </div>
+        </div>
+      ) : modeKiosque === "sections" ? (
       <div className="cmd-kiosk-cols">
         {COLONNES.map((col) => {
           const liste = visibles.filter(
-            (c) => etapeCommande(c) === col.id && (col.id !== "terminee" || dateEffective(c) >= debutAujourdhui)
+            (c) => (col.id === "terminee" ? terminesAffichees(c) : etapeCommande(c) === col.id)
           );
           return (
             <section className="cmd-kiosk-col" key={col.id}>
               <div className="cmd-kiosk-col-head" style={{ borderColor: col.couleur }}>
                 <span>{col.titre}</span>
-                <span className="cmd-kiosk-count">{liste.length}</span>
+                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {col.id === "terminee" && liste.length > 0 && (
+                    <button className="admin-icon-btn" onClick={() => viderTerminees(liste)}>
+                      Vider
+                    </button>
+                  )}
+                  <span className="cmd-kiosk-count">{liste.length}</span>
+                </span>
               </div>
 
               <div className="cmd-kiosk-col-liste">
               {liste.length === 0 && <p className="cmd-kiosk-vide">Aucune commande</p>}
 
-              {liste.map((c) => {
-                const mode = libelleMode(c.mode);
-                const paiement = libellePaiement(c);
-                return (
-                  <article className="cmd-kiosk-card" key={c.id}>
-                    <div className="cmd-kiosk-card-top">
-                      <strong>#{c.numero || "—"}</strong>
-                      <span>{libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}</span>
-                    </div>
-                    {c.client_nom && <div className="cmd-kiosk-client">{c.client_nom}</div>}
-                    {noteCommande(c) && <div className="cmd-kiosk-note">📝 {noteCommande(c)}</div>}
-                    <div className="cmd-kiosk-tags">
-                      {mode && <span className="cmd-kiosk-tag">{mode}</span>}
-                      {c.lieu_nom && <span className="cmd-kiosk-tag">{c.lieu_nom}</span>}
-                      {paiement && <span className="cmd-kiosk-tag">{paiement}</span>}
-                      {c.source === "manuel" && <span className="cmd-kiosk-tag">Manuelle</span>}
-                    </div>
-                    <div className="cmd-kiosk-items">
-                      {(c.items || []).map((it, i) => (
-                        <div key={i}>
-                          <strong>{it.quantite} ×</strong> {it.nom}
-                          {it.options?.length > 0 && <div className="cmd-kiosk-options">{it.options.join(", ")}</div>}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="cmd-kiosk-total">{formatMontant(c.total)}</div>
-
-                    <div className="cmd-kiosk-actions">
-                      {imprimanteActive && (
-                        <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
-                          🖨 Imprimer
-                        </button>
-                      )}
-                      {col.id !== "en_attente" && (
-                        <button
-                          className="admin-icon-btn"
-                          disabled={enCours === c.id}
-                          onClick={() => passer(c, col.id === "terminee" ? "traitee" : "en_attente")}
-                        >
-                          ← Retour
-                        </button>
-                      )}
-                      {col.suivante && (
-                        <button
-                          className="submit-btn"
-                          disabled={enCours === c.id}
-                          onClick={() => passer(c, col.suivante)}
-                        >
-                          {col.libelleBouton}
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
+              {liste.map((c) => renderCarte(c, col))}
               </div>
             </section>
           );
