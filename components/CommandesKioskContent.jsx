@@ -148,10 +148,6 @@ export default function CommandesKioskContent() {
   // Commandes à venir : ramassage à partir de demain (jusqu'à 500, les plus proches d'abord).
   const chargerAvenir = useCallback(async () => {
     if (!entrepriseId) return;
-    if (modeKiosque !== "liste") {
-      setAvenir([]);
-      return;
-    }
     const debutDemain = bornesJour(dateAujourdhui()).fin;
     const { data } = await supabase
       .from("commandes_en_ligne")
@@ -399,85 +395,8 @@ export default function CommandesKioskContent() {
     );
   }
 
-  return (
-    <div className="cmd-kiosk">
-      <header className="cmd-kiosk-head">
-        <div>
-          <div className="kiosk-entreprise">{entrepriseNom}</div>
-          <h2>Commandes en ligne</h2>
-        </div>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-          <input
-            type="search"
-            className="cmd-kiosk-recherche"
-            value={recherche}
-            onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Rechercher (nom, téléphone, no)"
-          />
-          {modeKiosque === "liste" && (
-          <button
-            className={`admin-icon-btn${vue === "avenir" ? " active" : ""}`}
-            style={vue === "avenir" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
-            onClick={() => setVue((v) => (v === "avenir" ? "jour" : "avenir"))}
-          >
-            {vue === "avenir" ? "← Commandes du jour" : `📅 Commandes à venir (${avenir.length})`}
-          </button>
-          )}
-          <button
-            className="admin-icon-btn"
-            onClick={() => setSonActif((v) => !v)}
-            style={!sonActif ? { background: "rgba(255,212,121,0.25)", borderColor: "rgba(255,212,121,0.6)" } : undefined}
-          >
-            {sonActif ? "🔔 Son activé" : "🔕 Activer le son"}
-          </button>
-          <button className="submit-btn" onClick={() => setModal(true)}>
-            + Nouvelle commande
-          </button>
-        </div>
-      </header>
-
-      {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
-
-      {modeKiosque === "liste" && vue === "jour" ? (
-        <div className="cmd-kiosk-liste-wrap">
-          <div className="cmd-kiosk-liste">
-            {aAfficherListe.length === 0 ? (
-              <p className="cmd-kiosk-vide">Aucune commande{recherche.trim() ? " pour cette recherche" : ""}.</p>
-            ) : (
-              aAfficherListe.map((c) => renderCarte(c, COLONNES.find((col) => col.id === etapeCommande(c)) || COLONNES[1], true))
-            )}
-          </div>
-        </div>
-      ) : modeKiosque === "sections" ? (
-      <div className="cmd-kiosk-cols">
-        {COLONNES.map((col) => {
-          const liste = visibles.filter(
-            (c) => (col.id === "terminee" ? terminesAffichees(c) : etapeCommande(c) === col.id)
-          );
-          return (
-            <section className="cmd-kiosk-col" key={col.id}>
-              <div className="cmd-kiosk-col-head" style={{ borderColor: col.couleur }}>
-                <span>{col.titre}</span>
-                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {col.id === "terminee" && liste.length > 0 && (
-                    <button className="admin-icon-btn" onClick={() => viderTerminees(liste)}>
-                      Vider
-                    </button>
-                  )}
-                  <span className="cmd-kiosk-count">{liste.length}</span>
-                </span>
-              </div>
-
-              <div className="cmd-kiosk-col-liste">
-              {liste.length === 0 && <p className="cmd-kiosk-vide">Aucune commande</p>}
-
-              {liste.map((c) => renderCarte(c, col))}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-      ) : (
+  // Tableau des commandes à venir (les deux modes). En mode 3 sections, les vraies étapes et le bouton « Traiter » sont gardés.
+  const vueAvenir = (
         <div className="cmd-kiosk-avenir">
           <div className="cmd-kiosk-filtres">
             <label>
@@ -533,7 +452,7 @@ export default function CommandesKioskContent() {
                       {g.commandes.map((c) => {
                         const etat = etatCommande(c);
                         // Pas d'étape « En attente » en mode liste : c'est une commande « Traitée ».
-                        const etatTexte = etat.id === "en_attente" ? { texte: "Traitée", couleur: "#8ab4ff" } : etat;
+                        const etatTexte = modeKiosque === "liste" && etat.id === "en_attente" ? { texte: "Traitée", couleur: "#8ab4ff" } : etat;
                         return (
                           <tr key={c.id}>
                             <td style={{ whiteSpace: "nowrap" }}>{libelleRamassage(c) || "—"}</td>
@@ -553,6 +472,11 @@ export default function CommandesKioskContent() {
                             <td style={{ color: etatTexte.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{etatTexte.texte}</td>
                             <td>
                               <div className="cmd-kiosk-table-actions">
+                                {modeKiosque === "sections" && etat.id === "en_attente" && (
+                                  <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
+                                    Traiter →
+                                  </button>
+                                )}
                                 {imprimanteActive && (
                                   <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
                                     🖨 Imprimer
@@ -570,6 +494,86 @@ export default function CommandesKioskContent() {
             )}
           </div>
         </div>
+  );
+
+  return (
+    <div className="cmd-kiosk">
+      <header className="cmd-kiosk-head">
+        <div>
+          <div className="kiosk-entreprise">{entrepriseNom}</div>
+          <h2>Commandes en ligne</h2>
+        </div>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+          <input
+            type="search"
+            className="cmd-kiosk-recherche"
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            placeholder="Rechercher (nom, téléphone, no)"
+          />
+          <button
+            className={`admin-icon-btn${vue === "avenir" ? " active" : ""}`}
+            style={vue === "avenir" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
+            onClick={() => setVue((v) => (v === "avenir" ? "jour" : "avenir"))}
+          >
+            {vue === "avenir" ? "← Commandes du jour" : `📅 Commandes à venir (${avenir.length})`}
+          </button>
+          <button
+            className="admin-icon-btn"
+            onClick={() => setSonActif((v) => !v)}
+            style={!sonActif ? { background: "rgba(255,212,121,0.25)", borderColor: "rgba(255,212,121,0.6)" } : undefined}
+          >
+            {sonActif ? "🔔 Son activé" : "🔕 Activer le son"}
+          </button>
+          <button className="submit-btn" onClick={() => setModal(true)}>
+            + Nouvelle commande
+          </button>
+        </div>
+      </header>
+
+      {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
+
+      {vue === "avenir" ? (
+        vueAvenir
+      ) : modeKiosque === "liste" ? (
+        <div className="cmd-kiosk-liste-wrap">
+          <div className="cmd-kiosk-liste">
+            {aAfficherListe.length === 0 ? (
+              <p className="cmd-kiosk-vide">Aucune commande{recherche.trim() ? " pour cette recherche" : ""}.</p>
+            ) : (
+              aAfficherListe.map((c) => renderCarte(c, COLONNES.find((col) => col.id === etapeCommande(c)) || COLONNES[1], true))
+            )}
+          </div>
+        </div>
+      ) : (
+      <div className="cmd-kiosk-cols">
+        {COLONNES.map((col) => {
+          const liste = visibles.filter(
+            (c) => (col.id === "terminee" ? terminesAffichees(c) : etapeCommande(c) === col.id)
+          );
+          return (
+            <section className="cmd-kiosk-col" key={col.id}>
+              <div className="cmd-kiosk-col-head" style={{ borderColor: col.couleur }}>
+                <span>{col.titre}</span>
+                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {col.id === "terminee" && liste.length > 0 && (
+                    <button className="admin-icon-btn" onClick={() => viderTerminees(liste)}>
+                      Vider
+                    </button>
+                  )}
+                  <span className="cmd-kiosk-count">{liste.length}</span>
+                </span>
+              </div>
+
+              <div className="cmd-kiosk-col-liste">
+              {liste.length === 0 && <p className="cmd-kiosk-vide">Aucune commande</p>}
+
+              {liste.map((c) => renderCarte(c, col))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
       )}
 
       {modal && (
