@@ -64,11 +64,6 @@ export default function ProduitsSection({ entrepriseId }) {
   const [categories, setCategories] = useState([]);
   const [categoriesPretes, setCategoriesPretes] = useState(false);
   const [filtreCategorie, setFiltreCategorie] = useState("toutes"); // "toutes" | "sans" | id
-  const [gererOuvert, setGererOuvert] = useState(false);
-  const [nouvelleCat, setNouvelleCat] = useState("");
-  const [renommerId, setRenommerId] = useState(null);
-  const [renommerNom, setRenommerNom] = useState("");
-  const [catErreur, setCatErreur] = useState("");
 
   useEffect(() => {
     load();
@@ -208,52 +203,6 @@ export default function ProduitsSection({ entrepriseId }) {
     load();
   }
 
-  // ---------- Gestion des catégories ----------
-  async function ajouterCategorie(e) {
-    e.preventDefault();
-    const nom = nouvelleCat.trim();
-    if (!nom) return;
-    setCatErreur("");
-    const ordre = categories.reduce((max, c) => Math.max(max, c.ordre || 0), 0) + 1;
-    const { error } = await supabase.from("categories_inventaire").insert({ entreprise_id: entrepriseId, nom, ordre });
-    if (error) {
-      setCatErreur("Impossible d'ajouter la catégorie. As-tu exécuté inventaire_categories.sql dans Supabase?");
-      return;
-    }
-    setNouvelleCat("");
-    chargerCategories();
-  }
-
-  async function renommerCategorie(id) {
-    const nom = renommerNom.trim();
-    if (!nom) return;
-    await supabase.from("categories_inventaire").update({ nom }).eq("id", id);
-    setRenommerId(null);
-    chargerCategories();
-  }
-
-  async function supprimerCategorie(c) {
-    const nb = produits.filter((p) => p.categorie_id === c.id).length;
-    const confirmation = nb > 0 ? `Supprimer « ${c.nom} »? Ses ${nb} produit(s) passeront dans « Sans catégorie ».` : `Supprimer « ${c.nom} »?`;
-    if (!window.confirm(confirmation)) return;
-    await supabase.from("categories_inventaire").delete().eq("id", c.id);
-    if (filtreCategorie === c.id) setFiltreCategorie("toutes");
-    load();
-  }
-
-  // Échange la place de deux catégories voisines.
-  async function deplacerCategorie(index, delta) {
-    const autre = categories[index + delta];
-    const courante = categories[index];
-    if (!autre || !courante) return;
-    // Les ordres sont renumérotés 1..n pour éviter les égalités.
-    const nouvelle = [...categories];
-    nouvelle[index] = autre;
-    nouvelle[index + delta] = courante;
-    await Promise.all(nouvelle.map((c, i) => supabase.from("categories_inventaire").update({ ordre: i + 1 }).eq("id", c.id)));
-    chargerCategories();
-  }
-
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
@@ -333,9 +282,6 @@ export default function ProduitsSection({ entrepriseId }) {
               {syncing ? "Synchronisation..." : <><IconIntegration className="gozly-icon" /> Synchroniser Wix</>}
             </button>
           )}
-          <button className="admin-icon-btn" onClick={() => { setCatErreur(""); setGererOuvert(true); }}>
-            🏷 Catégories
-          </button>
           <button className="submit-btn" onClick={openAdd}>
             + Ajouter un produit
           </button>
@@ -412,7 +358,7 @@ export default function ProduitsSection({ entrepriseId }) {
                   <MenuChoix options={optionsCategorieProduit} value={form.categorieId} onChange={(id) => setForm((f) => ({ ...f, categorieId: id }))} />
                   {categories.length === 0 && (
                     <p className="section-hint" style={{ marginTop: "6px" }}>
-                      Aucune catégorie pour l'instant : crée-en avec le bouton « Catégories ».
+                      Aucune catégorie pour l'instant : crée-en dans le sous-menu « Catégories » d'Inventaire (menu de gauche).
                     </p>
                   )}
                 </div>
@@ -470,85 +416,6 @@ export default function ProduitsSection({ entrepriseId }) {
         </div>
       )}
 
-      {gererOuvert && (
-        <div className="modal-overlay" onClick={() => setGererOuvert(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <h3>Catégories de produits</h3>
-              <button className="admin-icon-btn" onClick={() => setGererOuvert(false)}>
-                Fermer
-              </button>
-            </div>
-
-            <form onSubmit={ajouterCategorie} style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
-              <input
-                type="text"
-                value={nouvelleCat}
-                onChange={(e) => setNouvelleCat(e.target.value)}
-                placeholder="Nouvelle catégorie (ex: Boissons)"
-                maxLength={60}
-                style={{ flex: 1, minWidth: 0, margin: 0 }}
-              />
-              <button type="submit" className="submit-btn" disabled={!nouvelleCat.trim()}>
-                Ajouter
-              </button>
-            </form>
-            {catErreur && <p className="settings-msg err">{catErreur}</p>}
-
-            {categories.length === 0 ? (
-              <p className="section-hint">Aucune catégorie pour l&apos;instant.</p>
-            ) : (
-              <div className="admin-list">
-                {categories.map((c, i) => (
-                  <div className="admin-row" key={c.id}>
-                    <div className="admin-row-main">
-                      {renommerId === c.id ? (
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            renommerCategorie(c.id);
-                          }}
-                          style={{ display: "flex", gap: "6px" }}
-                        >
-                          <input type="text" value={renommerNom} onChange={(e) => setRenommerNom(e.target.value)} maxLength={60} autoFocus style={{ flex: 1, minWidth: 0, margin: 0 }} />
-                          <button type="submit" className="admin-icon-btn">
-                            OK
-                          </button>
-                        </form>
-                      ) : (
-                        <>
-                          <div className="admin-row-title">{c.nom}</div>
-                          <div className="admin-row-sub">{produits.filter((p) => p.categorie_id === c.id).length} produit(s)</div>
-                        </>
-                      )}
-                    </div>
-                    <div className="admin-row-controls" style={{ gap: "6px" }}>
-                      <button className="admin-icon-btn" disabled={i === 0} onClick={() => deplacerCategorie(i, -1)} aria-label="Monter">
-                        ▲
-                      </button>
-                      <button className="admin-icon-btn" disabled={i === categories.length - 1} onClick={() => deplacerCategorie(i, 1)} aria-label="Descendre">
-                        ▼
-                      </button>
-                      <button
-                        className="admin-icon-btn"
-                        onClick={() => {
-                          setRenommerId(c.id);
-                          setRenommerNom(c.nom);
-                        }}
-                      >
-                        Renommer
-                      </button>
-                      <button className="admin-icon-btn danger" onClick={() => supprimerCategorie(c)}>
-                        Retirer
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

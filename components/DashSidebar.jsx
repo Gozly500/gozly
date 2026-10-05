@@ -173,6 +173,14 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
                   <span>▤</span> Catégories
                 </Link>
               )}
+              {mod.id === "inventaire" && (active === "inventaire" || active === "inventaire-categories") && (
+                <Link
+                  href="/dashboard/inventaire/categories"
+                  className={`dash-nav-item dash-nav-sub${active === "inventaire-categories" ? " active" : ""}`}
+                >
+                  <span>▤</span> Catégories
+                </Link>
+              )}
               {mod.id === "temperature" && (active === "temperature" || active === "temperature-equipements") && (
                 <Link
                   href="/dashboard/temperature/equipements"
