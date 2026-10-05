@@ -4,7 +4,8 @@ import { getServiceClient } from "@/lib/adminServer";
 import { obtenirCommandesWix, diagnostiquerPermissionsWix } from "@/lib/wixClient";
 import { synchroniserTachesCommandes } from "@/lib/tachesCommandes";
 import { correspondAuLieu } from "@/lib/wixLieu";
-import { bornesJour, dateAujourdhui, dateEffective } from "@/lib/commandes";
+import { imprimerAutomatiquement } from "@/lib/impressionCommandes";
+import { bornesJour, dateAujourdhui, dateEffective, decalerJour } from "@/lib/commandes";
 
 // Copie (lecture seule) les commandes Wix récentes de l'entreprise dans
 // commandes_en_ligne. Rejouable à volonté : chaque commande est mise à jour
@@ -81,11 +82,19 @@ export async function POST(request) {
     .filter((c) => c.source_id && c.date_commande)
     .map((c) => ({ ...c, entreprise_id: entreprise.id, updated_at: new Date().toISOString() }));
 
-  // Une commande Wix qui arrive déjà "préparée" (c'est le cas des éléments de menu Wix Restaurants)
-  // est quand même NOUVELLE pour l'équipe : on la place "En attente" à son arrivée, sinon elle
-  // atterrirait directement dans "Terminées". On ne touche qu'aux nouvelles commandes d'aujourd'hui
-  // ou à venir ; les anciennes déjà préparées restent "Terminées", et une commande déjà connue
-  // garde son étape (le upsert ne l'écrase pas).
+  // Mode d'affichage du kiosque (Personnalisation). « liste » (par défaut) : les commandes en ligne
+  // arrivent déjà « Traitées » (pas d'étape « En attente »), et leur bon s'imprime à l'arrivée si
+  // l'impression est activée. « sections » : elles arrivent « En attente » et l'équipe les traite.
+  // Une commande déjà connue garde son étape (le upsert ne l'écrase pas), et les anciennes commandes
+  // (import de l'historique) ne sont ni modifiées ni imprimées.
+  const { data: reglage, error: erreurReglage } = await service
+    .from("entreprises")
+    .select("commandes_kiosque_mode")
+    .eq("id", entreprise.id)
+    .maybeSingle();
+  const modeSections = !erreurReglage && reglage?.commandes_kiosque_mode === "sections";
+  const aImprimer = [];
+
   if (lignes.length > 0) {
     const { data: connues } = await service
       .from("commandes_en_ligne")
@@ -94,9 +103,17 @@ export async function POST(request) {
       .eq("source", "wix")
       .in("source_id", lignes.map((l) => l.source_id));
     const dejaConnues = new Set((connues || []).map((c) => c.source_id));
-    const debutAujourdhui = bornesJour(dateAujourdhui()).debut;
+    const debutHier = bornesJour(decalerJour(dateAujourdhui(), -1)).debut;
+    const il_y_a_12h = Date.now() - 12 * 3600 * 1000;
     for (const l of lignes) {
-      if (!dejaConnues.has(l.source_id) && l.statut_preparation === "FULFILLED" && new Date(dateEffective(l)) >= new Date(debutAujourdhui)) {
+      if (dejaConnues.has(l.source_id)) continue;
+      const recente = new Date(dateEffective(l)) >= new Date(debutHier);
+      if (!recente) continue;
+      if (!modeSections) {
+        l.etape = "traitee";
+        if (new Date(l.date_commande).getTime() > il_y_a_12h) aImprimer.push(l.source_id);
+      } else if (l.statut_preparation === "FULFILLED") {
+        // Déjà « préparée » chez Wix (éléments de menu Wix Restaurants) : nouvelle pour l'équipe, donc « En attente ».
         l.etape = "en_attente";
       }
     }
@@ -107,6 +124,19 @@ export async function POST(request) {
     if (error) {
       console.error("Erreur synchronisation commandes Wix:", error.message);
       return NextResponse.json({ error: "La synchronisation a échoué.", detail: error.message }, { status: 500 });
+    }
+  }
+
+  // Mode liste : les bons des nouvelles commandes sortent à leur arrivée (comme quand elles deviennent « Traitées »).
+  if (aImprimer.length > 0) {
+    const { data: nouvelles } = await service
+      .from("commandes_en_ligne")
+      .select("id")
+      .eq("entreprise_id", entreprise.id)
+      .eq("source", "wix")
+      .in("source_id", aImprimer);
+    for (const n of nouvelles || []) {
+      await imprimerAutomatiquement(service, entreprise.id, n.id).catch((err) => console.error("Erreur impression automatique:", err.message));
     }
   }
 

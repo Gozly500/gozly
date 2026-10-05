@@ -69,7 +69,6 @@ export default function CommandesKioskContent() {
   const [vue, setVue] = useState("jour"); // "jour" | "avenir" (mode liste seulement)
   // Affichage choisi dans Personnalisation : "liste" (cartes, commandes du jour) ou "sections" (En attente / Traitées / Terminées).
   const [modeKiosque, setModeKiosque] = useState("liste");
-  const [filtreListe, setFiltreListe] = useState("en_cours"); // "en_cours" | "terminee" | "toutes"
   const [masquees, setMasquees] = useState(() => new Set()); // commandes terminées « vidées » de l'écran (mode sections)
   const [recherche, setRecherche] = useState("");
   const [avenir, setAvenir] = useState([]); // commandes dont le ramassage est après aujourd'hui
@@ -191,8 +190,7 @@ export default function CommandesKioskContent() {
     if (entrepriseId) impressionActive(entrepriseId).then(setImprimanteActive);
   }, [entrepriseId]);
 
-  const nbAvenirEnAttente = modeKiosque === "liste" ? avenir.filter((c) => etapeCommande(c) === "en_attente").length : 0;
-  const nbEnAttente = commandes.filter((c) => etapeCommande(c) === "en_attente").length + nbAvenirEnAttente;
+  const nbEnAttente = modeKiosque === "sections" ? commandes.filter((c) => etapeCommande(c) === "en_attente").length : 0;
 
   // Son en boucle tant qu'une commande attend : on le joue, et 5 secondes
   // après la fin on le rejoue, jusqu'à ce que plus rien ne soit "En attente".
@@ -223,6 +221,25 @@ export default function CommandesKioskContent() {
       audio.pause();
     };
   }, [sonActif, nbEnAttente > 0]);
+
+  // Mode liste : un seul son quand une nouvelle commande en ligne apparaît (jour ou à venir).
+  const dejaVuesRef = useRef(null);
+  useEffect(() => {
+    if (modeKiosque !== "liste") return;
+    const toutes = [...commandes, ...avenir];
+    const ids = new Set(toutes.map((c) => c.id));
+    if (dejaVuesRef.current === null) {
+      if (toutes.length > 0) dejaVuesRef.current = ids; // premier chargement : pas de son
+      return;
+    }
+    const nouvelles = toutes.filter((c) => !dejaVuesRef.current.has(c.id) && c.source !== "manuel");
+    dejaVuesRef.current = ids;
+    if (nouvelles.length > 0 && sonActif) {
+      if (!audioRef.current) audioRef.current = new Audio(SON_NOUVELLE_COMMANDE);
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+  }, [commandes, avenir, modeKiosque, sonActif]);
 
   async function imprimer(commande) {
     const { ok, error } = await imprimerCommande(entrepriseId, commande.id, "manuel");
@@ -306,20 +323,19 @@ export default function CommandesKioskContent() {
       ? new Date(dateEffective(c)) >= new Date(debutHier) && !masquees.has(c.id)
       : new Date(dateEffective(c)) >= new Date(debutAujourdhui));
 
-  // Mode liste : une seule liste de cartes ; les commandes à faire d'abord, les terminées à la demande.
-  const enCoursListe = visibles.filter((c) => ["en_attente", "traitee"].includes(etapeCommande(c)));
-  const terminesListe = visibles.filter(terminesAffichees);
-  const ORDRE_ETAPE = { en_attente: 0, traitee: 1, terminee: 2 };
-  const aAfficherListe = (filtreListe === "en_cours" ? enCoursListe : filtreListe === "terminee" ? terminesListe : [...enCoursListe, ...terminesListe]).sort(
-    (a, b) => ORDRE_ETAPE[etapeCommande(a)] - ORDRE_ETAPE[etapeCommande(b)] || new Date(dateEffective(a)) - new Date(dateEffective(b))
-  );
+  // Mode liste : toutes les commandes du jour dans une seule liste. Les commandes à faire d'abord (par heure de
+  // ramassage), puis les terminées. Pas d'étape « En attente » : une commande à faire est une commande « Traitée ».
+  const parHeure = (x, y) => new Date(dateEffective(x)) - new Date(dateEffective(y));
+  const aFaireListe = visibles.filter((c) => etapeCommande(c) !== "terminee").sort(parHeure);
+  const terminesListe = visibles.filter(terminesAffichees).sort(parHeure);
+  const aAfficherListe = [...aFaireListe, ...terminesListe];
 
-  function renderCarte(c, col, avecEtat = false) {
+  function renderCarte(c, col, liste = false) {
     const modeTexte = libelleMode(c.mode);
     const paiement = libellePaiement(c);
     const etat = etatCommande(c);
     return (
-      <article className="cmd-kiosk-card" key={c.id}>
+      <article className={`cmd-kiosk-card${liste && etapeCommande(c) === "terminee" ? " cmd-kiosk-card-finie" : ""}`} key={c.id}>
         <div className="cmd-kiosk-card-top">
           <strong>#{c.numero || "—"}</strong>
           <span>{libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}</span>
@@ -327,9 +343,9 @@ export default function CommandesKioskContent() {
         {c.client_nom && <div className="cmd-kiosk-client">{c.client_nom}</div>}
         {noteCommande(c) && <div className="cmd-kiosk-note">📝 {noteCommande(c)}</div>}
         <div className="cmd-kiosk-tags">
-          {avecEtat && (
+          {liste && etapeCommande(c) === "terminee" && (
             <span className="cmd-kiosk-tag" style={{ color: etat.couleur, fontWeight: 700 }}>
-              {etat.texte}
+              ✓ Terminée
             </span>
           )}
           {modeTexte && <span className="cmd-kiosk-tag">{modeTexte}</span>}
@@ -358,15 +374,25 @@ export default function CommandesKioskContent() {
               🖨 Imprimer
             </button>
           )}
-          {col.id !== "en_attente" && (
-            <button className="admin-icon-btn" disabled={enCours === c.id} onClick={() => passer(c, col.id === "terminee" ? "traitee" : "en_attente")}>
-              ← Retour
-            </button>
-          )}
-          {col.suivante && (
-            <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, col.suivante)}>
-              {col.libelleBouton}
-            </button>
+          {liste ? (
+            etapeCommande(c) !== "terminee" && (
+              <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "terminee")}>
+                Terminer ✓
+              </button>
+            )
+          ) : (
+            <>
+              {col.id !== "en_attente" && (
+                <button className="admin-icon-btn" disabled={enCours === c.id} onClick={() => passer(c, col.id === "terminee" ? "traitee" : "en_attente")}>
+                  ← Retour
+                </button>
+              )}
+              {col.suivante && (
+                <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, col.suivante)}>
+                  {col.libelleBouton}
+                </button>
+              )}
+            </>
           )}
         </div>
       </article>
@@ -414,27 +440,11 @@ export default function CommandesKioskContent() {
 
       {modeKiosque === "liste" && vue === "jour" ? (
         <div className="cmd-kiosk-liste-wrap">
-          <div className="cmd-kiosk-chips">
-            {[
-              ["en_cours", "En cours", enCoursListe.length],
-              ["terminee", "Terminées", terminesListe.length],
-              ["toutes", "Toutes", enCoursListe.length + terminesListe.length],
-            ].map(([id, label, n]) => (
-              <button
-                key={id}
-                className="admin-icon-btn"
-                style={filtreListe === id ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
-                onClick={() => setFiltreListe(id)}
-              >
-                {label} ({n})
-              </button>
-            ))}
-          </div>
           <div className="cmd-kiosk-liste">
             {aAfficherListe.length === 0 ? (
               <p className="cmd-kiosk-vide">Aucune commande{recherche.trim() ? " pour cette recherche" : ""}.</p>
             ) : (
-              aAfficherListe.map((c) => renderCarte(c, COLONNES.find((col) => col.id === etapeCommande(c)), true))
+              aAfficherListe.map((c) => renderCarte(c, COLONNES.find((col) => col.id === etapeCommande(c)) || COLONNES[1], true))
             )}
           </div>
         </div>
@@ -522,6 +532,8 @@ export default function CommandesKioskContent() {
                       </tr>
                       {g.commandes.map((c) => {
                         const etat = etatCommande(c);
+                        // Pas d'étape « En attente » en mode liste : c'est une commande « Traitée ».
+                        const etatTexte = etat.id === "en_attente" ? { texte: "Traitée", couleur: "#8ab4ff" } : etat;
                         return (
                           <tr key={c.id}>
                             <td style={{ whiteSpace: "nowrap" }}>{libelleRamassage(c) || "—"}</td>
@@ -538,14 +550,9 @@ export default function CommandesKioskContent() {
                               {noteCommande(c) && <div className="cmd-kiosk-note">📝 {noteCommande(c)}</div>}
                             </td>
                             <td style={{ whiteSpace: "nowrap", fontWeight: 700 }}>{formatMontant(c.total)}</td>
-                            <td style={{ color: etat.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{etat.texte}</td>
+                            <td style={{ color: etatTexte.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{etatTexte.texte}</td>
                             <td>
                               <div className="cmd-kiosk-table-actions">
-                                {etat.id === "en_attente" && (
-                                  <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
-                                    Traiter →
-                                  </button>
-                                )}
                                 {imprimanteActive && (
                                   <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
                                     🖨 Imprimer

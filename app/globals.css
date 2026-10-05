@@ -2223,3 +2223,12 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .cmd-kiosk-liste{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;align-content:start;overscroll-behavior:contain;padding-bottom:4px;}
 .cmd-kiosk-liste .cmd-kiosk-vide{grid-column:1/-1;}
 @media (max-width:900px){.cmd-kiosk-liste{overflow:visible;}}
+/* Tableau des commandes à venir : en-tête lisible dans tous les thèmes, coins arrondis. */
+.cmd-kiosk-avenir-liste{padding:0 0 14px;}
+.cmd-kiosk-table th:first-child{border-top-left-radius:20px;padding-left:18px;}
+.cmd-kiosk-table th:last-child{border-top-right-radius:20px;}
+.cmd-kiosk-table td:first-child{padding-left:18px;}
+[data-theme="clair"] .cmd-kiosk-table th{background:#e3e5ef;color:#4a4a5c;}
+[data-theme="clair"] .cmd-kiosk-table-jour td{background:#eceef5;}
+/* Mode liste : commande terminée = carte atténuée en fin de liste. */
+.cmd-kiosk-card-finie{opacity:.55;}
