@@ -60,6 +60,7 @@ function BoutonsChoix({ valeur, onChange, choix }) {
 export default function CommandeManuelleModal({ entrepriseId, commande, onClose, onSaved }) {
   const [clientNom, setClientNom] = useState(commande?.client_nom || "");
   const [telephone, setTelephone] = useState(commande?.client_telephone || "");
+  const [note, setNote] = useState(commande?.note || "");
   const [mode, setMode] = useState(commande?.mode || "ramassage");
   const [paye, setPaye] = useState(commande ? commande.statut_paiement === "PAID" : false);
   const [articles, setArticles] = useState(
@@ -208,6 +209,13 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
     if (error) {
       setErreur("Impossible d'enregistrer la commande. As-tu exécuté commandes_manuelles.sql dans Supabase?");
       return;
+    }
+    // Info supplémentaire : écrite à part (la commande s'enregistre même si commandes_note.sql n'est pas exécuté).
+    if (note.trim() || commande?.note) {
+      await supabase
+        .from("commandes_en_ligne")
+        .update({ note: note.trim() || null })
+        .eq("id", commande ? commande.id : nouvelId);
     }
     // N'imprime que si le réglage "Impression des commandes manuelles" est
     // sur "automatique" (décidé côté serveur).

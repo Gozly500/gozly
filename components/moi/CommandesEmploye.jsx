@@ -147,6 +147,7 @@ export default function CommandesEmploye() {
                     </a>
                   </div>
                 )}
+                {c.note && <div style={{ marginBottom: "6px", fontSize: "13.5px", color: "#ffd479" }}>📝 {c.note}</div>}
                 {(c.mode === "ramassage" || c.mode === "livraison" || c.lieu_nom) && (
                   <div className="section-hint" style={{ margin: "0 0 8px" }}>
                     {[c.mode === "ramassage" ? t("commandes.ramassage") : c.mode === "livraison" ? t("commandes.livraison") : null, c.lieu_nom]

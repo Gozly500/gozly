@@ -2189,3 +2189,5 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .impression-selecteur{flex:1 1 280px;min-width:0;}
 .impression-selecteur .param-field{margin-bottom:0;}
 .impression-boutons{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.cmd-kiosk-note{font-size:14px;color:#ffd479;font-weight:600;}
+.gestion-commande-note{font-size:13.5px;color:#ffd479;}

@@ -22,6 +22,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
   const [vue, setVue] = useState("infos"); // "infos" | "articles"
   const [clientNom, setClientNom] = useState("");
   const [telephone, setTelephone] = useState("");
+  const [note, setNote] = useState("");
   const [mode, setMode] = useState("ramassage");
   const [paye, setPaye] = useState(false);
   const [dateRamassage, setDateRamassage] = useState(dateParDefaut);
@@ -112,6 +113,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
     const commande = {
       client_nom: clientNom,
       client_telephone: telephone,
+      note,
       mode,
       paye,
       date_ramassage: dateRamassage ? versIsoQuebec(dateRamassage, heureRamassage) : null,
@@ -159,6 +161,17 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
 
             <div className="field">
               <input type="tel" inputMode="tel" value={telephone} onChange={(e) => setTelephone(e.target.value)} placeholder={t("commandes.telephone")} maxLength={40} />
+            </div>
+
+            <div className="field">
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={t("commandes.note")}
+                maxLength={500}
+                rows={2}
+                style={{ width: "100%", boxSizing: "border-box", resize: "vertical" }}
+              />
             </div>
 
             <div className="field">

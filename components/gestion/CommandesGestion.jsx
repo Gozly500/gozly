@@ -21,6 +21,7 @@ import {
   etatCommande,
   etapeCommande,
   libellePaiement,
+  noteCommande,
 } from "@/lib/commandes";
 
 const INTERVALLE_SYNC_MS = 30000;
@@ -269,6 +270,7 @@ export default function CommandesGestion() {
                     </div>
                   ))}
                 </div>
+                {noteCommande(c) && <div className="gestion-commande-note">📝 {noteCommande(c)}</div>}
                 <div className="gestion-commande-pied">
                   <strong>{formatMontant(c.total)}</strong>
                   <div className="gestion-commande-actions">

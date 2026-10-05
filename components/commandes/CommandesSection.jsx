@@ -22,6 +22,7 @@ import {
   etatCommande,
   etapeCommande,
   libellePaiement,
+  noteCommande,
 } from "@/lib/commandes";
 
 const INTERVALLE_SYNC_MS = 30000;
@@ -401,6 +402,7 @@ export default function CommandesSection({ entrepriseId }) {
                         )}
                       </div>
                     ))}
+                    {noteCommande(c) && <div style={{ fontSize: "13px", marginTop: "6px", color: "#ffd479" }}>📝 {noteCommande(c)}</div>}
                   </div>
                   <div className="admin-row-controls" style={{ flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
                     <span style={{ fontWeight: 700 }}>{formatMontant(c.total)}</span>

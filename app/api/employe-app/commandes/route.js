@@ -46,8 +46,9 @@ export async function GET(request) {
       );
 
   const colonnes = "id, numero, client_nom, mode, lieu_nom, items, total, statut, statut_paiement, statut_preparation, etape, date_commande, date_ramassage, date_ramassage_fin";
-  let { data: commandes, error: erreurLecture } = await lireCommandes(`${colonnes}, client_telephone`);
-  // Colonne téléphone pas encore créée (commandes_telephone.sql pas exécuté) : on relit sans elle.
+  let { data: commandes, error: erreurLecture } = await lireCommandes(`${colonnes}, client_telephone, note`);
+  // Colonnes pas encore créées (commandes_telephone.sql / commandes_note.sql pas exécutés) : on relit sans elles.
+  if (erreurLecture) ({ data: commandes, error: erreurLecture } = await lireCommandes(`${colonnes}, client_telephone`));
   if (erreurLecture) ({ data: commandes } = await lireCommandes(colonnes));
 
   // Ordre chronologique du ramassage (ou de la commande s'il n'y a pas de ramassage).
@@ -91,6 +92,7 @@ export async function POST(request) {
 
   const mode = corps.mode === "livraison" ? "livraison" : "ramassage";
   const telephone = String(corps.client_telephone || "").trim().slice(0, 40);
+  const note = String(corps.note || "").trim().slice(0, 500);
   let dateRamassage = null;
   if (corps.date_ramassage) {
     const ms = Date.parse(corps.date_ramassage);
@@ -149,6 +151,9 @@ export async function POST(request) {
     console.error("Erreur création commande (employé):", error.message);
     return NextResponse.json({ error: "Impossible d'enregistrer la commande." }, { status: 500 });
   }
+
+  // Info supplémentaire : écrite à part, pour que la commande s'enregistre même si commandes_note.sql n'est pas encore exécuté.
+  if (note) await service.from("commandes_en_ligne").update({ note }).eq("id", id);
 
   // Comme au dashboard : tâches "Réservations" mises à jour, et bon imprimé
   // si le réglage des commandes manuelles est sur "automatique".

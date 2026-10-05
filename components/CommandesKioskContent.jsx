@@ -18,6 +18,7 @@ import {
   etapeCommande,
   dateEffective,
   libelleRamassage,
+  noteCommande,
 } from "@/lib/commandes";
 
 const INTERVALLE_SYNC_MS = 30000;
@@ -240,6 +241,7 @@ export default function CommandesKioskContent() {
                       <span>{libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}</span>
                     </div>
                     {c.client_nom && <div className="cmd-kiosk-client">{c.client_nom}</div>}
+                    {noteCommande(c) && <div className="cmd-kiosk-note">📝 {noteCommande(c)}</div>}
                     <div className="cmd-kiosk-tags">
                       {mode && <span className="cmd-kiosk-tag">{mode}</span>}
                       {c.lieu_nom && <span className="cmd-kiosk-tag">{c.lieu_nom}</span>}
