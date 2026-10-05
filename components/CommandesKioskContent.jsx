@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
@@ -11,11 +11,13 @@ import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressi
 import {
   formatMontant,
   dateAujourdhui,
+  decalerJour,
   bornesJour,
   heureCommande,
   libelleMode,
   libellePaiement,
   etapeCommande,
+  etatCommande,
   dateEffective,
   libelleRamassage,
   noteCommande,
@@ -25,9 +27,30 @@ const INTERVALLE_SYNC_MS = 30000;
 
 const COLONNES = [
   { id: "en_attente", titre: "En attente", suivante: "traitee", libelleBouton: "Traiter →", couleur: "#ffd479" },
-  { id: "traitee", titre: "Traitées", suivante: "terminee", libelleBouton: "Terminer ✓", couleur: "#8ab4ff" },
+  { id: "traitee", titre: "Commandes du jour", suivante: "terminee", libelleBouton: "Terminer ✓", couleur: "#8ab4ff" },
   { id: "terminee", titre: "Terminées", suivante: null, libelleBouton: null, couleur: "#7ee2a8" },
 ];
+
+// Sans accents ni majuscules, pour chercher « eve » et trouver « Ève ».
+function normaliser(x) {
+  return String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+// Jour (AAAA-MM-JJ, heure du Québec) d'un instant ISO.
+function jourQuebec(iso) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date(iso));
+}
+
+// La recherche trouve une commande par nom du client, numéro de téléphone (avec ou sans tirets) ou numéro de commande.
+function correspondRecherche(c, recherche) {
+  const terme = normaliser(recherche);
+  if (!terme) return true;
+  if (normaliser(c.client_nom).includes(terme)) return true;
+  if (normaliser(c.numero).includes(terme.replace(/^#/, ""))) return true;
+  const chiffres = terme.replace(/\D/g, "");
+  if (chiffres.length >= 2 && String(c.client_telephone || "").replace(/\D/g, "").includes(chiffres)) return true;
+  return false;
+}
 
 const SON_NOUVELLE_COMMANDE = "/sons/nouvelle-commande.mp3";
 const PAUSE_ENTRE_SONS_MS = 5000;
@@ -43,6 +66,11 @@ export default function CommandesKioskContent() {
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const [message, setMessage] = useState(null);
   const [sonActif, setSonActif] = useState(false);
+  const [vue, setVue] = useState("jour"); // "jour" | "avenir"
+  const [recherche, setRecherche] = useState("");
+  const [avenir, setAvenir] = useState([]); // commandes dont le ramassage est après aujourd'hui
+  const [du, setDu] = useState("");
+  const [au, setAu] = useState("");
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -98,14 +126,33 @@ export default function CommandesKioskContent() {
 
   }, [entrepriseId]);
 
+  // Commandes à venir : ramassage à partir de demain (jusqu'à 500, les plus proches d'abord).
+  const chargerAvenir = useCallback(async () => {
+    if (!entrepriseId) return;
+    const debutDemain = bornesJour(dateAujourdhui()).fin;
+    const { data } = await supabase
+      .from("commandes_en_ligne")
+      .select("*")
+      .eq("entreprise_id", entrepriseId)
+      .neq("canal", "POS")
+      .gte("date_ramassage", debutDemain)
+      .order("date_ramassage", { ascending: true })
+      .limit(500);
+    setAvenir((data || []).filter((c) => c.statut !== "CANCELED"));
+  }, [entrepriseId]);
+
   useEffect(() => {
     if (!entrepriseId) return;
     let actif = true;
     async function cycle() {
       await synchroniserCommandes(entrepriseId); // muet si Wix n'est pas connecté
-      if (actif) await charger();
+      if (actif) {
+        await charger();
+        await chargerAvenir();
+      }
     }
     charger();
+    chargerAvenir();
     cycle();
     const id = setInterval(() => {
       if (document.visibilityState === "visible") cycle();
@@ -114,13 +161,14 @@ export default function CommandesKioskContent() {
       actif = false;
       clearInterval(id);
     };
-  }, [entrepriseId, charger]);
+  }, [entrepriseId, charger, chargerAvenir]);
 
   useEffect(() => {
     if (entrepriseId) impressionActive(entrepriseId).then(setImprimanteActive);
   }, [entrepriseId]);
 
-  const nbEnAttente = commandes.filter((c) => etapeCommande(c) === "en_attente").length;
+  const nbAvenirEnAttente = avenir.filter((c) => etapeCommande(c) === "en_attente").length;
+  const nbEnAttente = commandes.filter((c) => etapeCommande(c) === "en_attente").length + nbAvenirEnAttente;
 
   // Son en boucle tant qu'une commande attend : on le joue, et 5 secondes
   // après la fin on le rejoue, jusqu'à ce que plus rien ne soit "En attente".
@@ -166,12 +214,14 @@ export default function CommandesKioskContent() {
     setEnCours(commande.id);
     // Mise à jour immédiate à l'écran, puis confirmation du serveur.
     setCommandes((prev) => prev.map((c) => (c.id === commande.id ? { ...c, etape } : c)));
+    setAvenir((prev) => prev.map((c) => (c.id === commande.id ? { ...c, etape } : c)));
     const { ok, error } = await changerEtapeCommande(entrepriseId, commande.id, etape);
     if (!ok) {
       setMessage({ type: "err", text: error });
       setTimeout(() => setMessage(null), 8000);
     }
     await charger();
+    await chargerAvenir();
     setEnCours(null);
   }
 
@@ -192,7 +242,26 @@ export default function CommandesKioskContent() {
   }
 
   const debutAujourdhui = bornesJour(dateAujourdhui()).debut;
-  const visibles = commandes.filter((c) => etapeCommande(c) !== "annulee");
+  const visibles = commandes.filter((c) => etapeCommande(c) !== "annulee" && correspondRecherche(c, recherche));
+
+  // Commandes à venir filtrées (dates + recherche) et regroupées par jour de ramassage.
+  const avenirFiltre = avenir.filter((c) => {
+    const jour = jourQuebec(c.date_ramassage);
+    if (du && jour < du) return false;
+    if (au && jour > au) return false;
+    return correspondRecherche(c, recherche);
+  });
+  const jours = [];
+  for (const c of avenirFiltre) {
+    const jour = jourQuebec(c.date_ramassage);
+    let groupe = jours[jours.length - 1];
+    if (!groupe || groupe.jour !== jour) {
+      groupe = { jour, commandes: [] };
+      jours.push(groupe);
+    }
+    groupe.commandes.push(c);
+  }
+  const demain = decalerJour(dateAujourdhui(), 1);
 
   return (
     <div className="cmd-kiosk">
@@ -201,7 +270,21 @@ export default function CommandesKioskContent() {
           <div className="kiosk-entreprise">{entrepriseNom}</div>
           <h2>Commandes en ligne</h2>
         </div>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+          <input
+            type="search"
+            className="cmd-kiosk-recherche"
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            placeholder="Rechercher (nom, téléphone, no)"
+          />
+          <button
+            className={`admin-icon-btn${vue === "avenir" ? " active" : ""}`}
+            style={vue === "avenir" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
+            onClick={() => setVue((v) => (v === "avenir" ? "jour" : "avenir"))}
+          >
+            {vue === "avenir" ? "← Commandes du jour" : `📅 Commandes à venir (${avenir.length})`}
+          </button>
           <button
             className="admin-icon-btn"
             onClick={() => setSonActif((v) => !v)}
@@ -217,6 +300,7 @@ export default function CommandesKioskContent() {
 
       {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
 
+      {vue === "jour" ? (
       <div className="cmd-kiosk-cols">
         {COLONNES.map((col) => {
           const liste = visibles.filter(
@@ -262,7 +346,7 @@ export default function CommandesKioskContent() {
                     <div className="cmd-kiosk-actions">
                       {imprimanteActive && (
                         <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
-                          🖨
+                          🖨 Imprimer
                         </button>
                       )}
                       {col.id !== "en_attente" && (
@@ -292,6 +376,103 @@ export default function CommandesKioskContent() {
           );
         })}
       </div>
+      ) : (
+        <div className="cmd-kiosk-avenir">
+          <div className="cmd-kiosk-filtres">
+            <label>
+              Du <input type="date" value={du} onChange={(e) => setDu(e.target.value)} />
+            </label>
+            <label>
+              Au <input type="date" value={au} onChange={(e) => setAu(e.target.value)} />
+            </label>
+            <button className="admin-icon-btn" onClick={() => { setDu(demain); setAu(demain); }}>
+              Demain
+            </button>
+            <button className="admin-icon-btn" onClick={() => { setDu(demain); setAu(decalerJour(dateAujourdhui(), 7)); }}>
+              7 jours
+            </button>
+            <button className="admin-icon-btn" onClick={() => { setDu(demain); setAu(decalerJour(dateAujourdhui(), 30)); }}>
+              30 jours
+            </button>
+            <button className="admin-icon-btn" onClick={() => { setDu(""); setAu(""); }}>
+              Tout
+            </button>
+            <span className="cmd-kiosk-compte">
+              {avenirFiltre.length} commande{avenirFiltre.length > 1 ? "s" : ""}
+            </span>
+          </div>
+
+          <div className="cmd-kiosk-avenir-liste">
+            {jours.length === 0 ? (
+              <p className="cmd-kiosk-vide">Aucune commande à venir{du || au || recherche ? " pour ce filtre" : ""}.</p>
+            ) : (
+              <table className="cmd-kiosk-table">
+                <thead>
+                  <tr>
+                    <th>Heure</th>
+                    <th>No</th>
+                    <th>Client</th>
+                    <th>Téléphone</th>
+                    <th>Articles</th>
+                    <th>Total</th>
+                    <th>État</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {jours.map((g) => (
+                    <Fragment key={g.jour}>
+                      <tr className="cmd-kiosk-table-jour">
+                        <td colSpan={8}>
+                          {new Date(`${g.jour}T12:00:00`).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}
+                          {" · "}
+                          {g.commandes.length} commande{g.commandes.length > 1 ? "s" : ""}
+                        </td>
+                      </tr>
+                      {g.commandes.map((c) => {
+                        const etat = etatCommande(c);
+                        return (
+                          <tr key={c.id}>
+                            <td style={{ whiteSpace: "nowrap" }}>{libelleRamassage(c) || "—"}</td>
+                            <td>#{c.numero || "—"}</td>
+                            <td>{c.client_nom || "—"}</td>
+                            <td style={{ whiteSpace: "nowrap" }}>{c.client_telephone || "—"}</td>
+                            <td>
+                              {(c.items || []).map((it, i) => (
+                                <div key={i}>
+                                  {it.quantite} × {it.nom}
+                                  {it.options?.length > 0 && <span className="cmd-kiosk-options"> ({it.options.join(", ")})</span>}
+                                </div>
+                              ))}
+                              {noteCommande(c) && <div className="cmd-kiosk-note">📝 {noteCommande(c)}</div>}
+                            </td>
+                            <td style={{ whiteSpace: "nowrap", fontWeight: 700 }}>{formatMontant(c.total)}</td>
+                            <td style={{ color: etat.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{etat.texte}</td>
+                            <td>
+                              <div className="cmd-kiosk-table-actions">
+                                {etat.id === "en_attente" && (
+                                  <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
+                                    Traiter →
+                                  </button>
+                                )}
+                                {imprimanteActive && (
+                                  <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
+                                    🖨 Imprimer
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
 
       {modal && (
         <LangueProvider>
