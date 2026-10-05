@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import DashSidebar from "@/components/DashSidebar";
@@ -9,6 +9,8 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { PERIODES, estConforme, creneauActuel, grouperParJour, relevesEnCsv, telechargerFichier } from "@/lib/temperature";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import TemperatureInput from "@/components/TemperatureInput";
+import { telechargerPdfTemperatures } from "@/lib/exportPdf";
+import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 
 export default function TemperatureContent() {
   const router = useRouter();
@@ -28,6 +30,10 @@ export default function TemperatureContent() {
   const [msg, setMsg] = useState(null);
 
   const [emplacementFiltre, setEmplacementFiltre] = useState(null);
+  const [exportOuvert, setExportOuvert] = useState(false);
+  const [exportPdfEnCours, setExportPdfEnCours] = useState(false);
+  const exportRef = useRef(null);
+  useFermerAuClicExterieur(exportRef, exportOuvert, () => setExportOuvert(false));
   const [jourOuvert, setJourOuvert] = useState(null);
 
   const creneau = creneauActuel();
@@ -199,6 +205,24 @@ export default function TemperatureContent() {
     telechargerFichier(nomFichier, relevesEnCsv(releves, equipements, emplacements));
   }
 
+  // Rapport PDF des fiches données (tout l'historique affiché, ou une seule journée).
+  async function exporterPdf(releves, nomFichier) {
+    setExportPdfEnCours(true);
+    try {
+      const { data: ent } = await supabase.from("entreprises").select("nom").eq("id", entrepriseId).maybeSingle();
+      await telechargerPdfTemperatures({
+        entrepriseNom: ent?.nom || "",
+        succursaleNom: emplacements.find((e) => e.id === emplacementFiltre)?.nom || (emplacements.length > 1 ? "Toutes les succursales" : ""),
+        releves,
+        equipements,
+        emplacements,
+        nomFichier,
+      });
+    } finally {
+      setExportPdfEnCours(false);
+    }
+  }
+
   return (
     <div className="dash-layout">
       <DashSidebar
@@ -302,13 +326,35 @@ export default function TemperatureContent() {
 
               {fiches.length > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
-                  <button
-                    type="button"
-                    className="admin-icon-btn"
-                    onClick={() => exporter(historiqueFiltre, `temperatures_${creneau.date}.csv`)}
-                  >
-                    ⬇ Tout exporter (Excel)
-                  </button>
+                  <div className="account-wrap" ref={exportRef}>
+                    <button type="button" className="admin-icon-btn" onClick={() => setExportOuvert((v) => !v)} disabled={exportPdfEnCours}>
+                      {exportPdfEnCours ? "PDF..." : "⬇ Exporter ▾"}
+                    </button>
+                    {exportOuvert && (
+                      <div className="account-dropdown open">
+                        <button
+                          type="button"
+                          className="menu-item"
+                          onClick={() => {
+                            setExportOuvert(false);
+                            exporter(historiqueFiltre, `temperatures_${creneau.date}.csv`);
+                          }}
+                        >
+                          Excel (CSV)
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          onClick={() => {
+                            setExportOuvert(false);
+                            exporterPdf(historiqueFiltre, `registre-temperatures-${creneau.date}.pdf`);
+                          }}
+                        >
+                          PDF
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <span className="section-hint" style={{ margin: 0 }}>
                     Les fiches sont supprimées automatiquement après la durée choisie dans Personnalisation - exporte-les pour les garder.
                   </span>
@@ -362,9 +408,19 @@ export default function TemperatureContent() {
                                 })}
                               </div>
                             ))}
-                            <button type="button" className="admin-icon-btn" onClick={() => exporter(f.releves, `temperatures_${f.date}.csv`)}>
-                              ⬇ Exporter cette fiche
-                            </button>
+                            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                              <button type="button" className="admin-icon-btn" onClick={() => exporter(f.releves, `temperatures_${f.date}.csv`)}>
+                                ⬇ Cette fiche (Excel)
+                              </button>
+                              <button
+                                type="button"
+                                className="admin-icon-btn"
+                                disabled={exportPdfEnCours}
+                                onClick={() => exporterPdf(f.releves, `registre-temperatures-${f.date}.pdf`)}
+                              >
+                                ⬇ Cette fiche (PDF)
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
