@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 // Catégories de produits de l'Inventaire : créer, renommer, ordonner (▲▼) et retirer.
@@ -13,6 +13,28 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
   const [renommerId, setRenommerId] = useState(null);
   const [renommerNom, setRenommerNom] = useState("");
   const [erreur, setErreur] = useState("");
+
+  // Animation du déplacement (comme les catégories de tâches) : on retient la position de chaque
+  // ligne avant le changement, puis on la fait glisser de l'ancienne à la nouvelle.
+  const lignesRef = useRef(new Map());
+  const positionsAvantRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const avant = positionsAvantRef.current;
+    if (!avant) return;
+    positionsAvantRef.current = null;
+    for (const [id, el] of lignesRef.current) {
+      const precedent = avant.get(id);
+      if (precedent == null) continue;
+      const ecart = precedent - el.getBoundingClientRect().top;
+      if (!ecart) continue;
+      el.style.transition = "none";
+      el.style.transform = `translateY(${ecart}px)`;
+      el.getBoundingClientRect(); // force le recalcul avant de lancer la transition
+      el.style.transition = "transform 280ms ease";
+      el.style.transform = "";
+    }
+  }, [categories]);
 
   useEffect(() => {
     load();
@@ -60,17 +82,21 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
     load();
   }
 
-  // Échange la place de deux catégories voisines (les ordres sont renumérotés 1..n).
-  async function deplacer(index, delta) {
-    const autre = categories[index + delta];
-    const courante = categories[index];
-    if (!autre || !courante) return;
-    const nouvelleListe = [...categories];
-    nouvelleListe[index] = autre;
-    nouvelleListe[index + delta] = courante;
-    setCategories(nouvelleListe);
-    await Promise.all(nouvelleListe.map((c, i) => supabase.from("categories_inventaire").update({ ordre: i + 1 }).eq("id", c.id)));
-    load();
+  // Monte (-1) ou descend (+1) une catégorie : on renumérote toute la liste (1, 2, 3...)
+  // pour ne jamais dépendre d'anciens numéros en double.
+  async function deplacer(index, sens) {
+    const cible = index + sens;
+    if (cible < 0 || cible >= categories.length) return;
+    const nouvelle = [...categories];
+    [nouvelle[index], nouvelle[cible]] = [nouvelle[cible], nouvelle[index]];
+    const avecOrdre = nouvelle.map((c, i) => ({ ...c, ordre: i + 1 }));
+    positionsAvantRef.current = new Map([...lignesRef.current].map(([id, el]) => [id, el.getBoundingClientRect().top]));
+    setCategories(avecOrdre); // affichage immédiat, avec l'animation
+    await Promise.all(
+      avecOrdre
+        .filter((c, i) => c.id !== categories[i]?.id || c.ordre !== categories[i]?.ordre)
+        .map((c) => supabase.from("categories_inventaire").update({ ordre: c.ordre }).eq("id", c.id))
+    );
   }
 
   if (loading) return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
@@ -98,7 +124,14 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
       <div className="admin-list" style={{ maxWidth: "720px" }}>
         {categories.length === 0 && <div className="admin-empty">Aucune catégorie pour l&apos;instant.</div>}
         {categories.map((c, i) => (
-          <div className="admin-row" key={c.id}>
+          <div
+            className="admin-row"
+            key={c.id}
+            ref={(el) => {
+              if (el) lignesRef.current.set(c.id, el);
+              else lignesRef.current.delete(c.id);
+            }}
+          >
             <div className="admin-row-main">
               {renommerId === c.id ? (
                 <form
