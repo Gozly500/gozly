@@ -2232,3 +2232,6 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 [data-theme="clair"] .cmd-kiosk-table-jour td{background:#eceef5;}
 /* Mode liste : commande terminée = carte atténuée en fin de liste. */
 .cmd-kiosk-card-finie{opacity:.55;}
+/* Inventaire : titre d'une catégorie de produits. */
+.inventaire-categorie-titre{font-weight:700;font-size:15px;margin:0 0 8px 4px;}
+.inventaire-categorie-titre span{color:var(--text-dim);font-weight:400;font-size:13px;}
