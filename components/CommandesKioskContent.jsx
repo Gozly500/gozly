@@ -229,6 +229,7 @@ export default function CommandesKioskContent() {
                 <span className="cmd-kiosk-count">{liste.length}</span>
               </div>
 
+              <div className="cmd-kiosk-col-liste">
               {liste.length === 0 && <p className="cmd-kiosk-vide">Aucune commande</p>}
 
               {liste.map((c) => {
@@ -286,6 +287,7 @@ export default function CommandesKioskContent() {
                   </article>
                 );
               })}
+              </div>
             </section>
           );
         })}

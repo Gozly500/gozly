@@ -2066,10 +2066,10 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .accent-choice:disabled{opacity:.5;cursor:default;}
 
 /* ============ Kiosque des commandes en ligne ============ */
-.cmd-kiosk{min-height:100vh;padding:22px 24px;display:flex;flex-direction:column;gap:18px;}
+.cmd-kiosk{height:100vh;height:100dvh;min-height:0;box-sizing:border-box;overflow:hidden;padding:22px 24px;display:flex;flex-direction:column;gap:18px;}
 .cmd-kiosk-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-.cmd-kiosk-cols{flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start;}
-.cmd-kiosk-col{background:rgba(var(--w),0.04);border:1px solid rgba(var(--w),0.12);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:12px;}
+.cmd-kiosk-cols{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch;}
+.cmd-kiosk-col{background:rgba(var(--w),0.04);border:1px solid rgba(var(--w),0.12);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:12px;min-height:0;overflow:hidden;}
 .cmd-kiosk-col-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:17px;padding-bottom:10px;border-bottom:3px solid;}
 .cmd-kiosk-count{background:rgba(var(--w),0.12);border-radius:20px;padding:2px 12px;font-size:15px;}
 .cmd-kiosk-vide{color:var(--text-dim);text-align:center;font-size:14px;padding:18px 0;}
@@ -2083,7 +2083,14 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .cmd-kiosk-total{font-weight:700;font-size:16px;}
 .cmd-kiosk-actions{display:flex;gap:8px;margin-top:4px;}
 .cmd-kiosk-actions .submit-btn{flex:1;padding:14px;font-size:16px;}
-@media (max-width:900px){.cmd-kiosk-cols{grid-template-columns:minmax(0,1fr);}}
+/* Chaque colonne (En attente / Traitées / Terminées) défile toute seule : la page, elle, ne bouge pas. */
+.cmd-kiosk-col-liste{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;overscroll-behavior:contain;padding-right:2px;}
+@media (max-width:900px){
+  .cmd-kiosk{height:auto;overflow:visible;}
+  .cmd-kiosk-cols{grid-template-columns:minmax(0,1fr);}
+  .cmd-kiosk-col{overflow:visible;}
+  .cmd-kiosk-col-liste{overflow:visible;}
+}
 
 /* ============ Page Commandes : boîte "Planification" ============ */
 .cmd-avec-planif{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:28px;align-items:start;}
