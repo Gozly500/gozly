@@ -585,13 +585,6 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         </div>
       )}
 
-      <p className="section-hint" style={{ marginTop: "14px" }}>
-        L'export Nethris contient une ligne par employé pour la semaine affichée (heures régulières et
-        supplémentaires séparées, au-delà de 40h/semaine). Renseigne le numéro d'employé de chacun dans
-        Entreprise → Employés pour qu'il corresponde à sa fiche dans Nethris, et vérifie que les codes de
-        gain (1 et 43 par défaut) correspondent à ta configuration Nethris avant l'importation.
-      </p>
-
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal-card" style={{ maxWidth: "360px" }} onClick={(e) => e.stopPropagation()}>
