@@ -568,6 +568,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
           </button>
           {sectionsOuvertes.commandes && (
             <div className="integration-body">
+              <div className="param-subgroup">
+                <div className="param-subgroup-label">Général</div>
               <div className="param-grid">
                 <ParametreSelect
                   label="Conservation des commandes"
@@ -612,6 +614,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   onChange={handleChangeCommandesVersTaches}
                   disabled={saving}
                 />
+              </div>
               </div>
               <ImpressionCommandesBloc
                 entrepriseId={entrepriseId}
