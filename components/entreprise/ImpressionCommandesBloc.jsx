@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { xmlVersLignes } from "@/lib/apercuBon";
 
 async function appelerImpression(entrepriseId, action) {
   const { data } = await supabase.auth.getSession();
@@ -23,6 +24,21 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
   const [copie, setCopie] = useState(false);
+  const [apercu, setApercu] = useState(null); // { exemple, derniere } : XML des bons
+  const [apercuSource, setApercuSource] = useState("exemple");
+  const [apercuOuvert, setApercuOuvert] = useState(false);
+
+  async function voirApercu() {
+    setMsg(null);
+    const r = await appelerImpression(entrepriseId, "apercu");
+    if (!r.ok || !r.exemple) {
+      setMsg({ type: "err", text: r.error || "Impossible d'afficher l'aperçu." });
+      return;
+    }
+    setApercu({ exemple: r.exemple, derniere: r.derniere || null });
+    setApercuSource("exemple");
+    setApercuOuvert(true);
+  }
 
   useEffect(() => {
     appelerImpression(entrepriseId, "etat").then((r) => setEtat({ actif: !!r.actif, url: r.url || null }));
@@ -62,6 +78,9 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
       <div className="impression-ligne">
         {selecteur && <div className="impression-selecteur">{selecteur}</div>}
         <div className="impression-boutons">
+          <button className="admin-icon-btn" disabled={busy} onClick={voirApercu}>
+            👁 Aperçu du bon
+          </button>
           {!etat.actif ? (
             <button className="submit-btn" disabled={busy} onClick={() => lancer("activer")}>
               Activer l&apos;impression
@@ -110,6 +129,56 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
       )}
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
+
+      {apercuOuvert && apercu && (
+        <div className="modal-overlay" onClick={() => setApercuOuvert(false)}>
+          <div className="modal-card" style={{ maxWidth: "460px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Aperçu du bon de commande</h3>
+              <button className="admin-icon-btn" onClick={() => setApercuOuvert(false)}>
+                Fermer
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+              <button
+                className="admin-icon-btn"
+                style={apercuSource === "exemple" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
+                onClick={() => setApercuSource("exemple")}
+              >
+                Exemple
+              </button>
+              {apercu.derniere && (
+                <button
+                  className="admin-icon-btn"
+                  style={apercuSource === "derniere" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
+                  onClick={() => setApercuSource("derniere")}
+                >
+                  Ma dernière commande
+                </button>
+              )}
+            </div>
+            <div className="bon-papier">
+              {xmlVersLignes(apercuSource === "derniere" && apercu.derniere ? apercu.derniere : apercu.exemple).map((l, i) =>
+                l.coupe ? (
+                  <div key={i} className="bon-coupe">
+                    ✂ - - - - - - - - - - - - - - - - - -
+                  </div>
+                ) : (
+                  <div
+                    key={i}
+                    style={{ textAlign: l.align, fontWeight: l.gras ? 700 : 400, fontSize: l.grand ? "2em" : "1em", lineHeight: l.grand ? 1.15 : 1.3 }}
+                  >
+                    {l.texte || "\u00A0"}
+                  </div>
+                )
+              )}
+            </div>
+            <p className="section-hint" style={{ marginTop: "10px" }}>
+              C&apos;est le contenu exact envoyé à l&apos;imprimante. Les accents sont retirés à l&apos;impression (l&apos;imprimante les afficherait mal).
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

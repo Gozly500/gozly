@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
+import { construireBonCommande } from "@/lib/impressionCommandes";
 
 // Configuration de l'impression des bons de commande (Personnalisation >
 // Commandes en ligne) : active/désactive, génère l'URL secrète à copier dans
@@ -43,6 +44,40 @@ export async function POST(request) {
     return NextResponse.json({
       actif: !!actuelle?.impression_actif,
       url: actuelle?.impression_actif && actuelle.impression_token ? urlImprimante(actuelle.impression_token) : null,
+    });
+  }
+
+  // Aperçu : le bon tel que l'imprimante le recevrait, avec une commande d'exemple et avec la dernière
+  // vraie commande (s'il y en a une). Fonctionne même si l'impression n'est pas encore activée.
+  if (action === "apercu") {
+    const { data: ent } = await service.from("entreprises").select("nom").eq("id", entreprise.id).maybeSingle();
+    const { data: derniere } = await service
+      .from("commandes_en_ligne")
+      .select("*")
+      .eq("entreprise_id", entreprise.id)
+      .neq("canal", "POS")
+      .order("date_commande", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const maintenant = Date.now();
+    const exemple = {
+      numero: "M12",
+      date_commande: new Date(maintenant).toISOString(),
+      mode: "ramassage",
+      date_ramassage: new Date(maintenant + 2 * 3600 * 1000).toISOString(),
+      client_nom: "Marie Tremblay",
+      client_telephone: "514 555-0123",
+      items: [
+        { nom: "Pizza au tomate", quantite: 2, prix: 14.5, options: ["Taille: Grande"] },
+        { nom: "Tiramisu", quantite: 1, prix: 8.5, options: [] },
+      ],
+      total: 37.5,
+      statut_paiement: "NOT_PAID",
+      note: "Sans oignons svp",
+    };
+    return NextResponse.json({
+      exemple: construireBonCommande(exemple, ent?.nom || ""),
+      derniere: derniere ? construireBonCommande(derniere, ent?.nom || "") : null,
     });
   }
 
