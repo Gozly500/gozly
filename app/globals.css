@@ -2242,3 +2242,6 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 /* Aperçu du bon de commande (papier thermique 80 mm). */
 .bon-papier{background:#fff;color:#111;font-family:"Courier New",Courier,monospace;font-size:13px;white-space:pre;overflow-x:auto;padding:18px 16px;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,0.25);max-height:60vh;overflow-y:auto;}
 .bon-coupe{color:#999;text-align:center;margin-top:6px;}
+/* Inventaire : un produit à variantes (en-tête + variantes en retrait). */
+.inventaire-groupe-tete{background:rgba(var(--w),0.04);}
+.inventaire-variante{margin-left:22px;border-left:3px solid rgba(var(--w),0.14);}

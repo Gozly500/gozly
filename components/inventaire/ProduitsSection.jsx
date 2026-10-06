@@ -1,11 +1,36 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 
-const FORM_VIDE = { nom: "", sku: "", quantite: "", seuilAlerte: "", prix: "", notes: "", categorieId: "" };
+const FORM_VIDE = { nom: "", variante: "", sku: "", quantite: "", seuilAlerte: "", prix: "", notes: "", categorieId: "" };
+
+// Une variante s'écrit « Produit — Variante » dans le nom (c'est aussi comme ça que Wix la synchronise).
+// Les produits qui partagent le même nom de base sont regroupés : Pizza — Complète, Demi, Quart.
+const SEP = " — ";
+function separerNom(nom) {
+  const [base, ...reste] = String(nom).split(SEP);
+  return reste.length > 0 ? { base: base.trim(), variante: reste.join(SEP).trim() } : { base: String(nom).trim(), variante: "" };
+}
+function composerNom(base, variante) {
+  return variante.trim() ? `${base.trim()}${SEP}${variante.trim()}` : base.trim();
+}
+
+// Regroupe une liste de produits par nom de base : { type: "simple", produit } ou { type: "groupe", base, produits }.
+function construireEntrees(liste) {
+  const parBase = new Map();
+  for (const p of liste) {
+    const { base } = separerNom(p.nom);
+    const cle = base.toLowerCase();
+    if (!parBase.has(cle)) parBase.set(cle, { base, produits: [] });
+    parBase.get(cle).produits.push(p);
+  }
+  return [...parBase.values()].map((g) =>
+    g.produits.length === 1 && !separerNom(g.produits[0].nom).variante ? { type: "simple", produit: g.produits[0] } : { type: "groupe", ...g }
+  );
+}
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession();
@@ -112,7 +137,7 @@ export default function ProduitsSection({ entrepriseId }) {
       if (!res.ok) {
         setSyncMsg({ type: "err", text: data.error || "La synchronisation a échoué." });
       } else {
-        setSyncMsg({ type: "ok", text: `${data.count} produit(s) synchronisé(s) depuis Wix.` });
+        setSyncMsg({ type: "ok", text: `${data.count} produit(s) synchronisé(s) depuis Wix${typeof data.categories === "number" ? ` · ${data.categories} catégorie(s)` : ""}.` });
         load();
       }
     } catch {
@@ -155,10 +180,19 @@ export default function ProduitsSection({ entrepriseId }) {
     setModalOpen(true);
   }
 
+  // « + Variante » sur un produit : même nom et même catégorie, il reste à nommer la variante.
+  function ouvrirAjoutVariante(base, categorieId) {
+    setEditingId(null);
+    setForm({ ...FORM_VIDE, nom: base, categorieId: categorieId || "" });
+    setModalOpen(true);
+  }
+
   function openEdit(produit) {
     setEditingId(produit.id);
+    const { base, variante } = separerNom(produit.nom);
     setForm({
-      nom: produit.nom,
+      nom: base,
+      variante,
       sku: produit.sku || "",
       quantite: String(produit.quantite),
       seuilAlerte: String(produit.seuil_alerte),
@@ -175,7 +209,7 @@ export default function ProduitsSection({ entrepriseId }) {
     setSaving(true);
 
     const valeurs = {
-      nom: form.nom.trim(),
+      nom: composerNom(form.nom, form.variante),
       sku: form.sku.trim() || null,
       quantite: Number(form.quantite) || 0,
       seuil_alerte: Number(form.seuilAlerte) || 0,
@@ -191,6 +225,18 @@ export default function ProduitsSection({ entrepriseId }) {
       if (wixPushAuto && produit?.source === "wix") pousserVersWix(editingId);
     } else {
       await supabase.from("produits_inventaire").insert({ entreprise_id: entrepriseId, ...valeurs });
+    }
+
+    // La catégorie est celle du produit : toutes ses variantes la partagent.
+    if (categoriesPretes) {
+      const base = form.nom.trim().toLowerCase();
+      const freres = produits.filter((p) => p.id !== editingId && separerNom(p.nom).base.toLowerCase() === base);
+      if (freres.length > 0) {
+        await supabase
+          .from("produits_inventaire")
+          .update({ categorie_id: form.categorieId || null })
+          .in("id", freres.map((p) => p.id));
+      }
     }
 
     setSaving(false);
@@ -226,13 +272,14 @@ export default function ProduitsSection({ entrepriseId }) {
   ];
   const optionsCategorieProduit = [{ id: "", nom: "Sans catégorie" }, ...categories.map((c) => ({ id: c.id, nom: c.nom }))];
 
-  function ligneProduit(p) {
+  function ligneProduit(p, { variante = false } = {}) {
     const enAlerte = p.quantite <= p.seuil_alerte;
+    const titre = variante ? separerNom(p.nom).variante || "Standard" : p.nom;
     return (
-      <div className="admin-row" key={p.id}>
+      <div className={`admin-row${variante ? " inventaire-variante" : ""}`} key={p.id}>
         <div className="admin-row-main">
           <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
-            {p.nom} {p.source === "wix" && <IconIntegration className="gozly-icon" />} {enAlerte && "⚠️"}
+            {titre} {p.source === "wix" && <IconIntegration className="gozly-icon" />} {enAlerte && "⚠️"}
           </div>
           <div className="admin-row-sub">
             {p.sku && `SKU: ${p.sku} · `}
@@ -255,6 +302,32 @@ export default function ProduitsSection({ entrepriseId }) {
           </button>
         </div>
       </div>
+    );
+  }
+
+  function rendreEntree(e) {
+    if (e.type === "simple") return ligneProduit(e.produit);
+    const total = e.produits.reduce((somme, p) => somme + (Number(p.quantite) || 0), 0);
+    const enAlerte = e.produits.some((p) => p.quantite <= p.seuil_alerte);
+    return (
+      <Fragment key={`groupe-${e.base}`}>
+        <div className="admin-row inventaire-groupe-tete">
+          <div className="admin-row-main">
+            <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
+              {e.base} {enAlerte && "⚠️"}
+            </div>
+            <div className="admin-row-sub">
+              {e.produits.length} variante{e.produits.length > 1 ? "s" : ""} · Quantité totale: {total}
+            </div>
+          </div>
+          <div className="admin-row-controls">
+            <button className="admin-icon-btn" onClick={() => ouvrirAjoutVariante(e.base, e.produits[0].categorie_id)}>
+              + Variante
+            </button>
+          </div>
+        </div>
+        {e.produits.map((p) => ligneProduit(p, { variante: true }))}
+      </Fragment>
     );
   }
 
@@ -313,7 +386,7 @@ export default function ProduitsSection({ entrepriseId }) {
               </div>
             )}
             <div className="admin-list" style={{ maxWidth: "900px" }}>
-              {g.produits.map(ligneProduit)}
+              {construireEntrees(g.produits).map(rendreEntree)}
             </div>
           </div>
         ))
@@ -350,6 +423,17 @@ export default function ProduitsSection({ entrepriseId }) {
                     placeholder="Ex: TSN-M"
                   />
                 </div>
+              </div>
+
+              <div className="field">
+                <label>Variante (optionnel)</label>
+                <input
+                  type="text"
+                  value={form.variante}
+                  onChange={(e) => setForm((f) => ({ ...f, variante: e.target.value }))}
+                  placeholder="Ex: Complète, Demi, Quart"
+                  maxLength={60}
+                />
               </div>
 
               {categoriesPretes && (

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
-import { obtenirInventaireWix } from "@/lib/wixClient";
+import { obtenirInventaireWix, obtenirCollectionsWix } from "@/lib/wixClient";
 
 // Copie (lecture seule) l'inventaire Wix Stores de l'entreprise dans
 // produits_inventaire, pour l'afficher au même endroit que les produits
@@ -84,5 +84,73 @@ export async function POST(request) {
   requeteNettoyage = sourceIdsActuels.length > 0 ? requeteNettoyage.not("source_id", "in", `(${sourceIdsActuels.join(",")})`) : requeteNettoyage;
   await requeteNettoyage;
 
-  return NextResponse.json({ ok: true, count: lignes.length });
+  // Catégories : les collections Wix deviennent des catégories Gozly, et chaque produit sans catégorie reçoit celle de
+  // sa collection Wix (une catégorie choisie à la main dans Gozly n'est jamais écrasée). Une erreur ici ne fait pas échouer la synchro.
+  let nbCategories;
+  try {
+    nbCategories = await synchroniserCategories(service, entreprise.id, connexion.instance_id, items);
+  } catch (err) {
+    console.error("Erreur synchronisation catégories Wix:", err.message);
+  }
+
+  return NextResponse.json({ ok: true, count: lignes.length, categories: nbCategories });
+}
+
+// Retourne le nombre de catégories Wix, ou undefined si elles n'ont pas pu être lues / enregistrées
+// (site en catalogue V3, permission manquante, ou inventaire_categories_wix.sql pas exécuté).
+async function synchroniserCategories(service, entrepriseId, instanceId, items) {
+  const collections = await obtenirCollectionsWix(instanceId);
+  if (!collections) return undefined;
+
+  const { data: existantes, error: erreurLecture } = await service
+    .from("categories_inventaire")
+    .select("id, source_id, ordre")
+    .eq("entreprise_id", entrepriseId)
+    .eq("source", "wix");
+  if (erreurLecture) return undefined; // colonnes source / source_id absentes
+
+  const connues = new Set((existantes || []).map((c) => c.source_id));
+  const { data: dernieres } = await service
+    .from("categories_inventaire")
+    .select("ordre")
+    .eq("entreprise_id", entrepriseId)
+    .order("ordre", { ascending: false })
+    .limit(1);
+  let ordre = (dernieres?.[0]?.ordre || 0) + 1;
+
+  const nouvelles = collections.filter((c) => !connues.has(c.id)).map((c) => ({ entreprise_id: entrepriseId, nom: c.nom, source: "wix", source_id: c.id, ordre: ordre++ }));
+  if (nouvelles.length > 0) await service.from("categories_inventaire").insert(nouvelles);
+
+  // Une collection supprimée sur Wix disparaît (ses produits repassent « Sans catégorie »).
+  const idsWix = collections.map((c) => c.id);
+  await service
+    .from("categories_inventaire")
+    .delete()
+    .eq("entreprise_id", entrepriseId)
+    .eq("source", "wix")
+    .not("source_id", "in", `(${idsWix.length > 0 ? idsWix.join(",") : "''"})`);
+
+  const { data: toutes } = await service.from("categories_inventaire").select("id, source_id").eq("entreprise_id", entrepriseId).eq("source", "wix");
+  const categorieParCollection = new Map((toutes || []).map((c) => [c.source_id, c.id]));
+
+  // produit Wix (source_id) -> catégorie Gozly de sa première collection connue
+  const categorieParProduit = new Map();
+  for (const item of items) {
+    const collectionId = (item.collectionIds || []).find((id) => categorieParCollection.has(id));
+    if (collectionId) categorieParProduit.set(item.id, categorieParCollection.get(collectionId));
+  }
+
+  const { data: produits } = await service.from("produits_inventaire").select("id, source_id, categorie_id").eq("entreprise_id", entrepriseId).eq("source", "wix");
+  const parCategorie = new Map();
+  for (const p of produits || []) {
+    const categorieId = categorieParProduit.get(p.source_id);
+    if (!categorieId || p.categorie_id) continue;
+    if (!parCategorie.has(categorieId)) parCategorie.set(categorieId, []);
+    parCategorie.get(categorieId).push(p.id);
+  }
+  for (const [categorieId, ids] of parCategorie) {
+    await service.from("produits_inventaire").update({ categorie_id: categorieId }).in("id", ids);
+  }
+
+  return collections.length;
 }
