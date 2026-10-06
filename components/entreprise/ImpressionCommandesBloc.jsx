@@ -35,7 +35,7 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
     const r = await appelerImpression(entrepriseId, action);
     setBusy(false);
     if (!r.ok) {
-      setMsg({ type: "err", text: r.error || "L'action a échoué." });
+      setMsg({ type: "err", text: `${r.error || "L'action a échoué."}${r.detail ? ` [${r.detail}]` : ""}` });
       return;
     }
     if (action === "tester") {

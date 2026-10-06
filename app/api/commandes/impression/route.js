@@ -56,7 +56,11 @@ export async function POST(request) {
       .eq("id", entreprise.id);
     if (error) {
       console.error("Erreur activation impression:", error.message);
-      return NextResponse.json({ error: "Impossible d'activer l'impression." }, { status: 500 });
+      // Le plus souvent : commandes_impression.sql pas encore exécuté dans Supabase (colonnes manquantes).
+      return NextResponse.json(
+        { error: "Impossible d'activer l'impression. As-tu exécuté commandes_impression.sql dans Supabase?", detail: error.message },
+        { status: 500 }
+      );
     }
     return NextResponse.json({ actif: true, url: urlImprimante(jeton) });
   }
