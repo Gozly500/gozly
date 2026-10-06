@@ -2235,3 +2235,7 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 /* Inventaire : titre d'une catégorie de produits. */
 .inventaire-categorie-titre{font-weight:700;font-size:15px;margin:0 0 8px 4px;}
 .inventaire-categorie-titre span{color:var(--text-dim);font-weight:400;font-size:13px;}
+/* App gestionnaire : modification de l'horaire (bouton Modifier, crayons). */
+.gestion-horaire-barre{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin:12px 0 0;}
+.gestion-crayon{padding:6px 11px !important;flex-shrink:0;}
+.gestion-tache-plus:disabled{opacity:.4;cursor:default;}
