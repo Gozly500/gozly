@@ -1,7 +1,7 @@
 import CommandesContent from "@/components/CommandesContent";
 
 export const metadata = {
-  title: "Gozly - Commandes en ligne",
+  title: "Gozly - Commandes",
 };
 
 export default function CommandesPage() {

@@ -207,7 +207,7 @@ export default function CommandesSection({ entrepriseId }) {
         }}
       >
         <div>
-          <h2>Commandes en ligne</h2>
+          <h2>Commandes</h2>
           <p className="panel-hint" style={{ marginBottom: 0 }}>
             Les commandes reçues sur ton site Wix, mises à jour automatiquement.
           </p>

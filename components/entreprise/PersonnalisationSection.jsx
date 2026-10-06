@@ -563,7 +563,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
             className={`integration-header${sectionsOuvertes.commandes ? " open" : ""}`}
             onClick={() => toggleSection("commandes")}
           >
-            <span className="ih-label">Commandes en ligne</span>
+            <span className="ih-label">Commandes</span>
             <span className="ih-arrow">▾</span>
           </button>
           {sectionsOuvertes.commandes && (

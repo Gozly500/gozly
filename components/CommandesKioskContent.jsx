@@ -501,7 +501,7 @@ export default function CommandesKioskContent() {
       <header className="cmd-kiosk-head">
         <div>
           <div className="kiosk-entreprise">{entrepriseNom}</div>
-          <h2>Commandes en ligne</h2>
+          <h2>Commandes</h2>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <input
