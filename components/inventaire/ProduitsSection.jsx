@@ -7,6 +7,11 @@ import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 
 const FORM_VIDE = { nom: "", variante: "", sku: "", quantite: "", seuilAlerte: "", prix: "", notes: "", categorieId: "" };
 
+// Sans accents ni majuscules : « cafe » trouve « Café ».
+function normaliser(x) {
+  return String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
 // Une variante s'écrit « Produit — Variante » dans le nom (c'est aussi comme ça que Wix la synchronise).
 // Les produits qui partagent le même nom de base sont regroupés : Pizza — Complète, Demi, Quart.
 const SEP = " — ";
@@ -89,6 +94,7 @@ export default function ProduitsSection({ entrepriseId }) {
   const [categories, setCategories] = useState([]);
   const [categoriesPretes, setCategoriesPretes] = useState(false);
   const [filtreCategorie, setFiltreCategorie] = useState("toutes"); // "toutes" | "sans" | id
+  const [recherche, setRecherche] = useState("");
 
   useEffect(() => {
     load();
@@ -253,17 +259,27 @@ export default function ProduitsSection({ entrepriseId }) {
     return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
   }
 
-  // ---------- Affichage groupé par catégorie ----------
+  // ---------- Recherche + affichage groupé par catégorie ----------
+  const mots = normaliser(recherche).split(/s+/).filter(Boolean);
+  const produitsVisibles =
+    mots.length === 0
+      ? produits
+      : produits.filter((p) => {
+          const categorie = categories.find((c) => c.id === p.categorie_id)?.nom;
+          const texte = normaliser([p.nom, p.sku, p.notes, categorie].filter(Boolean).join(" "));
+          return mots.every((m) => texte.includes(m));
+        });
+
   const appartient = (p, c) => p.categorie_id === c.id;
   const sansCategorie = (p) => !p.categorie_id || !categories.some((c) => c.id === p.categorie_id);
 
   const groupes =
     categoriesPretes && categories.length > 0
       ? [
-          ...categories.map((c) => ({ id: c.id, nom: c.nom, produits: produits.filter((p) => appartient(p, c)) })),
-          { id: "sans", nom: "Sans catégorie", produits: produits.filter(sansCategorie) },
+          ...categories.map((c) => ({ id: c.id, nom: c.nom, produits: produitsVisibles.filter((p) => appartient(p, c)) })),
+          { id: "sans", nom: "Sans catégorie", produits: produitsVisibles.filter(sansCategorie) },
         ].filter((g) => g.produits.length > 0 && (filtreCategorie === "toutes" || (filtreCategorie === "sans" ? g.id === "sans" : g.id === filtreCategorie)))
-      : [{ id: "tous", nom: null, produits }];
+      : [{ id: "tous", nom: null, produits: produitsVisibles }];
 
   const optionsFiltre = [
     { id: "toutes", nom: "Toutes les catégories" },
@@ -363,9 +379,20 @@ export default function ProduitsSection({ entrepriseId }) {
 
       {syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
 
-      {categoriesPretes && categories.length > 0 && (
-        <div style={{ maxWidth: "320px", marginBottom: "16px" }}>
-          <MenuChoix options={optionsFiltre} value={filtreCategorie} onChange={setFiltreCategorie} />
+      {produits.length > 0 && (
+        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center", marginBottom: "16px" }}>
+          <input
+            type="search"
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            placeholder="Rechercher un produit (nom, variante, SKU...)"
+            style={{ flex: "1 1 260px", maxWidth: "420px", minWidth: 0, margin: 0, boxSizing: "border-box" }}
+          />
+          {categoriesPretes && categories.length > 0 && (
+            <div style={{ width: "260px", maxWidth: "100%" }}>
+              <MenuChoix options={optionsFiltre} value={filtreCategorie} onChange={setFiltreCategorie} />
+            </div>
+          )}
         </div>
       )}
 
@@ -375,7 +402,7 @@ export default function ProduitsSection({ entrepriseId }) {
         </div>
       ) : groupes.length === 0 ? (
         <div className="admin-list" style={{ maxWidth: "900px" }}>
-          <div className="admin-empty">Aucun produit dans cette catégorie.</div>
+          <div className="admin-empty">{mots.length > 0 ? "Aucun produit pour cette recherche." : "Aucun produit dans cette catégorie."}</div>
         </div>
       ) : (
         groupes.map((g) => (
