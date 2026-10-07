@@ -88,28 +88,6 @@ export function IconInventaire(props) {
   );
 }
 
-export function IconEquipe(props) {
-  return (
-    <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <g transform="matrix(1.266755,0,0,1.266755,-185.18085,-337.521276)">
-        <path d="M566.247,891.75L210.073,891.75C192.025,864.899 182.523,834.441 182.523,803.437C182.523,705.954 274.666,626.811 388.16,626.811C501.654,626.811 593.797,705.954 593.797,803.437C593.797,834.441 584.295,864.899 566.247,891.75Z" />
-      </g>
-      <g transform="matrix(1.266755,0,0,1.266755,-278.136335,-192.68366)">
-        <circle cx="461.541" cy="383.63" r="99.832" />
-      </g>
-      <g transform="matrix(0.503454,0,0,0.503454,-2.043556,6.645956)">
-        <circle cx="461.541" cy="383.63" r="99.832" />
-      </g>
-      <g transform="matrix(1.266755,0,0,1.266755,201.773377,-279.153878)">
-        <path d="M566.247,891.75L210.073,891.75C192.025,864.899 182.523,834.441 182.523,803.437C182.523,705.954 274.666,626.811 388.16,626.811C501.654,626.811 593.797,705.954 593.797,803.437C593.797,834.441 584.295,864.899 566.247,891.75Z" />
-      </g>
-      <g transform="matrix(1.266755,0,0,1.266755,108.817892,-134.316262)">
-        <circle cx="461.541" cy="383.63" r="99.832" />
-      </g>
-    </svg>
-  );
-}
-
 export function IconDemande(props) {
   return (
     <svg viewBox="0 0 1000 1000" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -258,4 +236,4 @@ export function IconTemperature(props) {
 }
 
 // Remplacées par les pictogrammes de la bibliothèque officielle (voir Pictogrammes.jsx).
-export { IconMessage as IconDiscussion, IconProfils as IconEmployes, IconLocalisation as IconEmplacement, IconCrayon } from "./Pictogrammes";
+export { IconMessage as IconDiscussion, IconProfils as IconEmployes, IconProfils as IconEquipe, IconLocalisation as IconEmplacement, IconCrayon } from "./Pictogrammes";
