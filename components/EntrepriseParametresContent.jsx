@@ -11,6 +11,7 @@ import IntegrationsSection from "@/components/settings/IntegrationsSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconEquipe, IconEmplacement, IconIntegration } from "@/components/icons/GozlyIcons";
+import { IconPalette, IconProfil } from "@/components/icons/Pictogrammes";
 
 const TABS = [
   { id: "informations", label: "Informations", Icone: IconProfil },

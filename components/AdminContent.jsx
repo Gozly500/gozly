@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import ClientsSection from "@/components/admin/ClientsSection";
 import AdminsSection from "@/components/admin/AdminsSection";
 import DemandesContactSection from "@/components/admin/DemandesContactSection";
+import { IconBouclier, IconEnveloppe, IconProfils } from "@/components/icons/Pictogrammes";
 
 const TABS = [
   { id: "clients", label: "Clients", Icone: IconProfils },

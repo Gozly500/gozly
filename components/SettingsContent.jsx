@@ -8,6 +8,7 @@ import AbonnementSection from "@/components/settings/AbonnementSection";
 import ActiviteSection from "@/components/settings/ActiviteSection";
 import AppearanceSection from "@/components/settings/AppearanceSection";
 import GestionSection from "@/components/settings/GestionSection";
+import { IconCarte, IconEngrenage, IconHorloge, IconPalette, IconProfil } from "@/components/icons/Pictogrammes";
 
 const TABS = [
   { id: "informations", label: "Informations", Icone: IconProfil },
