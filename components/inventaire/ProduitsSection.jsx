@@ -95,6 +95,10 @@ export default function ProduitsSection({ entrepriseId }) {
   const [categoriesPretes, setCategoriesPretes] = useState(false);
   const [filtreCategorie, setFiltreCategorie] = useState("toutes"); // "toutes" | "sans" | id
   const [recherche, setRecherche] = useState("");
+  const [diagOuvert, setDiagOuvert] = useState(false);
+  const [diagTerme, setDiagTerme] = useState("");
+  const [diagResultat, setDiagResultat] = useState(null);
+  const [diagBusy, setDiagBusy] = useState(false);
   const [groupesOuverts, setGroupesOuverts] = useState(() => new Set()); // produits à variantes dépliés
 
   useEffect(() => {
@@ -151,6 +155,24 @@ export default function ProduitsSection({ entrepriseId }) {
       setSyncMsg({ type: "err", text: "La synchronisation a échoué." });
     }
     setSyncing(false);
+  }
+
+  // Diagnostic : ce que Wix répond réellement pour les produits (pour comprendre ceux qui manquent).
+  async function lancerDiagnostic() {
+    setDiagBusy(true);
+    setDiagResultat(null);
+    try {
+      const res = await fetch("/api/inventaire/diagnostic-wix", {
+        method: "POST",
+        headers: await authHeaders(),
+        body: JSON.stringify({ entrepriseId, terme: diagTerme }),
+      });
+      const data = await res.json();
+      setDiagResultat(res.ok ? data.diagnostic : { erreur: data.error, detail: data.detail });
+    } catch {
+      setDiagResultat({ erreur: "Le diagnostic a échoué." });
+    }
+    setDiagBusy(false);
   }
 
   async function chargerCategories() {
@@ -392,6 +414,11 @@ export default function ProduitsSection({ entrepriseId }) {
               {syncing ? "Synchronisation..." : <><IconIntegration className="gozly-icon" /> Synchroniser Wix</>}
             </button>
           )}
+          {wixConnecte && (
+            <button className="admin-icon-btn" onClick={() => setDiagOuvert(true)}>
+              🔍 Diagnostic Wix
+            </button>
+          )}
           <button className="submit-btn" onClick={openAdd}>
             + Ajouter un produit
           </button>
@@ -438,6 +465,29 @@ export default function ProduitsSection({ entrepriseId }) {
             </div>
           </div>
         ))
+      )}
+
+      {diagOuvert && (
+        <div className="modal-overlay" onClick={() => setDiagOuvert(false)}>
+          <div className="modal-card" style={{ maxWidth: "620px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Diagnostic Wix</h3>
+              <button className="admin-icon-btn" onClick={() => setDiagOuvert(false)}>
+                Fermer
+              </button>
+            </div>
+            <p className="section-hint">
+              Montre ce que Wix répond pour tes produits. Tape le début du nom d&apos;un produit qui manque (ex: Lasagne) pour voir si Wix le renvoie.
+            </p>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+              <input type="text" value={diagTerme} onChange={(e) => setDiagTerme(e.target.value)} placeholder="Début du nom (optionnel)" style={{ flex: 1, minWidth: 0, margin: 0 }} />
+              <button className="submit-btn" onClick={lancerDiagnostic} disabled={diagBusy}>
+                {diagBusy ? "..." : "Lancer"}
+              </button>
+            </div>
+            {diagResultat && <pre className="diag-resultat">{JSON.stringify(diagResultat, null, 2)}</pre>}
+          </div>
+        </div>
       )}
 
       {modalOpen && (
