@@ -5,6 +5,7 @@ import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 
 export default function Nav() {
   const pathname = usePathname();
@@ -95,7 +96,7 @@ export default function Nav() {
           {user ? (
             <div className="account-wrap" ref={accountRef}>
               <button className="account-btn" onClick={() => setAccountOpen((v) => !v)}>
-                Mon compte ▾
+                Mon compte <IconFlecheBas className="gozly-icon-inline" />
               </button>
               {accountOpen && (
                 <div className="account-dropdown open">

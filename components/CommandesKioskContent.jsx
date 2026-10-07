@@ -22,12 +22,13 @@ import {
   libelleRamassage,
   noteCommande,
 } from "@/lib/commandes";
+import { IconCalendrier, IconCloche, IconClocheBarree, IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconImprimante } from "@/components/icons/Pictogrammes";
 
 const INTERVALLE_SYNC_MS = 30000;
 
 const COLONNES = [
-  { id: "en_attente", titre: "En attente", suivante: "traitee", libelleBouton: "Traiter →", couleur: "#ffd479" },
-  { id: "traitee", titre: "Commandes du jour", suivante: "terminee", libelleBouton: "Terminer ✓", couleur: "#8ab4ff" },
+  { id: "en_attente", titre: "En attente", suivante: "traitee", libelleBouton: <>Traiter <IconFlecheDroite className="gozly-icon-inline" /></>, couleur: "#ffd479" },
+  { id: "traitee", titre: "Commandes du jour", suivante: "terminee", libelleBouton: <>Terminer <IconCrochet className="gozly-icon" /></>, couleur: "#8ab4ff" },
   { id: "terminee", titre: "Terminées", suivante: null, libelleBouton: null, couleur: "#7ee2a8" },
 ];
 
@@ -337,11 +338,11 @@ export default function CommandesKioskContent() {
           <span>{libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}</span>
         </div>
         {c.client_nom && <div className="cmd-kiosk-client">{c.client_nom}</div>}
-        {noteCommande(c) && <div className="cmd-kiosk-note">📝 {noteCommande(c)}</div>}
+        {noteCommande(c) && <div className="cmd-kiosk-note"><IconDocument className="gozly-icon" /> {noteCommande(c)}</div>}
         <div className="cmd-kiosk-tags">
           {liste && etapeCommande(c) === "terminee" && (
             <span className="cmd-kiosk-tag" style={{ color: etat.couleur, fontWeight: 700 }}>
-              ✓ Terminée
+              <IconCrochet className="gozly-icon" /> Terminée
             </span>
           )}
           {modeTexte && <span className="cmd-kiosk-tag">{modeTexte}</span>}
@@ -367,20 +368,20 @@ export default function CommandesKioskContent() {
         <div className="cmd-kiosk-actions">
           {imprimanteActive && (
             <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
-              🖨 Imprimer
+              <IconImprimante className="gozly-icon" /> Imprimer
             </button>
           )}
           {liste ? (
             etapeCommande(c) !== "terminee" && (
               <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "terminee")}>
-                Terminer ✓
+                Terminer <IconCrochet className="gozly-icon" />
               </button>
             )
           ) : (
             <>
               {col.id !== "en_attente" && (
                 <button className="admin-icon-btn" disabled={enCours === c.id} onClick={() => passer(c, col.id === "terminee" ? "traitee" : "en_attente")}>
-                  ← Retour
+                  <IconFlecheGauche className="gozly-icon" /> Retour
                 </button>
               )}
               {col.suivante && (
@@ -466,7 +467,7 @@ export default function CommandesKioskContent() {
                                   {it.options?.length > 0 && <span className="cmd-kiosk-options"> ({it.options.join(", ")})</span>}
                                 </div>
                               ))}
-                              {noteCommande(c) && <div className="cmd-kiosk-note">📝 {noteCommande(c)}</div>}
+                              {noteCommande(c) && <div className="cmd-kiosk-note"><IconDocument className="gozly-icon" /> {noteCommande(c)}</div>}
                             </td>
                             <td style={{ whiteSpace: "nowrap", fontWeight: 700 }}>{formatMontant(c.total)}</td>
                             <td style={{ color: etatTexte.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{etatTexte.texte}</td>
@@ -474,12 +475,12 @@ export default function CommandesKioskContent() {
                               <div className="cmd-kiosk-table-actions">
                                 {modeKiosque === "sections" && etat.id === "en_attente" && (
                                   <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
-                                    Traiter →
+                                    Traiter <IconFlecheDroite className="gozly-icon-inline" />
                                   </button>
                                 )}
                                 {imprimanteActive && (
                                   <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
-                                    🖨 Imprimer
+                                    <IconImprimante className="gozly-icon" /> Imprimer
                                   </button>
                                 )}
                               </div>
@@ -516,14 +517,14 @@ export default function CommandesKioskContent() {
             style={vue === "avenir" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
             onClick={() => setVue((v) => (v === "avenir" ? "jour" : "avenir"))}
           >
-            {vue === "avenir" ? "← Commandes du jour" : `📅 Commandes à venir (${avenir.length})`}
+            {vue === "avenir" ? <><IconFlecheGauche className="gozly-icon" /> Commandes du jour</> : <><IconCalendrier className="gozly-icon" /> Commandes à venir ({avenir.length})</>}
           </button>
           <button
             className="admin-icon-btn"
             onClick={() => setSonActif((v) => !v)}
             style={!sonActif ? { background: "rgba(255,212,121,0.25)", borderColor: "rgba(255,212,121,0.6)" } : undefined}
           >
-            {sonActif ? "🔔 Son activé" : "🔕 Activer le son"}
+            {sonActif ? <><IconCloche className="gozly-icon" /> Son activé</> : <><IconClocheBarree className="gozly-icon" /> Activer le son</>}
           </button>
           <button className="submit-btn" onClick={() => setModal(true)}>
             + Nouvelle commande

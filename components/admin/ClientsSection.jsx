@@ -8,6 +8,7 @@ import SimpleSelect from "@/components/SimpleSelect";
 import InfoTooltip from "@/components/InfoTooltip";
 import { geocoderAdresse } from "@/lib/geocode";
 import { limiteEntreprises } from "@/lib/modules";
+import { IconAttention, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 const FORFAITS = [
   { id: "", label: "Aucun forfait" },
@@ -185,7 +186,7 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
             />
             {adresseIntrouvable && (
               <p className="section-hint" style={{ color: "#f2b95a", marginTop: "4px" }}>
-                ⚠ Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
+                <IconAttention className="gozly-icon" /> Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
               </p>
             )}
           </div>
@@ -387,13 +388,13 @@ export default function ClientsSection() {
           style={{ marginBottom: "14px" }}
           onClick={() => setCompteOuvertId(null)}
         >
-          ← Retour aux comptes
+          <IconFlecheGauche className="gozly-icon" /> Retour aux comptes
         </button>
         <h2>{compteOuvert.profil?.full_name || compteOuvert.email || "Compte"}</h2>
         <p className="panel-hint">
           {compteOuvert.email} · {compteOuvert.entreprises.length} entreprise
           {compteOuvert.entreprises.length > 1 ? "s" : ""} · Forfait :{" "}
-          {FORFAITS.find((f) => f.id === compteOuvert.profil?.forfait)?.label || "Aucun"} (change dans « ← Retour aux
+          {FORFAITS.find((f) => f.id === compteOuvert.profil?.forfait)?.label || "Aucun"} (change dans « Retour aux
           comptes »)
         </p>
         {error && <p className="settings-msg err">{error}</p>}
@@ -425,7 +426,7 @@ export default function ClientsSection() {
           type="text"
           value={rechercheClient}
           onChange={(e) => setRechercheClient(e.target.value)}
-          placeholder="🔎 Rechercher un client ou une entreprise..."
+          placeholder="Rechercher un client ou une entreprise..."
         />
       </div>
 
@@ -483,7 +484,7 @@ export default function ClientsSection() {
                   {editingCompteId === compte.userId ? "Fermer" : "Modifier"}
                 </button>
                 <button className="submit-btn" style={{ padding: "8px 18px" }} onClick={() => setCompteOuvertId(compte.userId)}>
-                  Voir les entreprises →
+                  Voir les entreprises <IconFlecheDroite className="gozly-icon-inline" />
                 </button>
               </div>
             </div>

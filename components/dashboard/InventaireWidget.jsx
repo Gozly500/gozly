@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 export default function InventaireWidget({ entrepriseId }) {
   const [produits, setProduits] = useState([]);
@@ -52,7 +53,7 @@ export default function InventaireWidget({ entrepriseId }) {
         </table>
       </div>
       <Link href="/dashboard/inventaire" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
-        Voir l'Inventaire →
+        Voir l'Inventaire <IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

@@ -5,6 +5,7 @@ import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import { formatMontant } from "@/lib/commandes";
 import { separerVariante, produitIdWix, versIsoQuebec } from "@/lib/commandesManuelles";
+import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
 
 const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitId: null, sku: null, options: [] };
 
@@ -184,8 +185,8 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
             <div className="field">
               <button type="button" className="submit-btn" style={{ width: "100%" }} onClick={() => setVue("articles")}>
                 {nombreArticles > 0
-                  ? `${t("commandes.nArticles", { n: nombreArticles })} · ${formatMontant(total)} ›`
-                  : `${t("commandes.ajouterProduits")} ›`}
+                  ? <>{t("commandes.nArticles", { n: nombreArticles })} · {formatMontant(total)} <IconFlecheDroite className="gozly-icon-inline" /></>
+                  : <>{t("commandes.ajouterProduits")} <IconFlecheDroite className="gozly-icon-inline" /></>}
               </button>
             </div>
 
@@ -222,7 +223,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
             <div className="modal-head">
               <h3>{t("commandes.articles")}</h3>
               <button type="button" className="admin-icon-btn" onClick={enregistrerArticles}>
-                ‹ {t("commandes.retour")}
+                <IconFlecheGauche className="gozly-icon" /> {t("commandes.retour")}
               </button>
             </div>
 
@@ -266,7 +267,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
                     aria-label={t("commandes.retirerArticle")}
                     style={{ width: "40px", height: "40px", boxSizing: "border-box", flexShrink: 0, padding: 0, margin: 0, borderRadius: "12px", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}
                   >
-                    ✕
+                    <IconX className="gozly-icon" />
                   </button>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "6px", marginTop: "6px" }}>

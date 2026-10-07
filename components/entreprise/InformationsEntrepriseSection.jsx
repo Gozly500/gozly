@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { geocoderAdresse } from "@/lib/geocode";
+import { IconAttention } from "@/components/icons/Pictogrammes";
 
 async function authFetch(path, options = {}) {
   const { data: sessionData } = await supabase.auth.getSession();
@@ -235,7 +236,7 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
             />
             {adresseIntrouvable && (
               <p className="section-hint" style={{ color: "#f2b95a", marginTop: "4px" }}>
-                ⚠ Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
+                <IconAttention className="gozly-icon" /> Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
               </p>
             )}
           </div>

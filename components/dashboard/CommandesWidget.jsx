@@ -13,6 +13,7 @@ import {
   dateEffective,
   libelleRamassage,
 } from "@/lib/commandes";
+import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 export default function CommandesWidget({ entrepriseId }) {
   const [commandes, setCommandes] = useState([]);
@@ -47,7 +48,7 @@ export default function CommandesWidget({ entrepriseId }) {
       <>
         <p className="widget-card-empty">Aucune commande en ligne aujourd&apos;hui.</p>
         <Link href="/dashboard/commandes" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "10px" }}>
-          Voir les commandes →
+          Voir les commandes <IconFlecheDroite className="gozly-icon-inline" />
         </Link>
       </>
     );
@@ -72,7 +73,7 @@ export default function CommandesWidget({ entrepriseId }) {
       ))}
 
       <Link href="/dashboard/commandes" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "12px" }}>
-        Voir les commandes →
+        Voir les commandes <IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

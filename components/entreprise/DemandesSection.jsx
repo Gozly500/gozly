@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { IconCrochet, IconFlecheDroite, IconX } from "@/components/icons/Pictogrammes";
 
 function heure(t) {
   return t ? t.slice(0, 5) : "";
@@ -154,7 +155,7 @@ export default function DemandesSection({ entrepriseId }) {
                   <div className="admin-row-title">{nomEmploye(c.employe_id)}</div>
                   <div className="admin-row-sub">
                     Du {new Date(c.date_debut).toLocaleDateString("fr-CA")} au {new Date(c.date_fin).toLocaleDateString("fr-CA")} ·{" "}
-                    {c.statut === "approuve" ? "✅ Approuvé" : "❌ Refusé"}
+                    {c.statut === "approuve" ? <><IconCrochet className="gozly-icon" /> Approuvé</> : <><IconX className="gozly-icon" /> Refusé</>}
                   </div>
                 </div>
               </div>
@@ -173,7 +174,7 @@ export default function DemandesSection({ entrepriseId }) {
               <div className="admin-row" key={e.id}>
                 <div className="admin-row-main">
                   <div className="admin-row-title">
-                    {nomEmploye(e.employe_donneur_id)} → {nomEmploye(e.employe_receveur_id)}
+                    {nomEmploye(e.employe_donneur_id)} <IconFlecheDroite className="gozly-icon-inline" /> {nomEmploye(e.employe_receveur_id)}
                   </div>
                   <div className="admin-row-sub">
                     {e.planning_quarts && (
@@ -206,7 +207,7 @@ export default function DemandesSection({ entrepriseId }) {
               <div className="admin-row" key={e.id}>
                 <div className="admin-row-main">
                   <div className="admin-row-title">
-                    {nomEmploye(e.employe_donneur_id)} → {nomEmploye(e.employe_receveur_id)}
+                    {nomEmploye(e.employe_donneur_id)} <IconFlecheDroite className="gozly-icon-inline" /> {nomEmploye(e.employe_receveur_id)}
                   </div>
                   <div className="admin-row-sub">
                     {e.planning_quarts && (
@@ -216,10 +217,10 @@ export default function DemandesSection({ entrepriseId }) {
                       </>
                     )}
                     {e.statut_employe === "en_attente" && "En attente de réponse de l'employé"}
-                    {e.statut_employe === "refuse" && "❌ Refusé par l'employé"}
-                    {e.statut_admin === "approuve" && "✅ Approuvé"}
-                    {e.statut_admin === "refuse" && "❌ Refusé"}
-                    {e.statut_admin === "non_requis" && "✅ Approuvé automatiquement"}
+                    {e.statut_employe === "refuse" && <><IconX className="gozly-icon" /> Refusé par l'employé</>}
+                    {e.statut_admin === "approuve" && <><IconCrochet className="gozly-icon" /> Approuvé</>}
+                    {e.statut_admin === "refuse" && <><IconX className="gozly-icon" /> Refusé</>}
+                    {e.statut_admin === "non_requis" && <><IconCrochet className="gozly-icon" /> Approuvé automatiquement</>}
                   </div>
                 </div>
               </div>

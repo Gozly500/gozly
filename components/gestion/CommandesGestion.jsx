@@ -23,6 +23,7 @@ import {
   libellePaiement,
   noteCommande,
 } from "@/lib/commandes";
+import { IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconRafraichir, IconTelecharger } from "@/components/icons/Pictogrammes";
 
 const INTERVALLE_SYNC_MS = 30000;
 
@@ -169,13 +170,13 @@ export default function CommandesGestion() {
 
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, -1))}>
-          ‹
+          <IconFlecheGauche className="gozly-icon" />
         </button>
         <span className="moi-week-label" style={{ textTransform: "capitalize" }}>
           {dateLabel}
         </span>
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, 1))}>
-          ›
+          <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
       {date !== aujourdhui && (
@@ -194,10 +195,10 @@ export default function CommandesGestion() {
         </span>
         <span style={{ display: "flex", gap: "6px" }}>
           <button type="button" className="admin-icon-btn" onClick={exporterPdf} disabled={exportEnCours || commandes.length === 0}>
-            {exportEnCours ? "PDF..." : "⬇ PDF"}
+            {exportEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> PDF</>}
           </button>
           <button type="button" className="admin-icon-btn" onClick={() => synchroniser()} disabled={syncing}>
-            {syncing ? "..." : "↻ Actualiser"}
+            {syncing ? "..." : <><IconRafraichir className="gozly-icon" /> Actualiser</>}
           </button>
         </span>
       </div>
@@ -270,18 +271,18 @@ export default function CommandesGestion() {
                     </div>
                   ))}
                 </div>
-                {noteCommande(c) && <div className="gestion-commande-note">📝 {noteCommande(c)}</div>}
+                {noteCommande(c) && <div className="gestion-commande-note"><IconDocument className="gozly-icon" /> {noteCommande(c)}</div>}
                 <div className="gestion-commande-pied">
                   <strong>{formatMontant(c.total)}</strong>
                   <div className="gestion-commande-actions">
                     {etat.id === "en_attente" && (
                       <button className="btn-small" onClick={() => passerEtape(c, "traitee")}>
-                        Traiter →
+                        Traiter <IconFlecheDroite className="gozly-icon-inline" />
                       </button>
                     )}
                     {etat.id === "traitee" && (
                       <button className="btn-small" onClick={() => passerEtape(c, "terminee")}>
-                        Terminer ✓
+                        Terminer <IconCrochet className="gozly-icon" />
                       </button>
                     )}
                   </div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
+import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 function dateAujourdhui() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date());
@@ -179,7 +180,7 @@ export default function TachesEmploye() {
           aria-label={t("taches.jourPrecedent")}
           onClick={() => setDate((d) => decalerJour(d, -1))}
         >
-          ‹
+          <IconFlecheGauche className="gozly-icon" />
         </button>
         <div style={{ textAlign: "center" }}>
           <div className="planning-day-title" style={{ textTransform: "capitalize" }}>
@@ -202,7 +203,7 @@ export default function TachesEmploye() {
           aria-label={t("taches.jourSuivant")}
           onClick={() => setDate((d) => decalerJour(d, 1))}
         >
-          ›
+          <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 

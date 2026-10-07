@@ -7,6 +7,7 @@ import RappelNotifications from "@/components/moi/RappelNotifications";
 import PointageMobileBloc from "@/components/moi/PointageMobileBloc";
 import { useLangue } from "@/components/moi/LangueContext";
 import { localeDate } from "@/lib/i18n/moi";
+import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 function heure(t) {
   return t.slice(0, 5);
@@ -103,11 +104,11 @@ export default function HoraireEmploye() {
       )}
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          ‹
+          <IconFlecheGauche className="gozly-icon" />
         </button>
         <span className="moi-week-label">{weekLabel}</span>
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-          ›
+          <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 

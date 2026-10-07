@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { IconCrochet } from "@/components/icons/Pictogrammes";
 
 export default function KioskReapproSection({ entrepriseId }) {
   const [liste, setListe] = useState([]);
@@ -50,7 +51,7 @@ export default function KioskReapproSection({ entrepriseId }) {
               onClick={() => handleFait(item.id)}
               disabled={busyId === item.id}
             >
-              <span className="kiosk-reappro-check">✓</span>
+              <span className="kiosk-reappro-check"><IconCrochet className="gozly-icon" /></span>
               <span className="kiosk-reappro-nom">{item.nom}</span>
               <span className="kiosk-reappro-qte">× {item.quantite}</span>
             </button>

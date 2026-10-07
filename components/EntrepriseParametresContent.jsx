@@ -13,10 +13,10 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconEquipe, IconEmplacement, IconIntegration } from "@/components/icons/GozlyIcons";
 
 const TABS = [
-  { id: "informations", label: "Informations", icon: "👤" },
+  { id: "informations", label: "Informations", Icone: IconProfil },
   { id: "equipe", label: "Équipe", Icone: IconEquipe },
   { id: "emplacements", label: "Emplacements", Icone: IconEmplacement },
-  { id: "personnalisation", label: "Personnalisation", icon: "🎨" },
+  { id: "personnalisation", label: "Personnalisation", Icone: IconPalette },
   { id: "integrations", label: "Intégrations", Icone: IconIntegration },
 ];
 

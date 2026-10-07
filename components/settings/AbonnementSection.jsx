@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { supabase } from "@/lib/supabaseClient";
+import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 
 const FORFAITS = [
   { id: "opale", label: "Opale", detail: "3 modules, 1 entreprise - 25$/mois" },
@@ -144,7 +145,7 @@ export default function AbonnementSection({ profil }) {
                 <div className="fs-label">{current ? current.label : "Sélectionner..."}</div>
                 <div className="fs-detail">{current ? current.detail : "Choisis un forfait pour continuer"}</div>
               </div>
-              <span className="fs-arrow">▾</span>
+              <span className="fs-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
             </div>
             {forfaitOpen && (
               <div className="forfait-select-options open">

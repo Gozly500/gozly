@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
+import { IconFlecheBas, IconFlecheHaut, IconX } from "@/components/icons/Pictogrammes";
 
 // Liste des tâches "modèles" d'une catégorie (ex: les sortes de pizza) -
 // repliée sous chaque catégorie, voir JourEditor.jsx pour leur utilisation
@@ -66,7 +67,7 @@ function ModelesSection({ entrepriseId, categorieId }) {
                 style={{ background: "none", border: "none", padding: 0, color: "inherit", cursor: "pointer", fontSize: "13px" }}
                 title="Retirer"
               >
-                ✕
+                <IconX className="gozly-icon" />
               </button>
             </span>
           ))}
@@ -216,7 +217,7 @@ export default function CategoriesSection({ entrepriseId }) {
                 {cat.nom === NOM_CATEGORIE_COMMANDES ? (
                   <>
                     <button className="admin-icon-btn" onClick={() => deplacer(index, -1)} disabled={index === 0} title="Monter" aria-label="Monter la catégorie">
-                      ↑
+                      <IconFlecheHaut className="gozly-icon" />
                     </button>
                     <button
                       className="admin-icon-btn"
@@ -225,7 +226,7 @@ export default function CategoriesSection({ entrepriseId }) {
                       title="Descendre"
                       aria-label="Descendre la catégorie"
                     >
-                      ↓
+                      <IconFlecheBas className="gozly-icon" />
                     </button>
                   </>
                 ) : editingId === cat.id ? (
@@ -246,7 +247,7 @@ export default function CategoriesSection({ entrepriseId }) {
                       title="Monter"
                       aria-label="Monter la catégorie"
                     >
-                      ↑
+                      <IconFlecheHaut className="gozly-icon" />
                     </button>
                     <button
                       className="admin-icon-btn"
@@ -255,7 +256,7 @@ export default function CategoriesSection({ entrepriseId }) {
                       title="Descendre"
                       aria-label="Descendre la catégorie"
                     >
-                      ↓
+                      <IconFlecheBas className="gozly-icon" />
                     </button>
                     <button
                       className="admin-icon-btn"

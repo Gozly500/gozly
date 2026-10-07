@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useLangue } from "@/components/moi/LangueContext";
+import { IconPartager } from "@/components/icons/Pictogrammes";
+import Pictos from "@/components/icons/Pictos";
 
 function detecterIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -51,7 +53,7 @@ export default function InstallerApp() {
   return (
     <>
       <button type="button" className="admin-icon-btn" style={{ width: "100%", marginTop: "16px" }} onClick={handleClick}>
-        {t("install.bouton")}
+        <Pictos texte={t("install.bouton")} />
       </button>
 
       {guideOuvert && (
@@ -65,7 +67,7 @@ export default function InstallerApp() {
             </div>
             {langue === "en" ? (
               <p className="panel-hint">
-                1. Tap the <strong>Share</strong> button (⬆️) at the bottom of Safari.
+                1. Tap the <strong>Share</strong> button (<IconPartager className="gozly-icon-inline" />) at the bottom of Safari.
                 <br />
                 2. Choose <strong>"Add to Home Screen"</strong>.
                 <br />
@@ -73,7 +75,7 @@ export default function InstallerApp() {
               </p>
             ) : (
               <p className="panel-hint">
-                1. Appuie sur le bouton <strong>Partager</strong> (⬆️) en bas de Safari.
+                1. Appuie sur le bouton <strong>Partager</strong> (<IconPartager className="gozly-icon-inline" />) en bas de Safari.
                 <br />
                 2. Choisis <strong>« Sur l'écran d'accueil »</strong>.
                 <br />

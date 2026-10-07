@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import EmplacementMultiSelectModal from "@/components/entreprise/EmplacementMultiSelectModal";
 import { permissionsParModule } from "@/lib/permissions";
 import { MODULES } from "@/lib/modules";
+import { IconFlecheBas, IconFlecheHaut, IconLocalisation } from "@/components/icons/Pictogrammes";
 
 function normaliserScope(ids) {
   return [...ids].map((id) => id ?? "toutes").sort().join(",");
@@ -246,7 +247,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
             <div className="admin-row-controls">
               {jeSuisProprietaire && m.role !== "proprietaire" && (
                 <button className="admin-icon-btn" onClick={() => handleToggleOuvert(m)}>
-                  Permissions {ouverts.has(m.id) ? "▴" : "▾"}
+                  Permissions {ouverts.has(m.id) ? <IconFlecheHaut className="gozly-icon-inline" /> : <IconFlecheBas className="gozly-icon-inline" />}
                 </button>
               )}
               {m.user_id === userId
@@ -307,7 +308,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
                               style={{ marginTop: "6px", marginLeft: "28px" }}
                               onClick={() => setModalPour({ membreId: m.id, permissionId: p.id })}
                             >
-                              📍 {labelScope(draftRow.emplacement_ids)}
+                              <IconLocalisation className="gozly-icon" /> {labelScope(draftRow.emplacement_ids)}
                             </button>
                           )}
                         </div>

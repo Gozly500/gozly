@@ -13,7 +13,6 @@ import {
   IconTableauDeBord,
   IconDiscussion,
   IconEmployes,
-  IconParametres,
   IconPlanning,
   IconHoraire,
   IconInventaire,
@@ -21,6 +20,7 @@ import {
   IconTemperature,
   IconCommandes,
 } from "@/components/icons/GozlyIcons";
+import { IconBouclier, IconCategorie, IconEchange, IconEngrenage, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 const ICONES_MODULES = {
   planning: IconPlanning,
@@ -100,7 +100,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
         onClick={() => setSidebarOpen((v) => !v)}
         aria-label="Ouvrir le menu"
       >
-        {sidebarOpen ? "‹" : "›"}
+        {sidebarOpen ? <IconFlecheGauche className="gozly-icon" /> : <IconFlecheDroite className="gozly-icon" />}
       </button>
 
       <aside className={`dash-sidebar${sidebarOpen ? " open" : ""}`}>
@@ -155,7 +155,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
             <IconEmployes className="gozly-icon" /> Employés
           </Link>
           <Link href="/dashboard/entreprise/parametres" className={`dash-nav-item${active === "entreprise" ? " active" : ""}`}>
-            <IconParametres className="gozly-icon" /> Paramètres
+            <IconEngrenage className="gozly-icon" /> Paramètres
           </Link>
           <div className="dash-nav-label">Modules</div>
           {modulesActifs.filter((mod) => mod.id !== "horaire" || peutVoirHoraire).map((mod) => {
@@ -163,14 +163,14 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
             return (
             <div key={mod.id}>
               <Link href={mod.href} className={`dash-nav-item${active === mod.id ? " active" : ""}`}>
-                {IconeModule ? <IconeModule className="gozly-icon" /> : <span>{mod.icon}</span>} {mod.nom}
+                {IconeModule ? <IconeModule className="gozly-icon" /> : null} {mod.nom}
               </Link>
               {mod.id === "planning" && (active === "planning" || active === "categories") && (
                 <Link
                   href="/dashboard/planning/categories"
                   className={`dash-nav-item dash-nav-sub${active === "categories" ? " active" : ""}`}
                 >
-                  <span>▤</span> Catégories
+                  <IconCategorie className="gozly-icon" /> Catégories
                 </Link>
               )}
               {mod.id === "inventaire" && (active === "inventaire" || active === "inventaire-categories") && (
@@ -178,7 +178,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
                   href="/dashboard/inventaire/categories"
                   className={`dash-nav-item dash-nav-sub${active === "inventaire-categories" ? " active" : ""}`}
                 >
-                  <span>▤</span> Catégories
+                  <IconCategorie className="gozly-icon" /> Catégories
                 </Link>
               )}
               {mod.id === "temperature" && (active === "temperature" || active === "temperature-equipements") && (
@@ -186,7 +186,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
                   href="/dashboard/temperature/equipements"
                   className={`dash-nav-item dash-nav-sub${active === "temperature-equipements" ? " active" : ""}`}
                 >
-                  <span>▤</span> Équipements
+                  <IconCategorie className="gozly-icon" /> Équipements
                 </Link>
               )}
             </div>
@@ -209,11 +209,11 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           <div className="dash-user-actions">
             {isAdmin && (
               <Link href="/admin" className="dash-settings-btn" title="Panneau admin">
-                🛡
+                <IconBouclier className="gozly-icon" />
               </Link>
             )}
             <Link href="/parametres" className="dash-settings-btn" title="Paramètres du compte">
-              <IconParametres className="gozly-icon" />
+              <IconEngrenage className="gozly-icon" />
             </Link>
             <button onClick={onLogout} className="dash-logout-btn">
               Déconnexion
@@ -221,7 +221,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           </div>
           {!impersonation && (
             <Link href="/dashboards" className="dash-switch-link" title="Changer de dashboard">
-              ⇄ {nomEntreprise || "Changer de dashboard"}
+              <IconEchange className="gozly-icon" /> {nomEntreprise || "Changer de dashboard"}
             </Link>
           )}
         </div>

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import JourEditor from "@/components/planning/JourEditor";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { bornesJour, filtrerParDateEffective, decalerJour, dateAujourdhui } from "@/lib/commandes";
+import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -59,10 +60,10 @@ export default function PlanificationBoite({ entrepriseId, date, onChangerDate, 
         <h3>Planification</h3>
         <div style={{ display: "flex", gap: "6px" }}>
           <button className="admin-icon-btn" aria-label="Semaine précédente" onClick={() => onChangerDate(decalerJour(date, -7))}>
-            ‹
+            <IconFlecheGauche className="gozly-icon" />
           </button>
           <button className="admin-icon-btn" aria-label="Semaine suivante" onClick={() => onChangerDate(decalerJour(date, 7))}>
-            ›
+            <IconFlecheDroite className="gozly-icon" />
           </button>
         </div>
       </div>

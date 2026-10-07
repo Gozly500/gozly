@@ -7,6 +7,7 @@ import { getOrCreateEquipeConversation, getOrCreateDirecteConversation } from "@
 import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
 import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
+import { IconEnvoyer, IconFlecheGauche, IconMegaphone, IconProfils, IconX } from "@/components/icons/Pictogrammes";
 
 // mobile : une seule colonne à la fois (liste des conversations OU conversation ouverte), pour l'app /gestion.
 export default function DiscussionSection({ entrepriseId, userId, mobile = false }) {
@@ -429,7 +430,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                   setGroupeModal({ mode: "groupe", nom: "", message: "", ids: new Set() });
                 }}
               >
-                👥 Nouveau groupe
+                <IconProfils className="gozly-icon" /> Nouveau groupe
               </button>
               <button
                 type="button"
@@ -439,7 +440,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                   setGroupeModal({ mode: "diffusion", nom: "", message: "", ids: new Set() });
                 }}
               >
-                📣 Message à plusieurs
+                <IconMegaphone className="gozly-icon" /> Message à plusieurs
               </button>
             </div>
           )}
@@ -467,7 +468,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                 }
               }}
             >
-              <div className="chat-conv-titre">{c.type === "equipe" || c.type === "groupe" ? "👥 " : ""}{c.titre}</div>
+              <div className="chat-conv-titre">{c.type === "equipe" || c.type === "groupe" ? <><IconProfils className="gozly-icon" /> </> : ""}{c.titre}</div>
               {c.dernierMessage ? (
                 <div className="chat-conv-apercu">{c.dernierMessage}</div>
               ) : (
@@ -487,11 +488,11 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", padding: "10px 14px", borderBottom: "1px solid rgba(var(--w),0.12)" }}>
                   {mobile && (
                     <button type="button" className="admin-icon-btn" onClick={() => setVueMobile("liste")} aria-label="Retour">
-                      ‹
+                      <IconFlecheGauche className="gozly-icon" />
                     </button>
                   )}
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <strong>{conversationActive.type === "groupe" || conversationActive.type === "equipe" ? "👥 " : ""}{conversationActive.titre}</strong>
+                    <strong>{conversationActive.type === "groupe" || conversationActive.type === "equipe" ? <><IconProfils className="gozly-icon" /> </> : ""}{conversationActive.titre}</strong>
                     {conversationActive.type === "groupe" && (
                       <div className="section-hint" style={{ margin: 0, fontSize: "12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {conversationActive.membres?.length ? `Toi, ${conversationActive.membres.join(", ")}` : "Toi seulement"}
@@ -549,7 +550,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                     Réponse à {repondreA.auteur} : {repondreA.contenu}
                   </span>
                   <button type="button" className="admin-icon-btn" onClick={() => setRepondreA(null)}>
-                    ✕
+                    <IconX className="gozly-icon" />
                   </button>
                 </div>
               )}
@@ -565,7 +566,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                   placeholder="Écrire un message..."
                 />
                 <button type="submit" className="chat-send-btn" disabled={!texte.trim()} aria-label="Envoyer">
-                  ➤
+                  <IconEnvoyer className="gozly-icon" />
                 </button>
               </form>
             </>

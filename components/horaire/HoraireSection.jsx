@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import SimpleSelect from "@/components/SimpleSelect";
+import { IconCrochet, IconDocument, IconEtoile, IconEtoilePleine, IconFlecheDroite, IconFlecheGauche, IconMegaphone } from "@/components/icons/Pictogrammes";
 
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
@@ -337,28 +338,28 @@ export default function HoraireSection({ entrepriseId }) {
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          ‹ Semaine précédente
+          <IconFlecheGauche className="gozly-icon" /> Semaine précédente
         </button>
         <span className="planning-week-label">{weekLabel}</span>
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-          Semaine suivante ›
+          Semaine suivante <IconFlecheDroite className="gozly-icon" />
         </button>
         <button
           className="admin-icon-btn"
           title={favoris.includes(toISODate(weekStart)) ? "Retirer des favoris" : "Garder cette semaine en favori (accessible même après 8 semaines)"}
           onClick={() => toggleFavori(toISODate(weekStart))}
         >
-          {favoris.includes(toISODate(weekStart)) ? "★" : "☆"}
+          {favoris.includes(toISODate(weekStart)) ? <IconEtoilePleine className="gozly-icon" /> : <IconEtoile className="gozly-icon" />}
         </button>
         <button className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={openImportModal}>
-          📋 Importer une semaine
+          <IconDocument className="gozly-icon" /> Importer une semaine
         </button>
         <button
           className="submit-btn"
           onClick={handlePublierSemaine}
           disabled={publishing || quarts.length === 0 || quarts.every((q) => q.publie)}
         >
-          {publishing ? "Publication..." : "📢 Publier la semaine"}
+          {publishing ? "Publication..." : <><IconMegaphone className="gozly-icon" /> Publier la semaine</>}
         </button>
       </div>
       {favoriMsg && (
@@ -558,7 +559,7 @@ export default function HoraireSection({ entrepriseId }) {
                       >
                         <div className="admin-row-main">
                           <div className="admin-row-title">
-                            {selectionne ? "✓ " : ""}
+                            {selectionne ? <><IconCrochet className="gozly-icon" /> </> : ""}
                             {debut.toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} –{" "}
                             {fin.toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}
                           </div>
@@ -572,7 +573,7 @@ export default function HoraireSection({ entrepriseId }) {
                             toggleFavori(iso);
                           }}
                         >
-                          {estFavori ? "★" : "☆"}
+                          {estFavori ? <IconEtoilePleine className="gozly-icon" /> : <IconEtoile className="gozly-icon" />}
                         </button>
                       </div>
                     );

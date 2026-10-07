@@ -5,6 +5,7 @@ import { employeFetch } from "@/lib/employeAuth";
 import RappelNotifications from "@/components/moi/RappelNotifications";
 import { useLangue } from "@/components/moi/LangueContext";
 import { localeDate } from "@/lib/i18n/moi";
+import Pictos from "@/components/icons/Pictos";
 
 function badgeConge(statut, t) {
   if (statut === "approuve") return t("demandes.approuve");
@@ -193,7 +194,7 @@ export default function DemandesEmploye() {
                       })}
                     </div>
                     <div className="admin-row-sub">
-                      {badgeConge(c.statut, t)}
+                      <Pictos texte={badgeConge(c.statut, t)} />
                       {c.raison && ` · ${c.raison}`}
                     </div>
                   </div>
@@ -258,7 +259,7 @@ export default function DemandesEmploye() {
                           {d.quart.heure_fin?.slice(0, 5)} ·{" "}
                         </>
                       )}
-                      {badgeEchange(d, t)}
+                      <Pictos texte={badgeEchange(d, t)} />
                     </div>
                   </div>
                   {d.role === "receveur" && d.statutEmploye === "en_attente" && (

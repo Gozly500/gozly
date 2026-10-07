@@ -833,7 +833,7 @@ section{padding:80px 0;position:relative;}
 
 .price-card ul{list-style:none;color:var(--text-dim);font-size:13.5px;line-height:2.1;margin-bottom:26px;flex:1;}
 
-.price-card ul li::before{content:'✦';color:var(--cyan);margin-right:8px;font-size:11px;}
+.price-card ul li::before{content:'';display:inline-block;width:11px;height:11px;margin-right:8px;background:var(--cyan);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 760 924'%3E%3Cpath d='M983.736,191.167L590.551,934.193L404.795,632.339' transform='translate(-211 -110) translate(-104 9)' fill='none' stroke='black' stroke-width='180' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 760 924'%3E%3Cpath d='M983.736,191.167L590.551,934.193L404.795,632.339' transform='translate(-211 -110) translate(-104 9)' fill='none' stroke='black' stroke-width='180' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;}
 
 .price-btn{
     text-align:center;padding:12px;border-radius:30px;font-weight:600;font-size:14px;
@@ -2248,3 +2248,9 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .inventaire-variante{margin-left:22px;border-left:3px solid rgba(var(--w),0.14);}
 .inventaire-chevron{display:inline-block;width:14px;color:var(--text-dim);}
 .diag-resultat{background:rgba(0,0,0,0.35);border:1px solid rgba(var(--w),0.14);border-radius:10px;padding:12px;font-size:12px;line-height:1.5;max-height:50vh;overflow:auto;white-space:pre-wrap;word-break:break-word;}
+/* Pictogrammes (bibliothèque Pictogram) : petite taille dans du texte, chevrons de menus, pastilles. */
+.gozly-icon-inline{width:.85em;height:.85em;vertical-align:-0.1em;flex-shrink:0;}
+.fs-arrow .gozly-icon-inline,.ih-arrow .gozly-icon-inline{width:12px;height:12px;vertical-align:middle;}
+.badge .badge-icone{width:26px;height:26px;}
+.inventaire-chevron .gozly-icon-inline{width:12px;height:12px;vertical-align:middle;}
+.gozly-icon-inline + .gozly-icon-inline{margin-left:2px;}

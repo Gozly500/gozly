@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
+import { IconFlecheBas, IconLocalisation } from "@/components/icons/Pictogrammes";
 
 // Menu déroulant "maison" pour choisir l'emplacement actif - un <select>
 // natif ne peut pas être stylé proprement (le menu ouvert reste blanc,
@@ -19,8 +20,8 @@ export default function EmplacementSelect({ emplacements, value, onChange, inclu
   return (
     <div className="emplacement-select-wrap" ref={ref}>
       <div className={`emplacement-select-trigger${open ? " open" : ""}`} onClick={() => setOpen((v) => !v)}>
-        <span>{current?.id ? `📍 ${current.nom}` : current?.nom}</span>
-        <span className="fs-arrow">▾</span>
+        <span>{current?.id ? <><IconLocalisation className="gozly-icon" /> {current.nom}</> : current?.nom}</span>
+        <span className="fs-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
       </div>
       {open && (
         <div className="emplacement-select-options">
@@ -33,7 +34,7 @@ export default function EmplacementSelect({ emplacements, value, onChange, inclu
                 setOpen(false);
               }}
             >
-              {o.id ? `📍 ${o.nom}` : o.nom}
+              {o.id ? <><IconLocalisation className="gozly-icon" /> {o.nom}</> : o.nom}
             </div>
           ))}
         </div>

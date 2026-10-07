@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { IconCrochet, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 function todayISO() {
   const d = new Date();
@@ -65,7 +66,7 @@ export default function PlanningJourWidget({ entrepriseId }) {
               <tr key={t.id}>
                 <td>{t.texte}</td>
                 <td>{nomCategorie(t.categorie_id) || "—"}</td>
-                <td>{t.terminee ? "✅ Faite" : "À faire"}</td>
+                <td>{t.terminee ? <><IconCrochet className="gozly-icon" /> Faite</> : "À faire"}</td>
               </tr>
             ))}
           </tbody>
@@ -77,7 +78,7 @@ export default function PlanningJourWidget({ entrepriseId }) {
         </p>
       )}
       <Link href="/dashboard/planning" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
-        Voir les tâches →
+        Voir les tâches <IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { geocoderAdresse } from "@/lib/geocode";
+import { IconAttention, IconCrochet } from "@/components/icons/Pictogrammes";
 
 // Jours dans l'ordre d'affichage ; l'id est le numéro de jour JS (0 = dimanche).
 const JOURS_OUVERTURE = [
@@ -155,7 +156,7 @@ export default function EmplacementsSection({ entrepriseId }) {
                 {emp.adresse && (
                   <div className="admin-row-sub">
                     {emp.adresse}
-                    {emp.latitude == null && " — ⚠ position introuvable, pointage mobile indisponible"}
+                    {emp.latitude == null && <> — <IconAttention className="gozly-icon" /> position introuvable, pointage mobile indisponible</>}
                   </div>
                 )}
               </div>
@@ -174,7 +175,7 @@ export default function EmplacementsSection({ entrepriseId }) {
               ) : (
                 <>
                   <button className="admin-icon-btn" onClick={() => ouvrirHoraires(emp)}>
-                    {emp.horaires_ouverture ? "Horaires ✓" : "Horaires"}
+                    {emp.horaires_ouverture ? <>Horaires <IconCrochet className="gozly-icon" /></> : "Horaires"}
                   </button>
                   <button className="admin-icon-btn" onClick={() => startEdit(emp)}>
                     Modifier

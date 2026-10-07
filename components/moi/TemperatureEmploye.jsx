@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import TemperatureInput from "@/components/TemperatureInput";
+import { IconAttention, IconCrochet, IconPoint } from "@/components/icons/Pictogrammes";
 
 export default function TemperatureEmploye() {
   const { t } = useLangue();
@@ -131,7 +132,7 @@ export default function TemperatureEmploye() {
     const r = releveExistant(eq.id, periode);
     return (
       <div style={{ textAlign: "center", fontSize: "13px", color: r ? "var(--text)" : "var(--text-dim)" }}>
-        {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°${eq.unite === "F" ? "F" : "C"}` : "—"}
+        {r ? <>{r.conforme ? <IconCrochet className="gozly-icon" /> : <IconAttention className="gozly-icon" />} {r.temperature}°{eq.unite === "F" ? "F" : "C"}</> : "—"}
       </div>
     );
   }
@@ -147,7 +148,7 @@ export default function TemperatureEmploye() {
           {["am", "pm"].map((p) => (
             <div key={p} style={{ textAlign: "center", color: p === creneau?.periode ? "var(--text)" : undefined }}>
               {p.toUpperCase()}
-              {p === creneau?.periode ? " ●" : ""}
+              {p === creneau?.periode ? <> <IconPoint className="gozly-icon-inline" /></> : ""}
             </div>
           ))}
         </div>

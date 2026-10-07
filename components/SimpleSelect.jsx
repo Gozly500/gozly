@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
+import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 
 // Menu déroulant "maison" générique ({id, label}[]) - un <select> natif ne
 // peut pas être stylé proprement (le menu ouvert reste blanc). Mêmes
@@ -16,7 +17,7 @@ export default function SimpleSelect({ options, value, onChange, placeholder = "
     <div className="forfait-select-wrap" ref={ref}>
       <div className={`forfait-select-trigger${open ? " open" : ""}`} onClick={() => setOpen((v) => !v)}>
         <div className="fs-label">{current ? current.label : placeholder}</div>
-        <span className="fs-arrow">▾</span>
+        <span className="fs-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
       </div>
       {open && (
         <div className="forfait-select-options open">

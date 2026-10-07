@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { xmlVersLignes } from "@/lib/apercuBon";
+import { IconCrochet, IconOeil } from "@/components/icons/Pictogrammes";
 
 async function appelerImpression(entrepriseId, action) {
   const { data } = await supabase.auth.getSession();
@@ -79,7 +80,7 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
         {selecteur && <div className="impression-selecteur">{selecteur}</div>}
         <div className="impression-boutons">
           <button className="admin-icon-btn" disabled={busy} onClick={voirApercu}>
-            👁 Aperçu du bon
+            <IconOeil className="gozly-icon" /> Aperçu du bon
           </button>
           {!etat.actif ? (
             <button className="submit-btn" disabled={busy} onClick={() => lancer("activer")}>
@@ -121,7 +122,7 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
           <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "12px" }}>
             <input type="text" readOnly value={etat.url || ""} onFocus={(e) => e.target.select()} style={{ flex: 1, minWidth: "260px" }} />
             <button className="admin-icon-btn" onClick={copier}>
-              {copie ? "Copié ✓" : "Copier"}
+              {copie ? <>Copié <IconCrochet className="gozly-icon" /></> : "Copier"}
             </button>
           </div>
           <p className="section-hint">Garde cette adresse privée : quiconque la connaît peut interroger ton imprimante.</p>
@@ -161,7 +162,7 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
               {xmlVersLignes(apercuSource === "derniere" && apercu.derniere ? apercu.derniere : apercu.exemple).map((l, i) =>
                 l.coupe ? (
                   <div key={i} className="bon-coupe">
-                    ✂ - - - - - - - - - - - - - - - - - -
+                    - - - - - - - - - - - - - - - - - - -
                   </div>
                 ) : (
                   <div

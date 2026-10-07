@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { MODULES } from "@/lib/modules";
 import { KIOSQUES } from "@/lib/kiosques";
+import { IconEcran } from "@/components/icons/Pictogrammes";
 
 // Tous les écrans kiosque de l'entreprise, au même endroit (un par module actif qui en a un).
 export default function KiosquesContent() {
@@ -108,7 +109,7 @@ export default function KiosquesContent() {
                     {module?.image ? (
                       <img src={module.image} alt="" width={44} height={44} style={{ flexShrink: 0, borderRadius: "10px" }} />
                     ) : (
-                      <span style={{ fontSize: "28px", flexShrink: 0 }}>{module?.icon || "🖥"}</span>
+                      <span style={{ fontSize: "28px", flexShrink: 0 }}>{module?.icon || <IconEcran className="gozly-icon" />}</span>
                     )}
                     <div className="admin-row-main" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                       <div className="admin-row-title">{k.nom}</div>
@@ -116,7 +117,7 @@ export default function KiosquesContent() {
                     </div>
                     <div className="admin-row-controls">
                       <Link href={k.href} target="_blank" className="submit-btn" style={{ textDecoration: "none" }}>
-                        🖥 Ouvrir
+                        <IconEcran className="gozly-icon" /> Ouvrir
                       </Link>
                     </div>
                   </div>

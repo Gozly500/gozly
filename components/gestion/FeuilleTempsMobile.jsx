@@ -6,6 +6,7 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { useGestion } from "@/components/gestion/GestionShell";
 import { telechargerPdfFeuilleTemps } from "@/lib/exportPdf";
+import { IconAttention, IconCrochet, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -261,7 +262,7 @@ export default function FeuilleTempsMobile() {
     const contenu = (
       <>
         {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>en cours</em>}
-        {x.auto && <span className="gestion-oubli">⚠ oubli potentiel</span>}
+        {x.auto && <span className="gestion-oubli"><IconAttention className="gozly-icon" /> oubli potentiel</span>}
       </>
     );
     return peutCorriger ? (
@@ -277,11 +278,11 @@ export default function FeuilleTempsMobile() {
     <div>
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          ‹
+          <IconFlecheGauche className="gozly-icon" />
         </button>
         <span className="moi-week-label">{libelleSemaine}</span>
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-          ›
+          <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 
@@ -290,7 +291,7 @@ export default function FeuilleTempsMobile() {
       <div className="gestion-approbation">
         {approbationActuelle ? (
           <>
-            <span className="gestion-approuvee">✓ Semaine approuvée</span>
+            <span className="gestion-approuvee"><IconCrochet className="gozly-icon" /> Semaine approuvée</span>
             {peutApprouver && (
               <button className="admin-icon-btn" onClick={() => desapprouver(approbationActuelle)} disabled={approving}>
                 Retirer
@@ -328,7 +329,7 @@ export default function FeuilleTempsMobile() {
             </span>
             {peutExporter && (
               <button type="button" className="admin-icon-btn" onClick={exporterPdf} disabled={exportEnCours}>
-                {exportEnCours ? "PDF..." : "⬇ PDF"}
+                {exportEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> PDF</>}
               </button>
             )}
           </div>
@@ -344,10 +345,10 @@ export default function FeuilleTempsMobile() {
                     <button type="button" className="gestion-carte-tete" onClick={() => setOuvertId(ouvert ? null : emp.id)} aria-expanded={ouvert}>
                       <span className="gestion-carte-nom">
                         {emp.nom}
-                        {nbOublis > 0 && <span className="gestion-oubli">⚠ {nbOublis}</span>}
+                        {nbOublis > 0 && <span className="gestion-oubli"><IconAttention className="gozly-icon" /> {nbOublis}</span>}
                       </span>
                       <span className="gestion-carte-total">{total > 0 ? heures(total) : "—"}</span>
-                      <span className="gestion-chevron">{ouvert ? "▾" : "▸"}</span>
+                      <span className="gestion-chevron">{ouvert ? <IconFlecheBas className="gozly-icon-inline" /> : <IconFlecheDroite className="gozly-icon-inline" />}</span>
                     </button>
                     {ouvert && (
                       <div className="gestion-jours">

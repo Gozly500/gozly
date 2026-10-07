@@ -18,6 +18,7 @@ import TemperatureWidget from "@/components/dashboard/TemperatureWidget";
 import CommandesWidget from "@/components/dashboard/CommandesWidget";
 import { WIDGETS, fusionnerConfigWidgets } from "@/lib/dashboardWidgets";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
+import { IconEcran, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 export default function DashboardContent() {
   const router = useRouter();
@@ -274,7 +275,7 @@ export default function DashboardContent() {
             <div className="dash-forfait-banner">
               <span>Tu n'as aucun forfait actif.</span>
               <Link href="/parametres?tab=abonnement" className="dash-forfait-banner-btn">
-                Choisir un forfait →
+                Choisir un forfait <IconFlecheDroite className="gozly-icon-inline" />
               </Link>
             </div>
           )}
@@ -289,7 +290,7 @@ export default function DashboardContent() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Link href="/dashboard/kiosques" className="admin-icon-btn">
-              🖥 Mode kiosque
+              <IconEcran className="gozly-icon" /> Mode kiosque
             </Link>
             <button
               type="button"

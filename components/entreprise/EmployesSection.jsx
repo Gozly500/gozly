@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import InfoTooltip from "@/components/InfoTooltip";
 import { IconTelephone } from "@/components/icons/GozlyIcons";
+import { IconCalendrier, IconLocalisation, IconMessage } from "@/components/icons/Pictogrammes";
 
 const FORM_VIDE = { nom: "", role: "", telephone: "", courriel: "", nip: "", numeroPaie: "", emplacementIds: [] };
 
@@ -239,7 +240,7 @@ export default function EmployesSection({ entrepriseId }) {
           type="text"
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
-          placeholder="🔎 Rechercher un employé..."
+          placeholder="Rechercher un employé..."
         />
       </div>
 
@@ -257,7 +258,7 @@ export default function EmployesSection({ entrepriseId }) {
                   {[emp.role, emp.courriel, emp.numero_paie && `# paie: ${emp.numero_paie}`].filter(Boolean).join(" · ") ||
                     "Aucune info de contact"}
                 </div>
-                {empEmplacements.length > 0 && <div className="admin-row-sub">📍 {empEmplacements.join(", ")}</div>}
+                {empEmplacements.length > 0 && <div className="admin-row-sub"><IconLocalisation className="gozly-icon" /> {empEmplacements.join(", ")}</div>}
               </div>
               <div className="admin-row-controls">
                 <IconTelephone
@@ -378,7 +379,7 @@ export default function EmployesSection({ entrepriseId }) {
                           checked={form.emplacementIds.includes(e.id)}
                           onChange={() => toggleEmplacement(e.id)}
                         />
-                        📍 {e.nom}
+                        <IconLocalisation className="gozly-icon" /> {e.nom}
                       </label>
                     ))}
                   </div>
@@ -417,13 +418,13 @@ export default function EmployesSection({ entrepriseId }) {
             <ul style={{ margin: "0 0 18px", paddingLeft: "20px", fontSize: "13.5px", color: "var(--text-dim)" }}>
               <li>
                 {confirmDelete.quartsCount > 0
-                  ? `🗓 ${confirmDelete.quartsCount} quart${confirmDelete.quartsCount > 1 ? "s" : ""} de travail assigné${confirmDelete.quartsCount > 1 ? "s" : ""}`
-                  : "🗓 Aucun quart de travail assigné"}
+                  ? <><IconCalendrier className="gozly-icon" /> {confirmDelete.quartsCount} quart{confirmDelete.quartsCount > 1 ? "s" : ""} de travail assigné{confirmDelete.quartsCount > 1 ? "s" : ""}</>
+                  : <><IconCalendrier className="gozly-icon" /> Aucun quart de travail assigné</>}
               </li>
               <li>
                 {confirmDelete.messagesCount > 0
-                  ? `💬 ${confirmDelete.messagesCount} message${confirmDelete.messagesCount > 1 ? "s" : ""} (fil d'équipe et conversations privées)`
-                  : "💬 Aucun message dans les discussions"}
+                  ? <><IconMessage className="gozly-icon" /> {confirmDelete.messagesCount} message{confirmDelete.messagesCount > 1 ? "s" : ""} (fil d'équipe et conversations privées)</>
+                  : <><IconMessage className="gozly-icon" /> Aucun message dans les discussions</>}
               </li>
             </ul>
 

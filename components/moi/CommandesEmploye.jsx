@@ -5,6 +5,7 @@ import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
 import { dateAujourdhui, decalerJour, heureCommande, libelleRamassage, formatMontant } from "@/lib/commandes";
+import { IconDocument, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 // Les téléphones se rafraîchissent tout seuls à cet intervalle tant que la page est visible.
 const INTERVALLE_RAFRAICHISSEMENT_MS = 30000;
@@ -87,7 +88,7 @@ export default function CommandesEmploye() {
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "14px" }}>
         <button type="button" className="admin-icon-btn" aria-label={t("taches.jourPrecedent")} onClick={() => setDate((d) => decalerJour(d, -1))}>
-          ‹
+          <IconFlecheGauche className="gozly-icon" />
         </button>
         <div style={{ textAlign: "center" }}>
           <div className="planning-day-title" style={{ textTransform: "capitalize" }}>
@@ -100,7 +101,7 @@ export default function CommandesEmploye() {
           )}
         </div>
         <button type="button" className="admin-icon-btn" aria-label={t("taches.jourSuivant")} onClick={() => setDate((d) => decalerJour(d, 1))}>
-          ›
+          <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 
@@ -147,7 +148,7 @@ export default function CommandesEmploye() {
                     </a>
                   </div>
                 )}
-                {c.note && <div style={{ marginBottom: "6px", fontSize: "13.5px", color: "#ffd479" }}>📝 {c.note}</div>}
+                {c.note && <div style={{ marginBottom: "6px", fontSize: "13.5px", color: "#ffd479" }}><IconDocument className="gozly-icon" /> {c.note}</div>}
                 {(c.mode === "ramassage" || c.mode === "livraison" || c.lieu_nom) && (
                   <div className="section-hint" style={{ margin: "0 0 8px" }}>
                     {[c.mode === "ramassage" ? t("commandes.ramassage") : c.mode === "livraison" ? t("commandes.livraison") : null, c.lieu_nom]

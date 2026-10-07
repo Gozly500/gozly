@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { SERVICES_PAIE } from "@/lib/servicesPaie";
+import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 
 // Regroupe les intégrations par catégorie pour les retrouver plus
 // facilement au fur et à mesure qu'on en ajoute (chaque catégorie est un
@@ -361,7 +362,7 @@ export default function IntegrationsSection({ entrepriseId }) {
             <div className="integration-item" key={cat.id}>
               <button type="button" className={`integration-header${ouverte ? " open" : ""}`} onClick={() => toggleCategorie(cat.id)}>
                 <span className="ih-label">{cat.label}</span>
-                <span className="ih-arrow">▾</span>
+                <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
               </button>
 
               {ouverte && (

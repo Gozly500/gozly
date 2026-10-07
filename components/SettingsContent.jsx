@@ -10,11 +10,11 @@ import AppearanceSection from "@/components/settings/AppearanceSection";
 import GestionSection from "@/components/settings/GestionSection";
 
 const TABS = [
-  { id: "informations", label: "Informations", icon: "👤" },
-  { id: "abonnement", label: "Abonnement", icon: "💳" },
-  { id: "apparence", label: "Apparence", icon: "🎨" },
-  { id: "activite", label: "Activité du compte", icon: "🕒" },
-  { id: "gestion", label: "Gestion du compte", icon: "⚙" },
+  { id: "informations", label: "Informations", Icone: IconProfil },
+  { id: "abonnement", label: "Abonnement", Icone: IconCarte },
+  { id: "apparence", label: "Apparence", Icone: IconPalette },
+  { id: "activite", label: "Activité du compte", Icone: IconHorloge },
+  { id: "gestion", label: "Gestion du compte", Icone: IconEngrenage },
 ];
 
 export default function SettingsContent() {
@@ -98,7 +98,7 @@ export default function SettingsContent() {
             className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            <span className="icon">{tab.icon}</span> {tab.label}
+            <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
           </button>
         ))}
       </nav>

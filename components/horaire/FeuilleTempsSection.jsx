@@ -9,6 +9,7 @@ import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { PERMISSIONS } from "@/lib/permissions";
 import { telechargerPdfFeuilleTemps } from "@/lib/exportPdf";
+import { IconAttention, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
 
 function heuresDecimal(minutes) {
   return (minutes / 60).toFixed(2);
@@ -425,11 +426,11 @@ export default function FeuilleTempsSection({ entrepriseId }) {
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          ‹ Semaine précédente
+          <IconFlecheGauche className="gozly-icon" /> Semaine précédente
         </button>
         <span className="planning-week-label">{weekLabel}</span>
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-          Semaine suivante ›
+          Semaine suivante <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 
@@ -460,7 +461,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
               onClick={() => setExportOpen((v) => !v)}
               disabled={lignes.length === 0 || envoiNethris}
             >
-              {envoiNethris ? "Envoi..." : exportPdfEnCours ? "PDF..." : "⬇ Exporter ▾"}
+              {envoiNethris ? "Envoi..." : exportPdfEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> Exporter <IconFlecheBas className="gozly-icon-inline" /></>}
             </button>
             {exportOpen && (
               <div className="account-dropdown open">
@@ -551,7 +552,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                                         title="Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin."
                                         style={{ color: "#ffd479", fontSize: "11.5px", marginLeft: "6px" }}
                                       >
-                                        ⚠ oubli potentiel
+                                        <IconAttention className="gozly-icon" /> oubli potentiel
                                       </span>
                                     )}
                                   </button>
@@ -563,7 +564,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                                         title="Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin."
                                         style={{ color: "#ffd479", fontSize: "11.5px", marginLeft: "6px" }}
                                       >
-                                        ⚠ oubli potentiel
+                                        <IconAttention className="gozly-icon" /> oubli potentiel
                                       </span>
                                     )}
                                   </>

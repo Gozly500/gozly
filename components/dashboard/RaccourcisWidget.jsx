@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { MODULES } from "@/lib/modules";
+import { IconeModule } from "@/components/icons/iconesModules";
 
 // L'activation/désactivation des modules eux-mêmes se fait uniquement
 // via "Gérer les modules" dans la barre latérale (DashSidebar.jsx) -
@@ -32,7 +33,7 @@ export default function RaccourcisWidget({ actifs, editMode, modulesCaches, onTo
                 <img src={mod.image} alt={mod.nom} className="dash-module-image" />
               ) : (
                 <>
-                  <span className="dash-module-emoji">{mod.icon}</span>
+                  <span className="dash-module-emoji"><IconeModule id={mod.id} className="gozly-icon" style={{ width: 34, height: 34 }} /></span>
                   <span className="dash-module-name">{mod.nom}</span>
                 </>
               )}

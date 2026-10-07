@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
+import { IconLocalisation } from "@/components/icons/Pictogrammes";
 
 function todayISO() {
   const d = new Date();
@@ -151,7 +152,7 @@ export default function PlanningKioskContent() {
                 onClick={() => choisirEmplacement(e.id)}
                 style={{ aspectRatio: "auto" }}
               >
-                <div className="dashboard-picker-logo">📍</div>
+                <div className="dashboard-picker-logo"><IconLocalisation className="gozly-icon" style={{ width: "58%", height: "58%" }} /></div>
                 <div className="dashboard-picker-nom">{e.nom}</div>
               </button>
             ))}

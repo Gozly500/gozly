@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -111,7 +112,7 @@ export default function LoginForm() {
             onClick={() => setMotDePasseOublie(false)}
             style={{ background: "none", border: "none", padding: 0, textDecoration: "underline", color: "#fff", cursor: "pointer", font: "inherit" }}
           >
-            ← Retour à la connexion
+            <IconFlecheGauche className="gozly-icon" /> Retour à la connexion
           </button>
         </p>
       </div>

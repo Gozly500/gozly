@@ -16,6 +16,7 @@ import {
   isValidTheme,
   estSobre,
 } from "@/lib/themes";
+import { IconAttention } from "@/components/icons/Pictogrammes";
 
 // Parcours obligatoire juste après la création d'un compte : (1) créer sa
 // première entreprise (impossible d'avoir un tableau de bord sans elle),
@@ -258,7 +259,7 @@ export default function OnboardingContent() {
             />
             {adresseIntrouvable && (
               <p className="section-hint" style={{ color: "#f2b95a", marginTop: "4px" }}>
-                ⚠ Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
+                <IconAttention className="gozly-icon" /> Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
               </p>
             )}
           </div>

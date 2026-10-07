@@ -6,6 +6,7 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import { useGestion } from "@/components/gestion/GestionShell";
 import { dateAujourdhui, decalerJour, NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
+import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
 
 // Tâches du jour pour le téléphone : on change de jour avec ‹ ›, on coche les tâches,
 // on en ajoute dans une catégorie ou on les retire. La catégorie "Réservations" est
@@ -121,7 +122,7 @@ export default function TachesGestion() {
             </label>
             {t.source !== "commande" && (
               <button type="button" className="admin-icon-btn danger gestion-tache-retirer" onClick={() => retirer(t)} aria-label="Retirer la tâche">
-                ✕
+                <IconX className="gozly-icon" />
               </button>
             )}
           </div>
@@ -134,7 +135,7 @@ export default function TachesGestion() {
                 Ajouter
               </button>
               <button type="button" className="admin-icon-btn" onClick={() => { setAjoutPour(null); setTexte(""); }}>
-                ✕
+                <IconX className="gozly-icon" />
               </button>
             </form>
           ) : (
@@ -152,13 +153,13 @@ export default function TachesGestion() {
 
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, -1))}>
-          ‹
+          <IconFlecheGauche className="gozly-icon" />
         </button>
         <span className="moi-week-label" style={{ textTransform: "capitalize" }}>
           {dateLabel}
         </span>
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, 1))}>
-          ›
+          <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
       {date !== aujourdhui && (

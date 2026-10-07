@@ -12,6 +12,7 @@ const CLE_LUS = "gozly_chat_lus";
 import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
 import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
+import { IconEnvoyer, IconFlecheGauche, IconProfil, IconProfils, IconX } from "@/components/icons/Pictogrammes";
 
 export default function DiscussionEmploye() {
   const { t } = useLangue();
@@ -329,7 +330,7 @@ export default function DiscussionEmploye() {
                 onClick={() => ouvrirConversation(c)}
               >
                 <div className="chat-conv-titre">
-                  {c.type === "equipe" || c.type === "groupe" ? "👥 " : ""}
+                  {c.type === "equipe" || c.type === "groupe" ? <><IconProfils className="gozly-icon" /> </> : ""}
                   {c.titre}
                   {nonLu && <span className="chat-conv-pastille" aria-label="Nouveau message" />}
                 </div>
@@ -353,7 +354,7 @@ export default function DiscussionEmploye() {
           <div className="chat-thread">
             <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderBottom: "1px solid rgba(var(--w),0.1)" }}>
               <button type="button" className="admin-icon-btn" onClick={() => setVue("liste")}>
-                ‹
+                <IconFlecheGauche className="gozly-icon" />
               </button>
               <strong style={{ fontSize: "14px" }}>{activeTitre}</strong>
             </div>
@@ -409,7 +410,7 @@ export default function DiscussionEmploye() {
                   {t("chat.reponseA", { nom: repondreA.auteur })} : {repondreA.contenu}
                 </span>
                 <button type="button" className="admin-icon-btn" onClick={() => setRepondreA(null)}>
-                  ✕
+                  <IconX className="gozly-icon" />
                 </button>
               </div>
             )}
@@ -425,7 +426,7 @@ export default function DiscussionEmploye() {
                 placeholder={t("chat.placeholder")}
               />
               <button type="submit" className="chat-send-btn" disabled={!texte.trim()} aria-label="Envoyer">
-                ➤
+                <IconEnvoyer className="gozly-icon" />
               </button>
             </form>
           </div>
@@ -456,7 +457,7 @@ export default function DiscussionEmploye() {
                   setPickerOpen(true);
                 }}
               >
-                👤 {t("chat.unContact")}
+                <IconProfil className="gozly-icon" /> {t("chat.unContact")}
               </button>
               <button
                 type="button"
@@ -467,7 +468,7 @@ export default function DiscussionEmploye() {
                   setGroupeOuvert(true);
                 }}
               >
-                👥 {t("chat.unGroupe")}
+                <IconProfils className="gozly-icon" /> {t("chat.unGroupe")}
               </button>
             </div>
           </div>

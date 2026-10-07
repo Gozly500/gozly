@@ -1,6 +1,7 @@
 "use client";
 
 import { THEMES_COULEUR, THEMES_SOBRES, ACCENTS, estSobre } from "@/lib/themes";
+import { IconCrochet } from "@/components/icons/Pictogrammes";
 
 function Choix({ t, theme, onSelect, disabled }) {
   const inactif = disabled;
@@ -16,7 +17,7 @@ function Choix({ t, theme, onSelect, disabled }) {
         <strong>{t.label}</strong>
         <span>{t.description}</span>
       </span>
-      {theme === t.id && <span className="theme-check">✓</span>}
+      {theme === t.id && <span className="theme-check"><IconCrochet className="gozly-icon" /></span>}
     </button>
   );
 }

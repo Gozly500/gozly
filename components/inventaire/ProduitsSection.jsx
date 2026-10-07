@@ -4,6 +4,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
+import { IconAttention, IconFlecheBas, IconFlecheDroite, IconLoupe } from "@/components/icons/Pictogrammes";
 
 const FORM_VIDE = { nom: "", variante: "", sku: "", quantite: "", seuilAlerte: "", prix: "", notes: "", categorieId: "" };
 
@@ -54,7 +55,7 @@ function MenuChoix({ options, value, onChange }) {
     <div className="emplacement-select-wrap" ref={ref} style={{ marginBottom: 0 }}>
       <div className={`emplacement-select-trigger${ouvert ? " open" : ""}`} onClick={() => setOuvert((v) => !v)}>
         <span>{courant?.nom}</span>
-        <span className="fs-arrow">▾</span>
+        <span className="fs-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
       </div>
       {ouvert && (
         <div className="emplacement-select-options" style={{ maxHeight: "260px", overflowY: "auto" }}>
@@ -321,7 +322,7 @@ export default function ProduitsSection({ entrepriseId }) {
       <div className={`admin-row${variante ? " inventaire-variante" : ""}`} key={p.id}>
         <div className="admin-row-main">
           <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
-            {!variante && <span className="inventaire-chevron" />}{titre} {p.source === "wix" && <IconIntegration className="gozly-icon" />} {enAlerte && "⚠️"}
+            {!variante && <span className="inventaire-chevron" />}{titre} {p.source === "wix" && <IconIntegration className="gozly-icon" />} {enAlerte && <IconAttention className="gozly-icon" />}
           </div>
           <div className="admin-row-sub">
             {p.sku && `SKU: ${p.sku} · `}
@@ -370,7 +371,7 @@ export default function ProduitsSection({ entrepriseId }) {
         >
           <div className="admin-row-main">
             <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
-              <span className="inventaire-chevron">{ouvert ? "▾" : "▸"}</span> {e.base} {enAlerte && "⚠️"}
+              <span className="inventaire-chevron">{ouvert ? <IconFlecheBas className="gozly-icon-inline" /> : <IconFlecheDroite className="gozly-icon-inline" />}</span> {e.base} {enAlerte && <IconAttention className="gozly-icon" />}
             </div>
             <div className="admin-row-sub">
               {e.produits.length} variante{e.produits.length > 1 ? "s" : ""} · Quantité totale: {total}
@@ -419,7 +420,7 @@ export default function ProduitsSection({ entrepriseId }) {
           )}
           {wixConnecte && (
             <button className="admin-icon-btn" onClick={() => setDiagOuvert(true)}>
-              🔍 Diagnostic Wix
+              <IconLoupe className="gozly-icon" /> Diagnostic Wix
             </button>
           )}
           <button className="submit-btn" onClick={openAdd}>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { creneauActuel } from "@/lib/temperature";
+import { IconAttention, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 // Une alerte disparaît du widget après ce nombre de jours (le registre complet
 // reste dans Températures > Historique).
@@ -77,7 +78,7 @@ export default function TemperatureWidget({ entrepriseId }) {
               <tr key={r.id}>
                 <td>{r.equipement?.nom || "?"}</td>
                 <td>{quand(r, aujourdhui)}</td>
-                <td>⚠️ {r.temperature}°C</td>
+                <td><IconAttention className="gozly-icon" /> {r.temperature}°C</td>
                 <td>{r.releve_par}</td>
               </tr>
             ))}
@@ -85,7 +86,7 @@ export default function TemperatureWidget({ entrepriseId }) {
         </table>
       </div>
       <Link href="/dashboard/temperature" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
-        Voir le registre →
+        Voir le registre <IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

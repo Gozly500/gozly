@@ -11,6 +11,7 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 import TemperatureInput from "@/components/TemperatureInput";
 import { telechargerPdfTemperatures } from "@/lib/exportPdf";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
+import { IconAttention, IconCrochet, IconEngrenage, IconFlecheBas, IconFlecheHaut, IconPoint, IconTelecharger } from "@/components/icons/Pictogrammes";
 
 export default function TemperatureContent() {
   const router = useRouter();
@@ -245,7 +246,7 @@ export default function TemperatureContent() {
               <p>Registre de conformité MAPAQ - frigos, congélateurs et maintien au chaud.</p>
             </div>
             <Link href="/dashboard/temperature/equipements" className="admin-icon-btn">
-              ⚙ Gérer les équipements
+              <IconEngrenage className="gozly-icon" /> Gérer les équipements
             </Link>
           </header>
 
@@ -280,7 +281,7 @@ export default function TemperatureContent() {
                       {["am", "pm"].map((p) => (
                         <div key={p} style={{ textAlign: "center", color: p === creneau.periode ? "var(--text)" : undefined }}>
                           {p.toUpperCase()}
-                          {p === creneau.periode ? " ●" : ""}
+                          {p === creneau.periode ? <> <IconPoint className="gozly-icon-inline" /></> : ""}
                         </div>
                       ))}
                     </div>
@@ -306,7 +307,7 @@ export default function TemperatureContent() {
                             const r = releveExistant(eq.id, p);
                             return (
                               <div key={p} style={{ textAlign: "center", fontSize: "13px", color: r ? "var(--text)" : "var(--text-dim)" }}>
-                                {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°${eq.unite === "F" ? "F" : "C"}` : "—"}
+                                {r ? <>{r.conforme ? <IconCrochet className="gozly-icon" /> : <IconAttention className="gozly-icon" />} {r.temperature}°{eq.unite === "F" ? "F" : "C"}</> : "—"}
                               </div>
                             );
                           })}
@@ -328,7 +329,7 @@ export default function TemperatureContent() {
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
                   <div className="account-wrap" ref={exportRef}>
                     <button type="button" className="admin-icon-btn" onClick={() => setExportOuvert((v) => !v)} disabled={exportPdfEnCours}>
-                      {exportPdfEnCours ? "PDF..." : "⬇ Exporter ▾"}
+                      {exportPdfEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> Exporter <IconFlecheBas className="gozly-icon-inline" /></>}
                     </button>
                     {exportOuvert && (
                       <div className="account-dropdown open">
@@ -384,7 +385,7 @@ export default function TemperatureContent() {
                             {enCours && <span style={{ color: "var(--text-dim)", fontWeight: 400 }}> · en cours</span>}
                           </span>
                           <span style={{ fontSize: "12.5px", color: "var(--text-dim)" }}>
-                            {f.nonConformes > 0 ? `⚠️ ${f.nonConformes} non conforme${f.nonConformes > 1 ? "s" : ""}` : "✓ conforme"} {ouvert ? "▴" : "▾"}
+                            {f.nonConformes > 0 ? <><IconAttention className="gozly-icon" /> {f.nonConformes} non conforme{f.nonConformes > 1 ? "s" : ""}</> : <><IconCrochet className="gozly-icon" /> conforme</>} {ouvert ? <IconFlecheHaut className="gozly-icon-inline" /> : <IconFlecheBas className="gozly-icon-inline" />}
                           </span>
                         </button>
                         {ouvert && (
@@ -401,7 +402,7 @@ export default function TemperatureContent() {
                                   const r = f.releves.find((x) => x.equipement_id === eq.id && x.periode === p);
                                   return (
                                     <div key={p} style={{ textAlign: "center", fontSize: "13px", color: r ? "var(--text)" : "var(--text-dim)" }}>
-                                      {r ? `${r.conforme ? "✓" : "⚠️"} ${r.temperature}°${eq.unite === "F" ? "F" : "C"}` : "—"}
+                                      {r ? <>{r.conforme ? <IconCrochet className="gozly-icon" /> : <IconAttention className="gozly-icon" />} {r.temperature}°{eq.unite === "F" ? "F" : "C"}</> : "—"}
                                       {r && <div style={{ fontSize: "11px", color: "var(--text-dim)" }}>{r.releve_par}</div>}
                                     </div>
                                   );
@@ -410,7 +411,7 @@ export default function TemperatureContent() {
                             ))}
                             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                               <button type="button" className="admin-icon-btn" onClick={() => exporter(f.releves, `temperatures_${f.date}.csv`)}>
-                                ⬇ Cette fiche (Excel)
+                                <IconTelecharger className="gozly-icon" /> Cette fiche (Excel)
                               </button>
                               <button
                                 type="button"
@@ -418,7 +419,7 @@ export default function TemperatureContent() {
                                 disabled={exportPdfEnCours}
                                 onClick={() => exporterPdf(f.releves, `registre-temperatures-${f.date}.pdf`)}
                               >
-                                ⬇ Cette fiche (PDF)
+                                <IconTelecharger className="gozly-icon" /> Cette fiche (PDF)
                               </button>
                             </div>
                           </div>

@@ -6,6 +6,7 @@ import InfoTooltip from "@/components/InfoTooltip";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import ImpressionCommandesBloc from "@/components/entreprise/ImpressionCommandesBloc";
 import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
+import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 
 const OPTIONS_PREMIER_JOUR = [
   { id: "lundi", label: "Lundi" },
@@ -102,7 +103,7 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
       <div className="forfait-select-wrap">
         <div className={`forfait-select-trigger${open ? " open" : ""}`} onClick={() => !disabled && setOpen((v) => !v)}>
           <div className="fs-label">{options.find((o) => o.id === value)?.label}</div>
-          <span className="fs-arrow">▾</span>
+          <span className="fs-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
         </div>
         {open && (
           <div className="forfait-select-options open">
@@ -447,7 +448,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
             onClick={() => toggleSection("horaire")}
           >
             <span className="ih-label">Horaire &amp; Pointage</span>
-            <span className="ih-arrow">▾</span>
+            <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
           </button>
           {sectionsOuvertes.horaire && (
             <div className="integration-body">
@@ -537,7 +538,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
             onClick={() => toggleSection("temperature")}
           >
             <span className="ih-label">Températures</span>
-            <span className="ih-arrow">▾</span>
+            <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
           </button>
           {sectionsOuvertes.temperature && (
             <div className="integration-body">
@@ -564,7 +565,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
             onClick={() => toggleSection("commandes")}
           >
             <span className="ih-label">Commandes</span>
-            <span className="ih-arrow">▾</span>
+            <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
           </button>
           {sectionsOuvertes.commandes && (
             <div className="integration-body">
@@ -642,7 +643,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
             onClick={() => toggleSection("inventaire")}
           >
             <span className="ih-label">Inventaire</span>
-            <span className="ih-arrow">▾</span>
+            <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
           </button>
           {sectionsOuvertes.inventaire && (
             <div className="integration-body">

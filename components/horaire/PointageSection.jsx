@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { IconCrochet, IconLocalisation } from "@/components/icons/Pictogrammes";
 
 export default function PointageSection({ entrepriseId }) {
   const [nip, setNip] = useState("");
@@ -183,7 +184,7 @@ export default function PointageSection({ entrepriseId }) {
               onClick={() => choisirEmplacement(e.id)}
               style={{ aspectRatio: "auto" }}
             >
-              <div className="dashboard-picker-logo">📍</div>
+              <div className="dashboard-picker-logo"><IconLocalisation className="gozly-icon" style={{ width: "58%", height: "58%" }} /></div>
               <div className="dashboard-picker-nom">{e.nom}</div>
             </button>
           ))}
@@ -230,7 +231,7 @@ export default function PointageSection({ entrepriseId }) {
                 0
               </button>
               <button className="pointage-key confirm" onClick={handleConfirm} disabled={busy || nip.length !== 4}>
-                ✓
+                <IconCrochet className="gozly-icon" />
               </button>
             </div>
           </>

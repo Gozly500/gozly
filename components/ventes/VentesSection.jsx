@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { SOURCES_VENTE } from "@/lib/modules";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
+import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 const FORM_VIDE = { source: "comptant", montant: "", date: "", description: "" };
 
@@ -191,11 +192,11 @@ export default function VentesSection({ entrepriseId }) {
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          ‹ Semaine précédente
+          <IconFlecheGauche className="gozly-icon" /> Semaine précédente
         </button>
         <span className="planning-week-label">{weekLabel}</span>
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-          Semaine suivante ›
+          Semaine suivante <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 
@@ -282,7 +283,7 @@ export default function VentesSection({ entrepriseId }) {
                       onClick={() => setSourceOpen((v) => !v)}
                     >
                       <span>{labelSource(form.source)}</span>
-                      <span className="fs-arrow">▾</span>
+                      <span className="fs-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
                     </div>
                     {sourceOpen && (
                       <div className="emplacement-select-options">

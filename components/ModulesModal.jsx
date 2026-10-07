@@ -5,6 +5,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES, limiteModules } from "@/lib/modules";
 import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
+import { IconCrochet } from "@/components/icons/Pictogrammes";
+import { IconeModule } from "@/components/icons/iconesModules";
 
 export default function ModulesModal({ entrepriseId, onClose, onChange }) {
   const [loading, setLoading] = useState(true);
@@ -117,11 +119,11 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
                       <img src={mod.image} alt={mod.nom} />
                     ) : (
                       <div className="modules-picker-fallback">
-                        <span>{mod.icon}</span>
+                        <span><IconeModule id={mod.id} className="gozly-icon" style={{ width: 28, height: 28 }} /></span>
                         <small>{mod.nom}</small>
                       </div>
                     )}
-                    {estActif && <span className="modules-picker-check">✓</span>}
+                    {estActif && <span className="modules-picker-check"><IconCrochet className="gozly-icon" /></span>}
                   </button>
                 );
               })}
@@ -130,7 +132,7 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
             <div className="settings-divider">Autre service</div>
             <div className="switch-row">
               <div className="switch-row-text">
-                <h4>◆ Site vitrine</h4>
+                <h4>Site vitrine</h4>
                 <p>Un site rapide, moderne et à ton image, propulsé par Wix - construit pour toi par l&apos;équipe Gozly.</p>
               </div>
               <button
@@ -140,7 +142,7 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
                 disabled={demandeVitrineStatut === "envoi" || demandeVitrineStatut === "envoye"}
               >
                 {demandeVitrineStatut === "envoye"
-                  ? "Demande envoyée ✓"
+                  ? <>Demande envoyée <IconCrochet className="gozly-icon" /></>
                   : demandeVitrineStatut === "envoi"
                   ? "Envoi..."
                   : "Demander"}

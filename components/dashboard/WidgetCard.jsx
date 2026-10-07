@@ -1,5 +1,7 @@
 "use client";
 
+import { IconX } from "@/components/icons/Pictogrammes";
+
 export default function WidgetCard({
   title,
   taille,
@@ -26,7 +28,7 @@ export default function WidgetCard({
         {editMode && (
           <div className="widget-card-controls">
             <button type="button" className="widget-remove-btn" onClick={onRemove}>
-              ✕ Retirer
+              <IconX className="gozly-icon" /> Retirer
             </button>
             <span className="widget-drag-handle" title="Glisser pour réordonner">
               ⠿

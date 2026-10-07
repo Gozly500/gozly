@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
 import ParallaxSection from "@/components/ParallaxSection";
 import HeroParallax from "@/components/HeroParallax";
+import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 export default function HomePage() {
   return (
@@ -21,7 +22,7 @@ export default function HomePage() {
           </div>
           <div className="hero-ctas">
             <Link href="/contact" className="btn-pill-dark">
-              Démarrer un projet →
+              Démarrer un projet <IconFlecheDroite className="gozly-icon-inline" />
             </Link>
             <a href="#modules" className="btn-pill-glass">
               Voir les modules
@@ -183,7 +184,7 @@ export default function HomePage() {
             <div className="promo-text">
               <p>Mais oui! Profitez d&apos;un mois entièrement gratuit sur tous nos forfaits.</p>
               <a href="#pricing" className="promo-btn">
-                Voir les forfaits →
+                Voir les forfaits <IconFlecheDroite className="gozly-icon-inline" />
               </a>
             </div>
           </div>
@@ -199,7 +200,7 @@ export default function HomePage() {
             <h2>Prêt à arrêter de jongler avec dix outils?</h2>
             <p>Parle-nous de ton entreprise - on te propose une première étape simple.</p>
             <Link href="/contact" className="btn-pill-dark">
-              Démarrer un projet →
+              Démarrer un projet <IconFlecheDroite className="gozly-icon-inline" />
             </Link>
           </div>
         </div>

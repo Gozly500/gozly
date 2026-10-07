@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { formatMontant, bornesJour } from "@/lib/commandes";
 import { imprimerCommande, mettreAJourTachesCommandes } from "@/lib/commandesClient";
+import { IconX } from "@/components/icons/Pictogrammes";
 
 const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitId: null, sku: null, options: [] };
 
@@ -320,7 +321,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
                   onClick={() => setArticles((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== i) : [{ ...ARTICLE_VIDE }]))}
                   aria-label="Retirer l'article"
                 >
-                  ✕
+                  <IconX className="gozly-icon" />
                 </button>
               </div>
             ))}

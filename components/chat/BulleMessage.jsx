@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { EMOJIS_REACTION_CLIENT } from "@/components/chat/emojisChat";
+import { IconRepondre } from "@/components/icons/Pictogrammes";
 
 const SEUIL_REPONSE = 56; // px de glissement vers la droite pour déclencher "Répondre"
 const GLISSEMENT_MAX = 84;
@@ -86,7 +87,7 @@ export default function BulleMessage({ m, ouvert, onToggle, onReagir, onRepondre
       g = { emoji: r.emoji, noms: [], mine: false };
       groupes.push(g);
     }
-    g.noms.push(r.mine ? "✓" : r.nom);
+    g.noms.push(r.mine ? "Toi" : r.nom);
     if (r.mine) g.mine = true;
   }
 
@@ -102,7 +103,7 @@ export default function BulleMessage({ m, ouvert, onToggle, onReagir, onRepondre
       onPointerCancel={aLaFin}
     >
       <span className="chat-swipe-icone" style={{ opacity: progres, transform: `translateY(-50%) scale(${0.6 + 0.4 * progres})` }}>
-        ↩
+        <IconRepondre className="gozly-icon" />
       </span>
       <div className="chat-bubble-auteur">{m.auteur}</div>
       <div
@@ -146,7 +147,7 @@ export default function BulleMessage({ m, ouvert, onToggle, onReagir, onRepondre
             </button>
           ))}
           <button type="button" className="chat-action-repondre" onClick={onRepondre}>
-            ↩ {texteRepondre}
+            <IconRepondre className="gozly-icon" /> {texteRepondre}
           </button>
         </div>
       )}

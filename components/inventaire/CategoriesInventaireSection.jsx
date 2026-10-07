@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { IconFlecheBas, IconFlecheHaut } from "@/components/icons/Pictogrammes";
 
 // Catégories de produits de l'Inventaire : créer, renommer, ordonner (▲▼) et retirer.
 // Retirer une catégorie ne supprime pas ses produits : ils passent « Sans catégorie ».
@@ -155,10 +156,10 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
             </div>
             <div className="admin-row-controls" style={{ gap: "6px" }}>
               <button className="admin-icon-btn" disabled={i === 0} onClick={() => deplacer(i, -1)} aria-label="Monter">
-                ▲
+                <IconFlecheHaut className="gozly-icon" />
               </button>
               <button className="admin-icon-btn" disabled={i === categories.length - 1} onClick={() => deplacer(i, 1)} aria-label="Descendre">
-                ▼
+                <IconFlecheBas className="gozly-icon" />
               </button>
               <button
                 className="admin-icon-btn"

@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import EmplacementSelect from "@/components/EmplacementSelect";
+import { IconCrochet, IconDocument } from "@/components/icons/Pictogrammes";
 
 // integre : version sans titre ni bouton "Terminé" (boîte intégrée à une autre page).
 // sansEmplacement : cache le sélecteur de succursale (la page qui l'intègre a le sien).
@@ -171,7 +172,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
             <p className="panel-hint">Les tâches à faire ce jour-là, par catégorie.</p>
           </div>
           <Link href="/dashboard/planning" className="submit-btn" style={{ textDecoration: "none" }}>
-            ✓ Terminé
+            <IconCrochet className="gozly-icon" /> Terminé
           </Link>
         </div>
       )}
@@ -201,7 +202,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                   <div style={{ display: "flex", gap: "8px" }}>
                     {catModeles.length > 0 && (
                       <button className="admin-icon-btn" onClick={() => setModelesPourCategorie(cat.id)}>
-                        📋 Modèles
+                        <IconDocument className="gozly-icon" /> Modèles
                       </button>
                     )}
                     <button className="admin-icon-btn" onClick={() => setAddingFor(cat.id)}>

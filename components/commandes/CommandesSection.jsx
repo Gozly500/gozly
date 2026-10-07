@@ -24,6 +24,7 @@ import {
   libellePaiement,
   noteCommande,
 } from "@/lib/commandes";
+import { IconDocument, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
 
 const INTERVALLE_SYNC_MS = 30000;
 
@@ -218,7 +219,7 @@ export default function CommandesSection({ entrepriseId }) {
           </button>
           <div className="account-wrap" ref={exportRef}>
             <button className="admin-icon-btn" onClick={() => setExportOuvert((v) => !v)} disabled={exportEnCours || commandes.length === 0}>
-              {exportEnCours ? "PDF..." : "⬇ Exporter ▾"}
+              {exportEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> Exporter <IconFlecheBas className="gozly-icon-inline" /></>}
             </button>
             {exportOuvert && (
               <div className="account-dropdown open">
@@ -264,7 +265,7 @@ export default function CommandesSection({ entrepriseId }) {
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, -1))}>
-          ‹ Jour précédent
+          <IconFlecheGauche className="gozly-icon" /> Jour précédent
         </button>
         <span className="planning-week-label" style={{ textTransform: "capitalize" }}>
           {dateLabel}
@@ -275,7 +276,7 @@ export default function CommandesSection({ entrepriseId }) {
           )}
         </span>
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, 1))}>
-          Jour suivant ›
+          Jour suivant <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 
@@ -399,7 +400,7 @@ export default function CommandesSection({ entrepriseId }) {
                         )}
                       </div>
                     ))}
-                    {noteCommande(c) && <div style={{ fontSize: "13px", marginTop: "6px", color: "#ffd479" }}>📝 {noteCommande(c)}</div>}
+                    {noteCommande(c) && <div style={{ fontSize: "13px", marginTop: "6px", color: "#ffd479" }}><IconDocument className="gozly-icon" /> {noteCommande(c)}</div>}
                   </div>
                   <div className="admin-row-controls" style={{ flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
                     <span style={{ fontWeight: 700 }}>{formatMontant(c.total)}</span>

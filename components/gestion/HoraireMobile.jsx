@@ -6,6 +6,7 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { useGestion } from "@/components/gestion/GestionShell";
+import { IconCrayon, IconFlecheBas, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -26,7 +27,7 @@ function ChoixEmploye({ employes, value, onChange }) {
     <div className="emplacement-select-wrap" ref={ref} style={{ marginBottom: 0 }}>
       <div className={`emplacement-select-trigger${ouvert ? " open" : ""}`} onClick={() => setOuvert((v) => !v)}>
         <span>{courant?.nom || "Choisis un employé"}</span>
-        <span className="fs-arrow">▾</span>
+        <span className="fs-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
       </div>
       {ouvert && (
         <div className="emplacement-select-options" style={{ maxHeight: "240px", overflowY: "auto" }}>
@@ -219,11 +220,11 @@ export default function HoraireMobile() {
     <div>
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          ‹
+          <IconFlecheGauche className="gozly-icon" />
         </button>
         <span className="moi-week-label">{libelleSemaine}</span>
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-          ›
+          <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 
@@ -232,7 +233,7 @@ export default function HoraireMobile() {
       {peutModifier && (
         <div className="gestion-horaire-barre">
           <button type="button" className={edition ? "btn-small" : "admin-icon-btn"} onClick={() => setEdition((v) => !v)}>
-            {edition ? "Terminer" : "✎ Modifier"}
+            {edition ? "Terminer" : <><IconCrayon className="gozly-icon" /> Modifier</>}
           </button>
           {edition && brouillons > 0 && (
             <button type="button" className="btn-small" onClick={publier} disabled={publication || !peutAjouter}>
@@ -276,7 +277,7 @@ export default function HoraireMobile() {
                       </div>
                       {edition && (
                         <button type="button" className="admin-icon-btn gestion-crayon" onClick={() => ouvrirModif(q)} aria-label="Modifier ce quart">
-                          ✎
+                          <IconCrayon className="gozly-icon" />
                         </button>
                       )}
                     </div>

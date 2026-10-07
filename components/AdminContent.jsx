@@ -9,9 +9,9 @@ import AdminsSection from "@/components/admin/AdminsSection";
 import DemandesContactSection from "@/components/admin/DemandesContactSection";
 
 const TABS = [
-  { id: "clients", label: "Clients", icon: "👥" },
-  { id: "demandes", label: "Demandes", icon: "✉" },
-  { id: "admins", label: "Équipe admin", icon: "🛡" },
+  { id: "clients", label: "Clients", Icone: IconProfils },
+  { id: "demandes", label: "Demandes", Icone: IconEnveloppe },
+  { id: "admins", label: "Équipe admin", Icone: IconBouclier },
 ];
 
 export default function AdminContent() {
@@ -80,7 +80,7 @@ export default function AdminContent() {
             className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            <span className="icon">{tab.icon}</span> {tab.label}
+            <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
           </button>
         ))}
       </nav>

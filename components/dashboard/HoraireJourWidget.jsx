@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 function todayISO() {
   const d = new Date();
@@ -65,7 +66,7 @@ export default function HoraireJourWidget({ entrepriseId }) {
         </table>
       </div>
       <Link href="/dashboard/horaire" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
-        Voir l'Horaire →
+        Voir l'Horaire <IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

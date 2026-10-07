@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES, LABELS_FORFAIT } from "@/lib/modules";
+import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import { IconeModule } from "@/components/icons/iconesModules";
 
 // Bloque tout le tableau de bord (rendu par DashSidebar, donc présent sur
 // chaque page /dashboard/*) quand l'entreprise a plus de modules actifs que
@@ -44,7 +46,7 @@ export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limi
             <div className="admin-row" key={mod.id}>
               <div className="admin-row-main">
                 <div className="admin-row-title">
-                  {mod.icon} {mod.nom}
+                  <IconeModule id={mod.id} className="gozly-icon" /> {mod.nom}
                 </div>
               </div>
               <div className="admin-row-controls">
@@ -62,7 +64,7 @@ export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limi
         </div>
 
         <Link href="/parametres?tab=abonnement" className="submit-btn" style={{ width: "100%", textAlign: "center", textDecoration: "none", display: "block" }}>
-          Choisir un nouveau forfait →
+          Choisir un nouveau forfait <IconFlecheDroite className="gozly-icon-inline" />
         </Link>
       </div>
     </div>

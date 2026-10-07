@@ -5,6 +5,7 @@ import Link from "next/link";
 import { employeFetch } from "@/lib/employeAuth";
 import { lireStatutPush } from "@/components/moi/NotificationsPush";
 import { useLangue } from "@/components/moi/LangueContext";
+import { IconClocheBarree } from "@/components/icons/Pictogrammes";
 
 // Rappel discret en haut d'une page quand les notifications qui la
 // concernent ne sont pas actives : soit l'appareil n'est pas abonné (bouton
@@ -42,7 +43,7 @@ export default function RappelNotifications({ types, sujet }) {
 
   return (
     <div className="moi-rappel">
-      <span>🔕 {message}</span>
+      <span><IconClocheBarree className="gozly-icon" /> {message}</span>
       <Link href="/moi/parametres/notifications">{t("rappel.activer")}</Link>
     </div>
   );

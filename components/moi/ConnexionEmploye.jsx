@@ -6,6 +6,8 @@ import { employeFetch, setEmployeToken } from "@/lib/employeAuth";
 import InstallerApp from "@/components/moi/InstallerApp";
 import { useLangue } from "@/components/moi/LangueContext";
 import { CLE_ONBOARDING_VU_MOI } from "@/components/moi/OnboardingEmploye";
+import { IconCrochet } from "@/components/icons/Pictogrammes";
+import Pictos from "@/components/icons/Pictos";
 
 export default function ConnexionEmploye() {
   const router = useRouter();
@@ -125,13 +127,13 @@ export default function ConnexionEmploye() {
             0
           </button>
           <button className="pointage-key confirm" onClick={handleConfirm} disabled={busy || nip.length !== 4}>
-            ✓
+            <IconCrochet className="gozly-icon" />
           </button>
         </div>
       </div>
 
       <button type="button" className="admin-icon-btn" onClick={() => setEtape("code")} style={{ marginTop: "18px" }}>
-        {t("login.changerCode")}
+        <Pictos texte={t("login.changerCode")} />
       </button>
     </div>
   );

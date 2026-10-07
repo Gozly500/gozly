@@ -9,6 +9,7 @@ import JourEditor from "@/components/planning/JourEditor";
 import { supabase } from "@/lib/supabaseClient";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { resoudreEntrepriseActive, getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
+import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -185,10 +186,10 @@ export default function PlanningContent() {
                     </button>
                   )}
                   <button className="admin-icon-btn" aria-label="Semaine précédente" onClick={() => decalerSemaine(-1)}>
-                    ‹
+                    <IconFlecheGauche className="gozly-icon" />
                   </button>
                   <button className="admin-icon-btn" aria-label="Semaine suivante" onClick={() => decalerSemaine(1)}>
-                    ›
+                    <IconFlecheDroite className="gozly-icon" />
                   </button>
                 </div>
               </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 function formatMontant(n) {
   return n.toLocaleString("fr-CA", { style: "currency", currency: "CAD" });
@@ -37,7 +38,7 @@ export default function VentesWidget({ entrepriseId }) {
         Ventes aujourd'hui, toutes sources confondues.
       </p>
       <Link href="/dashboard/ventes" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "10px" }}>
-        Voir le suivi des ventes →
+        Voir le suivi des ventes <IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );
