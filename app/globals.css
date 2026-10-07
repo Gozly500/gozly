@@ -2245,3 +2245,4 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 /* Inventaire : un produit à variantes (en-tête + variantes en retrait). */
 .inventaire-groupe-tete{background:rgba(var(--w),0.04);}
 .inventaire-variante{margin-left:22px;border-left:3px solid rgba(var(--w),0.14);}
+.inventaire-chevron{display:inline-block;width:14px;color:var(--text-dim);}

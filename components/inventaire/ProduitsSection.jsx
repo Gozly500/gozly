@@ -95,6 +95,7 @@ export default function ProduitsSection({ entrepriseId }) {
   const [categoriesPretes, setCategoriesPretes] = useState(false);
   const [filtreCategorie, setFiltreCategorie] = useState("toutes"); // "toutes" | "sans" | id
   const [recherche, setRecherche] = useState("");
+  const [groupesOuverts, setGroupesOuverts] = useState(() => new Set()); // produits à variantes dépliés
 
   useEffect(() => {
     load();
@@ -325,24 +326,44 @@ export default function ProduitsSection({ entrepriseId }) {
     if (e.type === "simple") return ligneProduit(e.produit);
     const total = e.produits.reduce((somme, p) => somme + (Number(p.quantite) || 0), 0);
     const enAlerte = e.produits.some((p) => p.quantite <= p.seuil_alerte);
+    const cle = e.base.toLowerCase();
+    // Replié par défaut ; une recherche déplie tout pour montrer les variantes trouvées.
+    const ouvert = groupesOuverts.has(cle) || mots.length > 0;
     return (
       <Fragment key={`groupe-${e.base}`}>
-        <div className="admin-row inventaire-groupe-tete">
+        <div
+          className="admin-row inventaire-groupe-tete"
+          style={{ cursor: "pointer" }}
+          onClick={() =>
+            setGroupesOuverts((prev) => {
+              const suivant = new Set(prev);
+              if (suivant.has(cle)) suivant.delete(cle);
+              else suivant.add(cle);
+              return suivant;
+            })
+          }
+        >
           <div className="admin-row-main">
             <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
-              {e.base} {enAlerte && "⚠️"}
+              <span className="inventaire-chevron">{ouvert ? "▾" : "▸"}</span> {e.base} {enAlerte && "⚠️"}
             </div>
             <div className="admin-row-sub">
               {e.produits.length} variante{e.produits.length > 1 ? "s" : ""} · Quantité totale: {total}
             </div>
           </div>
           <div className="admin-row-controls">
-            <button className="admin-icon-btn" onClick={() => ouvrirAjoutVariante(e.base, e.produits[0].categorie_id)}>
+            <button
+              className="admin-icon-btn"
+              onClick={(ev) => {
+                ev.stopPropagation();
+                ouvrirAjoutVariante(e.base, e.produits[0].categorie_id);
+              }}
+            >
               + Variante
             </button>
           </div>
         </div>
-        {e.produits.map((p) => ligneProduit(p, { variante: true }))}
+        {ouvert && e.produits.map((p) => ligneProduit(p, { variante: true }))}
       </Fragment>
     );
   }
