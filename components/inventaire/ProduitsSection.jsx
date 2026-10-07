@@ -127,7 +127,10 @@ export default function ProduitsSection({ entrepriseId }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setSyncMsg({ type: "err", text: data.error || "L'envoi vers Wix a échoué." });
+        setSyncMsg({ type: "err", text: `${data.error || "L'envoi vers Wix a échoué."}${data.detail ? ` [${data.detail}]` : ""}` });
+      } else if (data.cree) {
+        setSyncMsg({ type: "ok", text: "Produit créé sur Wix (masqué : affiche-le dans Wix quand tu es prêt). Il est maintenant lié à Wix." });
+        load();
       }
     } catch {
       setSyncMsg({ type: "err", text: "L'envoi vers Wix a échoué." });
@@ -328,7 +331,7 @@ export default function ProduitsSection({ entrepriseId }) {
           </div>
         </div>
         <div className="admin-row-controls">
-          {p.source === "wix" && !wixPushAuto && (
+          {((p.source === "wix" && !wixPushAuto) || (wixConnecte && !p.source && !separerNom(p.nom).variante)) && (
             <button className="admin-icon-btn" onClick={() => pousserVersWix(p.id)} disabled={pushingId === p.id}>
               {pushingId === p.id ? "..." : <><IconIntegration className="gozly-icon" /> Pousser vers Wix</>}
             </button>
