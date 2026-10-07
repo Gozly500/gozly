@@ -296,7 +296,7 @@ export default function ProduitsSection({ entrepriseId }) {
       <div className={`admin-row${variante ? " inventaire-variante" : ""}`} key={p.id}>
         <div className="admin-row-main">
           <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
-            {titre} {p.source === "wix" && <IconIntegration className="gozly-icon" />} {enAlerte && "⚠️"}
+            {!variante && <span className="inventaire-chevron" />}{titre} {p.source === "wix" && <IconIntegration className="gozly-icon" />} {enAlerte && "⚠️"}
           </div>
           <div className="admin-row-sub">
             {p.sku && `SKU: ${p.sku} · `}
