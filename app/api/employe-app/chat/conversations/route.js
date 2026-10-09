@@ -66,6 +66,10 @@ export async function GET(request) {
       : Promise.resolve({ data: [] }),
   ]);
 
+  function autreEmployeId(conversationId) {
+    return autresParticipants.find((a) => a.conversation_id === conversationId)?.employe_id || null;
+  }
+
   function nomAutreParticipant(conversationId) {
     const p = autresParticipants.find((a) => a.conversation_id === conversationId);
     if (!p) return "Conversation";
@@ -86,6 +90,7 @@ export async function GET(request) {
       id,
       type: "directe",
       titre: nomAutreParticipant(id),
+      autreEmployeId: autreEmployeId(id),
       dernierMessage: dernierParConversation[id]?.contenu || null,
       dernierMessageDate: dernierParConversation[id]?.created_at || null,
       dernierDeMoi: dernierParConversation[id]?.employe_id === employe.id,

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
+import { localeDate } from "@/lib/i18n/moi";
 import RappelNotifications from "@/components/moi/RappelNotifications";
 import { useLangue } from "@/components/moi/LangueContext";
 
@@ -12,10 +13,10 @@ const CLE_LUS = "gozly_chat_lus";
 import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
 import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
-import { IconEnvoyer, IconFlecheGauche, IconProfil, IconProfils, IconX } from "@/components/icons/Pictogrammes";
+import { IconEnvoyer, IconFlecheGauche, IconPlus, IconProfil, IconProfils, IconX } from "@/components/icons/Pictogrammes";
 
 export default function DiscussionEmploye() {
-  const { t } = useLangue();
+  const { t, langue } = useLangue();
   const [lus, setLus] = useState({});
   const vueRef = useRef("liste");
   const [conversations, setConversations] = useState([]);
@@ -42,10 +43,18 @@ export default function DiscussionEmploye() {
   const pollRef = useRef(null);
   const [messageOuvertId, setMessageOuvertId] = useState(null);
   const [repondreA, setRepondreA] = useState(null); // { id, auteur, contenu }
+  const [echangeOuvert, setEchangeOuvert] = useState(false);
+  const [mesQuarts, setMesQuarts] = useState(null); // null = pas encore chargés
+  const [echangeBusy, setEchangeBusy] = useState(false);
+  const [echangeErreur, setEchangeErreur] = useState("");
   const presence = useChatPresence(vue === "thread" ? activeId : null, async (corps) => {
     const res = await employeFetch("/api/employe-app/chat/presence", { method: "POST", body: JSON.stringify(corps) });
     return res.ok ? res.json() : null;
   });
+
+  // Discussion directe avec un collègue (pas l'administration, pas un groupe) : on peut lui proposer un échange.
+  const conversationActive = conversations.find((c) => c.id === activeId);
+  const autreEmployeIdActif = conversationActive?.type === "directe" ? conversationActive.autreEmployeId : null;
 
   useEffect(() => {
     try {
@@ -225,6 +234,54 @@ export default function DiscussionEmploye() {
       return;
     }
     chargerConversations({ silencieux: true });
+  }
+
+  // Proposer un échange de quart à l'autre personne d'une discussion directe : crée la vraie
+  // demande (onglet Demandes, notification push) puis écrit un message dans la conversation.
+  async function ouvrirEchange() {
+    setEchangeErreur("");
+    setEchangeOuvert(true);
+    if (mesQuarts) return;
+    try {
+      const res = await employeFetch("/api/employe-app/demandes/mes-quarts");
+      const data = await res.json();
+      setMesQuarts(data.quarts || []);
+    } catch {
+      setMesQuarts([]);
+    }
+  }
+
+  async function proposerEchange(quart, autreEmployeId) {
+    if (echangeBusy) return;
+    setEchangeBusy(true);
+    setEchangeErreur("");
+    try {
+      const res = await employeFetch("/api/employe-app/demandes/echanges", {
+        method: "POST",
+        body: JSON.stringify({ quartId: quart.id, avecEmployeId: autreEmployeId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setEchangeErreur(data.error || t("chat.echangeErreur"));
+        setEchangeBusy(false);
+        return;
+      }
+      const contenu = t("chat.echangeMessage", {
+        date: new Date(quart.date).toLocaleDateString(localeDate(langue)),
+        debut: quart.heure_debut.slice(0, 5),
+        fin: quart.heure_fin.slice(0, 5),
+      });
+      await employeFetch("/api/employe-app/chat/messages", {
+        method: "POST",
+        body: JSON.stringify({ conversationId: activeId, contenu }),
+      });
+      setEchangeOuvert(false);
+      chargerMessages(activeId);
+      chargerConversations({ silencieux: true });
+    } catch {
+      setEchangeErreur(t("chat.echangeErreur"));
+    }
+    setEchangeBusy(false);
   }
 
   async function creerGroupe(e) {
@@ -415,6 +472,11 @@ export default function DiscussionEmploye() {
               </div>
             )}
             <form className="chat-compose" onSubmit={handleEnvoyer}>
+              {!texte && autreEmployeIdActif && (
+                <button type="button" className="chat-plus-btn" onClick={ouvrirEchange} aria-label={t("chat.plus")}>
+                  <IconPlus className="gozly-icon" />
+                </button>
+              )}
               <input
                 type="text"
                 value={texte}
@@ -432,6 +494,47 @@ export default function DiscussionEmploye() {
           </div>
         )}
       </div>
+
+      {echangeOuvert && autreEmployeIdActif && (
+        <div className="modal-overlay" onClick={() => setEchangeOuvert(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("chat.proposerEchange")}</h3>
+              <button className="admin-icon-btn" onClick={() => setEchangeOuvert(false)}>
+                {t("nav.fermer")}
+              </button>
+            </div>
+            <p className="panel-hint">{t("chat.echangeChoisir", { nom: activeTitre })}</p>
+            {echangeErreur && <p className="settings-msg err">{echangeErreur}</p>}
+            {mesQuarts === null ? (
+              <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>
+            ) : mesQuarts.length === 0 ? (
+              <p className="chat-empty">{t("demandes.aucunQuartSemaine")}</p>
+            ) : (
+              <div className="admin-list">
+                {mesQuarts.map((q) => (
+                  <button
+                    key={q.id}
+                    type="button"
+                    className="admin-row"
+                    style={{ width: "100%", textAlign: "left", cursor: "pointer" }}
+                    disabled={echangeBusy}
+                    onClick={() => proposerEchange(q, autreEmployeIdActif)}
+                  >
+                    <div className="admin-row-main">
+                      <div className="admin-row-title">{new Date(q.date).toLocaleDateString(localeDate(langue))}</div>
+                      <div className="admin-row-sub">
+                        {q.heure_debut.slice(0, 5)}–{q.heure_fin.slice(0, 5)}
+                        {q.poste ? ` · ${q.poste}` : ""}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {vue === "liste" && (
         <button type="button" className="moi-discussion-add-btn" onClick={() => setMenuNouveau(true)}>
