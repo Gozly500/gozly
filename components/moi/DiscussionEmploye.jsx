@@ -46,12 +46,6 @@ export default function DiscussionEmploye() {
   const [messageOuvertId, setMessageOuvertId] = useState(null);
   const [repondreA, setRepondreA] = useState(null); // { id, auteur, contenu }
   const [menuPlus, setMenuPlus] = useState(false);
-  const [congeOuvert, setCongeOuvert] = useState(false);
-  const [congeDebut, setCongeDebut] = useState("");
-  const [congeFin, setCongeFin] = useState("");
-  const [congeRaison, setCongeRaison] = useState("");
-  const [congeBusy, setCongeBusy] = useState(false);
-  const [congeMsg, setCongeMsg] = useState(null); // { type: "ok" | "err", text }
   const [echangeOuvert, setEchangeOuvert] = useState(false);
   const [mesQuarts, setMesQuarts] = useState(null); // null = pas encore chargés
   const [echangeBusy, setEchangeBusy] = useState(false);
@@ -294,36 +288,6 @@ export default function DiscussionEmploye() {
     setEchangeBusy(false);
   }
 
-  function ouvrirConge() {
-    setMenuPlus(false);
-    setCongeMsg(null);
-    setCongeOuvert(true);
-  }
-
-  async function envoyerConge(e) {
-    e.preventDefault();
-    setCongeBusy(true);
-    setCongeMsg(null);
-    try {
-      const res = await employeFetch("/api/employe-app/demandes/conges", {
-        method: "POST",
-        body: JSON.stringify({ dateDebut: congeDebut, dateFin: congeFin, raison: congeRaison }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setCongeMsg({ type: "err", text: data.error || t("chat.congeErreur") });
-      } else {
-        setCongeDebut("");
-        setCongeFin("");
-        setCongeRaison("");
-        setCongeMsg({ type: "ok", text: t("chat.congeEnvoyee") });
-      }
-    } catch {
-      setCongeMsg({ type: "err", text: t("chat.congeErreur") });
-    }
-    setCongeBusy(false);
-  }
-
   async function repondreEchange(echangeId, accepte) {
     try {
       await employeFetch(`/api/employe-app/demandes/echanges/${echangeId}/repondre`, {
@@ -551,21 +515,17 @@ export default function DiscussionEmploye() {
               </div>
             )}
             <form className="chat-compose" onSubmit={handleEnvoyer}>
-              {menuPlus && !texte && (
+              {menuPlus && !texte && autreEmployeIdActif && (
                 <>
                   <div className="chat-plus-fond" onClick={() => setMenuPlus(false)} />
                   <div className="chat-plus-menu">
-                    {autreEmployeIdActif && (
-                      <button type="button" className="chat-plus-item" onClick={ouvrirEchange}>
-                        {t("chat.menuEchange")}
-                      </button>
-                    )}
-                    <button type="button" className="chat-plus-item" onClick={ouvrirConge}>
-                      {t("chat.menuConge")}
+                    <button type="button" className="chat-plus-item" onClick={ouvrirEchange}>
+                      {t("chat.menuEchange")}
                     </button>
                   </div>
                 </>
               )}
+              {autreEmployeIdActif && (
               <button
                 type="button"
                 className={`chat-plus-btn${texte ? " reduit" : ""}${menuPlus && !texte ? " ouvert" : ""}`}
@@ -575,6 +535,7 @@ export default function DiscussionEmploye() {
               >
                 <IconPlus className="gozly-icon" />
               </button>
+              )}
               <input
                 type="text"
                 value={texte}
@@ -592,41 +553,6 @@ export default function DiscussionEmploye() {
           </div>
         )}
       </div>
-
-      {congeOuvert && (
-        <div className="modal-overlay" onClick={() => setCongeOuvert(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <h3>{t("chat.congeTitre")}</h3>
-              <button className="admin-icon-btn" onClick={() => setCongeOuvert(false)}>
-                {t("nav.fermer")}
-              </button>
-            </div>
-            {congeMsg && <p className={`settings-msg ${congeMsg.type}`}>{congeMsg.text}</p>}
-            {congeMsg?.type !== "ok" && (
-              <form onSubmit={envoyerConge}>
-                <div className="field-row">
-                  <div className="field">
-                    <label>{t("demandes.dateDebut")}</label>
-                    <input type="date" value={congeDebut} onChange={(e) => setCongeDebut(e.target.value)} required />
-                  </div>
-                  <div className="field">
-                    <label>{t("demandes.dateFin")}</label>
-                    <input type="date" value={congeFin} onChange={(e) => setCongeFin(e.target.value)} required />
-                  </div>
-                </div>
-                <div className="field">
-                  <label>{t("demandes.raison")}</label>
-                  <input type="text" value={congeRaison} onChange={(e) => setCongeRaison(e.target.value)} placeholder={t("demandes.raisonPlaceholder")} />
-                </div>
-                <button type="submit" className="submit-btn" disabled={congeBusy}>
-                  {congeBusy ? t("demandes.envoi") : t("demandes.envoyer")}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
 
       {echangeOuvert && autreEmployeIdActif && (
         <div className="modal-overlay" onClick={() => setEchangeOuvert(false)}>
