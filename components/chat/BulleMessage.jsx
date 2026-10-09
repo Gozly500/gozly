@@ -19,6 +19,7 @@ export function appliquerReactionLocale(reactions, emoji, nom = "") {
 // et (en appuyant sur la bulle) la barre d'actions : emojis + Répondre.
 // Glisser la bulle vers la droite = répondre à ce message.
 // m : { id, auteur, mine, contenu, reponse: { auteur, contenu } | null, reactions: [{ emoji, nom, mine }], tmp }
+// m.extra : contenu optionnel affiché sous le texte dans la bulle (ex: carte d'échange de quart).
 export default function BulleMessage({ m, ouvert, onToggle, onReagir, onRepondre, texteRepondre = "Répondre" }) {
   const [dx, setDx] = useState(0);
   const [retour, setRetour] = useState(false); // animation de retour en place après le relâchement
@@ -123,6 +124,7 @@ export default function BulleMessage({ m, ouvert, onToggle, onReagir, onRepondre
           </div>
         )}
         {m.contenu}
+        {m.extra}
       </div>
       {groupes.length > 0 && (
         <div className="chat-reactions">

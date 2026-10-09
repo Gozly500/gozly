@@ -1998,11 +1998,28 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
     background:linear-gradient(160deg, var(--indigo), var(--navy));border:1px solid rgba(var(--w),0.18);color:#fff;
   }
 .chat-send-btn:disabled{opacity:.4;}
+.chat-compose{position:relative;}
 .chat-plus-btn{
-    flex-shrink:0;width:40px;height:40px;border-radius:50%;padding:0;
+    flex-shrink:0;width:40px;height:40px;border-radius:50%;padding:0;overflow:hidden;
     display:flex;align-items:center;justify-content:center;font-size:18px;
     background:rgba(var(--w),0.08);border:1px solid rgba(var(--w),0.18);color:var(--text);cursor:pointer;
+    transition:width .28s ease,margin .28s ease,opacity .2s ease,transform .28s ease,border-width .28s ease;
   }
+.chat-plus-btn svg{transition:transform .25s ease;}
+.chat-plus-btn.ouvert svg{transform:rotate(45deg);}
+/* On tape : le + glisse vers la gauche et se replie, la barre prend sa place. Le margin négatif annule le gap. */
+.chat-plus-btn.reduit{width:0;margin-right:-10px;opacity:0;transform:translateX(-18px);border-width:0;pointer-events:none;}
+.chat-plus-fond{position:fixed;inset:0;z-index:40;}
+.chat-plus-menu{
+    position:absolute;left:14px;bottom:calc(100% - 6px);z-index:41;min-width:220px;padding:6px;
+    background:var(--navy-light, #1b1b5c);border:1px solid rgba(var(--w),0.18);border-radius:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);transform-origin:bottom left;animation:chat-plus-pop .2s cubic-bezier(.2,.9,.3,1.2);
+  }
+.chat-plus-item{display:block;width:100%;text-align:left;padding:12px 14px;border-radius:12px;background:none;border:0;color:var(--text);font-size:15px;cursor:pointer;}
+.chat-plus-item:hover,.chat-plus-item:active{background:rgba(var(--w),0.1);}
+@keyframes chat-plus-pop{from{opacity:0;transform:scale(.3);}to{opacity:1;transform:scale(1);}}
+.chat-echange{margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(var(--w),0.1);font-size:13px;}
+.chat-echange-actions{display:flex;gap:8px;margin-top:8px;}
 .chat-empty{color:var(--text-dim);font-size:13.5px;padding:24px;text-align:center;}
 .chat-section-label{padding:10px 16px 6px;font-size:11px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;}
 .chat-picker{border-bottom:1px solid rgba(var(--w),0.08);padding-bottom:6px;}

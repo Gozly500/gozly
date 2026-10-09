@@ -13,7 +13,7 @@ function badgeConge(statut, t) {
   return t("demandes.enAttente");
 }
 
-function badgeEchange(d, t) {
+export function badgeEchange(d, t) {
   if (d.statutEmploye === "refuse") return t("demandes.refuse");
   if (d.statutEmploye === "en_attente") return d.role === "receveur" ? t("demandes.aRepondre") : t("demandes.attenteReponse");
   if (d.statutAdmin === "approuve" || d.statutAdmin === "non_requis") return t("demandes.approuve");
