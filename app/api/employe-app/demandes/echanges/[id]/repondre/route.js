@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { envoyerPushEmployes } from "@/lib/pushServer";
+import { appliquerEchangeQuart } from "@/lib/echangeQuart";
 
 export async function POST(request, { params }) {
   const employe = await verifierSession(getBearerToken(request));
@@ -66,7 +67,7 @@ export async function POST(request, { params }) {
     .eq("id", demande.id);
 
   if (auto) {
-    await service.from("planning_quarts").update({ employe_id: employe.id }).eq("id", demande.quart_id);
+    await appliquerEchangeQuart(service, demande);
 
     await envoyerPushEmployes(
       service,

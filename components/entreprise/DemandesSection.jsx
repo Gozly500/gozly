@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { appliquerEchangeQuart, plageEchange } from "@/lib/echangeQuart";
 import { IconCrochet, IconFlecheDroite, IconX } from "@/components/icons/Pictogrammes";
 
 function heure(t) {
@@ -79,6 +80,14 @@ export default function DemandesSection({ entrepriseId }) {
     load();
   }
 
+  // Heures affichées : la plage échangée si c'est une partie du quart, sinon tout le quart.
+  function heuresEchange(e) {
+    const q = e.planning_quarts;
+    if (!q) return null;
+    const plage = plageEchange(e, q);
+    return plage ? `${plage.debut}–${plage.fin} (partie du quart de ${heure(q.heure_debut)} à ${heure(q.heure_fin)})` : `${heure(q.heure_debut)}–${heure(q.heure_fin)}`;
+  }
+
   async function traiterEchange(demande, approuve) {
     setBusyId(demande.id);
     const {
@@ -90,7 +99,7 @@ export default function DemandesSection({ entrepriseId }) {
       .eq("id", demande.id);
 
     if (approuve) {
-      await supabase.from("planning_quarts").update({ employe_id: demande.employe_receveur_id }).eq("id", demande.quart_id);
+      await appliquerEchangeQuart(supabase, demande);
     }
 
     fetch("/api/notifications/demande-traitee", {
@@ -177,12 +186,7 @@ export default function DemandesSection({ entrepriseId }) {
                     {nomEmploye(e.employe_donneur_id)} <IconFlecheDroite className="gozly-icon-inline" /> {nomEmploye(e.employe_receveur_id)}
                   </div>
                   <div className="admin-row-sub">
-                    {e.planning_quarts && (
-                      <>
-                        {new Date(e.planning_quarts.date).toLocaleDateString("fr-CA")} · {heure(e.planning_quarts.heure_debut)}–
-                        {heure(e.planning_quarts.heure_fin)}
-                      </>
-                    )}
+                    {e.planning_quarts && <>{new Date(e.planning_quarts.date).toLocaleDateString("fr-CA")} · {heuresEchange(e)}</>}
                     {" · les deux employés sont d'accord, en attente de ton approbation"}
                   </div>
                 </div>
@@ -212,8 +216,7 @@ export default function DemandesSection({ entrepriseId }) {
                   <div className="admin-row-sub">
                     {e.planning_quarts && (
                       <>
-                        {new Date(e.planning_quarts.date).toLocaleDateString("fr-CA")} · {heure(e.planning_quarts.heure_debut)}–
-                        {heure(e.planning_quarts.heure_fin)} ·{" "}
+                        {new Date(e.planning_quarts.date).toLocaleDateString("fr-CA")} · {heuresEchange(e)} ·{" "}
                       </>
                     )}
                     {e.statut_employe === "en_attente" && "En attente de réponse de l'employé"}

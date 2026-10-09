@@ -48,6 +48,9 @@ export default function DiscussionEmploye() {
   const [menuPlus, setMenuPlus] = useState(false);
   const [echangeOuvert, setEchangeOuvert] = useState(false);
   const [mesQuarts, setMesQuarts] = useState(null); // null = pas encore chargés
+  const [quartEchange, setQuartEchange] = useState(null); // quart choisi dans la fenêtre, avant l'envoi
+  const [echDebut, setEchDebut] = useState("");
+  const [echFin, setEchFin] = useState("");
   const [echangeBusy, setEchangeBusy] = useState(false);
   const [echangeErreur, setEchangeErreur] = useState("");
   const presence = useChatPresence(vue === "thread" ? activeId : null, async (corps) => {
@@ -241,8 +244,16 @@ export default function DiscussionEmploye() {
 
   // Proposer un échange de quart à l'autre personne d'une discussion directe : crée la vraie
   // demande (onglet Demandes, notification push) puis écrit un message dans la conversation.
+  function choisirQuartEchange(q) {
+    setQuartEchange(q);
+    setEchDebut(q.heure_debut.slice(0, 5));
+    setEchFin(q.heure_fin.slice(0, 5));
+    setEchangeErreur("");
+  }
+
   async function ouvrirEchange() {
     setMenuPlus(false);
+    setQuartEchange(null);
     setEchangeErreur("");
     setEchangeOuvert(true);
     if (mesQuarts) return;
@@ -255,14 +266,14 @@ export default function DiscussionEmploye() {
     }
   }
 
-  async function proposerEchange(quart, autreEmployeId) {
+  async function proposerEchange(quart, autreEmployeId, debut, fin) {
     if (echangeBusy) return;
     setEchangeBusy(true);
     setEchangeErreur("");
     try {
       const res = await employeFetch("/api/employe-app/demandes/echanges", {
         method: "POST",
-        body: JSON.stringify({ quartId: quart.id, avecEmployeId: autreEmployeId }),
+        body: JSON.stringify({ quartId: quart.id, avecEmployeId: autreEmployeId, heureDebut: debut, heureFin: fin }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -270,10 +281,11 @@ export default function DiscussionEmploye() {
         setEchangeBusy(false);
         return;
       }
-      const contenu = t("chat.echangeMessage", {
+      const partiel = debut !== quart.heure_debut.slice(0, 5) || fin !== quart.heure_fin.slice(0, 5);
+      const contenu = t(partiel ? "chat.echangePartieMessage" : "chat.echangeMessage", {
         date: new Date(quart.date).toLocaleDateString(localeDate(langue)),
-        debut: quart.heure_debut.slice(0, 5),
-        fin: quart.heure_fin.slice(0, 5),
+        debut: partiel ? debut : quart.heure_debut.slice(0, 5),
+        fin: partiel ? fin : quart.heure_fin.slice(0, 5),
       });
       await employeFetch("/api/employe-app/chat/messages", {
         method: "POST",
@@ -306,7 +318,13 @@ export default function DiscussionEmploye() {
       <div className="chat-echange" onClick={(ev) => ev.stopPropagation()}>
         {quart && (
           <div>
-            {new Date(quart.date).toLocaleDateString(localeDate(langue))} · {quart.heure_debut?.slice(0, 5)}–{quart.heure_fin?.slice(0, 5)}
+            {new Date(quart.date).toLocaleDateString(localeDate(langue))} ·{" "}
+            {e.heureDebut && e.heureFin ? `${e.heureDebut}–${e.heureFin}` : `${quart.heure_debut?.slice(0, 5)}–${quart.heure_fin?.slice(0, 5)}`}
+            {e.heureDebut && e.heureFin && (
+              <div style={{ opacity: 0.75 }}>
+                {t("demandes.partieDuQuart", { debut: quart.heure_debut?.slice(0, 5), fin: quart.heure_fin?.slice(0, 5) })}
+              </div>
+            )}
           </div>
         )}
         <div style={{ opacity: 0.85 }}>
@@ -565,7 +583,32 @@ export default function DiscussionEmploye() {
             </div>
             <p className="panel-hint">{t("chat.echangeChoisir", { nom: activeTitre })}</p>
             {echangeErreur && <p className="settings-msg err">{echangeErreur}</p>}
-            {mesQuarts === null ? (
+            {quartEchange ? (
+              <div>
+                <div className="admin-row-title" style={{ marginBottom: "6px" }}>
+                  {new Date(quartEchange.date).toLocaleDateString(localeDate(langue))} · {quartEchange.heure_debut.slice(0, 5)}–{quartEchange.heure_fin.slice(0, 5)}
+                </div>
+                <div className="field">
+                  <label>{t("chat.echangeHeures")}</label>
+                  <div className="field-row">
+                    <div className="field">
+                      <label>{t("chat.echangeDe")}</label>
+                      <input type="time" value={echDebut} onChange={(e) => setEchDebut(e.target.value)} />
+                    </div>
+                    <div className="field">
+                      <label>{t("chat.echangeA")}</label>
+                      <input type="time" value={echFin} onChange={(e) => setEchFin(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+                <button type="button" className="submit-btn" disabled={echangeBusy || !echDebut || !echFin} onClick={() => proposerEchange(quartEchange, autreEmployeIdActif, echDebut, echFin)}>
+                  {echangeBusy ? t("demandes.envoi") : t("demandes.proposer")}
+                </button>{" "}
+                <button type="button" className="admin-icon-btn" onClick={() => setQuartEchange(null)}>
+                  {t("chat.echangeChangerQuart")}
+                </button>
+              </div>
+            ) : mesQuarts === null ? (
               <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>
             ) : mesQuarts.length === 0 ? (
               <p className="chat-empty">{t("demandes.aucunQuartSemaine")}</p>
@@ -578,7 +621,7 @@ export default function DiscussionEmploye() {
                     className="admin-row"
                     style={{ width: "100%", textAlign: "left", cursor: "pointer" }}
                     disabled={echangeBusy}
-                    onClick={() => proposerEchange(q, autreEmployeIdActif)}
+                    onClick={() => choisirQuartEchange(q)}
                   >
                     <div className="admin-row-main">
                       <div className="admin-row-title">{new Date(q.date).toLocaleDateString(localeDate(langue))}</div>

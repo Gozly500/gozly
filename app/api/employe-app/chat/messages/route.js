@@ -32,7 +32,7 @@ async function ajouterEchanges(service, messages, employeId) {
 
   const { data } = await service
     .from("demandes_echange")
-    .select("id, employe_donneur_id, employe_receveur_id, statut_employe, statut_admin, planning_quarts(date, heure_debut, heure_fin)")
+    .select("*, planning_quarts(date, heure_debut, heure_fin)")
     .in("id", ids);
   const parId = new Map((data || []).map((d) => [d.id, d]));
 
@@ -47,6 +47,8 @@ async function ajouterEchanges(service, messages, employeId) {
         statutEmploye: d.statut_employe,
         statutAdmin: d.statut_admin,
         quart: d.planning_quarts,
+        heureDebut: d.heure_debut ? String(d.heure_debut).slice(0, 5) : null,
+        heureFin: d.heure_fin ? String(d.heure_fin).slice(0, 5) : null,
       },
     };
   });

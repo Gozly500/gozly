@@ -42,6 +42,8 @@ export default function DemandesEmploye() {
   const [formEchangeOpen, setFormEchangeOpen] = useState(false);
   const [quartChoisi, setQuartChoisi] = useState("");
   const [collegueChoisi, setCollegueChoisi] = useState("");
+  const [heureDebutEch, setHeureDebutEch] = useState("");
+  const [heureFinEch, setHeureFinEch] = useState("");
 
   useEffect(() => {
     chargerTout();
@@ -97,7 +99,7 @@ export default function DemandesEmploye() {
     setMsg(null);
     const res = await employeFetch("/api/employe-app/demandes/echanges", {
       method: "POST",
-      body: JSON.stringify({ quartId: quartChoisi, avecEmployeId: collegueChoisi }),
+      body: JSON.stringify({ quartId: quartChoisi, avecEmployeId: collegueChoisi, heureDebut: heureDebutEch, heureFin: heureFinEch }),
     });
     const data = await res.json();
     setBusy(false);
@@ -107,6 +109,8 @@ export default function DemandesEmploye() {
     }
     setQuartChoisi("");
     setCollegueChoisi("");
+    setHeureDebutEch("");
+    setHeureFinEch("");
     setFormEchangeOpen(false);
     chargerTout();
   }
@@ -215,7 +219,16 @@ export default function DemandesEmploye() {
             <form onSubmit={handleSubmitEchange} style={{ marginBottom: "18px" }}>
               <div className="field">
                 <label>{t("demandes.quelQuart")}</label>
-                <select value={quartChoisi} onChange={(e) => setQuartChoisi(e.target.value)} required>
+                <select
+                  value={quartChoisi}
+                  onChange={(e) => {
+                    setQuartChoisi(e.target.value);
+                    const q = mesQuarts.find((x) => x.id === e.target.value);
+                    setHeureDebutEch(q ? q.heure_debut.slice(0, 5) : "");
+                    setHeureFinEch(q ? q.heure_fin.slice(0, 5) : "");
+                  }}
+                  required
+                >
                   <option value="">{t("demandes.choisirQuart")}</option>
                   {mesQuarts.map((q) => (
                     <option key={q.id} value={q.id}>
@@ -224,6 +237,15 @@ export default function DemandesEmploye() {
                   ))}
                 </select>
               </div>
+              {quartChoisi && (
+                <div className="field">
+                  <label>{t("demandes.heuresEchange")}</label>
+                  <div className="field-row">
+                    <input type="time" value={heureDebutEch} onChange={(e) => setHeureDebutEch(e.target.value)} required />
+                    <input type="time" value={heureFinEch} onChange={(e) => setHeureFinEch(e.target.value)} required />
+                  </div>
+                </div>
+              )}
               <div className="field">
                 <label>{t("demandes.aQui")}</label>
                 <select value={collegueChoisi} onChange={(e) => setCollegueChoisi(e.target.value)} required>
@@ -255,8 +277,11 @@ export default function DemandesEmploye() {
                     <div className="admin-row-sub">
                       {d.quart && (
                         <>
-                          {new Date(d.quart.date).toLocaleDateString(localeDate(langue))} · {d.quart.heure_debut?.slice(0, 5)}–
-                          {d.quart.heure_fin?.slice(0, 5)} ·{" "}
+                          {new Date(d.quart.date).toLocaleDateString(localeDate(langue))} ·{" "}
+                          {d.heureDebut && d.heureFin
+                            ? `${d.heureDebut}–${d.heureFin} (${t("demandes.partieDuQuart", { debut: d.quart.heure_debut?.slice(0, 5), fin: d.quart.heure_fin?.slice(0, 5) })})`
+                            : `${d.quart.heure_debut?.slice(0, 5)}–${d.quart.heure_fin?.slice(0, 5)}`}{" "}
+                          ·{" "}
                         </>
                       )}
                       <Pictos texte={badgeEchange(d, t)} />

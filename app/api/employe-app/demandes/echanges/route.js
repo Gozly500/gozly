@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { envoyerPushEmployes } from "@/lib/pushServer";
+import { erreurPlage } from "@/lib/echangeQuart";
 
 async function resoudreNomsEmployes(service, ids) {
   if (ids.length === 0) return [];
@@ -37,6 +38,8 @@ export async function GET(request) {
       role: jeSuisDonneur ? "donneur" : "receveur",
       autreNom: employes.find((e) => e.id === autreId)?.nom || "Collègue",
       quart: d.planning_quarts,
+      heureDebut: d.heure_debut ? String(d.heure_debut).slice(0, 5) : null,
+      heureFin: d.heure_fin ? String(d.heure_fin).slice(0, 5) : null,
       statutEmploye: d.statut_employe,
       statutAdmin: d.statut_admin,
       createdAt: d.created_at,
@@ -52,7 +55,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Session invalide." }, { status: 401 });
   }
 
-  const { quartId, avecEmployeId } = await request.json().catch(() => ({}));
+  const { quartId, avecEmployeId, heureDebut, heureFin } = await request.json().catch(() => ({}));
   if (!quartId || !avecEmployeId) {
     return NextResponse.json({ error: "Quart et collègue requis." }, { status: 400 });
   }
@@ -74,7 +77,7 @@ export async function POST(request) {
 
   const { data: quart } = await service
     .from("planning_quarts")
-    .select("id, employe_id, entreprise_id")
+    .select("id, employe_id, entreprise_id, heure_debut, heure_fin")
     .eq("id", quartId)
     .maybeSingle();
 
@@ -94,6 +97,13 @@ export async function POST(request) {
     return NextResponse.json({ error: "Collègue introuvable." }, { status: 404 });
   }
 
+  // Échange partiel : seulement si les heures choisies ne couvrent pas déjà le quart au complet.
+  const partiel = heureDebut && heureFin && !(heureDebut <= quart.heure_debut.slice(0, 5) && heureFin >= quart.heure_fin.slice(0, 5));
+  if (partiel) {
+    const erreur = erreurPlage(heureDebut, heureFin, quart);
+    if (erreur) return NextResponse.json({ error: erreur }, { status: 400 });
+  }
+
   const { data: demande, error } = await service
     .from("demandes_echange")
     .insert({
@@ -101,6 +111,7 @@ export async function POST(request) {
       quart_id: quartId,
       employe_donneur_id: employe.id,
       employe_receveur_id: avecEmployeId,
+      ...(partiel ? { heure_debut: heureDebut, heure_fin: heureFin } : {}),
     })
     .select("*")
     .single();
