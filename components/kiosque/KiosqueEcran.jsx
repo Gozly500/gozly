@@ -54,19 +54,23 @@ export default function KiosqueEcran({ id }) {
         aria-label="Retour à la liste des kiosques"
         style={{
           position: "fixed",
-          top: "10px",
-          left: "10px",
+          bottom: "4px",
+          left: "4px",
           zIndex: 50,
-          opacity: 0.35,
-          padding: "6px 12px",
-          borderRadius: "999px",
-          background: "rgba(255,255,255,.1)",
+          opacity: 0.4,
+          width: "30px",
+          height: "30px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "50%",
+          background: "rgba(255,255,255,.12)",
           color: "var(--text-dim, #aaa)",
-          fontSize: "13px",
+          fontSize: "16px",
           textDecoration: "none",
         }}
       >
-        ← Kiosques
+        ←
       </Link>
     </>
   );
