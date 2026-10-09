@@ -10,7 +10,6 @@ import ForfaitBloqueModal from "@/components/ForfaitBloqueModal";
 import { getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
-  IconTableauDeBord,
   IconDiscussion,
   IconEmployes,
   IconPlanning,
@@ -20,7 +19,7 @@ import {
   IconTemperature,
   IconCommandes,
 } from "@/components/icons/GozlyIcons";
-import { IconBouclier, IconCategorie, IconEchange, IconEngrenage, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import { IconBouclier, IconCategorie, IconEchange, IconEngrenage, IconFlecheDroite, IconFlecheGauche, IconMaison } from "@/components/icons/Pictogrammes";
 
 const ICONES_MODULES = {
   planning: IconPlanning,
@@ -146,7 +145,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
 
         <nav className="dash-nav">
           <Link href="/dashboard" className={`dash-nav-item${active === "dashboard" ? " active" : ""}`}>
-            <IconTableauDeBord className="gozly-icon" /> Tableau de bord
+            <IconMaison className="gozly-icon" /> Tableau de bord
           </Link>
           <Link href="/dashboard/discussion" className={`dash-nav-item${active === "discussion" ? " active" : ""}`}>
             <IconDiscussion className="gozly-icon" /> Discussion
