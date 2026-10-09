@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 import PointageKioskContent from "@/components/PointageKioskContent";
 import PlanningKioskContent from "@/components/PlanningKioskContent";
 import InventaireKioskContent from "@/components/InventaireKioskContent";
@@ -57,20 +58,20 @@ export default function KiosqueEcran({ id }) {
           bottom: "4px",
           left: "4px",
           zIndex: 50,
-          opacity: 0.4,
-          width: "30px",
-          height: "30px",
+          opacity: 0.55,
+          width: "44px",
+          height: "44px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           borderRadius: "50%",
           background: "rgba(255,255,255,.12)",
           color: "var(--text-dim, #aaa)",
-          fontSize: "16px",
+          fontSize: "22px",
           textDecoration: "none",
         }}
       >
-        ←
+        <IconFlecheGauche className="gozly-icon" />
       </Link>
     </>
   );
