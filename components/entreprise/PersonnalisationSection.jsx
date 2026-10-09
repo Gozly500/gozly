@@ -37,6 +37,11 @@ const OPTIONS_POINTAGE_MOBILE = [
   { id: "active", label: "Activé" },
 ];
 
+const OPTIONS_RAPPELS_TEMPERATURE = [
+  { id: "desactive", label: "Désactivés" },
+  { id: "active", label: "Activés" },
+];
+
 const OPTIONS_PUSH_WIX = [
   { id: "manuel", label: "Manuel" },
   { id: "automatique", label: "Automatique" },
@@ -133,6 +138,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [approbationConges, setApprobationConges] = useState("manuelle");
   const [calculPointage, setCalculPointage] = useState("reel");
   const [pointageMobile, setPointageMobile] = useState("desactive");
+  const [rappelsTemperature, setRappelsTemperature] = useState("desactive");
   const [pushWix, setPushWix] = useState("manuel");
   const [visibiliteFeuilleTemps, setVisibiliteFeuilleTemps] = useState("manuelle");
   const [retentionDemandes, setRetentionDemandes] = useState("6");
@@ -184,6 +190,10 @@ export default function PersonnalisationSection({ entrepriseId }) {
     // Mode d'affichage du kiosque : lu à part (colonne de commandes_kiosque_mode.sql, absente tant que le SQL n'est pas exécuté).
     const { data: kiosqueData, error: kiosqueErreur } = await supabase.from("entreprises").select("commandes_kiosque_mode").eq("id", entrepriseId).maybeSingle();
     if (!kiosqueErreur) setKiosqueCommandes(kiosqueData?.commandes_kiosque_mode === "sections" ? "sections" : "liste");
+
+    // Rappels de températures : lus à part (colonne de temperature_rappels.sql, absente tant que le SQL n'est pas exécuté).
+    const { data: rappelsData, error: rappelsErreur } = await supabase.from("entreprises").select("temperature_rappels_actif").eq("id", entrepriseId).maybeSingle();
+    if (!rappelsErreur) setRappelsTemperature(rappelsData?.temperature_rappels_actif ? "active" : "desactive");
 
     // Les succursales Wix qu'on a vues passer dans les commandes de ce dashboard.
     const { data: lieuxData } = await supabase
@@ -309,6 +319,24 @@ export default function PersonnalisationSection({ entrepriseId }) {
 
     setSaving(false);
     setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+  }
+
+  async function handleChangeRappelsTemperature(value) {
+    setRappelsTemperature(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ temperature_rappels_actif: value === "active" })
+      .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(
+      error
+        ? { type: "err", text: "L'enregistrement a échoué (le fichier SQL des rappels est-il exécuté ?)." }
+        : { type: "ok", text: "Préférence enregistrée." }
+    );
   }
 
   async function handleChangePremierJour(value) {
@@ -549,6 +577,14 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   options={OPTIONS_RETENTION_TEMPERATURE}
                   value={retentionTemperature}
                   onChange={handleChangeRetentionTemperature}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label="Rappels d'enregistrement"
+                  info="Envoie une notification « N'oubliez pas d'enregistrer les températures » aux employés au travail, 30 minutes avant la fin du créneau (11 h 30 pour le matin, 23 h 30 pour le soir), si aucun relevé n'a encore été enregistré pour ce créneau. Les employés doivent avoir activé les notifications dans l'app."
+                  options={OPTIONS_RAPPELS_TEMPERATURE}
+                  value={rappelsTemperature}
+                  onChange={handleChangeRappelsTemperature}
                   disabled={saving}
                 />
               </div>
