@@ -144,6 +144,7 @@ export default function HoraireEmploye() {
                     <div key={q.id}>
                       <div className="moi-quart">
                         {heure(q.heure_debut)} – {heure(q.heure_fin)}
+                        {q.echange_de_nom && <span className="moi-quart-echange">{t("horaire.echange")}</span>}
                       </div>
                       {ouvert && (
                         <div className="moi-quart-detail">
@@ -155,6 +156,12 @@ export default function HoraireEmploye() {
                             <div className="moi-detail-ligne">
                               <span>{t("horaire.succursale")}</span>
                               <strong>{q.emplacement_nom}</strong>
+                            </div>
+                          )}
+                          {q.echange_de_nom && (
+                            <div className="moi-detail-ligne">
+                              <span>{t("horaire.echange")}</span>
+                              <strong>{t("horaire.echangeDe", { nom: q.echange_de_nom })}</strong>
                             </div>
                           )}
                           {q.poste && (

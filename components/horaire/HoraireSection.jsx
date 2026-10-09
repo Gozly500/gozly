@@ -440,6 +440,11 @@ export default function HoraireSection({ entrepriseId }) {
                         <div className="horaire-chip-nom">
                           {employeNom(q.employe_id)}
                           {!q.publie && <span className="horaire-chip-badge">Brouillon</span>}
+                          {q.echange_de && (
+                            <span className="horaire-chip-badge horaire-chip-echange" title={`Quart reçu de ${employeNom(q.echange_de)} par échange`}>
+                              Échange
+                            </span>
+                          )}
                         </div>
                         <div className="horaire-chip-heures">
                           {q.heure_debut.slice(0, 5)} - {q.heure_fin.slice(0, 5)}

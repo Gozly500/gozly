@@ -274,6 +274,7 @@ export default function HoraireMobile() {
                           </span>
                         )}
                         {!q.publie && <span className="gestion-brouillon">Brouillon</span>}
+                        {q.echange_de && <span className="gestion-echange">Échange · de {nomEmploye(q.echange_de)}</span>}
                       </div>
                       {edition && (
                         <button type="button" className="admin-icon-btn gestion-crayon" onClick={() => ouvrirModif(q)} aria-label="Modifier ce quart">

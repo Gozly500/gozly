@@ -22,7 +22,7 @@ export async function GET(request) {
   const service = getServiceClient();
   const { data: quarts } = await service
     .from("planning_quarts")
-    .select("id, date, heure_debut, heure_fin, poste, emplacement_id")
+    .select("*")
     .eq("employe_id", employe.id)
     .eq("publie", true)
     .gte("date", semaine)
@@ -50,12 +50,19 @@ export async function GET(request) {
 
   const nomsEmplacements = new Map((emplacements || []).map((e) => [e.id, e.nom]));
 
+  // Quarts reçus par échange : nom de l'employé qui les a donnés.
+  const donneursIds = [...new Set(quarts.map((q) => q.echange_de).filter(Boolean))];
+  const { data: donneurs } =
+    donneursIds.length > 0 ? await service.from("employes").select("id, nom").in("id", donneursIds) : { data: [] };
+  const nomsDonneurs = new Map((donneurs || []).map((d) => [d.id, d.nom]));
+
   const enrichis = quarts.map((q) => ({
     id: q.id,
     date: q.date,
     heure_debut: q.heure_debut,
     heure_fin: q.heure_fin,
     poste: q.poste || null,
+    echange_de_nom: q.echange_de ? nomsDonneurs.get(q.echange_de) || "—" : null,
     emplacement_nom: nomsEmplacements.get(q.emplacement_id) || null,
     collegues: (autres || [])
       .filter(
