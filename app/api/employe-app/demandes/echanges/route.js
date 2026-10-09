@@ -98,7 +98,7 @@ export async function POST(request) {
   }
 
   // Échange partiel : seulement si les heures choisies ne couvrent pas déjà le quart au complet.
-  const partiel = heureDebut && heureFin && !(heureDebut <= quart.heure_debut.slice(0, 5) && heureFin >= quart.heure_fin.slice(0, 5));
+  const partiel = heureDebut && heureFin && !(heureDebut === quart.heure_debut.slice(0, 5) && heureFin === quart.heure_fin.slice(0, 5));
   if (partiel) {
     const erreur = erreurPlage(heureDebut, heureFin, quart);
     if (erreur) return NextResponse.json({ error: erreur }, { status: 400 });

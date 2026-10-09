@@ -5,6 +5,7 @@ import { employeFetch } from "@/lib/employeAuth";
 import RappelNotifications from "@/components/moi/RappelNotifications";
 import { useLangue } from "@/components/moi/LangueContext";
 import { localeDate } from "@/lib/i18n/moi";
+import { dansLeQuart } from "@/lib/echangeQuart";
 import Pictos from "@/components/icons/Pictos";
 
 function badgeConge(statut, t) {
@@ -241,8 +242,24 @@ export default function DemandesEmploye() {
                 <div className="field">
                   <label>{t("demandes.heuresEchange")}</label>
                   <div className="field-row">
-                    <input type="time" value={heureDebutEch} onChange={(e) => setHeureDebutEch(e.target.value)} required />
-                    <input type="time" value={heureFinEch} onChange={(e) => setHeureFinEch(e.target.value)} required />
+                    <input
+                      type="time"
+                      value={heureDebutEch}
+                      min={mesQuarts.find((x) => x.id === quartChoisi)?.heure_debut.slice(0, 5)}
+                      max={mesQuarts.find((x) => x.id === quartChoisi)?.heure_fin.slice(0, 5)}
+                      onChange={(e) => setHeureDebutEch(e.target.value)}
+                      onBlur={() => setHeureDebutEch((v) => dansLeQuart(v, mesQuarts.find((x) => x.id === quartChoisi)))}
+                      required
+                    />
+                    <input
+                      type="time"
+                      value={heureFinEch}
+                      min={mesQuarts.find((x) => x.id === quartChoisi)?.heure_debut.slice(0, 5)}
+                      max={mesQuarts.find((x) => x.id === quartChoisi)?.heure_fin.slice(0, 5)}
+                      onChange={(e) => setHeureFinEch(e.target.value)}
+                      onBlur={() => setHeureFinEch((v) => dansLeQuart(v, mesQuarts.find((x) => x.id === quartChoisi)))}
+                      required
+                    />
                   </div>
                 </div>
               )}

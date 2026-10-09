@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { localeDate } from "@/lib/i18n/moi";
+import { dansLeQuart, erreurPlage } from "@/lib/echangeQuart";
 import Pictos from "@/components/icons/Pictos";
 import { badgeEchange } from "@/components/moi/DemandesEmploye";
 import RappelNotifications from "@/components/moi/RappelNotifications";
@@ -268,6 +269,11 @@ export default function DiscussionEmploye() {
 
   async function proposerEchange(quart, autreEmployeId, debut, fin) {
     if (echangeBusy) return;
+    const erreur = erreurPlage(debut, fin, quart);
+    if (erreur && !(debut === quart.heure_debut.slice(0, 5) && fin === quart.heure_fin.slice(0, 5))) {
+      setEchangeErreur(erreur);
+      return;
+    }
     setEchangeBusy(true);
     setEchangeErreur("");
     try {
@@ -593,11 +599,25 @@ export default function DiscussionEmploye() {
                   <div className="field-row">
                     <div className="field">
                       <label>{t("chat.echangeDe")}</label>
-                      <input type="time" value={echDebut} onChange={(e) => setEchDebut(e.target.value)} />
+                      <input
+                        type="time"
+                        value={echDebut}
+                        min={quartEchange.heure_debut.slice(0, 5)}
+                        max={quartEchange.heure_fin.slice(0, 5)}
+                        onChange={(e) => setEchDebut(e.target.value)}
+                        onBlur={() => setEchDebut((v) => dansLeQuart(v, quartEchange))}
+                      />
                     </div>
                     <div className="field">
                       <label>{t("chat.echangeA")}</label>
-                      <input type="time" value={echFin} onChange={(e) => setEchFin(e.target.value)} />
+                      <input
+                        type="time"
+                        value={echFin}
+                        min={quartEchange.heure_debut.slice(0, 5)}
+                        max={quartEchange.heure_fin.slice(0, 5)}
+                        onChange={(e) => setEchFin(e.target.value)}
+                        onBlur={() => setEchFin((v) => dansLeQuart(v, quartEchange))}
+                      />
                     </div>
                   </div>
                 </div>
