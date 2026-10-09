@@ -94,6 +94,10 @@ export default function KiosquesContent() {
           <header className="dash-hero-inline">
             <h1>Mode kiosque</h1>
             <p>Les écrans à laisser ouverts sur une tablette ou un écran du commerce. Chacun s&apos;ouvre dans un nouvel onglet.</p>
+            <p style={{ marginTop: "8px" }}>
+              Pour une tablette : ouvre <strong>gozly.net/kiosque</strong> dessus, installe l&apos;app, puis connecte-toi — tu pourras choisir le kiosque à afficher.{" "}
+              <Link href="/kiosque" target="_blank">Ouvrir la page d&apos;installation</Link>
+            </p>
           </header>
 
           {!entrepriseId ? (
