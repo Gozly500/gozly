@@ -4,7 +4,7 @@ export const metadata = {
   title: "Gozly Kiosque",
   manifest: "/manifest-kiosque.json",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Gozly Kiosque" },
-  icons: { icon: "/icone-app-192", apple: "/icone-app-192" },
+  icons: { icon: "/icone-kiosque-192?v=1", apple: "/icone-kiosque-192" },
 };
 
 export const viewport = {
