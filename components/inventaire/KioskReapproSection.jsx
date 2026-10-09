@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useLangue } from "@/components/moi/LangueContext";
 import { IconCrochet } from "@/components/icons/Pictogrammes";
 
 export default function KioskReapproSection({ entrepriseId }) {
+  const { t } = useLangue();
   const [liste, setListe] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
@@ -33,14 +35,14 @@ export default function KioskReapproSection({ entrepriseId }) {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("kq.chargement")}</p>;
   }
 
   return (
     <div>
-      <h2>À aller chercher</h2>
+      <h2>{t("kq.i.titre")}</h2>
       {liste.length === 0 ? (
-        <p className="panel-hint">Rien à préparer pour l'instant.</p>
+        <p className="panel-hint">{t("kq.i.rien")}</p>
       ) : (
         <div className="kiosk-reappro-list">
           {liste.map((item) => (

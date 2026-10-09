@@ -1,4 +1,5 @@
-import DashboardThemeLayout from "@/app/dashboard/layout";
+import KiosqueThemeAppliqueur from "@/components/kiosque/KiosqueThemeAppliqueur";
+import { LangueProvider } from "@/components/moi/LangueContext";
 
 export const metadata = {
   title: "Gozly Kiosque",
@@ -11,11 +12,12 @@ export const viewport = {
   themeColor: "#191960",
 };
 
-// App tablette « Gozly Kiosque » : même thème que le dashboard, installable en plein écran.
+// App tablette « Gozly Kiosque » : thème et langue propres à la tablette (voir /kiosque/reglages), installable en plein écran.
 export default function KiosqueLayout({ children }) {
   return (
-    <DashboardThemeLayout>
-      <div className="page dash-page">{children}</div>
-    </DashboardThemeLayout>
+    <div className="page dash-page">
+      <KiosqueThemeAppliqueur />
+      <LangueProvider>{children}</LangueProvider>
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { MODULES } from "@/lib/modules";
 import { KIOSQUES } from "@/lib/kiosques";
+import { useLangue } from "@/components/moi/LangueContext";
 import { IconEcran } from "@/components/icons/Pictogrammes";
 
 function detecterIOS() {
@@ -23,8 +24,10 @@ function dejaInstallee() {
 
 // Page d'accueil de l'app tablette : installation (si pas encore installée), connexion au
 // compte Gozly, puis la liste des kiosques des modules actifs de l'entreprise.
+// Les réglages (thème, langue) sont propres à la tablette : /kiosque/reglages.
 export default function KiosqueAccueil() {
   const router = useRouter();
+  const { t } = useLangue();
   const [etat, setEtat] = useState("chargement"); // "chargement" | "deconnecte" | "liste"
   const [entrepriseNom, setEntrepriseNom] = useState("");
   const [actifs, setActifs] = useState([]);
@@ -94,10 +97,16 @@ export default function KiosqueAccueil() {
     setEtat("deconnecte");
   }
 
+  const lienReglages = (
+    <Link href="/kiosque/reglages" className="admin-icon-btn" style={{ display: "inline-flex", textDecoration: "none" }}>
+      {t("kq.reglages")}
+    </Link>
+  );
+
   if (etat === "chargement") {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("kq.chargement")}</p>
       </div>
     );
   }
@@ -106,30 +115,26 @@ export default function KiosqueAccueil() {
     return (
       <div className="kiosk-screen">
         <div className="kiosk-inner" style={{ maxWidth: "460px", width: "100%", textAlign: "center" }}>
-          <h1>Gozly Kiosque</h1>
-          <p className="panel-hint">Connecte cette tablette au compte Gozly de ton commerce pour afficher tes écrans kiosque.</p>
+          <h1>{t("kq.titre")}</h1>
+          <p className="panel-hint">{t("kq.hintConnexion")}</p>
 
           <Link href="/login?retour=/kiosque" className="submit-btn" style={{ display: "block", textDecoration: "none", marginTop: "20px" }}>
-            Se connecter
+            {t("kq.seConnecter")}
           </Link>
 
           {!installee && (
             <div style={{ marginTop: "28px" }}>
               {promptEvent ? (
                 <button type="button" className="admin-icon-btn" style={{ width: "100%" }} onClick={installer}>
-                  Installer l&apos;app sur cette tablette
+                  {t("kq.installer")}
                 </button>
-              ) : estIOS ? (
-                <p className="panel-hint">
-                  Pour installer l&apos;app : appuie sur <strong>Partager</strong> en bas de Safari, choisis <strong>« Sur l&apos;écran d&apos;accueil »</strong>, puis <strong>Ajouter</strong>.
-                </p>
               ) : (
-                <p className="panel-hint">
-                  Pour installer l&apos;app : ouvre le menu du navigateur (⋮) et choisis <strong>« Installer l&apos;application »</strong> ou <strong>« Ajouter à l&apos;écran d&apos;accueil »</strong>.
-                </p>
+                <p className="panel-hint">{estIOS ? t("kq.installerIOS") : t("kq.installerAndroid")}</p>
               )}
             </div>
           )}
+
+          <div style={{ marginTop: "24px" }}>{lienReglages}</div>
         </div>
       </div>
     );
@@ -141,10 +146,10 @@ export default function KiosqueAccueil() {
     <div className="kiosk-screen">
       <div className="kiosk-inner" style={{ maxWidth: "720px", width: "100%" }}>
         {entrepriseNom && <p className="kiosk-entreprise">{entrepriseNom}</p>}
-        <h1 style={{ textAlign: "center" }}>Choisis un kiosque</h1>
+        <h1 style={{ textAlign: "center" }}>{t("kq.choisir")}</h1>
 
         {disponibles.length === 0 ? (
-          <p className="chat-empty">Aucun kiosque disponible : active un module avec « Gérer les modules » dans le dashboard.</p>
+          <p className="chat-empty">{t("kq.aucunKiosque")}</p>
         ) : (
           <div className="admin-list">
             {disponibles.map((k) => {
@@ -157,8 +162,8 @@ export default function KiosqueAccueil() {
                     <span style={{ fontSize: "32px", flexShrink: 0 }}>{module?.icon || <IconEcran className="gozly-icon" />}</span>
                   )}
                   <div className="admin-row-main" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                    <div className="admin-row-title">{k.nom}</div>
-                    <div className="admin-row-sub">{k.description}</div>
+                    <div className="admin-row-title">{t(`kq.k.${k.id}.nom`)}</div>
+                    <div className="admin-row-sub">{t(`kq.k.${k.id}.desc`)}</div>
                   </div>
                 </Link>
               );
@@ -166,9 +171,12 @@ export default function KiosqueAccueil() {
           </div>
         )}
 
-        <button type="button" className="admin-icon-btn" style={{ marginTop: "24px" }} onClick={changerDeCompte}>
-          Changer de compte
-        </button>
+        <div style={{ marginTop: "24px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          {lienReglages}
+          <button type="button" className="admin-icon-btn" onClick={changerDeCompte}>
+            {t("kq.changerCompte")}
+          </button>
+        </div>
       </div>
     </div>
   );

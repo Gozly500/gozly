@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useLangue } from "@/components/moi/LangueContext";
 import { IconCrochet, IconLocalisation } from "@/components/icons/Pictogrammes";
 
 export default function PointageSection({ entrepriseId }) {
+  const { t, langue } = useLangue();
   const [nip, setNip] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(null);
@@ -97,7 +99,7 @@ export default function PointageSection({ entrepriseId }) {
       .maybeSingle();
 
     if (!employe) {
-      setMessage({ type: "err", text: "NIP invalide." });
+      setMessage({ type: "err", text: t("kq.p.nipInvalide") });
       setNip("");
       setBusy(false);
       return;
@@ -126,7 +128,7 @@ export default function PointageSection({ entrepriseId }) {
       .maybeSingle();
 
     if (lectureError) {
-      setMessage({ type: "err", text: "Erreur : " + lectureError.message });
+      setMessage({ type: "err", text: t("kq.p.erreur", { msg: lectureError.message }) });
       setNip("");
       setBusy(false);
       return;
@@ -138,7 +140,7 @@ export default function PointageSection({ entrepriseId }) {
     if (enCours) {
       const { error: updateError } = await supabase.from("pointages").update({ sortie: maintenant }).eq("id", enCours.id);
       if (updateError) {
-        setMessage({ type: "err", text: "Erreur : " + updateError.message });
+        setMessage({ type: "err", text: t("kq.p.erreur", { msg: updateError.message }) });
         setNip("");
         setBusy(false);
         return;
@@ -149,7 +151,7 @@ export default function PointageSection({ entrepriseId }) {
         .from("pointages")
         .insert({ entreprise_id: entrepriseId, employe_id: employe.id, entree: maintenant, emplacement_id: emplacementId });
       if (insertError) {
-        setMessage({ type: "err", text: "Erreur : " + insertError.message });
+        setMessage({ type: "err", text: t("kq.p.erreur", { msg: insertError.message }) });
         setNip("");
         setBusy(false);
         return;
@@ -157,14 +159,14 @@ export default function PointageSection({ entrepriseId }) {
       prochainType = "arrivee";
     }
 
-    const heure = new Date().toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+    const heure = new Date().toLocaleTimeString(langue === "en" ? "en-CA" : "fr-CA", { hour: "2-digit", minute: "2-digit" });
 
     setMessage({
       type: "ok",
       text:
         prochainType === "arrivee"
-          ? `Bonjour ${employe.nom} ! Arrivée enregistrée à ${heure}.`
-          : `Au revoir ${employe.nom} ! Départ enregistré à ${heure}.`,
+          ? t("kq.p.arrivee", { nom: employe.nom, heure })
+          : t("kq.p.depart", { nom: employe.nom, heure }),
     });
     setNip("");
     setBusy(false);
@@ -174,8 +176,8 @@ export default function PointageSection({ entrepriseId }) {
   if (emplacementsLoaded && emplacements.length > 1 && !emplacementId) {
     return (
       <div>
-        <h2>Quel emplacement ?</h2>
-        <p className="panel-hint">Choisis la succursale de cette tablette (mémorisé pour la prochaine fois).</p>
+        <h2>{t("kq.p.empl")}</h2>
+        <p className="panel-hint">{t("kq.p.emplHint")}</p>
         <div className="modules-picker-grid" style={{ maxWidth: "360px", margin: "0 auto" }}>
           {emplacements.map((e) => (
             <button
@@ -195,8 +197,8 @@ export default function PointageSection({ entrepriseId }) {
 
   return (
     <div>
-      <h2>Pointage</h2>
-      <p className="panel-hint">Entre ton NIP pour enregistrer ton arrivée ou ton départ.</p>
+      <h2>{t("kq.p.titre")}</h2>
+      <p className="panel-hint">{t("kq.p.hint")}</p>
 
       <div className="pointage-kiosk">
         {showSuccess ? (
@@ -225,7 +227,7 @@ export default function PointageSection({ entrepriseId }) {
                 </button>
               ))}
               <button className="pointage-key" onClick={pressClear} disabled={busy}>
-                Effacer
+                {t("kq.p.effacer")}
               </button>
               <button className="pointage-key" onClick={() => pressDigit("0")} disabled={busy}>
                 0

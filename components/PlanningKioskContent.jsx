@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { useLangue } from "@/components/moi/LangueContext";
 import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 import { IconLocalisation } from "@/components/icons/Pictogrammes";
 
@@ -14,6 +15,7 @@ function todayISO() {
 
 export default function PlanningKioskContent() {
   const router = useRouter();
+  const { t: tr, langue } = useLangue();
   const [checking, setChecking] = useState(true);
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [entrepriseNom, setEntrepriseNom] = useState("");
@@ -116,7 +118,7 @@ export default function PlanningKioskContent() {
     await supabase.from("taches").update({ terminee: !tache.terminee }).eq("id", tache.id);
   }
 
-  const dateLabel = new Date(date + "T00:00:00").toLocaleDateString("fr-CA", {
+  const dateLabel = new Date(date + "T00:00:00").toLocaleDateString(langue === "en" ? "en-CA" : "fr-CA", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -125,7 +127,7 @@ export default function PlanningKioskContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("kq.chargement")}</p>
       </div>
     );
   }
@@ -133,7 +135,7 @@ export default function PlanningKioskContent() {
   if (!entrepriseId) {
     return (
       <div className="kiosk-screen">
-        <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("kq.aucuneEntreprise")}</p>
       </div>
     );
   }
@@ -142,8 +144,8 @@ export default function PlanningKioskContent() {
     return (
       <div className="kiosk-screen">
         <div className="kiosk-inner">
-          <h2>Quel emplacement ?</h2>
-          <p className="panel-hint">Choisis la succursale de cette tablette (mémorisé pour la prochaine fois).</p>
+          <h2>{tr("kq.p.empl")}</h2>
+          <p className="panel-hint">{tr("kq.p.emplHint")}</p>
           <div className="modules-picker-grid" style={{ maxWidth: "360px", margin: "0 auto" }}>
             {emplacements.map((e) => (
               <button
@@ -169,9 +171,9 @@ export default function PlanningKioskContent() {
         <h2 style={{ textTransform: "capitalize", marginBottom: "24px" }}>{dateLabel}</h2>
 
         {loadingTaches ? (
-          <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+          <p style={{ color: "var(--text-dim)" }}>{tr("kq.chargement")}</p>
         ) : categories.length === 0 ? (
-          <p style={{ color: "var(--text-dim)" }}>Aucune catégorie configurée.</p>
+          <p style={{ color: "var(--text-dim)" }}>{tr("kq.t.aucuneCategorie")}</p>
         ) : (
           (() => {
             const boite = (cat) => {
@@ -203,7 +205,7 @@ export default function PlanningKioskContent() {
                   <div className="kiosk-taches-colonnes">{autres.map(boite)}</div>
                 </div>
                 {taches.length === 0 && (
-                  <p style={{ color: "var(--text-dim)", textAlign: "center" }}>Aucune tâche pour aujourd'hui.</p>
+                  <p style={{ color: "var(--text-dim)", textAlign: "center" }}>{tr("kq.t.aucuneTache")}</p>
                 )}
               </>
             );

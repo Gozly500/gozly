@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
-import { LangueProvider } from "@/components/moi/LangueContext";
+import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
 import { chargerProduitsInventaire, creerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
 import {
@@ -26,10 +26,11 @@ import { IconCalendrier, IconCloche, IconClocheBarree, IconCrochet, IconDocument
 
 const INTERVALLE_SYNC_MS = 30000;
 
+// Les titres et libellés de boutons viennent du dictionnaire (kq.c.col.<id>, kq.c.traiter / kq.c.terminer).
 const COLONNES = [
-  { id: "en_attente", titre: "En attente", suivante: "traitee", libelleBouton: <>Traiter <IconFlecheDroite className="gozly-icon-inline" /></>, couleur: "#ffd479" },
-  { id: "traitee", titre: "Commandes du jour", suivante: "terminee", libelleBouton: <>Terminer <IconCrochet className="gozly-icon" /></>, couleur: "#8ab4ff" },
-  { id: "terminee", titre: "Terminées", suivante: null, libelleBouton: null, couleur: "#7ee2a8" },
+  { id: "en_attente", suivante: "traitee", couleur: "#ffd479" },
+  { id: "traitee", suivante: "terminee", couleur: "#8ab4ff" },
+  { id: "terminee", suivante: null, couleur: "#7ee2a8" },
 ];
 
 // Sans accents ni majuscules, pour chercher « eve » et trouver « Ève ».
@@ -58,6 +59,8 @@ const PAUSE_ENTRE_SONS_MS = 5000;
 
 export default function CommandesKioskContent() {
   const router = useRouter();
+  const { t, langue } = useLangue();
+  const locale = langue === "en" ? "en-CA" : "fr-CA";
   const [checking, setChecking] = useState(true);
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [entrepriseNom, setEntrepriseNom] = useState("");
@@ -242,8 +245,8 @@ export default function CommandesKioskContent() {
     const { ok, error } = await imprimerCommande(entrepriseId, commande.id, "manuel");
     setMessage(
       ok
-        ? { type: "ok", text: `Bon #${commande.numero} envoyé à l'imprimante.` }
-        : { type: "err", text: error || "L'impression a échoué." }
+        ? { type: "ok", text: t("kq.c.bonEnvoye", { n: commande.numero }) }
+        : { type: "err", text: error || t("kq.c.impressionEchec") }
     );
     setTimeout(() => setMessage(null), 4000);
   }
@@ -276,7 +279,7 @@ export default function CommandesKioskContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("kq.chargement")}</p>
       </div>
     );
   }
@@ -284,7 +287,7 @@ export default function CommandesKioskContent() {
   if (!entrepriseId) {
     return (
       <div className="kiosk-screen">
-        <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("kq.aucuneEntreprise")}</p>
       </div>
     );
   }
@@ -328,30 +331,31 @@ export default function CommandesKioskContent() {
   const aAfficherListe = [...aFaireListe, ...terminesListe];
 
   function renderCarte(c, col, liste = false) {
-    const modeTexte = libelleMode(c.mode);
-    const paiement = libellePaiement(c);
+    const modeTexte = libelleMode(c.mode) ? t(`kq.c.mode.${c.mode}`) : null;
+    const clePaiement = c.statut_paiement === "PARTIALLY_REFUNDED" ? "REFUNDED" : c.statut_paiement;
+    const paiement = libellePaiement(c) ? t(`kq.c.pay.${clePaiement}`) : null;
     const etat = etatCommande(c);
     return (
       <article className={`cmd-kiosk-card${liste && etapeCommande(c) === "terminee" ? " cmd-kiosk-card-finie" : ""}`} key={c.id}>
         <div className="cmd-kiosk-card-top">
           <strong>#{c.numero || "—"}</strong>
-          <span>{libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}</span>
+          <span>{libelleRamassage(c, locale) ? t("kq.c.ramassageHeure", { h: libelleRamassage(c, locale) }) : heureCommande(c.date_commande, locale)}</span>
         </div>
         {c.client_nom && <div className="cmd-kiosk-client">{c.client_nom}</div>}
         {noteCommande(c) && <div className="cmd-kiosk-note"><IconDocument className="gozly-icon" /> {noteCommande(c)}</div>}
         <div className="cmd-kiosk-tags">
           {liste && etapeCommande(c) === "terminee" && (
             <span className="cmd-kiosk-tag" style={{ color: etat.couleur, fontWeight: 700 }}>
-              <IconCrochet className="gozly-icon" /> Terminée
+              <IconCrochet className="gozly-icon" /> {t("kq.c.terminee")}
             </span>
           )}
           {modeTexte && <span className="cmd-kiosk-tag">{modeTexte}</span>}
           {c.lieu_nom && <span className="cmd-kiosk-tag">{c.lieu_nom}</span>}
           {paiement && <span className="cmd-kiosk-tag">{paiement}</span>}
-          {c.source === "manuel" && <span className="cmd-kiosk-tag">Manuelle</span>}
+          {c.source === "manuel" && <span className="cmd-kiosk-tag">{t("kq.c.manuelle")}</span>}
           {c.date_ramassage && jourQuebec(c.date_ramassage) !== dateAujourdhui() && (
             <span className="cmd-kiosk-tag">
-              {new Date(`${jourQuebec(c.date_ramassage)}T12:00:00`).toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" })}
+              {new Date(`${jourQuebec(c.date_ramassage)}T12:00:00`).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" })}
             </span>
           )}
         </div>
@@ -363,30 +367,34 @@ export default function CommandesKioskContent() {
             </div>
           ))}
         </div>
-        <div className="cmd-kiosk-total">{formatMontant(c.total)}</div>
+        <div className="cmd-kiosk-total">{formatMontant(c.total, locale)}</div>
 
         <div className="cmd-kiosk-actions">
           {imprimanteActive && (
-            <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
-              <IconImprimante className="gozly-icon" /> Imprimer
+            <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label={t("kq.c.imprimerBon")}>
+              <IconImprimante className="gozly-icon" /> {t("kq.c.imprimer")}
             </button>
           )}
           {liste ? (
             etapeCommande(c) !== "terminee" && (
               <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "terminee")}>
-                Terminer <IconCrochet className="gozly-icon" />
+                {t("kq.c.terminer")} <IconCrochet className="gozly-icon" />
               </button>
             )
           ) : (
             <>
               {col.id !== "en_attente" && (
                 <button className="admin-icon-btn" disabled={enCours === c.id} onClick={() => passer(c, col.id === "terminee" ? "traitee" : "en_attente")}>
-                  <IconFlecheGauche className="gozly-icon" /> Retour
+                  <IconFlecheGauche className="gozly-icon" /> {t("kq.c.retour")}
                 </button>
               )}
               {col.suivante && (
                 <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, col.suivante)}>
-                  {col.libelleBouton}
+                  {col.suivante === "traitee" ? (
+                    <>{t("kq.c.traiter")} <IconFlecheDroite className="gozly-icon-inline" /></>
+                  ) : (
+                    <>{t("kq.c.terminer")} <IconCrochet className="gozly-icon" /></>
+                  )}
                 </button>
               )}
             </>
@@ -401,42 +409,42 @@ export default function CommandesKioskContent() {
         <div className="cmd-kiosk-avenir">
           <div className="cmd-kiosk-filtres">
             <label>
-              Du <input type="date" value={du} onChange={(e) => setDu(e.target.value)} />
+              {t("kq.c.du")} <input type="date" value={du} onChange={(e) => setDu(e.target.value)} />
             </label>
             <label>
-              Au <input type="date" value={au} onChange={(e) => setAu(e.target.value)} />
+              {t("kq.c.au")} <input type="date" value={au} onChange={(e) => setAu(e.target.value)} />
             </label>
             <button className="admin-icon-btn" onClick={() => { setDu(demain); setAu(demain); }}>
-              Demain
+              {t("kq.c.demain")}
             </button>
             <button className="admin-icon-btn" onClick={() => { setDu(demain); setAu(decalerJour(dateAujourdhui(), 7)); }}>
-              7 jours
+              {t("kq.c.sept")}
             </button>
             <button className="admin-icon-btn" onClick={() => { setDu(demain); setAu(decalerJour(dateAujourdhui(), 30)); }}>
-              30 jours
+              {t("kq.c.trente")}
             </button>
             <button className="admin-icon-btn" onClick={() => { setDu(""); setAu(""); }}>
-              Tout
+              {t("kq.c.tout")}
             </button>
             <span className="cmd-kiosk-compte">
-              {avenirFiltre.length} commande{avenirFiltre.length > 1 ? "s" : ""}
+              {t(avenirFiltre.length > 1 ? "kq.c.nbN" : "kq.c.nb1", { n: avenirFiltre.length })}
             </span>
           </div>
 
           <div className="cmd-kiosk-avenir-liste">
             {jours.length === 0 ? (
-              <p className="cmd-kiosk-vide">Aucune commande à venir{du || au || recherche ? " pour ce filtre" : ""}.</p>
+              <p className="cmd-kiosk-vide">{t(du || au || recherche ? "kq.c.aucuneAvenirFiltre" : "kq.c.aucuneAvenir")}</p>
             ) : (
               <table className="cmd-kiosk-table">
                 <thead>
                   <tr>
-                    <th>Heure</th>
-                    <th>No</th>
-                    <th>Client</th>
-                    <th>Téléphone</th>
-                    <th>Articles</th>
-                    <th>Total</th>
-                    <th>État</th>
+                    <th>{t("kq.c.th.heure")}</th>
+                    <th>{t("kq.c.th.no")}</th>
+                    <th>{t("kq.c.th.client")}</th>
+                    <th>{t("kq.c.th.tel")}</th>
+                    <th>{t("kq.c.th.articles")}</th>
+                    <th>{t("kq.c.th.total")}</th>
+                    <th>{t("kq.c.th.etat")}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -445,18 +453,18 @@ export default function CommandesKioskContent() {
                     <Fragment key={g.jour}>
                       <tr className="cmd-kiosk-table-jour">
                         <td colSpan={8}>
-                          {new Date(`${g.jour}T12:00:00`).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}
+                          {new Date(`${g.jour}T12:00:00`).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
                           {" · "}
-                          {g.commandes.length} commande{g.commandes.length > 1 ? "s" : ""}
+                          {t(g.commandes.length > 1 ? "kq.c.nbN" : "kq.c.nb1", { n: g.commandes.length })}
                         </td>
                       </tr>
                       {g.commandes.map((c) => {
                         const etat = etatCommande(c);
                         // Pas d'étape « En attente » en mode liste : c'est une commande « Traitée ».
-                        const etatTexte = modeKiosque === "liste" && etat.id === "en_attente" ? { texte: "Traitée", couleur: "#8ab4ff" } : etat;
+                        const etatTexte = modeKiosque === "liste" && etat.id === "en_attente" ? { id: "traitee", couleur: "#8ab4ff" } : etat;
                         return (
                           <tr key={c.id}>
-                            <td style={{ whiteSpace: "nowrap" }}>{libelleRamassage(c) || "—"}</td>
+                            <td style={{ whiteSpace: "nowrap" }}>{libelleRamassage(c, locale) || "—"}</td>
                             <td>#{c.numero || "—"}</td>
                             <td>{c.client_nom || "—"}</td>
                             <td style={{ whiteSpace: "nowrap" }}>{c.client_telephone || "—"}</td>
@@ -469,18 +477,18 @@ export default function CommandesKioskContent() {
                               ))}
                               {noteCommande(c) && <div className="cmd-kiosk-note"><IconDocument className="gozly-icon" /> {noteCommande(c)}</div>}
                             </td>
-                            <td style={{ whiteSpace: "nowrap", fontWeight: 700 }}>{formatMontant(c.total)}</td>
-                            <td style={{ color: etatTexte.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{etatTexte.texte}</td>
+                            <td style={{ whiteSpace: "nowrap", fontWeight: 700 }}>{formatMontant(c.total, locale)}</td>
+                            <td style={{ color: etatTexte.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{t(`kq.c.etat.${etatTexte.id}`)}</td>
                             <td>
                               <div className="cmd-kiosk-table-actions">
                                 {modeKiosque === "sections" && etat.id === "en_attente" && (
                                   <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
-                                    Traiter <IconFlecheDroite className="gozly-icon-inline" />
+                                    {t("kq.c.traiter")} <IconFlecheDroite className="gozly-icon-inline" />
                                   </button>
                                 )}
                                 {imprimanteActive && (
-                                  <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label="Imprimer le bon">
-                                    <IconImprimante className="gozly-icon" /> Imprimer
+                                  <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label={t("kq.c.imprimerBon")}>
+                                    <IconImprimante className="gozly-icon" /> {t("kq.c.imprimer")}
                                   </button>
                                 )}
                               </div>
@@ -502,7 +510,7 @@ export default function CommandesKioskContent() {
       <header className="cmd-kiosk-head">
         <div>
           <div className="kiosk-entreprise">{entrepriseNom}</div>
-          <h2>Commandes</h2>
+          <h2>{t("kq.c.titre")}</h2>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <input
@@ -510,24 +518,24 @@ export default function CommandesKioskContent() {
             className="cmd-kiosk-recherche"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Rechercher (nom, téléphone, no)"
+            placeholder={t("kq.c.rechercher")}
           />
           <button
             className={`admin-icon-btn${vue === "avenir" ? " active" : ""}`}
             style={vue === "avenir" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
             onClick={() => setVue((v) => (v === "avenir" ? "jour" : "avenir"))}
           >
-            {vue === "avenir" ? <><IconFlecheGauche className="gozly-icon" /> Commandes du jour</> : <><IconCalendrier className="gozly-icon" /> Commandes à venir ({avenir.length})</>}
+            {vue === "avenir" ? <><IconFlecheGauche className="gozly-icon" /> {t("kq.c.voirJour")}</> : <><IconCalendrier className="gozly-icon" /> {t("kq.c.voirAvenir", { n: avenir.length })}</>}
           </button>
           <button
             className="admin-icon-btn"
             onClick={() => setSonActif((v) => !v)}
             style={!sonActif ? { background: "rgba(255,212,121,0.25)", borderColor: "rgba(255,212,121,0.6)" } : undefined}
           >
-            {sonActif ? <><IconCloche className="gozly-icon" /> Son activé</> : <><IconClocheBarree className="gozly-icon" /> Activer le son</>}
+            {sonActif ? <><IconCloche className="gozly-icon" /> {t("kq.c.sonOn")}</> : <><IconClocheBarree className="gozly-icon" /> {t("kq.c.sonOff")}</>}
           </button>
           <button className="submit-btn" onClick={() => setModal(true)}>
-            + Nouvelle commande
+            {t("kq.c.nouvelle")}
           </button>
         </div>
       </header>
@@ -540,7 +548,7 @@ export default function CommandesKioskContent() {
         <div className="cmd-kiosk-liste-wrap">
           <div className="cmd-kiosk-liste">
             {aAfficherListe.length === 0 ? (
-              <p className="cmd-kiosk-vide">Aucune commande{recherche.trim() ? " pour cette recherche" : ""}.</p>
+              <p className="cmd-kiosk-vide">{t(recherche.trim() ? "kq.c.aucunePourRecherche" : "kq.c.aucune")}</p>
             ) : (
               aAfficherListe.map((c) => renderCarte(c, COLONNES.find((col) => col.id === etapeCommande(c)) || COLONNES[1], true))
             )}
@@ -555,11 +563,11 @@ export default function CommandesKioskContent() {
           return (
             <section className="cmd-kiosk-col" key={col.id}>
               <div className="cmd-kiosk-col-head" style={{ borderColor: col.couleur }}>
-                <span>{col.titre}</span>
+                <span>{t(`kq.c.col.${col.id}`)}</span>
                 <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   {col.id === "terminee" && liste.length > 0 && (
                     <button className="admin-icon-btn" onClick={() => viderTerminees(liste)}>
-                      Vider
+                      {t("kq.c.vider")}
                     </button>
                   )}
                   <span className="cmd-kiosk-count">{liste.length}</span>
@@ -567,7 +575,7 @@ export default function CommandesKioskContent() {
               </div>
 
               <div className="cmd-kiosk-col-liste">
-              {liste.length === 0 && <p className="cmd-kiosk-vide">Aucune commande</p>}
+              {liste.length === 0 && <p className="cmd-kiosk-vide">{t("kq.c.aucuneCol")}</p>}
 
               {liste.map((c) => renderCarte(c, col))}
               </div>

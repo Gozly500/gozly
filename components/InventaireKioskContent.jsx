@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { useLangue } from "@/components/moi/LangueContext";
 import KioskReapproSection from "@/components/inventaire/KioskReapproSection";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 
 export default function InventaireKioskContent() {
   const router = useRouter();
+  const { t } = useLangue();
   const [checking, setChecking] = useState(true);
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [entrepriseNom, setEntrepriseNom] = useState("");
@@ -51,7 +53,7 @@ export default function InventaireKioskContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("kq.chargement")}</p>
       </div>
     );
   }
@@ -63,7 +65,7 @@ export default function InventaireKioskContent() {
         {entrepriseId ? (
           <KioskReapproSection entrepriseId={entrepriseId} />
         ) : (
-          <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+          <p style={{ color: "var(--text-dim)" }}>{t("kq.aucuneEntreprise")}</p>
         )}
       </div>
     </div>
