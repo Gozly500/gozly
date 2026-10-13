@@ -15,7 +15,10 @@
     --orange: #f2925a;
     --pink: #ec4899;
     --text: #f2f0ff;
-    --text-dim: rgba(242,240,255,0.72);
+    /* Texte atténué en COULEUR PLEINE (le texte mélangé au fond), pas en rgba : les icônes héritent de cette couleur,
+       et une icône faite de plusieurs formes superposées laisse voir ses calques quand sa couleur est translucide.
+       Même rendu doux qu'avant, sans transparence. */
+    --text-dim: color-mix(in srgb, var(--text) 72%, var(--navy));
     --glass: rgba(var(--w),0.08);
     --glass-border: rgba(var(--w),0.18);
     --glow: rgba(122,63,224,0.4);
@@ -62,7 +65,7 @@
     --w: 0,0,0;
     --fg: #111114;
     --text: #1c1c22;
-    --text-dim: rgba(28,28,34,0.66);
+    --text-dim: color-mix(in srgb, var(--text) 66%, var(--page-clair));
     --glow: transparent;
     --pop: #ffffff;
     --pop-2: #ffffff;
@@ -78,7 +81,7 @@
     --w: 255,255,255;
     --fg: #fff;
     --text: #f2f0ff;
-    --text-dim: rgba(242,240,255,0.72);
+    --text-dim: color-mix(in srgb, var(--text) 72%, var(--side, #12122b));
     --pop: rgba(30,25,70,0.97);
     --pop-2: rgba(30,25,70,0.98);
     background:var(--side,#12122b);
