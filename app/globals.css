@@ -1885,6 +1885,16 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
   }
 
 /* Rappel "notifications désactivées" (Discussion, Demandes, Horaire). */
+.moi-annonces{display:flex;flex-direction:column;gap:8px;padding:10px 14px 0;}
+.moi-annonce{
+    padding:12px 14px;border-radius:16px;
+    background:linear-gradient(135deg, rgba(242,146,90,0.28), rgba(255,92,157,0.22));
+    border:1px solid rgba(255,196,120,0.55);box-shadow:0 4px 18px rgba(242,146,90,0.18);
+  }
+.moi-annonce-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+.moi-annonce-titre{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#ffd9a8;}
+.moi-annonce-fin{font-size:11.5px;color:var(--text-dim);}
+.moi-annonce-texte{margin:0 0 10px;font-size:15px;line-height:1.4;white-space:pre-wrap;word-break:break-word;}
 .moi-rappel{
     display:flex;align-items:center;justify-content:space-between;gap:12px;
     margin-bottom:14px;padding:10px 14px;border-radius:12px;font-size:13px;

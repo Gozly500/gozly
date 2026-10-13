@@ -6,6 +6,7 @@ import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeA
 import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconPlanning, IconParametres, IconCommandes } from "@/components/icons/GozlyIcons";
 import MoiChargement from "@/components/moi/MoiChargement";
 import { repareAbonnementPush } from "@/components/moi/NotificationsPush";
+import AnnoncesBandeau from "@/components/moi/AnnoncesBandeau";
 import { useLangue } from "@/components/moi/LangueContext";
 
 // L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
@@ -120,6 +121,8 @@ export default function MoiShell({ children }) {
           </button>
         </div>
       </header>
+
+      <AnnoncesBandeau />
 
       <main className={`moi-main${estDiscussion ? " moi-main-chat" : ""}`}>{children}</main>
 
