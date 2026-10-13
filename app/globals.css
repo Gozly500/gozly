@@ -1885,6 +1885,13 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
   }
 
 /* Rappel "notifications désactivées" (Discussion, Demandes, Horaire). */
+.moi-annonces-page{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
+.moi-cloche{position:relative;}
+.moi-cloche-pastille{
+    position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;
+    display:flex;align-items:center;justify-content:center;border-radius:9px;
+    background:#ff5c7a;color:#fff;font-size:11px;font-weight:700;line-height:1;
+  }
 .moi-annonces{display:flex;flex-direction:column;gap:8px;padding:10px 14px 0;}
 .moi-annonce{
     padding:12px 14px;border-radius:16px;
@@ -2071,6 +2078,9 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
     padding:12px 8px;border-bottom:1px solid rgba(var(--w),0.08);
   }
 .moi-picker-row:last-child{border-bottom:none;}
+/* Listes à cocher : la case est à gauche du nom. Le sélecteur « .field label » force display:block (le nom collait à la case). */
+label.moi-picker-row,.field label.moi-picker-row{display:flex;align-items:center;justify-content:flex-start;gap:14px;margin:0;color:var(--text);font-size:inherit;font-weight:inherit;}
+label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 
 /* Pages légales (Conditions d'utilisation, Confidentialité) */
 .legal-doc{max-width:760px;margin:0 auto;padding-bottom:30px;line-height:1.7;font-size:15px;color:var(--text-dim);}

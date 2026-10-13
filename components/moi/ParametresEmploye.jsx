@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLangue } from "@/components/moi/LangueContext";
 import { LANGUES } from "@/lib/i18n/moi";
+import { employeFetch, clearEmployeToken } from "@/lib/employeAuth";
 
 // Cas rencontré en test : un employé a refusé l'accès à la localisation par
 // accident au tout premier pointage mobile, et ne pouvait plus jamais
@@ -92,6 +93,14 @@ export default function ParametresEmploye() {
   const router = useRouter();
   const { t, langue, setLangue } = useLangue();
 
+  async function handleLogout() {
+    try {
+      await employeFetch("/api/employe-app/deconnexion", { method: "POST" });
+    } catch {}
+    clearEmployeToken();
+    router.push("/moi/connexion");
+  }
+
   return (
     <div>
       <h2>{t("parametres.titre")}</h2>
@@ -134,6 +143,10 @@ export default function ParametresEmploye() {
 
         <SectionLocalisation t={t} />
       </div>
+
+      <button type="button" className="admin-icon-btn danger" style={{ width: "100%", marginTop: "22px" }} onClick={handleLogout}>
+        {t("nav.deconnexion")}
+      </button>
     </div>
   );
 }

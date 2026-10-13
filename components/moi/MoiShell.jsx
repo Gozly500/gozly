@@ -7,6 +7,8 @@ import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, Ic
 import MoiChargement from "@/components/moi/MoiChargement";
 import { repareAbonnementPush } from "@/components/moi/NotificationsPush";
 import AnnoncesBandeau from "@/components/moi/AnnoncesBandeau";
+import ClocheAnnonces from "@/components/moi/ClocheAnnonces";
+import { AnnoncesProvider } from "@/components/moi/AnnoncesContext";
 import { useLangue } from "@/components/moi/LangueContext";
 
 // L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
@@ -71,12 +73,6 @@ export default function MoiShell({ children }) {
     });
   }, [router]);
 
-  async function handleLogout() {
-    await employeFetch("/api/employe-app/deconnexion", { method: "POST" });
-    clearEmployeToken();
-    router.push("/moi/connexion");
-  }
-
   // Si le splash joue, on garde l'app cachée jusqu'à ce qu'il soit fini
   // (même si les données ont fini de charger avant), pour ne pas couper
   // l'animation en plein milieu.
@@ -101,6 +97,7 @@ export default function MoiShell({ children }) {
   }
 
   return (
+    <AnnoncesProvider>
     <div className={`moi-shell${estDiscussion ? " moi-shell-chat" : ""}`}>
       <header className="moi-header">
         <button type="button" className="moi-header-identite" onClick={() => router.push("/moi/accueil")}>
@@ -116,9 +113,7 @@ export default function MoiShell({ children }) {
           >
             <IconParametres className="gozly-icon" />
           </button>
-          <button type="button" className="admin-icon-btn" onClick={handleLogout}>
-            {t("nav.deconnexion")}
-          </button>
+          <ClocheAnnonces />
         </div>
       </header>
 
@@ -177,5 +172,6 @@ export default function MoiShell({ children }) {
         </div>
       )}
     </div>
+    </AnnoncesProvider>
   );
 }

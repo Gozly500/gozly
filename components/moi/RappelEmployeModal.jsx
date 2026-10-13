@@ -102,10 +102,12 @@ export default function RappelEmployeModal({ fixes, nomFixe, tous, onClose }) {
               <p className="panel-hint" style={{ margin: 0 }}>{t("rap.pourPersonne", { nom: nomFixe })}</p>
             ) : (
               <>
-                <label className="moi-picker-row" style={{ cursor: "pointer" }}>
-                  <span>{t("rap.tous")}</span>
-                  <input type="checkbox" checked={pourTous} onChange={(e) => setPourTous(e.target.checked)} />
-                </label>
+                <div className="moi-picker-list" style={{ maxHeight: "none", overflow: "visible" }}>
+                  <label className="moi-picker-row" style={{ cursor: "pointer" }}>
+                    <span>{t("rap.tous")}</span>
+                    <input type="checkbox" checked={pourTous} onChange={(e) => setPourTous(e.target.checked)} />
+                  </label>
+                </div>
                 {!pourTous && (
                   <div className="moi-picker-list" style={{ marginTop: "6px" }}>
                     {tous.map((c) => (

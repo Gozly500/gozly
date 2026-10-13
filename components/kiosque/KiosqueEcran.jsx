@@ -21,15 +21,15 @@ const BOUTON_COIN = {
   position: "fixed",
   bottom: "4px",
   zIndex: 50,
-  opacity: 0.55,
   width: "44px",
   height: "44px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   borderRadius: "50%",
-  background: "rgba(255,255,255,.12)",
-  color: "var(--text-dim, #aaa)",
+  // Couleurs pleines (mélange du texte et du fond) plutôt que de l'opacité, qui ferait voir les calques des icônes.
+  background: "color-mix(in srgb, var(--text, #ffffff) 14%, var(--navy, #0d0d3f))",
+  color: "color-mix(in srgb, var(--text, #ffffff) 62%, var(--navy, #0d0d3f))",
   fontSize: "22px",
   textDecoration: "none",
 };
