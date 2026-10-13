@@ -10,8 +10,11 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.titre, {
       body: data.corps,
+      // icon : la grande image dans la notification (l'icône de l'app, en couleur).
+      // badge : la petite icône de la barre d'état Android. Elle doit être blanche sur fond transparent
+      // (Android n'en garde que la forme) - sinon il la remplace par l'icône du navigateur.
       icon: "/icone-app-192",
-      badge: "/icone-app-192",
+      badge: "/notif-badge.png",
       data: { url: data.url },
     })
   );
