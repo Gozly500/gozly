@@ -42,6 +42,11 @@ const OPTIONS_RAPPELS_TEMPERATURE = [
   { id: "active", label: "Activés" },
 ];
 
+const OPTIONS_RAPPELS_POINTAGE = [
+  { id: "desactive", label: "Désactivé" },
+  { id: "active", label: "Activé" },
+];
+
 const OPTIONS_PUSH_WIX = [
   { id: "manuel", label: "Manuel" },
   { id: "automatique", label: "Automatique" },
@@ -139,6 +144,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [calculPointage, setCalculPointage] = useState("reel");
   const [pointageMobile, setPointageMobile] = useState("desactive");
   const [rappelsTemperature, setRappelsTemperature] = useState("desactive");
+  const [rappelsPointage, setRappelsPointage] = useState("desactive");
   const [pushWix, setPushWix] = useState("manuel");
   const [visibiliteFeuilleTemps, setVisibiliteFeuilleTemps] = useState("manuelle");
   const [retentionDemandes, setRetentionDemandes] = useState("6");
@@ -194,6 +200,10 @@ export default function PersonnalisationSection({ entrepriseId }) {
     // Rappels de températures : lus à part (colonne de temperature_rappels.sql, absente tant que le SQL n'est pas exécuté).
     const { data: rappelsData, error: rappelsErreur } = await supabase.from("entreprises").select("temperature_rappels_actif").eq("id", entrepriseId).maybeSingle();
     if (!rappelsErreur) setRappelsTemperature(rappelsData?.temperature_rappels_actif ? "active" : "desactive");
+
+    // Rappel de pointage : lu à part (colonne de pointage_rappels.sql, absente tant que le SQL n'est pas exécuté).
+    const { data: rappelsPointageData, error: rappelsPointageErreur } = await supabase.from("entreprises").select("pointage_rappels_actif").eq("id", entrepriseId).maybeSingle();
+    if (!rappelsPointageErreur) setRappelsPointage(rappelsPointageData?.pointage_rappels_actif ? "active" : "desactive");
 
     // Les succursales Wix qu'on a vues passer dans les commandes de ce dashboard.
     const { data: lieuxData } = await supabase
@@ -335,6 +345,24 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setMsg(
       error
         ? { type: "err", text: "L'enregistrement a échoué (le fichier SQL des rappels est-il exécuté ?)." }
+        : { type: "ok", text: "Préférence enregistrée." }
+    );
+  }
+
+  async function handleChangeRappelsPointage(value) {
+    setRappelsPointage(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ pointage_rappels_actif: value === "active" })
+      .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(
+      error
+        ? { type: "err", text: "L'enregistrement a échoué (le fichier SQL du rappel de pointage est-il exécuté ?)." }
         : { type: "ok", text: "Préférence enregistrée." }
     );
   }
@@ -503,6 +531,14 @@ export default function PersonnalisationSection({ entrepriseId }) {
                     options={OPTIONS_POINTAGE_MOBILE}
                     value={pointageMobile}
                     onChange={handleChangePointageMobile}
+                    disabled={saving}
+                  />
+                  <ParametreSelect
+                    label="Rappel de pointage"
+                    info="Envoie une notification « N'oublie pas de pointer » à l'employé dont le quart publié a commencé depuis 10 minutes sans qu'il ait pointé. Les employés doivent avoir activé les notifications dans l'app."
+                    options={OPTIONS_RAPPELS_POINTAGE}
+                    value={rappelsPointage}
+                    onChange={handleChangeRappelsPointage}
                     disabled={saving}
                   />
                   <ParametreSelect
