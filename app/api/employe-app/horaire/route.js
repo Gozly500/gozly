@@ -40,7 +40,9 @@ export async function GET(request) {
     service.from("emplacements").select("id, nom").eq("entreprise_id", employe.entreprise_id),
     service
       .from("planning_quarts")
-      .select("date, heure_debut, heure_fin, poste, emplacement_id, employes(nom)")
+      // Pas de jointure employes(nom) : depuis que planning_quarts a deux liens vers employes (employe_id et echange_de),
+      // PostgREST la refuse comme ambiguë et la liste des collègues devenait vide. Les noms sont lus à part, plus bas.
+      .select("employe_id, date, heure_debut, heure_fin, poste, emplacement_id")
       .eq("entreprise_id", employe.entreprise_id)
       .eq("publie", true)
       .neq("employe_id", employe.id)
@@ -49,6 +51,11 @@ export async function GET(request) {
   ]);
 
   const nomsEmplacements = new Map((emplacements || []).map((e) => [e.id, e.nom]));
+
+  // Noms des collègues.
+  const collegueIds = [...new Set((autres || []).map((a) => a.employe_id).filter(Boolean))];
+  const { data: collegues } = collegueIds.length > 0 ? await service.from("employes").select("id, nom").in("id", collegueIds) : { data: [] };
+  const nomsCollegues = new Map((collegues || []).map((c) => [c.id, c.nom]));
 
   // Quarts reçus par échange : nom de l'employé qui les a donnés.
   const donneursIds = [...new Set(quarts.map((q) => q.echange_de).filter(Boolean))];
@@ -73,7 +80,7 @@ export async function GET(request) {
           a.heure_fin > q.heure_debut
       )
       .map((a) => ({
-        nom: a.employes?.nom || "Collègue",
+        nom: nomsCollegues.get(a.employe_id) || "Collègue",
         heure_debut: a.heure_debut,
         heure_fin: a.heure_fin,
         poste: a.poste || null,
