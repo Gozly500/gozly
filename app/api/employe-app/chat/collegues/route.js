@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
+import { chargerRestrictions } from "@/lib/chatRestrictions";
 
 export async function GET(request) {
   const employe = await verifierSession(getBearerToken(request));
@@ -9,6 +10,7 @@ export async function GET(request) {
   }
 
   const service = getServiceClient();
+  const { bloques } = await chargerRestrictions(service, employe.id);
 
   // Exclut les collègues avec qui une conversation directe existe déjà -
   // "Démarrer avec..." ne doit proposer que des gens pas encore contactés.
@@ -29,12 +31,14 @@ export async function GET(request) {
     );
   }
 
-  const { data: collegues } = await service
+  const { data: tousLesCollegues } = await service
     .from("employes")
     .select("id, nom")
     .eq("entreprise_id", employe.entreprise_id)
     .neq("id", employe.id)
     .order("nom", { ascending: true });
+  // Les personnes avec qui le propriétaire a coupé la communication n'apparaissent nulle part.
+  const collegues = (tousLesCollegues || []).filter((c) => !bloques.has(c.id));
 
   const disponibles = (collegues || []).filter((c) => !dejaEnDiscussionAvec.has(c.id));
 

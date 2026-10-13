@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import CommunicationEmploye from "@/components/entreprise/CommunicationEmploye";
 import { supabase } from "@/lib/supabaseClient";
 import InfoTooltip from "@/components/InfoTooltip";
 import { IconTelephone } from "@/components/icons/GozlyIcons";
@@ -45,6 +46,7 @@ export default function EmployesSection({ entrepriseId }) {
   const [deleting, setDeleting] = useState(false);
   const [recherche, setRecherche] = useState("");
   const [viewingEmp, setViewingEmp] = useState(null);
+  const [communicationEmp, setCommunicationEmp] = useState(null); // employé dont on règle la messagerie
 
   useEffect(() => {
     load();
@@ -269,6 +271,9 @@ export default function EmployesSection({ entrepriseId }) {
                 <button className="admin-icon-btn" onClick={() => setViewingEmp({ ...emp, emplacements: empEmplacements })}>
                   Voir
                 </button>
+                <button className="admin-icon-btn" onClick={() => setCommunicationEmp(emp)}>
+                  Discussion
+                </button>
                 <button className="admin-icon-btn" onClick={() => openEdit(emp)}>
                   Modifier
                 </button>
@@ -284,6 +289,16 @@ export default function EmployesSection({ entrepriseId }) {
           <div className="admin-empty">Aucun employé ne correspond à "{recherche}".</div>
         )}
       </div>
+
+      {communicationEmp && (
+        <CommunicationEmploye
+          emp={communicationEmp}
+          employes={employes}
+          entrepriseId={entrepriseId}
+          onClose={() => setCommunicationEmp(null)}
+          onChange={(id, champs) => setEmployes((prev) => prev.map((e) => (e.id === id ? { ...e, ...champs } : e)))}
+        />
+      )}
 
       {modalOpen && (
         <div className="modal-overlay" onClick={() => setModalOpen(false)}>

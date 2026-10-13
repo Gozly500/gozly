@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { getOrCreateDirecteConversation } from "@/lib/chatServer";
+import { chargerRestrictions } from "@/lib/chatRestrictions";
 
 export async function POST(request) {
   const employe = await verifierSession(getBearerToken(request));
@@ -24,6 +25,11 @@ export async function POST(request) {
 
   if (!autre || autre.entreprise_id !== employe.entreprise_id) {
     return NextResponse.json({ error: "Employé introuvable." }, { status: 404 });
+  }
+
+  const { bloques } = await chargerRestrictions(service, employe.id);
+  if (bloques.has(autre.id)) {
+    return NextResponse.json({ error: "Tu ne peux pas écrire à cette personne." }, { status: 403 });
   }
 
   const conversationId = await getOrCreateDirecteConversation(

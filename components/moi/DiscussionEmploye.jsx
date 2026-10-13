@@ -46,6 +46,12 @@ export default function DiscussionEmploye() {
   const pollRef = useRef(null);
   const [messageOuvertId, setMessageOuvertId] = useState(null);
   const [repondreA, setRepondreA] = useState(null); // { id, auteur, contenu }
+  const [permissions, setPermissions] = useState({ groupes: true, multi: true }); // posées par le propriétaire
+  const [multiOuvert, setMultiOuvert] = useState(false);
+  const [multiIds, setMultiIds] = useState(() => new Set());
+  const [multiTexte, setMultiTexte] = useState("");
+  const [multiBusy, setMultiBusy] = useState(false);
+  const [multiMsg, setMultiMsg] = useState(null); // { type: "ok" | "err", text }
   const [menuPlus, setMenuPlus] = useState(false);
   const [echangeOuvert, setEchangeOuvert] = useState(false);
   const [mesQuarts, setMesQuarts] = useState(null); // null = pas encore chargés
@@ -61,7 +67,7 @@ export default function DiscussionEmploye() {
 
   // Discussion directe avec un collègue (pas l'administration, pas un groupe) : on peut lui proposer un échange.
   const conversationActive = conversations.find((c) => c.id === activeId);
-  const autreEmployeIdActif = conversationActive?.type === "directe" ? conversationActive.autreEmployeId : null;
+  const autreEmployeIdActif = conversationActive?.type === "directe" && !conversationActive.bloquee ? conversationActive.autreEmployeId : null;
 
   useEffect(() => {
     try {
@@ -154,6 +160,7 @@ export default function DiscussionEmploye() {
         setErreur(data.error || t("chat.erreurChargement"));
       } else {
         setConversations(data.conversations || []);
+        if (data.permissions) setPermissions(data.permissions);
         initialiserLus(data.conversations || []);
       }
     } catch (err) {
@@ -350,6 +357,32 @@ export default function DiscussionEmploye() {
     );
   }
 
+  // Même message à plusieurs collègues, chacun dans sa propre conversation (pas de groupe).
+  async function envoyerMulti(e) {
+    e.preventDefault();
+    if (!multiTexte.trim() || multiIds.size === 0) return;
+    setMultiBusy(true);
+    setMultiMsg(null);
+    try {
+      const res = await employeFetch("/api/employe-app/chat/conversations/multi", {
+        method: "POST",
+        body: JSON.stringify({ employeIds: [...multiIds], contenu: multiTexte.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMultiMsg({ type: "err", text: data.error || t("chat.erreurMulti") });
+      } else {
+        setMultiMsg({ type: "ok", text: t(data.refuses > 0 ? "chat.multiEnvoyePartiel" : "chat.multiEnvoye", { n: data.envoyes }) });
+        setMultiTexte("");
+        setMultiIds(new Set());
+        chargerConversations({ silencieux: true });
+      }
+    } catch {
+      setMultiMsg({ type: "err", text: t("chat.erreurMulti") });
+    }
+    setMultiBusy(false);
+  }
+
   async function creerGroupe(e) {
     e.preventDefault();
     if (!groupeNom.trim() || groupeIds.size === 0) return;
@@ -538,7 +571,12 @@ export default function DiscussionEmploye() {
                 </button>
               </div>
             )}
-            <form className="chat-compose" onSubmit={handleEnvoyer}>
+            {conversationActive?.bloquee && (
+              <div className="chat-compose">
+                <p className="chat-empty" style={{ padding: 0, flex: 1 }}>{t("chat.conversationDesactivee")}</p>
+              </div>
+            )}
+            <form className="chat-compose" style={conversationActive?.bloquee ? { display: "none" } : undefined} onSubmit={handleEnvoyer}>
               {menuPlus && !texte && autreEmployeIdActif && (
                 <>
                   <div className="chat-plus-fond" onClick={() => setMenuPlus(false)} />
@@ -684,17 +722,32 @@ export default function DiscussionEmploye() {
               >
                 <IconProfil className="gozly-icon" /> {t("chat.unContact")}
               </button>
-              <button
-                type="button"
-                className="dash-nav-item"
-                onClick={() => {
-                  setMenuNouveau(false);
-                  setGroupeErreur("");
-                  setGroupeOuvert(true);
-                }}
-              >
-                <IconProfils className="gozly-icon" /> {t("chat.unGroupe")}
-              </button>
+              {permissions.groupes && (
+                <button
+                  type="button"
+                  className="dash-nav-item"
+                  onClick={() => {
+                    setMenuNouveau(false);
+                    setGroupeErreur("");
+                    setGroupeOuvert(true);
+                  }}
+                >
+                  <IconProfils className="gozly-icon" /> {t("chat.unGroupe")}
+                </button>
+              )}
+              {permissions.multi && (
+                <button
+                  type="button"
+                  className="dash-nav-item"
+                  onClick={() => {
+                    setMenuNouveau(false);
+                    setMultiMsg(null);
+                    setMultiOuvert(true);
+                  }}
+                >
+                  <IconProfils className="gozly-icon" /> {t("chat.plusieurs")}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -748,6 +801,52 @@ export default function DiscussionEmploye() {
               {groupeErreur && <p className="settings-msg err">{groupeErreur}</p>}
               <button type="submit" className="submit-btn" style={{ width: "100%", marginTop: "10px" }} disabled={groupeBusy || !groupeNom.trim() || groupeIds.size === 0}>
                 {groupeBusy ? t("chat.creation") : t("chat.creerGroupe")}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {multiOuvert && (
+        <div className="modal-overlay" onClick={() => setMultiOuvert(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("chat.multiTitre")}</h3>
+              <button className="admin-icon-btn" onClick={() => setMultiOuvert(false)}>
+                {t("nav.fermer")}
+              </button>
+            </div>
+            <p className="panel-hint">{t("chat.multiHint")}</p>
+            <form onSubmit={envoyerMulti}>
+              {tous.length === 0 ? (
+                <p className="chat-empty">{t("chat.aucunCollegue")}</p>
+              ) : (
+                <div className="moi-picker-list">
+                  {tous.map((c) => (
+                    <label className="moi-picker-row" key={c.id} style={{ cursor: "pointer" }}>
+                      <span>{c.nom}</span>
+                      <input
+                        type="checkbox"
+                        checked={multiIds.has(c.id)}
+                        onChange={() =>
+                          setMultiIds((prev) => {
+                            const suivant = new Set(prev);
+                            if (suivant.has(c.id)) suivant.delete(c.id);
+                            else suivant.add(c.id);
+                            return suivant;
+                          })
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div className="field" style={{ marginTop: "10px" }}>
+                <textarea value={multiTexte} onChange={(e) => setMultiTexte(e.target.value)} placeholder={t("chat.multiPlaceholder")} rows={3} maxLength={2000} />
+              </div>
+              {multiMsg && <p className={`settings-msg ${multiMsg.type}`}>{multiMsg.text}</p>}
+              <button type="submit" className="submit-btn" style={{ width: "100%" }} disabled={multiBusy || !multiTexte.trim() || multiIds.size === 0}>
+                {t("chat.multiEnvoyer")}
               </button>
             </form>
           </div>

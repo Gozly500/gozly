@@ -3,6 +3,7 @@ import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { notifierNouveauMessage } from "@/lib/pushServer";
 import { reactionsDe } from "@/lib/chatReactions";
+import { chargerRestrictions, conversationDirecteBloquee } from "@/lib/chatRestrictions";
 
 async function aAcces(service, employe, conversationId) {
   const { data: conversation } = await service
@@ -128,6 +129,12 @@ export async function POST(request) {
   const service = getServiceClient();
   if (!(await aAcces(service, employe, conversationId))) {
     return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
+  }
+
+  // Le propriétaire a coupé la communication avec l'autre personne : on n'envoie plus rien.
+  const { bloques } = await chargerRestrictions(service, employe.id);
+  if (await conversationDirecteBloquee(service, employe.id, conversationId, bloques)) {
+    return NextResponse.json({ error: "Cette conversation est désactivée." }, { status: 403 });
   }
 
   // Réponse à un message précis : il doit être dans la même conversation.

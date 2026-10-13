@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { getOrCreateEquipeConversation } from "@/lib/chatServer";
+import { chargerRestrictions } from "@/lib/chatRestrictions";
 
 export async function GET(request) {
   const employe = await verifierSession(getBearerToken(request));
@@ -11,6 +12,7 @@ export async function GET(request) {
 
   const service = getServiceClient();
   const equipeId = await getOrCreateEquipeConversation(service, employe.entreprise_id);
+  const restrictions = await chargerRestrictions(service, employe.id);
 
   const { data: mesParticipations } = await service
     .from("conversation_participants")
@@ -91,6 +93,8 @@ export async function GET(request) {
       type: "directe",
       titre: nomAutreParticipant(id),
       autreEmployeId: autreEmployeId(id),
+      // Le propriétaire a coupé la communication avec cette personne : on voit la conversation, sans pouvoir écrire.
+      bloquee: !!autreEmployeId(id) && restrictions.bloques.has(autreEmployeId(id)),
       dernierMessage: dernierParConversation[id]?.contenu || null,
       dernierMessageDate: dernierParConversation[id]?.created_at || null,
       dernierDeMoi: dernierParConversation[id]?.employe_id === employe.id,
@@ -105,5 +109,5 @@ export async function GET(request) {
     })),
   ].sort((a, b) => new Date(b.dernierMessageDate || 0) - new Date(a.dernierMessageDate || 0));
 
-  return NextResponse.json({ conversations });
+  return NextResponse.json({ conversations, permissions: { groupes: restrictions.groupes, multi: restrictions.multi } });
 }

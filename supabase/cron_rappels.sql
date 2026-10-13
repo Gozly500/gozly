@@ -26,7 +26,7 @@ select cron.schedule(
   '*/5 * * * *',
   $$ select net.http_get(
        url := 'https://gozly.net/api/cron/rappels-pointage',
-       headers := jsonb_build_object('Authorization', 'Bearer VOTRE_CRON_SECRET')
+       headers := jsonb_build_object('Authorization', 'Bearer 265b7b47ce414a0a9e44f8e94b4710cdd78a336e88594cd5872d2e647d86b707')
      ); $$
 );
 
