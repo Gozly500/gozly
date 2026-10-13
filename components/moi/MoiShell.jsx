@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
 import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconPlanning, IconParametres, IconCommandes } from "@/components/icons/GozlyIcons";
 import MoiChargement from "@/components/moi/MoiChargement";
+import { repareAbonnementPush } from "@/components/moi/NotificationsPush";
 import { useLangue } from "@/components/moi/LangueContext";
 
 // L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
@@ -65,6 +66,7 @@ export default function MoiShell({ children }) {
       }
       setMoi(await res.json());
       setChecking(false);
+      repareAbonnementPush(); // récupère en silence un abonnement push perdu (voir NotificationsPush.jsx)
     });
   }, [router]);
 
