@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ChargementAnimation from "@/components/moi/ChargementAnimation";
 import { employeFetch } from "@/lib/employeAuth";
 import RappelNotifications from "@/components/moi/RappelNotifications";
 import { useLangue } from "@/components/moi/LangueContext";
@@ -133,7 +134,7 @@ export default function DemandesEmploye() {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>;
+    return <ChargementAnimation />;
   }
 
   if (!congesActif && !echangesActif) {

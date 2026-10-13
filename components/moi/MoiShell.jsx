@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import ChargementAnimation from "@/components/moi/ChargementAnimation";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
 import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconPlanning, IconParametres, IconCommandes } from "@/components/icons/GozlyIcons";
@@ -81,7 +82,7 @@ export default function MoiShell({ children }) {
       <MoiChargement onTermine={marquerAnimationTerminee} />
     ) : (
       <div className="moi-loading">
-        <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>
+        <ChargementAnimation />
       </div>
     );
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ChargementAnimation from "@/components/moi/ChargementAnimation";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import TemperatureInput from "@/components/TemperatureInput";
@@ -100,7 +101,7 @@ export default function TemperatureEmploye() {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>;
+    return <ChargementAnimation />;
   }
 
   if (equipements.length === 0) {

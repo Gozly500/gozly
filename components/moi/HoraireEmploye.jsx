@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ChargementAnimation from "@/components/moi/ChargementAnimation";
 import { employeFetch } from "@/lib/employeAuth";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import RappelNotifications from "@/components/moi/RappelNotifications";
@@ -113,7 +114,7 @@ export default function HoraireEmploye() {
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>
+        <ChargementAnimation />
       ) : (
         <div className="moi-jours-list">
           {jours.map((jour) => {

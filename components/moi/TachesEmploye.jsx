@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ChargementAnimation from "@/components/moi/ChargementAnimation";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
@@ -208,7 +209,7 @@ export default function TachesEmploye() {
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>
+        <ChargementAnimation />
       ) : taches.length === 0 ? (
         <p className="chat-empty">{t("taches.aucune")}</p>
       ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ChargementAnimation from "@/components/moi/ChargementAnimation";
 import { employeFetch } from "@/lib/employeAuth";
 import { localeDate } from "@/lib/i18n/moi";
 import { dansLeQuart, erreurPlage } from "@/lib/echangeQuart";
@@ -482,7 +483,7 @@ export default function DiscussionEmploye() {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>;
+    return <ChargementAnimation />;
   }
 
   if (erreur && conversations.length === 0) {
@@ -729,7 +730,7 @@ export default function DiscussionEmploye() {
                 </button>
               </div>
             ) : mesQuarts === null ? (
-              <p style={{ color: "var(--text-dim)" }}>{t("nav.chargement")}</p>
+              <ChargementAnimation />
             ) : mesQuarts.length === 0 ? (
               <p className="chat-empty">{t("demandes.aucunQuartSemaine")}</p>
             ) : (
