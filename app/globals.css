@@ -1890,6 +1890,17 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 /* Rappel "notifications désactivées" (Discussion, Demandes, Horaire). */
 .moi-annonces-page{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
 .moi-cloche{position:relative;}
+.moi-notif-message{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+    padding:12px 14px;border-radius:16px;color:var(--text);
+    background:rgba(var(--w),0.08);border:1px solid rgba(var(--w),0.18);
+  }
+.moi-notif-message-icone{flex-shrink:0;display:flex;color:var(--text-dim);}
+.moi-notif-message-icone .gozly-icon{width:22px;height:22px;}
+.moi-notif-message-texte{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.moi-notif-message-texte strong{font-size:15px;}
+.moi-notif-message-texte span{font-size:13.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.moi-notif-message-heure{flex-shrink:0;font-size:12px;color:var(--text-dim);}
 .moi-cloche-pastille{
     position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;
     display:flex;align-items:center;justify-content:center;border-radius:9px;

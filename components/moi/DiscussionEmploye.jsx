@@ -12,7 +12,7 @@ import { useLangue } from "@/components/moi/LangueContext";
 
 // Dernier message vu par conversation, mémorisé sur l'appareil (les employés n'ont
 // pas de compte où l'enregistrer) : sert à mettre en évidence les messages non lus.
-const CLE_LUS = "gozly_chat_lus";
+import { CLE_LUS, ecrireLus } from "@/lib/chatLus";
 
 import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
@@ -23,6 +23,7 @@ export default function DiscussionEmploye() {
   const { t, langue } = useLangue();
   const [lus, setLus] = useState({});
   const vueRef = useRef("liste");
+  const ouvertDepuisUrl = useRef(false);
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [activeTitre, setActiveTitre] = useState("");
@@ -98,9 +99,7 @@ export default function DiscussionEmploye() {
     setLus((precedent) => {
       if (precedent[conversationId] && new Date(precedent[conversationId]) >= new Date(dateIso)) return precedent;
       const suivant = { ...precedent, [conversationId]: dateIso };
-      try {
-        window.localStorage.setItem(CLE_LUS, JSON.stringify(suivant));
-      } catch {}
+      ecrireLus(suivant); // la cloche des notifications se met à jour
       return suivant;
     });
   }
@@ -112,7 +111,7 @@ export default function DiscussionEmploye() {
       if (window.localStorage.getItem(CLE_LUS) !== null) return;
       const initial = {};
       for (const c of liste) if (c.dernierMessageDate) initial[c.id] = c.dernierMessageDate;
-      window.localStorage.setItem(CLE_LUS, JSON.stringify(initial));
+      ecrireLus(initial);
       setLus(initial);
     } catch {}
   }
@@ -163,6 +162,16 @@ export default function DiscussionEmploye() {
       } else {
         setConversations(data.conversations || []);
         if (data.permissions) setPermissions(data.permissions);
+        // Arrivée depuis une notification (cloche ou téléphone) : /moi/discussion?c=<id> ouvre cette conversation.
+        const cible = new URLSearchParams(window.location.search).get("c");
+        if (cible && !ouvertDepuisUrl.current) {
+          const c = (data.conversations || []).find((x) => x.id === cible);
+          if (c) {
+            ouvertDepuisUrl.current = true;
+            ouvrirConversation(c);
+            window.history.replaceState(null, "", "/moi/discussion");
+          }
+        }
         initialiserLus(data.conversations || []);
       }
     } catch (err) {
