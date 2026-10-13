@@ -50,6 +50,9 @@ export default function DiscussionEmploye() {
   const [repondreA, setRepondreA] = useState(null); // { id, auteur, contenu }
   const [permissions, setPermissions] = useState({ groupes: true, multi: true, rappels: true }); // posées par le propriétaire
   const [rappelOuvert, setRappelOuvert] = useState(null); // { fixes: [id] | null, nom }
+  const [suppressionOuverte, setSuppressionOuverte] = useState(false);
+  const [suppressionBusy, setSuppressionBusy] = useState(false);
+  const [suppressionErreur, setSuppressionErreur] = useState("");
   const [multiOuvert, setMultiOuvert] = useState(false);
   const [multiIds, setMultiIds] = useState(() => new Set());
   const [multiTexte, setMultiTexte] = useState("");
@@ -394,6 +397,29 @@ export default function DiscussionEmploye() {
     setMultiBusy(false);
   }
 
+  // Supprime la conversation ouverte « pour moi » (l'autre personne et le propriétaire gardent tout).
+  async function supprimerConversation() {
+    if (!activeId || suppressionBusy) return;
+    setSuppressionBusy(true);
+    setSuppressionErreur("");
+    try {
+      const res = await employeFetch("/api/employe-app/chat/conversations/masquer", { method: "POST", body: JSON.stringify({ conversationId: activeId }) });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setSuppressionErreur(data.error || t("chat.supprimerErreur"));
+      } else {
+        setSuppressionOuverte(false);
+        setActiveId(null);
+        setMessages([]);
+        setVue("liste");
+        chargerConversations();
+      }
+    } catch {
+      setSuppressionErreur(t("chat.supprimerErreur"));
+    }
+    setSuppressionBusy(false);
+  }
+
   async function creerGroupe(e) {
     e.preventDefault();
     if (!groupeNom.trim() || groupeIds.size === 0) return;
@@ -524,6 +550,19 @@ export default function DiscussionEmploye() {
                 <IconFlecheGauche className="gozly-icon" />
               </button>
               <strong style={{ fontSize: "14px" }}>{activeTitre}</strong>
+              {conversationActive && conversationActive.type !== "equipe" && (
+                <button
+                  type="button"
+                  className="admin-icon-btn danger"
+                  style={{ marginLeft: "auto" }}
+                  onClick={() => {
+                    setSuppressionErreur("");
+                    setSuppressionOuverte(true);
+                  }}
+                >
+                  {t("chat.supprimer")}
+                </button>
+              )}
             </div>
             <div className="chat-messages" ref={messagesRef} onScroll={surDefilement}>
               {messages.length === 0 && <p className="chat-empty">{t("chat.aucunMessage")}</p>}
@@ -838,6 +877,26 @@ export default function DiscussionEmploye() {
                 {groupeBusy ? t("chat.creation") : t("chat.creerGroupe")}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {suppressionOuverte && (
+        <div className="modal-overlay" onClick={() => !suppressionBusy && setSuppressionOuverte(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("chat.supprimerTitre")}</h3>
+            </div>
+            <p className="panel-hint">{t("chat.supprimerTexte")}</p>
+            {suppressionErreur && <p className="settings-msg err">{suppressionErreur}</p>}
+            <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
+              <button type="button" className="admin-icon-btn" style={{ flex: 1 }} disabled={suppressionBusy} onClick={() => setSuppressionOuverte(false)}>
+                {t("nav.fermer")}
+              </button>
+              <button type="button" className="submit-btn" style={{ flex: 1 }} disabled={suppressionBusy} onClick={supprimerConversation}>
+                {t("chat.supprimerOui")}
+              </button>
+            </div>
           </div>
         </div>
       )}

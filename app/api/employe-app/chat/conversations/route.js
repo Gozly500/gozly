@@ -79,6 +79,11 @@ export async function GET(request) {
     return profilsAutres?.find((pr) => pr.id === p.user_id)?.full_name || "Administration";
   }
 
+  // Conversations supprimées « pour moi » (supabase/chat_masquer.sql) : cachées tant qu'aucun message plus récent n'est arrivé.
+  const masquees = {};
+  const { data: lignesMasquees, error: erreurMasquees } = await service.from("conversations_masquees").select("conversation_id, masque_le").eq("employe_id", employe.id);
+  if (!erreurMasquees) for (const m of lignesMasquees || []) masquees[m.conversation_id] = m.masque_le;
+
   const conversations = [
     {
       id: equipeId,
@@ -107,7 +112,9 @@ export async function GET(request) {
       dernierMessageDate: dernierParConversation[id]?.created_at || null,
       dernierDeMoi: dernierParConversation[id]?.employe_id === employe.id,
     })),
-  ].sort((a, b) => new Date(b.dernierMessageDate || 0) - new Date(a.dernierMessageDate || 0));
+  ]
+    .filter((c) => !masquees[c.id] || (c.dernierMessageDate && new Date(c.dernierMessageDate) > new Date(masquees[c.id])))
+    .sort((a, b) => new Date(b.dernierMessageDate || 0) - new Date(a.dernierMessageDate || 0));
 
   return NextResponse.json({ conversations, permissions: { groupes: restrictions.groupes, multi: restrictions.multi, rappels: await peutCreerRappels(service, employe.id) } });
 }

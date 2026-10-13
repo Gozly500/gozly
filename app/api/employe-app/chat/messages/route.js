@@ -107,6 +107,14 @@ export async function GET(request) {
 
   let query = service.from("messages").select("*").eq("conversation_id", conversationId).order("created_at", { ascending: true });
   if (apres) query = query.gt("created_at", apres);
+  // Conversation supprimée « pour moi » puis réapparue : seulement les messages venus après la suppression.
+  const { data: masque, error: erreurMasque } = await service
+    .from("conversations_masquees")
+    .select("masque_le")
+    .eq("employe_id", employe.id)
+    .eq("conversation_id", conversationId)
+    .maybeSingle();
+  if (!erreurMasque && masque?.masque_le) query = query.gt("created_at", masque.masque_le);
 
   const { data: messages } = await query;
   const resolus = await ajouterEchanges(service, await resoudreNoms(service, messages || [], employe.id), employe.id);
