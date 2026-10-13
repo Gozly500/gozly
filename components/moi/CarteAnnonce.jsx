@@ -9,10 +9,10 @@ import { IconCloche } from "@/components/icons/Pictogrammes";
 export default function CarteAnnonce({ a, onOk }) {
   const { t, langue } = useLangue();
   return (
-    <div className={`moi-annonce${a.rappelDe ? " rappel" : ""}`} role="status">
+    <div className={`moi-annonce${a.rappel ? " rappel" : ""}`} role="status">
       <div className="moi-annonce-tete">
         <span className="moi-annonce-titre">
-          <IconCloche className="gozly-icon" /> {a.rappelDe ? t("rap.de", { nom: a.rappelDe }) : t("annonce.titre")}
+          <IconCloche className="gozly-icon" /> {a.rappel ? (a.rappelDe ? t("rap.de", { nom: a.rappelDe }) : t("rap.anonymeTitre")) : t("annonce.titre")}
         </span>
         <span className="moi-annonce-fin">{t("annonce.jusqua", { date: new Date(a.fin).toLocaleDateString(localeDate(langue), { day: "numeric", month: "short" }) })}</span>
       </div>

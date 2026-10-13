@@ -14,6 +14,7 @@ export default function RappelEmployeModal({ fixes, nomFixe, tous, onClose }) {
   const [contenu, setContenu] = useState("");
   const [duree, setDuree] = useState("24");
   const [pourTous, setPourTous] = useState(true);
+  const [anonyme, setAnonyme] = useState(false);
   const [ids, setIds] = useState(() => new Set());
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -46,6 +47,7 @@ export default function RappelEmployeModal({ fixes, nomFixe, tous, onClose }) {
           dureeHeures: Number(duree),
           pourTous: fixes ? false : pourTous,
           employeIds: fixes || [...ids],
+          anonyme,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -132,6 +134,14 @@ export default function RappelEmployeModal({ fixes, nomFixe, tous, onClose }) {
               </>
             )}
           </div>
+
+          <div className="moi-picker-list" style={{ maxHeight: "none", overflow: "visible" }}>
+            <label className="moi-picker-row" style={{ cursor: "pointer" }}>
+              <span>{t("rap.anonyme")}</span>
+              <input type="checkbox" checked={anonyme} onChange={(e) => setAnonyme(e.target.checked)} />
+            </label>
+          </div>
+          {anonyme && <p className="section-hint" style={{ margin: "2px 0 10px" }}>{t("rap.anonymeAide")}</p>}
 
           {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
           <button type="submit" className="submit-btn" style={{ width: "100%" }} disabled={busy || !contenu.trim() || (!fixes && !pourTous && ids.size === 0)}>

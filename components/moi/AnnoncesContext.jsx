@@ -32,7 +32,7 @@ export function AnnoncesProvider({ children }) {
       const [resAnnonces, resRappels] = await Promise.all([employeFetch("/api/employe-app/annonces"), employeFetch("/api/employe-app/rappels")]);
       const annonces = resAnnonces.ok ? (await resAnnonces.json()).annonces || [] : [];
       const rappels = resRappels.ok ? (await resRappels.json()).recus || [] : [];
-      setItems([...annonces, ...rappels.map((r) => ({ ...r, rappelDe: r.auteur }))]);
+      setItems([...annonces, ...rappels.map((r) => ({ ...r, rappel: true, rappelDe: r.auteur }))]); // rappelDe vide = rappel anonyme
     } catch {}
   }, []);
 

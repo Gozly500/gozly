@@ -158,7 +158,8 @@ export default function RappelsModal({ entrepriseId, onClose }) {
                   <div className="admin-row-main">
                     <div className="admin-row-title" style={{ whiteSpace: "normal" }}>{r.contenu}</div>
                     <div className="admin-row-sub">
-                      {r.auteur_nom} · {r.pour_tous ? "Pour tout le monde" : `Pour ${nbParRappel[r.id] || 0} personne(s)`} · jusqu'au{" "}
+                      {r.auteur_nom}
+                      {r.anonyme ? " (anonyme pour les destinataires)" : ""} · {r.pour_tous ? "Pour tout le monde" : `Pour ${nbParRappel[r.id] || 0} personne(s)`} · jusqu'au{" "}
                       {new Date(r.fin).toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" })}
                     </div>
                   </div>

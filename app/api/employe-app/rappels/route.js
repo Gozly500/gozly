@@ -16,7 +16,7 @@ export async function GET(request) {
 
   const { data: actifs, error } = await service
     .from("rappels")
-    .select("id, contenu, fin, auteur_nom, pour_tous, cree_par_employe")
+    .select("*")
     .eq("entreprise_id", employe.entreprise_id)
     .lte("debut", maintenant)
     .gt("fin", maintenant)
@@ -35,7 +35,8 @@ export async function GET(request) {
 
   const recus = (actifs || [])
     .filter((r) => r.pour_tous || pourMoi.has(r.id))
-    .map((r) => ({ id: r.id, contenu: r.contenu, fin: r.fin, auteur: r.auteur_nom }));
+    // Un rappel anonyme n'envoie jamais le nom de son auteur aux destinataires.
+    .map((r) => ({ id: r.id, contenu: r.contenu, fin: r.fin, anonyme: !!r.anonyme, auteur: r.anonyme ? null : r.auteur_nom }));
 
   const crees = (actifs || [])
     .filter((r) => r.cree_par_employe === employe.id)
@@ -66,6 +67,7 @@ export async function POST(request) {
     pourTous: !!corps.pourTous,
     employeIds: corps.employeIds,
     auteur: { employeId: employe.id, nom: employe.nom },
+    anonyme: !!corps.anonyme,
     bloques,
   });
 
