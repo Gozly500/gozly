@@ -24,12 +24,13 @@ export default function AnnoncesBandeau() {
   const [annonces, setAnnonces] = useState([]);
   const [masquees, setMasquees] = useState(() => new Set());
 
+  // Annonces du propriétaire + rappels qui nous sont destinés, dans le même bandeau (les rappels portent le nom de leur auteur).
   const charger = useCallback(async () => {
     try {
-      const res = await employeFetch("/api/employe-app/annonces");
-      if (!res.ok) return;
-      const data = await res.json();
-      setAnnonces(data.annonces || []);
+      const [resAnnonces, resRappels] = await Promise.all([employeFetch("/api/employe-app/annonces"), employeFetch("/api/employe-app/rappels")]);
+      const annoncesData = resAnnonces.ok ? (await resAnnonces.json()).annonces || [] : [];
+      const rappelsData = resRappels.ok ? (await resRappels.json()).recus || [] : [];
+      setAnnonces([...annoncesData, ...rappelsData.map((r) => ({ ...r, rappelDe: r.auteur }))]);
     } catch {}
   }, []);
 
@@ -59,10 +60,10 @@ export default function AnnoncesBandeau() {
   return (
     <div className="moi-annonces">
       {visibles.map((a) => (
-        <div className="moi-annonce" key={a.id} role="status">
+        <div className={`moi-annonce${a.rappelDe ? " rappel" : ""}`} key={a.id} role="status">
           <div className="moi-annonce-tete">
             <span className="moi-annonce-titre">
-              <IconCloche className="gozly-icon" /> {t("annonce.titre")}
+              <IconCloche className="gozly-icon" /> {a.rappelDe ? t("rap.de", { nom: a.rappelDe }) : t("annonce.titre")}
             </span>
             <span className="moi-annonce-fin">{t("annonce.jusqua", { date: new Date(a.fin).toLocaleDateString(localeDate(langue), { day: "numeric", month: "short" }) })}</span>
           </div>

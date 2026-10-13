@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { getOrCreateEquipeConversation } from "@/lib/chatServer";
-import { chargerRestrictions } from "@/lib/chatRestrictions";
+import { chargerRestrictions, peutCreerRappels } from "@/lib/chatRestrictions";
 
 export async function GET(request) {
   const employe = await verifierSession(getBearerToken(request));
@@ -109,5 +109,5 @@ export async function GET(request) {
     })),
   ].sort((a, b) => new Date(b.dernierMessageDate || 0) - new Date(a.dernierMessageDate || 0));
 
-  return NextResponse.json({ conversations, permissions: { groupes: restrictions.groupes, multi: restrictions.multi } });
+  return NextResponse.json({ conversations, permissions: { groupes: restrictions.groupes, multi: restrictions.multi, rappels: await peutCreerRappels(service, employe.id) } });
 }

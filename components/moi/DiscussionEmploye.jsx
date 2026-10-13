@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { localeDate } from "@/lib/i18n/moi";
 import { dansLeQuart, erreurPlage } from "@/lib/echangeQuart";
+import RappelEmployeModal from "@/components/moi/RappelEmployeModal";
 import Pictos from "@/components/icons/Pictos";
 import { badgeEchange } from "@/components/moi/DemandesEmploye";
 import RappelNotifications from "@/components/moi/RappelNotifications";
@@ -16,7 +17,7 @@ const CLE_LUS = "gozly_chat_lus";
 import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
 import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
-import { IconEnvoyer, IconFlecheGauche, IconPlus, IconProfil, IconProfils, IconX } from "@/components/icons/Pictogrammes";
+import { IconCloche, IconEnvoyer, IconFlecheGauche, IconPlus, IconProfil, IconProfils, IconX } from "@/components/icons/Pictogrammes";
 
 export default function DiscussionEmploye() {
   const { t, langue } = useLangue();
@@ -46,7 +47,8 @@ export default function DiscussionEmploye() {
   const pollRef = useRef(null);
   const [messageOuvertId, setMessageOuvertId] = useState(null);
   const [repondreA, setRepondreA] = useState(null); // { id, auteur, contenu }
-  const [permissions, setPermissions] = useState({ groupes: true, multi: true }); // posées par le propriétaire
+  const [permissions, setPermissions] = useState({ groupes: true, multi: true, rappels: true }); // posées par le propriétaire
+  const [rappelOuvert, setRappelOuvert] = useState(null); // { fixes: [id] | null, nom }
   const [multiOuvert, setMultiOuvert] = useState(false);
   const [multiIds, setMultiIds] = useState(() => new Set());
   const [multiTexte, setMultiTexte] = useState("");
@@ -584,6 +586,18 @@ export default function DiscussionEmploye() {
                     <button type="button" className="chat-plus-item" onClick={ouvrirEchange}>
                       {t("chat.menuEchange")}
                     </button>
+                    {permissions.rappels && (
+                      <button
+                        type="button"
+                        className="chat-plus-item"
+                        onClick={() => {
+                          setMenuPlus(false);
+                          setRappelOuvert({ fixes: [autreEmployeIdActif], nom: activeTitre });
+                        }}
+                      >
+                        {t("rap.menuDiscussion")}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -735,6 +749,18 @@ export default function DiscussionEmploye() {
                   <IconProfils className="gozly-icon" /> {t("chat.unGroupe")}
                 </button>
               )}
+              {permissions.rappels && (
+                <button
+                  type="button"
+                  className="dash-nav-item"
+                  onClick={() => {
+                    setMenuNouveau(false);
+                    setRappelOuvert({ fixes: null, nom: "" });
+                  }}
+                >
+                  <IconCloche className="gozly-icon" /> {t("rap.menu")}
+                </button>
+              )}
               {permissions.multi && (
                 <button
                   type="button"
@@ -806,6 +832,8 @@ export default function DiscussionEmploye() {
           </div>
         </div>
       )}
+
+      {rappelOuvert && <RappelEmployeModal fixes={rappelOuvert.fixes} nomFixe={rappelOuvert.nom} tous={tous} onClose={() => setRappelOuvert(null)} />}
 
       {multiOuvert && (
         <div className="modal-overlay" onClick={() => setMultiOuvert(false)}>

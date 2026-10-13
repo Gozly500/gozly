@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabaseClient";
 export default function CommunicationEmploye({ emp, employes, entrepriseId, onClose, onChange }) {
   const [groupes, setGroupes] = useState(emp.chat_groupes_autorise !== false);
   const [multi, setMulti] = useState(emp.chat_multi_autorise !== false);
+  const [rappels, setRappels] = useState(emp.chat_rappels_autorise !== false);
   const [blocages, setBlocages] = useState([]); // lignes de chat_blocages impliquant cet employé
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -88,13 +89,25 @@ export default function CommunicationEmploye({ emp, employes, entrepriseId, onCl
           </label>
         </div>
 
-        <div className="switch-row" style={{ marginBottom: "18px" }}>
+        <div className="switch-row" style={{ marginBottom: "12px" }}>
           <div className="switch-row-text">
             <h4>Écrire à plusieurs personnes</h4>
             <p>Peut envoyer un même message à plusieurs collègues à la fois (chacun le reçoit séparément, sans groupe).</p>
           </div>
           <label className="switch">
             <input type="checkbox" checked={multi} onChange={(e) => changerDroit("chat_multi_autorise", e.target.checked, setMulti)} />
+            <span className="switch-track"></span>
+            <span className="switch-thumb"></span>
+          </label>
+        </div>
+
+        <div className="switch-row" style={{ marginBottom: "18px" }}>
+          <div className="switch-row-text">
+            <h4>Créer des rappels</h4>
+            <p>Peut créer des rappels pour ses collègues (une personne, des personnes précises ou tout le monde).</p>
+          </div>
+          <label className="switch">
+            <input type="checkbox" checked={rappels} onChange={(e) => changerDroit("chat_rappels_autorise", e.target.checked, setRappels)} />
             <span className="switch-track"></span>
             <span className="switch-thumb"></span>
           </label>

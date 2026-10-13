@@ -8,6 +8,7 @@ import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
 import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
 import AnnoncesModal from "@/components/discussion/AnnoncesModal";
+import RappelsModal from "@/components/discussion/RappelsModal";
 import { IconCloche, IconEnvoyer, IconFlecheGauche, IconMegaphone, IconProfils, IconX } from "@/components/icons/Pictogrammes";
 
 // mobile : une seule colonne à la fois (liste des conversations OU conversation ouverte), pour l'app /gestion.
@@ -26,6 +27,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
   const [groupeBusy, setGroupeBusy] = useState(false);
   const [menuNouveauOuvert, setMenuNouveauOuvert] = useState(false);
   const [annoncesOuvert, setAnnoncesOuvert] = useState(false);
+  const [rappelsOuvert, setRappelsOuvert] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const messagesEndRef = useRef(null);
   const dernierMessageIdRef = useRef(null);
@@ -454,6 +456,16 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
               >
                 <IconCloche className="gozly-icon" /> Annonce
               </button>
+              <button
+                type="button"
+                className="chat-conv-item"
+                onClick={() => {
+                  setMenuNouveauOuvert(false);
+                  setRappelsOuvert(true);
+                }}
+              >
+                <IconCloche className="gozly-icon" /> Rappel
+              </button>
             </div>
           )}
           <div style={{ padding: "10px 12px", borderBottom: "1px solid rgba(var(--w),0.08)" }}>
@@ -587,6 +599,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
       </div>
 
       {annoncesOuvert && <AnnoncesModal entrepriseId={entrepriseId} onClose={() => setAnnoncesOuvert(false)} />}
+      {rappelsOuvert && <RappelsModal entrepriseId={entrepriseId} onClose={() => setRappelsOuvert(false)} />}
 
       {groupeModal && (
         <div className="modal-overlay" onClick={() => setGroupeModal(null)}>
