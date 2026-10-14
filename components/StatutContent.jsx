@@ -29,6 +29,7 @@ export default function StatutContent() {
   const [edition, setEdition] = useState(null); // clé du système en cours de modification
   const [brouillon, setBrouillon] = useState({ etat: "ok", message: "" });
   const [enregistrement, setEnregistrement] = useState(false);
+  const [erreurEdition, setErreurEdition] = useState("");
 
   const charger = useCallback(async () => {
     try {
@@ -58,20 +59,32 @@ export default function StatutContent() {
 
   function ouvrirEdition(s) {
     setEdition(s.cle);
+    setErreurEdition("");
     setBrouillon({ etat: s.etat, message: s.message || "" });
   }
 
   async function enregistrer(cle, etat) {
     setEnregistrement(true);
-    const token = await tokenAdmin();
-    await fetch("/api/admin/statut", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ cle, etat, message: brouillon.message }),
-    });
-    setEnregistrement(false);
-    setEdition(null);
-    charger();
+    setErreurEdition("");
+    try {
+      const token = await tokenAdmin();
+      const res = await fetch("/api/admin/statut", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ cle, etat, message: brouillon.message }),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setErreurEdition(`Erreur ${res.status} : ${json.error || "échec de l'enregistrement."}`);
+        return;
+      }
+      setEdition(null);
+      charger();
+    } catch (e) {
+      setErreurEdition(`Erreur réseau : ${e.message}`);
+    } finally {
+      setEnregistrement(false);
+    }
   }
 
   if (!statut) {
@@ -138,6 +151,7 @@ export default function StatutContent() {
                         value={brouillon.message}
                         onChange={(e) => setBrouillon((b) => ({ ...b, message: e.target.value }))}
                       />
+                      {erreurEdition && <p className="statut-erreur">{erreurEdition}</p>}
                       <div className="statut-actions">
                         <button type="button" className="statut-btn-principal" disabled={enregistrement} onClick={() => enregistrer(s.cle, brouillon.etat)}>
                           Enregistrer

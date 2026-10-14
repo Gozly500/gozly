@@ -2372,3 +2372,4 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
   .statut-bento{grid-template-columns:1fr;}
   .statut-carte-modules{grid-row:auto;}
 }
+.statut-erreur{font-size:13px;color:#f87171;}
