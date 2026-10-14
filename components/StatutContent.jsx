@@ -31,7 +31,6 @@ export default function StatutContent() {
   const [brouillon, setBrouillon] = useState({ etat: "ok", message: "" });
   const [enregistrement, setEnregistrement] = useState(false);
   const [erreurEdition, setErreurEdition] = useState("");
-  const [infoEdition, setInfoEdition] = useState("");
 
   const charger = useCallback(async () => {
     try {
@@ -69,7 +68,6 @@ export default function StatutContent() {
   async function enregistrer(cle, etat) {
     setEnregistrement(true);
     setErreurEdition("");
-    setInfoEdition("");
     try {
       // getSession peut rester bloqué (verrou d'auth) : on retombe sur le jeton lu au chargement.
       const token = await Promise.race([
@@ -91,7 +89,6 @@ export default function StatutContent() {
         return;
       }
       const json = await res.json().catch(() => ({}));
-      setInfoEdition(`Réponse du serveur : ${JSON.stringify(json)}`);
       setEdition(null);
       charger();
     } catch (e) {
@@ -111,7 +108,6 @@ export default function StatutContent() {
 
   return (
     <div className="wrap statut-wrap">
-      {infoEdition && <p className="statut-info">{infoEdition}</p>}
       <div className={`statut-banniere statut-${statut.global}`}>
         <span className="statut-point" />
         <div>
