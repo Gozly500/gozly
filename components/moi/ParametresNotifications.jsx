@@ -59,31 +59,8 @@ export default function ParametresNotifications() {
 
       <NotificationsPush />
 
-      {prefs && (
-        <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
-          {TYPES_NOTIF.map((tn) => (
-            <div className="switch-row" key={tn.id}>
-              <div className="switch-row-text">
-                <h4>{t(tn.titreCle)}</h4>
-                <p>{t(tn.descCle)}</p>
-              </div>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={prefs[tn.id] !== false}
-                  onChange={() => handleToggleNotif(tn.id)}
-                  disabled={saving === tn.id}
-                />
-                <span className="switch-track"></span>
-                <span className="switch-thumb"></span>
-              </label>
-            </div>
-          ))}
-        </div>
-      )}
-
       {calmes && (
-        <div style={{ marginTop: "18px" }}>
+        <div style={{ marginTop: "14px" }}>
           <div className="switch-row">
             <div className="switch-row-text">
               <h4>{t("notifications.calmesTitre")}</h4>
@@ -107,6 +84,32 @@ export default function ParametresNotifications() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Séparateur : le bouton principal et les heures calmes d'un côté, les types de notifications de l'autre. */}
+      {prefs && <div style={{ height: "1px", background: "rgba(var(--w),0.16)", margin: "22px 0 18px" }} />}
+
+      {prefs && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {TYPES_NOTIF.map((tn) => (
+            <div className="switch-row" key={tn.id}>
+              <div className="switch-row-text">
+                <h4>{t(tn.titreCle)}</h4>
+                <p>{t(tn.descCle)}</p>
+              </div>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={prefs[tn.id] !== false}
+                  onChange={() => handleToggleNotif(tn.id)}
+                  disabled={saving === tn.id}
+                />
+                <span className="switch-track"></span>
+                <span className="switch-thumb"></span>
+              </label>
+            </div>
+          ))}
         </div>
       )}
     </div>
