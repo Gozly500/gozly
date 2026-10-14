@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { IconEtatFonctionne, IconEtatProbleme, IconEtatNonFonctionnel } from "@/components/icons/GozlyIcons";
 
 const ETATS = {
   ok: { label: "Fonctionne", couleur: "#34d399" },
@@ -14,6 +15,13 @@ const TITRE_GLOBAL = {
   probleme: "Certains systèmes ont un problème",
   panne: "Certains systèmes ne fonctionnent pas",
 };
+
+const ICONES = { ok: IconEtatFonctionne, probleme: IconEtatProbleme, panne: IconEtatNonFonctionnel };
+
+function IconeEtat({ etat, className = "" }) {
+  const Icone = ICONES[etat];
+  return <Icone className={`statut-icone statut-icone-${etat} ${className}`} aria-hidden="true" />;
+}
 
 async function tokenAdmin() {
   const {
@@ -109,7 +117,7 @@ export default function StatutContent() {
   return (
     <div className="wrap statut-wrap">
       <div className={`statut-banniere statut-${statut.global}`}>
-        <span className="statut-point" />
+        <IconeEtat etat={statut.global} className="statut-icone-grande" />
         <div>
           <strong>{TITRE_GLOBAL[statut.global]}</strong>
           <small>
@@ -128,7 +136,7 @@ export default function StatutContent() {
               {g.systemes.map((s) => (
                 <li key={s.cle} className="statut-ligne">
                   <div className="statut-ligne-haut">
-                    <span className={`statut-point statut-${s.etat}`} />
+                    <IconeEtat etat={s.etat} />
                     <span className="statut-nom">{s.nom}</span>
                     <span className={`statut-etat statut-texte-${s.etat}`}>{ETATS[s.etat].label}</span>
                     {admin && (

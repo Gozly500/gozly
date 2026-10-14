@@ -17,6 +17,11 @@ export default function StatutPage() {
         <div className="wrap">
           <h1>Statut des systèmes</h1>
           <p>L'état de Gozly en temps réel.</p>
+          <div className="statut-carres" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
         </div>
       </header>
 
