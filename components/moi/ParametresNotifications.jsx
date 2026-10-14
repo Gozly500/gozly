@@ -17,11 +17,16 @@ const TYPES_NOTIF = [
 export default function ParametresNotifications() {
   const { t } = useLangue();
   const [prefs, setPrefs] = useState(null);
+  const [calmes, setCalmes] = useState(null); // { actif, debut, fin } ; null tant que le SQL des heures calmes n'est pas exécuté
   const [saving, setSaving] = useState(null);
 
   useEffect(() => {
     employeFetch("/api/employe-app/notifications/preferences").then(async (res) => {
-      if (res.ok) setPrefs((await res.json()).preferences);
+      if (res.ok) {
+        const data = await res.json();
+        setPrefs(data.preferences);
+        setCalmes(data.heuresCalmes || null);
+      }
     });
   }, []);
 
@@ -34,6 +39,16 @@ export default function ParametresNotifications() {
       body: JSON.stringify({ [colonne]: valeur }),
     });
     setSaving(null);
+  }
+
+  // Heures calmes : enregistrées tout de suite.
+  async function changerCalmes(partie) {
+    const suivant = { ...calmes, ...partie };
+    setCalmes(suivant);
+    await employeFetch("/api/employe-app/notifications/preferences", {
+      method: "PATCH",
+      body: JSON.stringify({ heures_calmes_actif: suivant.actif, heures_calmes_debut: suivant.debut, heures_calmes_fin: suivant.fin }),
+    });
   }
 
   return (
@@ -64,6 +79,34 @@ export default function ParametresNotifications() {
               </label>
             </div>
           ))}
+        </div>
+      )}
+
+      {calmes && (
+        <div style={{ marginTop: "18px" }}>
+          <div className="switch-row">
+            <div className="switch-row-text">
+              <h4>{t("notifications.calmesTitre")}</h4>
+              <p>{t("notifications.calmesDesc")}</p>
+            </div>
+            <label className="switch">
+              <input type="checkbox" checked={calmes.actif} onChange={(e) => changerCalmes({ actif: e.target.checked })} />
+              <span className="switch-track"></span>
+              <span className="switch-thumb"></span>
+            </label>
+          </div>
+          {calmes.actif && (
+            <div className="field-row" style={{ marginTop: "10px" }}>
+              <div className="field">
+                <label>{t("notifications.calmesDe")}</label>
+                <input type="time" value={calmes.debut} onChange={(e) => e.target.value && changerCalmes({ debut: e.target.value })} />
+              </div>
+              <div className="field">
+                <label>{t("notifications.calmesA")}</label>
+                <input type="time" value={calmes.fin} onChange={(e) => e.target.value && changerCalmes({ fin: e.target.value })} />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

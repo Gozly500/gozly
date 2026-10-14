@@ -84,6 +84,11 @@ export async function GET(request) {
   const { data: lignesMasquees, error: erreurMasquees } = await service.from("conversations_masquees").select("conversation_id, masque_le").eq("employe_id", employe.id);
   if (!erreurMasquees) for (const m of lignesMasquees || []) masquees[m.conversation_id] = m.masque_le;
 
+  // Conversations en sourdine (supabase/notifications_sourdine.sql) : pas de notification, la conversation reste visible.
+  const sourdines = new Set();
+  const { data: lignesSourdine, error: erreurSourdine } = await service.from("conversations_sourdine").select("conversation_id").eq("employe_id", employe.id);
+  if (!erreurSourdine) for (const l of lignesSourdine || []) sourdines.add(l.conversation_id);
+
   const conversations = [
     {
       id: equipeId,
@@ -114,6 +119,7 @@ export async function GET(request) {
     })),
   ]
     .filter((c) => !masquees[c.id] || (c.dernierMessageDate && new Date(c.dernierMessageDate) > new Date(masquees[c.id])))
+    .map((c) => ({ ...c, sourdine: sourdines.has(c.id) }))
     .sort((a, b) => new Date(b.dernierMessageDate || 0) - new Date(a.dernierMessageDate || 0));
 
   return NextResponse.json({ conversations, permissions: { groupes: restrictions.groupes, multi: restrictions.multi, rappels: await peutCreerRappels(service, employe.id) } });

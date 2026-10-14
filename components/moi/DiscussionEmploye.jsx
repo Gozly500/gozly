@@ -18,7 +18,7 @@ import { CLE_LUS, ecrireLus } from "@/lib/chatLus";
 import { useChatPresence } from "@/lib/useChatPresence";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
 import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
-import { IconCloche, IconEnvoyer, IconFlecheGauche, IconPlus, IconProfil, IconProfils, IconX } from "@/components/icons/Pictogrammes";
+import { IconCloche, IconClocheBarree, IconEnvoyer, IconFlecheGauche, IconPlus, IconProfil, IconProfils, IconX } from "@/components/icons/Pictogrammes";
 
 export default function DiscussionEmploye() {
   const { t, langue } = useLangue();
@@ -399,6 +399,20 @@ export default function DiscussionEmploye() {
   }
 
   // Supprime la conversation ouverte « pour moi » (l'autre personne et le propriétaire gardent tout).
+  // Sourdine : plus de notification des nouveaux messages de cette conversation (elle reste dans la liste).
+  async function basculerSourdine() {
+    if (!conversationActive) return;
+    const sourdine = !conversationActive.sourdine;
+    setConversations((cur) => cur.map((c) => (c.id === conversationActive.id ? { ...c, sourdine } : c)));
+    try {
+      const res = await employeFetch("/api/employe-app/chat/conversations/sourdine", { method: "POST", body: JSON.stringify({ conversationId: conversationActive.id, sourdine }) });
+      if (!res.ok) throw new Error("sourdine");
+    } catch {
+      setConversations((cur) => cur.map((c) => (c.id === conversationActive.id ? { ...c, sourdine: !sourdine } : c)));
+      setErreur(t("chat.sourdineErreur"));
+    }
+  }
+
   async function supprimerConversation() {
     if (!activeId || suppressionBusy) return;
     setSuppressionBusy(true);
@@ -551,11 +565,21 @@ export default function DiscussionEmploye() {
                 <IconFlecheGauche className="gozly-icon" />
               </button>
               <strong style={{ fontSize: "14px" }}>{activeTitre}</strong>
+              {conversationActive && (
+                <button type="button" className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={basculerSourdine}>
+                  {conversationActive.sourdine ? (
+                    <>
+                      <IconClocheBarree className="gozly-icon" /> {t("chat.sourdineOff")}
+                    </>
+                  ) : (
+                    t("chat.sourdine")
+                  )}
+                </button>
+              )}
               {conversationActive && conversationActive.type !== "equipe" && (
                 <button
                   type="button"
                   className="admin-icon-btn danger"
-                  style={{ marginLeft: "auto" }}
                   onClick={() => {
                     setSuppressionErreur("");
                     setSuppressionOuverte(true);

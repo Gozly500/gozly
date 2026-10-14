@@ -88,7 +88,7 @@ export function AnnoncesProvider({ children }) {
 
   // Conversations avec un message non lu, la plus récente d'abord.
   const messagesNonLus = conversations
-    .filter((c) => conversationNonLue(c, lus))
+    .filter((c) => conversationNonLue(c, lus) && !c.sourdine)
     .sort((a, b) => new Date(b.dernierMessageDate) - new Date(a.dernierMessageDate));
 
   const nonVues = items.filter((a) => !masquees.has(a.id)).length + messagesNonLus.length;
