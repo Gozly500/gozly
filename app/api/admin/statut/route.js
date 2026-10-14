@@ -26,9 +26,10 @@ export async function POST(request) {
   }
   if (!["ok", "probleme", "panne"].includes(etat)) return NextResponse.json({ error: "État invalide." }, { status: 400 });
 
-  const { error } = await service
+  const { data, error } = await service
     .from("statut_overrides")
-    .upsert({ cle, etat, message: (message || "").trim().slice(0, 300) || null, updated_at: new Date().toISOString() });
+    .upsert({ cle, etat, message: (message || "").trim().slice(0, 300) || null, updated_at: new Date().toISOString() })
+    .select("cle, etat, message");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, enregistre: data });
 }
