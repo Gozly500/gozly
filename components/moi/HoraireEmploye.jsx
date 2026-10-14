@@ -8,6 +8,8 @@ import RappelNotifications from "@/components/moi/RappelNotifications";
 import PointageMobileBloc from "@/components/moi/PointageMobileBloc";
 import { useLangue } from "@/components/moi/LangueContext";
 import { localeDate } from "@/lib/i18n/moi";
+import RemplacantModal from "@/components/moi/RemplacantModal";
+import { dateAujourdhui } from "@/lib/commandes";
 import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 function heure(t) {
@@ -27,6 +29,7 @@ function duree(debut, fin) {
 export default function HoraireEmploye() {
   const { t, langue } = useLangue();
   const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
+  const [remplacantQuart, setRemplacantQuart] = useState(null); // quart pour lequel on lance un appel de remplaçant
   const [quarts, setQuarts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [joursOuverts, setJoursOuverts] = useState({});
@@ -186,6 +189,11 @@ export default function HoraireEmploye() {
                                 </strong>
                               </div>
                             ))
+                          )}
+                          {q.date >= dateAujourdhui() && (
+                            <button type="button" className="admin-icon-btn" style={{ marginTop: "10px", width: "100%" }} onClick={() => setRemplacantQuart(q)}>
+                              {t("rem.cherche")}
+                            </button>
                           )}
                         </div>
                       )}

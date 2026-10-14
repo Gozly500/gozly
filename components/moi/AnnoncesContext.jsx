@@ -10,7 +10,7 @@ import { EVENEMENT_LUS, conversationNonLue, ecrireLus, lireLus, lusInitialises }
 const CLE_MASQUEES = "gozly_annonces_masquees";
 const INTERVALLE_MS = 30000;
 
-const AnnoncesContexte = createContext({ items: [], messagesNonLus: [], masquees: new Set(), nonVues: 0, masquer: () => {} });
+const AnnoncesContexte = createContext({ items: [], messagesNonLus: [], remplacements: [], mesRemplacements: [], masquees: new Set(), nonVues: 0, masquer: () => {}, recharger: () => {} });
 
 export function useAnnonces() {
   return useContext(AnnoncesContexte);
@@ -29,14 +29,22 @@ export function AnnoncesProvider({ children }) {
   const [masquees, setMasquees] = useState(() => new Set());
   const [conversations, setConversations] = useState([]);
   const [lus, setLus] = useState({});
+  const [remplacements, setRemplacements] = useState([]); // appels de remplaçant des collègues auxquels je peux répondre
+  const [mesRemplacements, setMesRemplacements] = useState([]); // mes propres appels encore ouverts
 
   const charger = useCallback(async () => {
     try {
-      const [resAnnonces, resRappels, resConversations] = await Promise.all([
+      const [resAnnonces, resRappels, resConversations, resRemplacements] = await Promise.all([
         employeFetch("/api/employe-app/annonces"),
         employeFetch("/api/employe-app/rappels"),
         employeFetch("/api/employe-app/chat/conversations"),
+        employeFetch("/api/employe-app/remplacements"),
       ]);
+      if (resRemplacements.ok) {
+        const d = await resRemplacements.json();
+        setRemplacements((d.ouverts || []).map((r) => ({ ...r, remplacement: true })));
+        setMesRemplacements(d.mes || []);
+      }
       if (resConversations.ok) {
         const liste = (await resConversations.json()).conversations || [];
         // Première fois sur cet appareil : rien n'est « non lu », on part de l'état actuel (comme la page Discussion).
@@ -81,7 +89,7 @@ export function AnnoncesProvider({ children }) {
     setMasquees(suivant);
     try {
       // On ne garde que les éléments encore en cours : la liste ne grossit pas indéfiniment.
-      const encore = new Set(items.map((a) => a.id));
+      const encore = new Set([...items, ...remplacements].map((a) => a.id));
       window.localStorage.setItem(CLE_MASQUEES, JSON.stringify([...suivant].filter((x) => encore.has(x))));
     } catch {}
   }
@@ -91,7 +99,11 @@ export function AnnoncesProvider({ children }) {
     .filter((c) => conversationNonLue(c, lus) && !c.sourdine)
     .sort((a, b) => new Date(b.dernierMessageDate) - new Date(a.dernierMessageDate));
 
-  const nonVues = items.filter((a) => !masquees.has(a.id)).length + messagesNonLus.length;
+  const nonVues = items.filter((a) => !masquees.has(a.id)).length + messagesNonLus.length + remplacements.filter((r) => !masquees.has(r.id)).length;
 
-  return <AnnoncesContexte.Provider value={{ items, messagesNonLus, masquees, nonVues, masquer }}>{children}</AnnoncesContexte.Provider>;
+  return (
+    <AnnoncesContexte.Provider value={{ items, messagesNonLus, remplacements, mesRemplacements, masquees, nonVues, masquer, recharger: charger }}>
+      {children}
+    </AnnoncesContexte.Provider>
+  );
 }
