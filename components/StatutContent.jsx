@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 const ETATS = {
@@ -23,6 +23,7 @@ async function tokenAdmin() {
 }
 
 export default function StatutContent() {
+  const tokenRef = useRef(null);
   const [statut, setStatut] = useState(null);
   const [erreur, setErreur] = useState(false);
   const [admin, setAdmin] = useState(false);
@@ -52,6 +53,7 @@ export default function StatutContent() {
     (async () => {
       const token = await tokenAdmin();
       if (!token) return;
+      tokenRef.current = token;
       const res = await fetch("/api/admin/statut", { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) setAdmin((await res.json()).admin === true);
     })();
@@ -67,7 +69,15 @@ export default function StatutContent() {
     setEnregistrement(true);
     setErreurEdition("");
     try {
-      const token = await tokenAdmin();
+      // getSession peut rester bloqué (verrou d'auth) : on retombe sur le jeton lu au chargement.
+      const token = await Promise.race([
+        tokenAdmin(),
+        new Promise((resolve) => setTimeout(() => resolve(tokenRef.current), 3000)),
+      ]);
+      if (!token) {
+        setErreurEdition("Session introuvable : reconnecte-toi puis réessaie.");
+        return;
+      }
       const res = await fetch("/api/admin/statut", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -154,7 +164,7 @@ export default function StatutContent() {
                       {erreurEdition && <p className="statut-erreur">{erreurEdition}</p>}
                       <div className="statut-actions">
                         <button type="button" className="statut-btn-principal" disabled={enregistrement} onClick={() => enregistrer(s.cle, brouillon.etat)}>
-                          Enregistrer
+                          {enregistrement ? "Enregistrement..." : "Enregistrer"}
                         </button>
                         {s.manuel && (
                           <button type="button" className="statut-btn-secondaire" disabled={enregistrement} onClick={() => enregistrer(s.cle, null)}>
