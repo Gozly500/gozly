@@ -71,6 +71,11 @@ export function AnnoncesProvider({ children }) {
   }, [charger]);
 
   function masquer(id) {
+    // Une annonce (ni rappel ni appel de remplaçant) : le propriétaire voit qui l'a lue.
+    const item = items.find((a) => a.id === id);
+    if (item && !item.rappel && !item.remplacement) {
+      employeFetch("/api/employe-app/annonces/lu", { method: "POST", body: JSON.stringify({ annonceId: id }) }).catch(() => {});
+    }
     const suivant = new Set(masquees);
     suivant.add(id);
     setMasquees(suivant);

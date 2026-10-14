@@ -18,10 +18,19 @@ export default function AnnoncesModal({ entrepriseId, onClose }) {
   const [contenu, setContenu] = useState("");
   const [duree, setDuree] = useState("168");
   const [encours, setEncours] = useState([]);
+  const [employes, setEmployes] = useState([]);
+  const [lectures, setLectures] = useState({}); // { annonceId: Set d'employés qui ont touché « OK » }
+  const [detailOuvert, setDetailOuvert] = useState(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
 
   useEffect(() => {
+    supabase
+      .from("employes")
+      .select("id, nom")
+      .eq("entreprise_id", entrepriseId)
+      .order("nom", { ascending: true })
+      .then(({ data }) => setEmployes(data || []));
     charger();
   }, [entrepriseId]);
 
@@ -33,7 +42,18 @@ export default function AnnoncesModal({ entrepriseId, onClose }) {
       .eq("entreprise_id", entrepriseId)
       .gt("fin", maintenant)
       .order("debut", { ascending: false });
-    setEncours(data || []);
+    const liste = data || [];
+    setEncours(liste);
+
+    // Accusés de lecture (supabase/annonces_lectures.sql) : table absente = on n'affiche simplement pas « lu par ».
+    if (liste.length > 0) {
+      const { data: lus, error } = await supabase.from("annonce_lectures").select("annonce_id, employe_id").in("annonce_id", liste.map((a) => a.id));
+      if (!error) {
+        const parAnnonce = {};
+        for (const l of lus || []) (parAnnonce[l.annonce_id] ||= new Set()).add(l.employe_id);
+        setLectures(parAnnonce);
+      }
+    }
   }
 
   async function publier(e) {
@@ -105,6 +125,24 @@ export default function AnnoncesModal({ entrepriseId, onClose }) {
                   <div className="admin-row-main">
                     <div className="admin-row-title" style={{ whiteSpace: "normal" }}>{a.contenu}</div>
                     <div className="admin-row-sub">Jusqu'au {new Date(a.fin).toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" })}</div>
+                    {employes.length > 0 && (
+                      <div className="admin-row-sub" style={{ marginTop: "4px" }}>
+                        <button type="button" className="admin-icon-btn" onClick={() => setDetailOuvert((v) => (v === a.id ? null : a.id))}>
+                          Lu par {(lectures[a.id] || new Set()).size} sur {employes.length}
+                        </button>
+                        {detailOuvert === a.id && (
+                          <div style={{ marginTop: "8px" }}>
+                            <div>
+                              <strong>Pas encore lu :</strong>{" "}
+                              {employes.filter((e) => !(lectures[a.id] || new Set()).has(e.id)).map((e) => e.nom).join(", ") || "Tout le monde l'a lue"}
+                            </div>
+                            <div style={{ marginTop: "4px" }}>
+                              <strong>Lu :</strong> {employes.filter((e) => (lectures[a.id] || new Set()).has(e.id)).map((e) => e.nom).join(", ") || "Personne"}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="admin-row-controls">
                     <button className="admin-icon-btn danger" onClick={() => retirer(a.id)}>
