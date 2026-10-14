@@ -205,6 +205,8 @@ export default function HoraireEmploye() {
           })}
         </div>
       )}
+
+      {remplacantQuart && <RemplacantModal quart={remplacantQuart} onClose={() => setRemplacantQuart(null)} />}
     </div>
   );
 }
