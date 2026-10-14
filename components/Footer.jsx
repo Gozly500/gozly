@@ -39,6 +39,7 @@ export default function Footer() {
           <span>© 2026 Gozly - Tous droits réservés</span>
           <Link href="/conditions">Conditions d'utilisation</Link>
           <Link href="/confidentialite">Confidentialité</Link>
+          <Link href="/statut">Statut</Link>
         </div>
       </div>
     </footer>

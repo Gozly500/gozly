@@ -2322,3 +2322,53 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 .badge .badge-icone{width:26px;height:26px;}
 .inventaire-chevron .gozly-icon-inline{width:12px;height:12px;vertical-align:middle;}
 .gozly-icon-inline + .gozly-icon-inline{margin-left:2px;}
+
+/* ===== Page de statut (/statut) ===== */
+#statut-content{padding:10px 0 90px;}
+.statut-wrap{max-width:1000px;}
+.statut-chargement{text-align:center;color:var(--text-dim);padding:40px 0;}
+.statut-banniere{display:flex;align-items:center;gap:16px;padding:20px 24px;border-radius:22px;margin-bottom:20px;
+  background:rgba(var(--w),0.08);border:1px solid var(--glass-border);backdrop-filter:blur(14px);}
+.statut-banniere strong{display:block;font-size:18px;color:var(--fg);}
+.statut-banniere small{color:var(--text-dim);font-size:13px;}
+.statut-banniere .statut-point{width:16px;height:16px;}
+.statut-banniere.statut-ok{border-color:rgba(52,211,153,0.45);}
+.statut-banniere.statut-probleme{border-color:rgba(251,191,36,0.5);}
+.statut-banniere.statut-panne{border-color:rgba(248,113,113,0.55);}
+.statut-banniere.statut-ok .statut-point{background:#34d399;}
+.statut-banniere.statut-probleme .statut-point{background:#fbbf24;}
+.statut-banniere.statut-panne .statut-point{background:#f87171;}
+
+.statut-bento{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+.statut-carte{padding:24px;border-radius:24px;background:rgba(var(--w),0.08);border:1px solid var(--glass-border);backdrop-filter:blur(14px);}
+.statut-carte h2{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:14px;}
+.statut-carte-modules{grid-row:span 2;}
+.statut-carte ul{list-style:none;}
+.statut-ligne{padding:12px 0;border-top:1px solid rgba(var(--w),0.1);}
+.statut-ligne:first-child{border-top:none;}
+.statut-ligne-haut{display:flex;align-items:center;gap:10px;}
+.statut-nom{flex:1;color:var(--fg);font-weight:500;}
+.statut-etat{font-size:13px;font-weight:600;}
+.statut-point{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:#94a3b8;}
+.statut-point.statut-ok{background:#34d399;box-shadow:0 0 8px rgba(52,211,153,0.6);}
+.statut-point.statut-probleme{background:#fbbf24;box-shadow:0 0 8px rgba(251,191,36,0.6);}
+.statut-point.statut-panne{background:#f87171;box-shadow:0 0 8px rgba(248,113,113,0.6);}
+.statut-texte-ok{color:#34d399;}
+.statut-texte-probleme{color:#fbbf24;}
+.statut-texte-panne{color:#f87171;}
+.statut-message{margin:6px 0 0 20px;font-size:13px;color:var(--text-dim);}
+.statut-manuel{margin:4px 0 0 20px;font-size:12px;color:var(--cyan);}
+.statut-modifier{font-family:inherit;font-size:12px;padding:4px 10px;border-radius:10px;cursor:pointer;
+  background:rgba(var(--w),0.08);border:1px solid rgba(var(--w),0.18);color:var(--text);}
+.statut-edition{margin:12px 0 0 20px;display:flex;flex-direction:column;gap:10px;}
+.statut-choix{display:flex;flex-wrap:wrap;gap:8px;}
+.statut-choix button{font-family:inherit;font-size:13px;padding:6px 12px;border-radius:12px;cursor:pointer;
+  background:rgba(var(--w),0.06);border:1px solid rgba(var(--w),0.2);color:var(--text);}
+.statut-actions{display:flex;flex-wrap:wrap;gap:8px;}
+.statut-btn-principal,.statut-btn-secondaire{font-family:inherit;font-size:13px;padding:8px 14px;border-radius:12px;cursor:pointer;color:var(--fg);border:1px solid rgba(var(--w),0.2);}
+.statut-btn-principal{background:var(--violet);border-color:transparent;}
+.statut-btn-secondaire{background:rgba(var(--w),0.06);}
+@media (max-width:760px){
+  .statut-bento{grid-template-columns:1fr;}
+  .statut-carte-modules{grid-row:auto;}
+}
