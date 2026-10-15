@@ -2580,3 +2580,56 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) .integration-item{backg
 .scat-j-res li.doublon{background:rgba(251,191,36,0.18);}
 .scat-j-res li.ko{background:rgba(248,113,113,0.15);}
 .scat-j-total{font-size:18px;text-align:center;margin-top:6px;}
+
+/* ===== Scategories : page de choix, fenêtre de partie, champs ===== */
+.scat-choix{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:900px;margin:0 auto;}
+.scat-choix-carte{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:34px 28px;border-radius:34px;color:var(--text);text-decoration:none;
+  background:rgba(var(--w),0.10);border:1px solid rgba(var(--w),0.16);box-shadow:0 24px 60px -26px rgba(0,0,0,0.7);backdrop-filter:blur(14px);transition:transform .2s ease,border-color .2s ease;}
+.scat-choix-maitre:hover{transform:translateY(-4px);border-color:rgba(138,86,254,0.7);}
+.scat-choix-icone{font-size:54px;line-height:1;}
+.scat-choix-carte h2{font-size:26px;}
+.scat-choix-carte p{color:var(--text-dim);font-size:15px;line-height:1.5;max-width:320px;}
+.scat-choix-go{margin-top:auto;padding:12px 26px;border-radius:999px;font-weight:600;color:#fff;background:linear-gradient(160deg,#8a56fe,#4b3fd6);box-shadow:0 10px 26px -10px rgba(138,86,254,0.8);}
+.scat-choix-joueur .scat-champ{width:100%;max-width:260px;}
+
+/* Champs arrondis, dans l'esprit Gozly (code, nom, réponses) */
+.scat-champ,.scat-j-form input,.scat-j-champs input,.scat-ajout input{
+  width:100%;padding:15px 22px;border-radius:999px;font-family:inherit;font-size:17px;color:var(--fg);
+  background:rgba(var(--w),0.10);border:1.5px solid rgba(var(--w),0.2);outline:none;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.25);transition:border-color .2s ease,box-shadow .2s ease,background .2s ease;}
+.scat-champ::placeholder,.scat-j-form input::placeholder,.scat-j-champs input::placeholder,.scat-ajout input::placeholder{color:var(--text-dim);}
+.scat-champ:focus,.scat-j-form input:focus,.scat-j-champs input:focus,.scat-ajout input:focus{
+  border-color:var(--violet);background:rgba(var(--w),0.14);box-shadow:inset 0 2px 8px rgba(0,0,0,0.25),0 0 0 4px rgba(138,86,254,0.28);}
+.scat-champ-code,.scat-j-code{font-family:'Fredoka',sans-serif !important;font-weight:700;font-size:36px !important;letter-spacing:.35em;text-align:center;text-transform:uppercase;padding:14px 18px !important;}
+.scat-j-form{border-radius:34px;padding:30px 26px;}
+.scat-j-carte{border-radius:34px;}
+.scat-j-champs input{border-radius:22px;}
+.scat-ajout input{font-size:15px;padding:11px 18px;}
+.scat-btn-stop{background:#c0392b;border-color:#e0574a;color:#fff;}
+.scat-btn-stop:hover:not(:disabled){background:#d4493a;}
+
+/* Fenêtre de partie (hôte) : temps/lettre à gauche, catégories à droite */
+.scat-popup{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;
+  background:radial-gradient(ellipse 900px 700px at 70% 30%,rgba(138,86,254,0.22),transparent 60%),linear-gradient(135deg,#05051c 0%,#0b0b3a 50%,#17175f 100%);animation:scat-popup-in .25s ease-out;}
+@keyframes scat-popup-in{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
+.scat-popup-grille{display:grid;grid-template-columns:minmax(300px,1fr) minmax(300px,1fr);gap:24px;width:100%;max-width:1200px;align-items:stretch;}
+.scat-popup-carte{padding:32px;border-radius:36px;background:rgba(var(--w),0.10);border:1px solid rgba(var(--w),0.18);box-shadow:0 30px 80px -30px rgba(0,0,0,0.8);}
+.scat-popup-temps{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;}
+.scat-popup-lettre{width:clamp(150px,22vw,230px);height:clamp(150px,22vw,230px);font-size:clamp(90px,14vw,150px);border-radius:44px;}
+.scat-popup-chrono{width:clamp(150px,20vw,210px);height:clamp(150px,20vw,210px);}
+.scat-popup-chrono .scat-temps{font-size:clamp(38px,5vw,54px);}
+.scat-popup-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:6px;}
+.scat-popup-actions .scat-btn{font-size:17px;padding:13px 26px;border-radius:999px;}
+.scat-popup-cats h2{font-size:26px;margin-bottom:18px;}
+.scat-popup-cats ol{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.scat-popup-cats li{display:flex;align-items:center;gap:14px;padding:12px 18px;border-radius:20px;background:rgba(var(--w),0.10);font-size:clamp(17px,2vw,24px);font-weight:500;}
+.scat-popup-cats .scat-num{width:34px;height:34px;font-size:16px;}
+
+@media (max-width:900px){
+  .scat-choix{grid-template-columns:1fr;}
+  .scat-popup{align-items:flex-start;}
+  .scat-popup-grille{grid-template-columns:1fr;}
+}
+
+.scat-wrap{z-index:auto;}
+.scat-page section{overflow:visible;}

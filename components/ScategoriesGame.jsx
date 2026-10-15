@@ -29,6 +29,7 @@ export default function ScategoriesGame() {
   const [nouvelle, setNouvelle] = useState("");
   const [message, setMessage] = useState("");
   const [pleinEcran, setPleinEcran] = useState(false);
+  const [popup, setPopup] = useState(false);
 
   const salle = useSalleHote(snapshotRef);
   const salleRef = useRef(salle);
@@ -128,6 +129,7 @@ export default function ScategoriesGame() {
     finRef.current = Date.now() + duree * 1000;
     setRestant(duree);
     setEtat("running");
+    setPopup(true);
   }
 
   function pause() {
@@ -147,7 +149,15 @@ export default function ScategoriesGame() {
     setRestant(duree);
   }
 
+  function terminerDepuisPopup() {
+    if (salle.actif) return terminer();
+    setEtat("idle");
+    setRestant(duree);
+    setPopup(false);
+  }
+
   function mancheSuivante() {
+    setPopup(false);
     salle.nouvelleManche();
     setManche((m) => m + 1);
     setEtat("idle");
@@ -232,6 +242,7 @@ export default function ScategoriesGame() {
   }
 
   function terminerPartie() {
+    setPopup(false);
     salle.quitter();
     setEtat("idle");
     setLettre("?");
@@ -245,7 +256,8 @@ export default function ScategoriesGame() {
   const R = 54;
   const circ = 2 * Math.PI * R;
   const res = salle.resultat;
-  const lien = typeof window !== "undefined" && salle.code ? `${window.location.origin}/scategories?code=${salle.code}` : "";
+  const popupOuvert = popup && (etat === "running" || etat === "paused" || (etat === "ended" && (!salle.actif || !res)));
+  const lien = typeof window !== "undefined" && salle.code ? `${window.location.origin}/scategories/jouer?code=${salle.code}` : "";
 
   return (
     <div ref={zoneRef} className={`scat-zone${pleinEcran ? " scat-plein" : ""}`}>
@@ -495,6 +507,65 @@ export default function ScategoriesGame() {
           </p>
         </aside>
       </div>
+
+      {popupOuvert && (
+        <div className="scat-popup" role="dialog" aria-modal="true">
+          <div className="scat-popup-grille">
+            <section className="scat-popup-carte scat-popup-temps">
+              <div key={lettre} className="scat-lettre scat-popup-lettre" aria-label={t("scat.lettre")}>
+                {lettre}
+              </div>
+              <div className={`scat-chrono scat-popup-chrono${urgence ? " urgence" : ""}${etat === "ended" ? " fini" : ""}`}>
+                <svg viewBox="0 0 120 120" aria-hidden="true">
+                  <circle cx="60" cy="60" r={R} className="scat-anneau-fond" />
+                  <circle cx="60" cy="60" r={R} className="scat-anneau" strokeDasharray={circ} strokeDashoffset={circ * (1 - fraction)} transform="rotate(-90 60 60)" />
+                </svg>
+                <span className="scat-temps">{etat === "ended" ? "0:00" : formatTemps(affiche)}</span>
+              </div>
+              {etat === "ended" && <p className="scat-fin">{salle.actif && !res ? t("scat.collecte") : t("scat.tempsEcoule")}</p>}
+              {salle.actif && salle.joueurs.length > 0 && (
+                <p className="scat-sous">
+                  {t("scat.joueurs")} : {salle.joueurs.length}
+                </p>
+              )}
+              <div className="scat-popup-actions">
+                {etat === "running" && (
+                  <button type="button" className="scat-btn scat-btn-go" onClick={pause}>
+                    {t("scat.pause")}
+                  </button>
+                )}
+                {etat === "paused" && (
+                  <>
+                    <button type="button" className="scat-btn scat-btn-go" onClick={reprendre}>
+                      {t("scat.reprendre")}
+                    </button>
+                    <button type="button" className="scat-btn scat-btn-stop" onClick={terminerDepuisPopup}>
+                      {t("scat.terminer")}
+                    </button>
+                  </>
+                )}
+                {etat === "ended" && !salle.actif && (
+                  <button type="button" className="scat-btn" onClick={() => setPopup(false)}>
+                    {t("scat.fermer")}
+                  </button>
+                )}
+              </div>
+            </section>
+
+            <section className="scat-popup-carte scat-popup-cats">
+              <h2>{t("scat.categories")}</h2>
+              <ol>
+                {categories.map((c, i) => (
+                  <li key={`${i}-${c}`}>
+                    <span className="scat-num">{i + 1}</span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
