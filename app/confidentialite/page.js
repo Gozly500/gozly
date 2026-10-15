@@ -1,6 +1,7 @@
 import LegalPage from "@/components/LegalPage";
 import { LEGAL } from "@/lib/legal";
-import { getT } from "@/lib/i18n/siteServer";
+import { getT, getLang } from "@/lib/i18n/siteServer";
+import { CONFIDENTIALITE_EN } from "@/lib/legalEn";
 
 export function generateMetadata() {
   return { title: "Gozly - " + getT().t("signup.confidentialite") };
@@ -102,6 +103,7 @@ const sections = [
 ];
 
 export default function ConfidentialitePage() {
+  if (getLang() === "en") return <LegalPage titre={CONFIDENTIALITE_EN.titre} intro={CONFIDENTIALITE_EN.intro} sections={CONFIDENTIALITE_EN.sections} />;
   return (
     <LegalPage
       titre="Politique de confidentialité"

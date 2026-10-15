@@ -1,6 +1,7 @@
 import LegalPage from "@/components/LegalPage";
 import { LEGAL } from "@/lib/legal";
-import { getT } from "@/lib/i18n/siteServer";
+import { getT, getLang } from "@/lib/i18n/siteServer";
+import { CONDITIONS_EN } from "@/lib/legalEn";
 
 export function generateMetadata() {
   return { title: "Gozly - " + getT().t("footer.conditions") };
@@ -118,6 +119,7 @@ const sections = [
 ];
 
 export default function ConditionsPage() {
+  if (getLang() === "en") return <LegalPage titre={CONDITIONS_EN.titre} intro={CONDITIONS_EN.intro} sections={CONDITIONS_EN.sections} />;
   return (
     <LegalPage
       titre="Conditions d'utilisation"
