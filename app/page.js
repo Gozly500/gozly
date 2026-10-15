@@ -3,7 +3,7 @@ import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
-import ParallaxSection from "@/components/ParallaxSection";
+import ModuleVitrine from "@/components/ModuleVitrine";
 import HeroParallax from "@/components/HeroParallax";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
@@ -31,7 +31,13 @@ export default function HomePage() {
         </div>
       </header>
 
-      <ParallaxSection id="modules" src="/marketing/planification.png" alt="Aperçu du module Tâches de Gozly" />
+      <ModuleVitrine
+        id="modules"
+        titre="Planification"
+        texte="Planifiez vos journées de travail facilement grâce au module de planification"
+        image="/marketing/planification-element.svg"
+        alt="Aperçu du module Planification de Gozly"
+      />
 
       <section id="process">
         <div className="wrap">
@@ -91,7 +97,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      <ParallaxSection src="/marketing/horaire.png" alt="Aperçu du module Horaire & Pointage de Gozly" />
+      <ModuleVitrine
+        titre="Horaire"
+        texte="Gérez facilement les horaires de vos employés en temps réel"
+        image="/marketing/horaire-element.svg"
+        alt="Aperçu du module Horaire & Pointage de Gozly"
+        inverse
+      />
 
       <section id="pricing">
         <div className="wrap">
@@ -159,7 +171,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      <ParallaxSection src="/marketing/inventaire.png" alt="Aperçu du module Inventaire de Gozly" />
+      <ModuleVitrine
+        titre="Inventaire"
+        texte="Gérez votre inventaire de partout et connectez-le à votre système de vente"
+        image="/marketing/inventaire-element.svg"
+        alt="Aperçu du module Inventaire de Gozly"
+      />
 
       <section className="promo">
         <div className="wrap promo-wrap">
@@ -192,7 +209,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      <ParallaxSection src="/marketing/ventes.png" alt="Aperçu du module Suivi des ventes de Gozly" />
+      <ModuleVitrine
+        titre="Suivi des ventes"
+        texte="Gardez un œil sur vos rapports de vente grâce au module de suivi des ventes et de conciliation"
+        image="/marketing/ventes-element.svg"
+        alt="Aperçu du module Suivi des ventes de Gozly"
+        inverse
+      />
 
       <section id="contact-cta">
         <div className="wrap">

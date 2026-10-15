@@ -143,10 +143,11 @@
    dégradé, mais sans ces 4 variables figées) pour que ses thèmes (voir
    plus haut) changent vraiment tout le dégradé, pas juste --navy. */
 .page-default{
-    --indigo: #15267f;
-    --violet: #2f5fdb;
-    --purple: #1b3aa0;
-    --glow: rgba(47,95,219,0.35);
+    --navy: #05051c;
+    --indigo: #0b0b3a;
+    --purple: #17175f;
+    --violet: #8a56fe;
+    --glow: rgba(138,86,254,0.16);
   }
 
 .dash-page{
@@ -501,7 +502,7 @@ a{color:inherit;text-decoration:none;}
   }
 .hero-parallax-bg::after{
     content:'';position:absolute;inset:0;
-    background:linear-gradient(180deg, rgba(13,13,63,0.15) 0%, rgba(13,13,63,0.55) 100%);
+    background:linear-gradient(180deg, rgba(5,5,28,0.55) 0%, rgba(5,5,28,0.9) 100%);
   }
 .hero-parallax-bg img{
     position:absolute;inset:0;width:100%;height:100%;
@@ -742,17 +743,17 @@ section{padding:80px 0;position:relative;}
 
 .about-block{
     border-radius:48px;padding:36px 34px;
-    background:rgba(var(--w),0.10);
-    box-shadow:0 20px 50px -20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(var(--w),0.12);
+    background:linear-gradient(160deg,#f6f8ff 0%,#dde5ff 100%);
+    box-shadow:0 24px 60px -20px rgba(0,0,0,0.6), inset 0 1px 0 #fff;
     max-width:680px;
     flex:1;
   }
 
-.about-block p{color:var(--text-dim);font-size:15.5px;line-height:1.75;margin-bottom:16px;}
+.about-block p{color:#34346b;font-size:15.5px;line-height:1.75;margin-bottom:16px;}
 
 .about-block p:last-child{margin-bottom:0;}
 
-.about-block strong{color:var(--text);font-weight:600;}
+.about-block strong{color:#0b0b3a;font-weight:600;}
 
 .about-wrap{display:flex;align-items:center;gap:48px;}
 
@@ -768,28 +769,6 @@ section{padding:80px 0;position:relative;}
 @media(max-width:820px){
     .about-wrap{flex-direction:column;}
     .about-logo{width:120px;height:120px;order:-1;}
-  }
-
-/* Illustrations de modules (page d'accueil) - pleine largeur entre les
-   sections, sans texte, avec un effet de parallaxe piloté en JS (voir
-   ParallaxSection.jsx). L'image garde sa pleine largeur (pas de recadrage
-   des côtés, donc pas de texte coupé) - seul le haut et le bas sont
-   rognés (aspect-ratio plus court que l'image d'origine 1280x720) pour
-   avoir de la marge de déplacement vertical. */
-.module-showcase{
-    position:relative;overflow:hidden;
-    aspect-ratio:1280/620;
-  }
-
-.module-showcase img{
-    position:absolute;top:50%;left:0;
-    width:100%;height:auto;
-    transform:translateY(-50%);
-    will-change:transform;
-  }
-
-@media(max-width:900px){
-    .module-showcase{aspect-ratio:1280/720;}
   }
 
 .pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:26px;}
@@ -865,13 +844,13 @@ section{padding:80px 0;position:relative;}
 
 .cta-band{
     border-radius:34px;padding:60px 44px;text-align:center;
-    background:rgba(var(--w),0.11);
-    box-shadow:0 30px 70px -20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(var(--w),0.15);
+    background:linear-gradient(135deg,#f6f8ff 0%,#d6e0ff 100%);
+    box-shadow:0 30px 70px -20px rgba(0,0,0,0.6), inset 0 1px 0 #fff;
   }
 
-.cta-band h2{font-size:clamp(24px,4vw,36px);margin-bottom:14px;}
+.cta-band h2{font-size:clamp(24px,4vw,36px);margin-bottom:14px;color:#0b0b3a;}
 
-.cta-band p{color:var(--text-dim);margin-bottom:30px;}
+.cta-band p{color:#34346b;margin-bottom:30px;}
 
 footer{padding:44px 0 36px;border-top:1px solid rgba(var(--w),0.12);margin-top:30px;}
 
@@ -2383,3 +2362,36 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
   .statut-carte-externe ul{grid-template-columns:1fr;}
 }
 .statut-erreur{font-size:13px;color:#f87171;}
+
+
+/* ===== Vitrines de modules (accueil) : texte HTML + élément SVG ===== */
+.vitrine{padding:90px 0;overflow:hidden;}
+.vitrine-wrap{display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:48px;}
+.vitrine-inverse .vitrine-wrap{grid-template-columns:.9fr 1.1fr;}
+.vitrine-inverse .vitrine-visuel{order:-1;}
+.vitrine-titre{
+  font-family:'Fredoka',sans-serif;font-weight:700;color:#fff;
+  font-size:clamp(44px,7vw,88px);line-height:1.05;letter-spacing:-0.01em;margin-bottom:22px;
+  text-shadow:0 6px 30px rgba(138,86,254,0.35);
+}
+.vitrine-texte p{font-size:clamp(17px,2vw,21px);line-height:1.5;color:var(--text);max-width:460px;}
+.vitrine-visuel{position:relative;display:flex;justify-content:center;align-items:center;}
+.vitrine-visuel::before{
+  content:'';position:absolute;inset:8% 6%;border-radius:50%;
+  background:radial-gradient(closest-side,rgba(138,86,254,0.28),rgba(12,192,223,0.10) 60%,transparent 100%);
+  filter:blur(30px);
+}
+.vitrine-visuel img{
+  position:relative;width:auto;max-width:100%;max-height:460px;
+  filter:drop-shadow(0 28px 40px rgba(0,0,0,0.5));
+  animation:vitrine-flotte 7s ease-in-out infinite;
+}
+@keyframes vitrine-flotte{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
+@media (prefers-reduced-motion:reduce){.vitrine-visuel img{animation:none;}}
+@media (max-width:900px){
+  .vitrine{padding:56px 0;}
+  .vitrine-wrap,.vitrine-inverse .vitrine-wrap{grid-template-columns:1fr;gap:28px;text-align:center;}
+  .vitrine-inverse .vitrine-visuel{order:0;}
+  .vitrine-texte p{margin:0 auto;}
+  .vitrine-visuel img{max-height:300px;}
+}
