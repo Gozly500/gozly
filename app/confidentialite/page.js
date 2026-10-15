@@ -1,9 +1,10 @@
 import LegalPage from "@/components/LegalPage";
 import { LEGAL } from "@/lib/legal";
+import { getT } from "@/lib/i18n/siteServer";
 
-export const metadata = {
-  title: "Gozly - Politique de confidentialité",
-};
+export function generateMetadata() {
+  return { title: "Gozly - " + getT().t("signup.confidentialite") };
+}
 
 const sections = [
   {

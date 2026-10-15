@@ -6,8 +6,11 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import LangSwitch from "@/components/LangSwitch";
 
 export default function Nav() {
+  const { t } = useT();
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -82,13 +85,13 @@ export default function Nav() {
         </div>
         <div className="nav-links desktop-only">
           <Link href="/" className={pathname === "/" ? "active" : ""}>
-            Accueil
+            {t("nav.accueil")}
           </Link>
           <Link href="/s-abonner" className={pathname === "/s-abonner" ? "active" : ""}>
-            S&apos;abonner
+            {t("nav.abonner")}
           </Link>
           <Link href="/contact" className={pathname === "/contact" ? "active" : ""}>
-            Contact
+            {t("nav.contact")}
           </Link>
         </div>
 
@@ -96,31 +99,31 @@ export default function Nav() {
           {user ? (
             <div className="account-wrap" ref={accountRef}>
               <button className="account-btn" onClick={() => setAccountOpen((v) => !v)}>
-                Mon compte <IconFlecheBas className="gozly-icon-inline" />
+                {t("nav.compte")} <IconFlecheBas className="gozly-icon-inline" />
               </button>
               {accountOpen && (
                 <div className="account-dropdown open">
                   <Link href="/dashboard" onClick={() => setAccountOpen(false)}>
-                    Tableau de bord
+                    {t("nav.dashboard")}
                   </Link>
                   <Link href="/parametres" onClick={() => setAccountOpen(false)}>
-                    Paramètres
+                    {t("nav.parametres")}
                   </Link>
                   {isAdmin && (
                     <Link href="/admin" onClick={() => setAccountOpen(false)}>
-                      Panneau admin
+                      {t("nav.admin")}
                     </Link>
                   )}
                   <div className="divider"></div>
                   <button className="logout" onClick={handleLogout}>
-                    Se déconnecter
+                    {t("nav.deconnexion")}
                   </button>
                 </div>
               )}
             </div>
           ) : (
             <Link href="/login" className="btn-navy">
-              Se connecter
+              {t("nav.connexion")}
             </Link>
           )}
         </div>
@@ -128,44 +131,45 @@ export default function Nav() {
         <button
           className={`hamburger-btn mobile-only${mobileOpen ? " open" : ""}`}
           onClick={() => setMobileOpen((v) => !v)}
-          aria-label="Menu"
+          aria-label={t("nav.menu")}
         >
           <span></span>
           <span></span>
           <span></span>
         </button>
+        <LangSwitch />
       </div>
 
       <div className={`mobile-menu-panel${mobileOpen ? " open" : ""}`}>
         <Link href="/" onClick={() => setMobileOpen(false)}>
-          Accueil
+          {t("nav.accueil")}
         </Link>
         <Link href="/s-abonner" onClick={() => setMobileOpen(false)}>
-          S&apos;abonner
+          {t("nav.abonner")}
         </Link>
         <Link href="/contact" onClick={() => setMobileOpen(false)}>
-          Contact
+          {t("nav.contact")}
         </Link>
         {user ? (
           <>
             <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
-              Tableau de bord
+              {t("nav.dashboard")}
             </Link>
             <Link href="/parametres" onClick={() => setMobileOpen(false)}>
-              Paramètres
+              {t("nav.parametres")}
             </Link>
             {isAdmin && (
               <Link href="/admin" onClick={() => setMobileOpen(false)}>
-                Panneau admin
+                {t("nav.admin")}
               </Link>
             )}
             <button onClick={handleLogout} className="mobile-logout">
-              Se déconnecter
+              {t("nav.deconnexion")}
             </button>
           </>
         ) : (
           <Link href="/login" onClick={() => setMobileOpen(false)}>
-            Se connecter
+            {t("nav.connexion")}
           </Link>
         )}
       </div>

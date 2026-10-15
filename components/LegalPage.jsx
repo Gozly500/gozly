@@ -2,10 +2,12 @@ import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import { LEGAL } from "@/lib/legal";
+import { getT } from "@/lib/i18n/siteServer";
 
 // Gabarit commun des pages légales : titre + sections { titre, contenu }.
 // "contenu" est une liste de paragraphes (string) ou de listes à puces (string[]).
 export default function LegalPage({ titre, intro, sections }) {
+  const { t, lang } = getT();
   return (
     <div className="page page-default">
       <Loader />
@@ -14,12 +16,15 @@ export default function LegalPage({ titre, intro, sections }) {
       <header className="page-hero">
         <div className="wrap">
           <h1>{titre}</h1>
-          <p>Dernière mise à jour : {LEGAL.dateMiseAJour}</p>
+          <p>
+            {t("legal.maj")} {lang === "en" ? LEGAL.dateMiseAJourEn : LEGAL.dateMiseAJour}
+          </p>
         </div>
       </header>
 
       <section>
         <div className="wrap">
+          {lang === "en" && <p className="legal-notice">{t("legal.avisLangue")}</p>}
           <article className="legal-doc">
             {intro && <p>{intro}</p>}
             {sections.map((s, i) => (

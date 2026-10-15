@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { useT } from "@/components/LangProvider";
 
 export default function ResetPasswordForm() {
+  const { t } = useT();
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [password, setPassword] = useState("");
@@ -31,11 +33,11 @@ export default function ResetPasswordForm() {
     setError("");
 
     if (password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères.");
+      setError(t("reset.errLongueur"));
       return;
     }
     if (password !== confirm) {
-      setError("Les deux mots de passe ne correspondent pas.");
+      setError(t("reset.errDifferent"));
       return;
     }
 
@@ -44,7 +46,7 @@ export default function ResetPasswordForm() {
     setStatus("idle");
 
     if (updateError) {
-      setError("La mise à jour a échoué. Redemande un lien depuis les paramètres.");
+      setError(t("reset.errMaj"));
       return;
     }
 
@@ -56,8 +58,7 @@ export default function ResetPasswordForm() {
     return (
       <div className="contact-card login-card">
         <p style={{ color: "var(--text-dim)", textAlign: "center" }}>
-          Ce lien de réinitialisation est invalide ou a expiré. Redemande-en un depuis la page
-          Paramètres du compte.
+          {t("reset.invalide")}
         </p>
       </div>
     );
@@ -67,7 +68,7 @@ export default function ResetPasswordForm() {
     return (
       <div className="contact-card login-card">
         <p style={{ color: "#7ee787", textAlign: "center" }}>
-          Mot de passe mis à jour ! Redirection vers ton tableau de bord...
+          {t("reset.ok")}
         </p>
       </div>
     );
@@ -77,32 +78,32 @@ export default function ResetPasswordForm() {
     <div className="contact-card login-card">
       <form onSubmit={handleSubmit}>
         <div className="field">
-          <label htmlFor="password">Nouveau mot de passe</label>
+          <label htmlFor="password">{t("reset.nouveau")}</label>
           <input
             type="password"
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Minimum 6 caractères"
+            placeholder={t("signup.mdpPh")}
             minLength={6}
             required
           />
         </div>
         <div className="field">
-          <label htmlFor="confirm">Confirme le mot de passe</label>
+          <label htmlFor="confirm">{t("reset.confirmer")}</label>
           <input
             type="password"
             id="confirm"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            placeholder="Retape le mot de passe"
+            placeholder={t("reset.confirmerPh")}
             minLength={6}
             required
           />
         </div>
         <div className="submit-wrap">
           <button type="submit" className="submit-btn" disabled={status === "saving"}>
-            {status === "saving" ? "Enregistrement..." : "Mettre à jour le mot de passe"}
+            {status === "saving" ? t("reset.enregistrement") : t("reset.bouton")}
           </button>
         </div>
         {error && (

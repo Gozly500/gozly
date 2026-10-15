@@ -2,12 +2,14 @@ import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import ContactForm from "@/components/ContactForm";
+import { getT } from "@/lib/i18n/siteServer";
 
-export const metadata = {
-  title: "Gozly - Contact",
-};
+export function generateMetadata() {
+  return { title: getT().t("contact.meta") };
+}
 
 export default function ContactPage() {
+  const { t } = getT();
   return (
     <div className="page page-contact">
       <Loader />
@@ -15,8 +17,8 @@ export default function ContactPage() {
 
       <header className="page-hero">
         <div className="wrap">
-          <h1>Contactez nous</h1>
-          <p>Une question, une idée, un projet? Parlons-en!</p>
+          <h1>{t("contact.titre")}</h1>
+          <p>{t("contact.sous")}</p>
         </div>
       </header>
 
@@ -76,9 +78,9 @@ export default function ContactPage() {
           </div>
 
           <div className="contact-alt">
-            Vous préférez écrire via <a href="mailto:gozly.pro@gmail.com">Gmail</a> ou <a href="#">Outlook</a>?
+            {t("contact.alt.debut")} <a href="mailto:gozly.pro@gmail.com">Gmail</a> {t("contact.alt.ou")} <a href="#">Outlook</a>{t("contact.alt.fin")}
             <br />
-            Pas de problème.
+            {t("contact.alt.ok")}
             <span className="email-line">
               <a href="mailto:gozly.pro@gmail.com">gozly.pro@gmail.com</a>
             </span>

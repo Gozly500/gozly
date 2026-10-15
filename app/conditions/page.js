@@ -1,9 +1,10 @@
 import LegalPage from "@/components/LegalPage";
 import { LEGAL } from "@/lib/legal";
+import { getT } from "@/lib/i18n/siteServer";
 
-export const metadata = {
-  title: "Gozly - Conditions d'utilisation",
-};
+export function generateMetadata() {
+  return { title: "Gozly - " + getT().t("footer.conditions") };
+}
 
 const sections = [
   {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { useT } from "@/components/LangProvider";
 
 // Forfaits qu'on peut présélectionner via /inscription?forfait=... (depuis la page
 // des forfaits). Le forfait n'est JAMAIS activé à l'inscription : il ne l'est
@@ -15,6 +16,7 @@ const FORFAITS_ACHETABLES = {
 };
 
 export default function SignupForm() {
+  const { t } = useT();
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -44,15 +46,15 @@ export default function SignupForm() {
     if (signUpError) {
       setLoading(false);
       setError(signUpError.message.includes("already registered")
-        ? "Ce courriel est déjà utilisé."
-        : "Une erreur est survenue à l'inscription.");
+        ? t("signup.errExiste")
+        : t("signup.errGenerique"));
       return;
     }
 
     const user = signUpData.user;
     if (!user) {
       setLoading(false);
-      setError("Vérifie ton courriel pour confirmer ton compte, puis connecte-toi.");
+      setError(t("signup.errConfirmer"));
       return;
     }
 
@@ -75,7 +77,7 @@ export default function SignupForm() {
       setLoading(false);
 
       if (profilError) {
-        setError("Ton compte est créé, mais une erreur est survenue. Contacte-nous.");
+        setError(t("signup.errProfil"));
         return;
       }
 
@@ -94,7 +96,7 @@ export default function SignupForm() {
     setLoading(false);
 
     if (profilError) {
-      setError("Ton compte est créé, mais une erreur est survenue. Contacte-nous.");
+      setError(t("signup.errProfil"));
       return;
     }
 
@@ -105,37 +107,37 @@ export default function SignupForm() {
     <div className="contact-card">
       <form onSubmit={handleSubmit}>
         <div className="field">
-          <label htmlFor="fullName">Ton nom</label>
+          <label htmlFor="fullName">{t("signup.nom")}</label>
           <input
             type="text"
             id="fullName"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Ton nom"
+            placeholder={t("signup.nomPh")}
             required
           />
         </div>
 
         <div className="field">
-          <label htmlFor="email">Courriel</label>
+          <label htmlFor="email">{t("login.courriel")}</label>
           <input
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="ton@courriel.com"
+            placeholder={t("login.courrielPh")}
             required
           />
         </div>
 
         <div className="field">
-          <label htmlFor="password">Mot de passe</label>
+          <label htmlFor="password">{t("login.mdp")}</label>
           <input
             type="password"
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Minimum 6 caractères"
+            placeholder={t("signup.mdpPh")}
             minLength={6}
             required
           />
@@ -143,18 +145,18 @@ export default function SignupForm() {
 
         {forfaitVoulu && (
           <p className="section-hint" style={{ textAlign: "center", margin: "0 0 10px" }}>
-            Forfait choisi : <strong>{FORFAITS_ACHETABLES[forfaitVoulu]}</strong>. Tu paieras à l'étape suivante.
+            {t("signup.forfait")} <strong>{t("plan.resume." + forfaitVoulu)}</strong>. {t("signup.forfaitPaye")}
           </p>
         )}
 
         <p className="legal-notice">
-          En créant un compte, tu acceptes nos <Link href="/conditions">Conditions d'utilisation</Link> et notre{" "}
-          <Link href="/confidentialite">Politique de confidentialité</Link>.
+          {t("signup.legal1")} <Link href="/conditions">{t("footer.conditions")}</Link> {t("signup.legal2")}{" "}
+          <Link href="/confidentialite">{t("signup.confidentialite")}</Link>.
         </p>
 
         <div className="submit-wrap">
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? "Création..." : "Créer mon compte"}
+            {loading ? t("signup.chargement") : t("signup.bouton")}
           </button>
         </div>
 

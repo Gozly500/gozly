@@ -2,18 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useT } from "@/components/LangProvider";
 import { IconEtatFonctionne, IconEtatProbleme, IconEtatNonFonctionnel } from "@/components/icons/GozlyIcons";
 
 const ETATS = {
-  ok: { label: "Fonctionne", couleur: "#34d399" },
-  probleme: { label: "Problème", couleur: "#fbbf24" },
-  panne: { label: "Ne fonctionne pas", couleur: "#f87171" },
-};
-
-const TITRE_GLOBAL = {
-  ok: "Tous les systèmes fonctionnent",
-  probleme: "Certains systèmes ont un problème",
-  panne: "Certains systèmes ne fonctionnent pas",
+  ok: { couleur: "#34d399" },
+  probleme: { couleur: "#fbbf24" },
+  panne: { couleur: "#f87171" },
 };
 
 const ICONES = { ok: IconEtatFonctionne, probleme: IconEtatProbleme, panne: IconEtatNonFonctionnel };
@@ -31,6 +26,7 @@ async function tokenAdmin() {
 }
 
 export default function StatutContent() {
+  const { t, lang } = useT();
   const tokenRef = useRef(null);
   const [statut, setStatut] = useState(null);
   const [erreur, setErreur] = useState(false);
@@ -109,7 +105,7 @@ export default function StatutContent() {
   if (!statut) {
     return (
       <div className="wrap statut-wrap">
-        <p className="statut-chargement">{erreur ? "Impossible de charger le statut pour l'instant." : "Vérification en cours..."}</p>
+        <p className="statut-chargement">{erreur ? t("statut.erreurChargement") : t("statut.chargement")}</p>
       </div>
     );
   }
@@ -119,11 +115,11 @@ export default function StatutContent() {
       <div className={`statut-banniere statut-${statut.global}`}>
         <IconeEtat etat={statut.global} className="statut-icone-grande" />
         <div>
-          <strong>{TITRE_GLOBAL[statut.global]}</strong>
+          <strong>{t("statut.global." + statut.global)}</strong>
           <small>
-            Vérifié à{" "}
-            {new Date(statut.verifieA).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}
-            {" · "}mis à jour automatiquement chaque minute
+            {t("statut.verifieA")}{" "}
+            {new Date(statut.verifieA).toLocaleTimeString(lang === "en" ? "en-CA" : "fr-CA", { hour: "2-digit", minute: "2-digit" })}
+            {" · "}{t("statut.maj")}
           </small>
         </div>
       </div>
@@ -131,17 +127,17 @@ export default function StatutContent() {
       <div className="statut-bento">
         {statut.groupes.map((g) => (
           <section key={g.id} className={`statut-carte statut-carte-${g.id}`}>
-            <h2>{g.titre}</h2>
+            <h2>{t("statut.groupe." + g.id)}</h2>
             <ul>
               {g.systemes.map((s) => (
                 <li key={s.cle} className="statut-ligne">
                   <div className="statut-ligne-haut">
                     <IconeEtat etat={s.etat} />
-                    <span className="statut-nom">{s.nom}</span>
-                    <span className={`statut-etat statut-texte-${s.etat}`}>{ETATS[s.etat].label}</span>
+                    <span className="statut-nom">{t("statut.sys." + s.cle)}</span>
+                    <span className={`statut-etat statut-texte-${s.etat}`}>{t("statut." + s.etat)}</span>
                     {admin && (
                       <button type="button" className="statut-modifier" onClick={() => (edition === s.cle ? setEdition(null) : ouvrirEdition(s))}>
-                        Modifier
+                        {t("statut.modifier")}
                       </button>
                     )}
                   </div>
@@ -158,25 +154,25 @@ export default function StatutContent() {
                             style={brouillon.etat === id ? { borderColor: e.couleur, color: e.couleur } : undefined}
                             onClick={() => setBrouillon((b) => ({ ...b, etat: id }))}
                           >
-                            {e.label}
+                            {t("statut." + id)}
                           </button>
                         ))}
                       </div>
                       <input
                         type="text"
                         maxLength={300}
-                        placeholder="Message pour les clients (facultatif)"
+                        placeholder={t("statut.msgPh")}
                         value={brouillon.message}
                         onChange={(e) => setBrouillon((b) => ({ ...b, message: e.target.value }))}
                       />
                       {erreurEdition && <p className="statut-erreur">{erreurEdition}</p>}
                       <div className="statut-actions">
                         <button type="button" className="statut-btn-principal" disabled={enregistrement} onClick={() => enregistrer(s.cle, brouillon.etat)}>
-                          {enregistrement ? "Enregistrement..." : "Enregistrer"}
+                          {enregistrement ? t("statut.enregistrement") : t("statut.enregistrer")}
                         </button>
                         {s.manuel && (
                           <button type="button" className="statut-btn-secondaire" disabled={enregistrement} onClick={() => enregistrer(s.cle, null)}>
-                            Revenir à l'automatique
+                            {t("statut.auto")}
                           </button>
                         )}
                       </div>

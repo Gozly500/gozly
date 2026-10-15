@@ -5,12 +5,14 @@ import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
 import { IconPlanning, IconHoraire, IconInventaire, IconVentes, IconTemperature } from "@/components/icons/GozlyIcons";
 import { IconEcran } from "@/components/icons/Pictogrammes";
+import { getT } from "@/lib/i18n/siteServer";
 
-export const metadata = {
-  title: "Gozly - S'abonner",
-};
+export function generateMetadata() {
+  return { title: getT().t("abonner.meta") };
+}
 
 export default function SubscribePage() {
+  const { t } = getT();
   return (
     <div className="page page-default">
       <Loader />
@@ -18,8 +20,8 @@ export default function SubscribePage() {
 
       <header className="page-hero">
         <div className="wrap">
-          <h1>Nos forfaits</h1>
-          <p>Choisis ton palier, active tes modules. Tu peux toujours en ajouter plus tard.</p>
+          <h1>{t("abonner.titre")}</h1>
+          <p>{t("abonner.sous")}</p>
         </div>
       </header>
 
@@ -32,16 +34,16 @@ export default function SubscribePage() {
                 <h3>Opale</h3>
               </div>
               <div className="price">
-                25$<span>/mois</span>
+                {t("plan.opale.prix")}<span>{t("plan.mois")}</span>
               </div>
               <ul>
-                <li>3 modules</li>
-                <li>1 entreprise</li>
-                <li>Assistance standard</li>
-                <li>Mises à jour essentielles</li>
+                <li>{t("plan.opale.l1")}</li>
+                <li>{t("plan.opale.l2")}</li>
+                <li>{t("plan.opale.l3")}</li>
+                <li>{t("plan.opale.l4")}</li>
               </ul>
               <Link href="/inscription?forfait=opale" className="price-btn">
-                Choisir ce forfait
+                {t("plan.choisir")}
               </Link>
             </TiltCard>
             <TiltCard className="price-card featured tilt-card">
@@ -50,16 +52,16 @@ export default function SubscribePage() {
                 <h3>Onyx</h3>
               </div>
               <div className="price">
-                40$<span>/mois</span>
+                {t("plan.onyx.prix")}<span>{t("plan.mois")}</span>
               </div>
               <ul>
-                <li>5 modules</li>
-                <li>3 entreprises</li>
-                <li>Support prioritaire</li>
-                <li>Mises à jour avancées</li>
+                <li>{t("plan.onyx.l1")}</li>
+                <li>{t("plan.onyx.l2")}</li>
+                <li>{t("plan.onyx.l3")}</li>
+                <li>{t("plan.onyx.l4")}</li>
               </ul>
               <Link href="/inscription?forfait=onyx" className="price-btn">
-                Choisir ce forfait
+                {t("plan.choisir")}
               </Link>
             </TiltCard>
             <TiltCard className="price-card tilt-card">
@@ -68,17 +70,17 @@ export default function SubscribePage() {
                 <h3>Crystal</h3>
               </div>
               <div className="price">
-                50$<span>/mois</span>
+                {t("plan.crystal.prix")}<span>{t("plan.mois")}</span>
               </div>
               <ul>
-                <li>Modules illimités</li>
-                <li>5 entreprises</li>
-                <li>Module personnalisé sur demande</li>
-                <li>Assistance prioritaire</li>
-                <li>Mises à jour avancées</li>
+                <li>{t("plan.crystal.l1")}</li>
+                <li>{t("plan.crystal.l2")}</li>
+                <li>{t("plan.crystal.l3")}</li>
+                <li>{t("plan.crystal.l4")}</li>
+                <li>{t("plan.crystal.l5")}</li>
               </ul>
               <Link href="/inscription?forfait=crystal" className="price-btn">
-                Choisir ce forfait
+                {t("plan.choisir")}
               </Link>
             </TiltCard>
           </div>
@@ -88,52 +90,52 @@ export default function SubscribePage() {
       <section id="modules">
         <div className="wrap">
           <div className="sec-head">
-            <div className="eyebrow">Modules disponibles</div>
-            <h2>Ajoute ce dont tu as besoin.</h2>
-            <p>Chaque forfait donne accès à un certain nombre de modules - choisis parmi ceux-ci.</p>
+            <div className="eyebrow">{t("abonner.modules.eyebrow")}</div>
+            <h2>{t("abonner.modules.titre")}</h2>
+            <p>{t("abonner.modules.sous")}</p>
           </div>
           <div className="modules-stack">
             <div className="module-row">
               <div className="badge b-1"><IconEcran className="badge-icone" /></div>
               <div className="module-row-text">
-                <h3>Site vitrine</h3>
-                <p>Un site rapide, moderne et à ton image pour présenter ton entreprise et convertir tes visiteurs.</p>
-                <span className="wix-tag">Propulsé par Wix</span>
+                <h3>{t("abonner.vitrine.titre")}</h3>
+                <p>{t("abonner.vitrine.texte")}</p>
+                <span className="wix-tag">{t("abonner.vitrine.wix")}</span>
               </div>
             </div>
             <div className="module-row">
               <div className="badge b-3"><IconPlanning className="badge-icone" /></div>
               <div className="module-row-text">
-                <h3>Tâches</h3>
-                <p>Prépare les tâches et ce qu&apos;il y a à faire, jour par jour - une liste claire pour ton équipe, même plusieurs jours à l&apos;avance.</p>
+                <h3>{t("abonner.taches.titre")}</h3>
+                <p>{t("abonner.taches.texte")}</p>
               </div>
             </div>
             <div className="module-row">
               <div className="badge b-4"><IconHoraire className="badge-icone" /></div>
               <div className="module-row-text">
-                <h3>Horaire &amp; pointage</h3>
-                <p>Construis l&apos;horaire de ton équipe, suis les heures travaillées et le pointage de chacun - simple pour les employés, clair pour toi au moment de la paie.</p>
+                <h3>{t("abonner.horaire.titre")}</h3>
+                <p>{t("abonner.horaire.texte")}</p>
               </div>
             </div>
             <div className="module-row">
               <div className="badge b-5"><IconInventaire className="badge-icone" /></div>
               <div className="module-row-text">
-                <h3>Inventaire</h3>
-                <p>Un suivi de stock qui se met à jour avec tes ventes, pour ne plus jamais être pris au dépourvu.</p>
+                <h3>{t("abonner.inventaire.titre")}</h3>
+                <p>{t("abonner.inventaire.texte")}</p>
               </div>
             </div>
             <div className="module-row">
               <div className="badge b-6"><IconVentes className="badge-icone" /></div>
               <div className="module-row-text">
-                <h3>Suivi des ventes</h3>
-                <p>Un journal de ventes multi-sources (Wix, Moneris, comptant...) avec les totaux de la semaine en un coup d&apos;œil.</p>
+                <h3>{t("abonner.ventes.titre")}</h3>
+                <p>{t("abonner.ventes.texte")}</p>
               </div>
             </div>
             <div className="module-row">
               <div className="badge b-7"><IconTemperature className="badge-icone" /></div>
               <div className="module-row-text">
-                <h3>Températures</h3>
-                <p>Le registre de conformité MAPAQ pour tes frigos et congélateurs, rempli directement sur le téléphone de ton équipe.</p>
+                <h3>{t("abonner.temperature.titre")}</h3>
+                <p>{t("abonner.temperature.texte")}</p>
               </div>
             </div>
           </div>

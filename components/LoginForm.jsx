@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 export default function LoginForm() {
+  const { t } = useT();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +20,7 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("desactive") === "1") {
-      setError("Ce compte a été désactivé.");
+      setError(t("login.desactive"));
     }
   }, []);
 
@@ -31,7 +33,7 @@ export default function LoginForm() {
 
     if (error) {
       setLoading(false);
-      setError("Courriel ou mot de passe incorrect.");
+      setError(t("login.errIdentifiants"));
       return;
     }
 
@@ -45,7 +47,7 @@ export default function LoginForm() {
 
     if (profil?.desactive) {
       await supabase.auth.signOut();
-      setError("Ce compte a été désactivé. Contacte-nous si c'est une erreur.");
+      setError(t("login.desactiveContact"));
       return;
     }
 
@@ -76,32 +78,32 @@ export default function LoginForm() {
       <div className="contact-card login-card">
         {envoiStatut === "envoye" ? (
           <p style={{ color: "#7ee787", textAlign: "center" }}>
-            Si un compte existe avec cette adresse, un lien de réinitialisation vient d'être envoyé par courriel.
+            {t("login.oubliEnvoye")}
           </p>
         ) : (
           <form onSubmit={handleEnvoyerReinitialisation}>
             <p className="section-hint" style={{ textAlign: "center", marginBottom: "18px" }}>
-              Entre ton courriel - on t'envoie un lien pour choisir un nouveau mot de passe.
+              {t("login.oubliHint")}
             </p>
             <div className="field">
-              <label htmlFor="email-oublie">Courriel</label>
+              <label htmlFor="email-oublie">{t("login.courriel")}</label>
               <input
                 type="email"
                 id="email-oublie"
                 value={emailOubli}
                 onChange={(e) => setEmailOubli(e.target.value)}
-                placeholder="ton@courriel.com"
+                placeholder={t("login.courrielPh")}
                 required
               />
             </div>
             <div className="submit-wrap">
               <button type="submit" className="submit-btn" disabled={envoiStatut === "envoi"}>
-                {envoiStatut === "envoi" ? "Envoi..." : "Envoyer le lien"}
+                {envoiStatut === "envoi" ? t("login.oubliEnvoi") : t("login.oubliBouton")}
               </button>
             </div>
             {envoiStatut === "erreur" && (
               <p style={{ color: "#ff8a8a", textAlign: "center", marginTop: "14px", fontSize: "14px" }}>
-                L'envoi a échoué. Réessaie dans un instant.
+                {t("login.oubliErreur")}
               </p>
             )}
           </form>
@@ -112,7 +114,7 @@ export default function LoginForm() {
             onClick={() => setMotDePasseOublie(false)}
             style={{ background: "none", border: "none", padding: 0, textDecoration: "underline", color: "var(--fg)", cursor: "pointer", font: "inherit" }}
           >
-            <IconFlecheGauche className="gozly-icon" /> Retour à la connexion
+            <IconFlecheGauche className="gozly-icon" /> {t("login.retour")}
           </button>
         </p>
       </div>
@@ -123,18 +125,18 @@ export default function LoginForm() {
     <div className="contact-card login-card">
       <form onSubmit={handleSubmit}>
         <div className="field">
-          <label htmlFor="email">Courriel</label>
+          <label htmlFor="email">{t("login.courriel")}</label>
           <input
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="ton@courriel.com"
+            placeholder={t("login.courrielPh")}
             required
           />
         </div>
         <div className="field">
-          <label htmlFor="password">Mot de passe</label>
+          <label htmlFor="password">{t("login.mdp")}</label>
           <input
             type="password"
             id="password"
@@ -146,7 +148,7 @@ export default function LoginForm() {
         </div>
         <div className="submit-wrap">
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? "Connexion..." : "Se connecter"}
+            {loading ? t("login.chargement") : t("login.bouton")}
           </button>
         </div>
         {error && (
@@ -160,13 +162,13 @@ export default function LoginForm() {
             onClick={ouvrirMotDePasseOublie}
             style={{ background: "none", border: "none", padding: 0, textDecoration: "underline", color: "var(--text-dim)", cursor: "pointer", font: "inherit" }}
           >
-            Mot de passe oublié ?
+            {t("login.oublie")}
           </button>
         </p>
         <p style={{ color: "var(--text-dim)", textAlign: "center", marginTop: "10px", fontSize: "13.5px" }}>
-          Pas encore de compte?{" "}
+          {t("login.pasDeCompte")}{" "}
           <a href="/inscription" style={{ textDecoration: "underline", color: "var(--fg)" }}>
-            Crée-en un
+            {t("login.creer")}
           </a>
         </p>
       </form>

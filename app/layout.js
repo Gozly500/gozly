@@ -1,13 +1,21 @@
 import "./globals.css";
+import { LangProvider } from "@/components/LangProvider";
+import { getLang } from "@/lib/i18n/siteServer";
 
-export const metadata = {
-  title: "Gozly",
-  description: "Des outils numériques modulaires pour les PME qui veulent tout gérer au même endroit.",
-};
+export function generateMetadata() {
+  const en = getLang() === "en";
+  return {
+    title: "Gozly",
+    description: en
+      ? "Modular digital tools for small businesses that want to manage everything in one place."
+      : "Des outils numériques modulaires pour les PME qui veulent tout gérer au même endroit.",
+  };
+}
 
 export default function RootLayout({ children }) {
+  const lang = getLang();
   return (
-    <html lang="fr" translate="no">
+    <html lang={lang} translate="no">
       <head>
         <meta name="google" content="notranslate" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -17,7 +25,9 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <LangProvider lang={lang}>{children}</LangProvider>
+      </body>
     </html>
   );
 }

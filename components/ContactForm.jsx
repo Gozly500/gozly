@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useT } from "@/components/LangProvider";
 
 export default function ContactForm() {
+  const { t } = useT();
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
 
   async function handleSubmit(e) {
@@ -38,35 +40,35 @@ export default function ContactForm() {
       <form onSubmit={handleSubmit}>
         <div className="field-row">
           <div className="field">
-            <label htmlFor="name">Nom</label>
-            <input type="text" id="name" name="name" placeholder="Entrer votre nom" />
+            <label htmlFor="name">{t("contact.nom")}</label>
+            <input type="text" id="name" name="name" placeholder={t("contact.nomPh")} />
           </div>
           <div className="field">
-            <label htmlFor="email">Courriel *</label>
-            <input type="email" id="email" name="email" placeholder="Entrer votre adresse..." required />
+            <label htmlFor="email">{t("contact.courriel")}</label>
+            <input type="email" id="email" name="email" placeholder={t("contact.courrielPh")} required />
           </div>
         </div>
         <div className="field">
-          <label htmlFor="subject">Objets</label>
+          <label htmlFor="subject">{t("contact.objet")}</label>
           <input type="text" id="subject" name="subject" placeholder="" />
         </div>
         <div className="field">
-          <label htmlFor="message">Écrivez nous</label>
-          <textarea id="message" name="message" placeholder="Entrer votre texte ici"></textarea>
+          <label htmlFor="message">{t("contact.message")}</label>
+          <textarea id="message" name="message" placeholder={t("contact.messagePh")}></textarea>
         </div>
         <div className="submit-wrap">
           <button type="submit" className="submit-btn" disabled={status === "sending"}>
-            {status === "sending" ? "Envoi..." : "Envoyer"}
+            {status === "sending" ? t("contact.envoi") : t("contact.envoyer")}
           </button>
         </div>
         {status === "sent" && (
           <p style={{ color: "#7ee787", textAlign: "center", marginTop: "14px", fontSize: "14px" }}>
-            Merci! On te répond bientôt.
+            {t("contact.merci")}
           </p>
         )}
         {status === "error" && (
           <p style={{ color: "#ff8a8a", textAlign: "center", marginTop: "14px", fontSize: "14px" }}>
-            Une erreur est survenue, réessaie dans un instant.
+            {t("contact.erreur")}
           </p>
         )}
       </form>

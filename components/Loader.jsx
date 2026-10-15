@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/LangProvider";
 
 export default function Loader() {
+  const { t } = useT();
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -13,7 +15,7 @@ export default function Loader() {
   return (
     <div className={`loader${hidden ? " hidden" : ""}`}>
       <div className="loader-text">
-        <span className="loader-dot"></span>Un moment...
+        <span className="loader-dot"></span>{t("loader.texte")}
       </div>
     </div>
   );

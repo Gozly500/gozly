@@ -2,12 +2,14 @@ import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import SignupForm from "@/components/SignupForm";
+import { getT } from "@/lib/i18n/siteServer";
 
-export const metadata = {
-  title: "Gozly - Créer un compte",
-};
+export function generateMetadata() {
+  return { title: getT().t("signup.meta") };
+}
 
 export default function SignupPage() {
+  const { t } = getT();
   return (
     <div className="page page-default">
       <Loader />
@@ -15,8 +17,8 @@ export default function SignupPage() {
 
       <header className="page-hero">
         <div className="wrap">
-          <h1>Créer un compte</h1>
-          <p>Crée ton compte, puis choisis ton forfait.</p>
+          <h1>{t("signup.titre")}</h1>
+          <p>{t("signup.sous")}</p>
         </div>
       </header>
 

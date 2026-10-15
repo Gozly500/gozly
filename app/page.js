@@ -5,9 +5,12 @@ import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
 import ModuleVitrine from "@/components/ModuleVitrine";
 import HeroParallax from "@/components/HeroParallax";
+import { Rich } from "@/components/LangProvider";
+import { getT } from "@/lib/i18n/siteServer";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 export default function HomePage() {
+  const { t } = getT();
   return (
     <div className="page page-default">
       <Loader />
@@ -18,14 +21,14 @@ export default function HomePage() {
         <div className="wrap">
           <div className="hero-title">Gozly</div>
           <div className="hero-slogan">
-            Des outils numériques modulaires pour les PME qui veulent tout gérer au même endroit.
+            {t("home.slogan")}
           </div>
           <div className="hero-ctas">
             <Link href="/contact" className="btn-pill-dark">
-              Démarrer un projet <IconFlecheDroite className="gozly-icon-inline" />
+              {t("home.cta.projet")} <IconFlecheDroite className="gozly-icon-inline" />
             </Link>
             <a href="#modules" className="btn-pill-glass">
-              Voir les modules
+              {t("home.cta.modules")}
             </a>
           </div>
         </div>
@@ -33,36 +36,26 @@ export default function HomePage() {
 
       <ModuleVitrine
         id="modules"
-        titre="Planification"
-        texte="Planifiez vos journées de travail facilement grâce au module de planification"
+        titre={t("home.planification.titre")}
+        texte={t("home.planification.texte")}
         image="/marketing/planification-element.svg"
-        alt="Aperçu du module Planification de Gozly"
+        alt={t("home.planification.alt")}
       />
 
       <section id="process">
         <div className="wrap">
           <div className="sec-head">
-            <div className="eyebrow">Notre philosophie</div>
-            <h2>Pourquoi Gozly?</h2>
+            <div className="eyebrow">{t("home.philo.eyebrow")}</div>
+            <h2>{t("home.philo.titre")}</h2>
           </div>
           <div className="about-wrap">
             <div className="about-block">
+              <p>{t("home.philo.p1")}</p>
               <p>
-                Trop d&apos;agences numériques fonctionnent de la même façon : un gros projet sur mesure, un
-                contrat signé d&apos;avance, plusieurs mois d&apos;attente - et une fois le produit livré, plus
-                personne pour faire évoluer le système quand tes besoins changent. Résultat : tu payes
-                cher pour un outil figé, qui ne bouge plus avec ton entreprise.
+                <Rich text={t("home.philo.p2")} />
               </p>
               <p>
-                Chez Gozly, on fait les choses autrement. <strong>On te livre une plateforme déjà prête</strong>,
-                où tu actives seulement les modules dont tu as besoin - planning, pointage, inventaire, et
-                plus encore. Pas de gros engagement de départ, pas d&apos;attente de six mois avant de voir
-                un résultat concret.
-              </p>
-              <p>
-                Ton système <strong>évolue avec toi</strong>: un nouveau besoin apparaît, tu actives un
-                nouveau module. Rien à reconstruire, rien à jeter - et rien que tu payes sans t&apos;en
-                servir.
+                <Rich text={t("home.philo.p3")} />
               </p>
             </div>
             <div className="about-logo">
@@ -98,18 +91,18 @@ export default function HomePage() {
       </section>
 
       <ModuleVitrine
-        titre="Horaire"
-        texte="Gérez facilement les horaires de vos employés en temps réel"
+        titre={t("home.horaire.titre")}
+        texte={t("home.horaire.texte")}
         image="/marketing/horaire-element.svg"
-        alt="Aperçu du module Horaire & Pointage de Gozly"
+        alt={t("home.horaire.alt")}
         inverse
       />
 
       <section id="pricing">
         <div className="wrap">
           <div className="sec-head">
-            <div className="eyebrow">Tarifs</div>
-            <h2>Trois paliers, un seul système.</h2>
+            <div className="eyebrow">{t("home.tarifs.eyebrow")}</div>
+            <h2>{t("home.tarifs.titre")}</h2>
           </div>
           <div className="pricing">
             <TiltCard className="price-card tilt-card">
@@ -118,16 +111,16 @@ export default function HomePage() {
                 <h3>Opale</h3>
               </div>
               <div className="price">
-                25$<span>/mois</span>
+                {t("plan.opale.prix")}<span>{t("plan.mois")}</span>
               </div>
               <ul>
-                <li>3 modules</li>
-                <li>1 entreprise</li>
-                <li>Assistance standard</li>
-                <li>Mises à jour essentielles</li>
+                <li>{t("plan.opale.l1")}</li>
+                <li>{t("plan.opale.l2")}</li>
+                <li>{t("plan.opale.l3")}</li>
+                <li>{t("plan.opale.l4")}</li>
               </ul>
               <Link href="/inscription?forfait=opale" className="price-btn">
-                Choisir ce forfait
+                {t("plan.choisir")}
               </Link>
             </TiltCard>
             <TiltCard className="price-card featured tilt-card">
@@ -136,16 +129,16 @@ export default function HomePage() {
                 <h3>Onyx</h3>
               </div>
               <div className="price">
-                40$<span>/mois</span>
+                {t("plan.onyx.prix")}<span>{t("plan.mois")}</span>
               </div>
               <ul>
-                <li>5 modules</li>
-                <li>3 entreprises</li>
-                <li>Support prioritaire</li>
-                <li>Mises à jour avancées</li>
+                <li>{t("plan.onyx.l1")}</li>
+                <li>{t("plan.onyx.l2")}</li>
+                <li>{t("plan.onyx.l3")}</li>
+                <li>{t("plan.onyx.l4")}</li>
               </ul>
               <Link href="/inscription?forfait=onyx" className="price-btn">
-                Choisir ce forfait
+                {t("plan.choisir")}
               </Link>
             </TiltCard>
             <TiltCard className="price-card tilt-card">
@@ -154,17 +147,17 @@ export default function HomePage() {
                 <h3>Crystal</h3>
               </div>
               <div className="price">
-                50$<span>/mois</span>
+                {t("plan.crystal.prix")}<span>{t("plan.mois")}</span>
               </div>
               <ul>
-                <li>Modules illimités</li>
-                <li>5 entreprises</li>
-                <li>Module personnalisé sur demande</li>
-                <li>Assistance prioritaire</li>
-                <li>Mises à jour avancées</li>
+                <li>{t("plan.crystal.l1")}</li>
+                <li>{t("plan.crystal.l2")}</li>
+                <li>{t("plan.crystal.l3")}</li>
+                <li>{t("plan.crystal.l4")}</li>
+                <li>{t("plan.crystal.l5")}</li>
               </ul>
               <Link href="/inscription?forfait=crystal" className="price-btn">
-                Choisir ce forfait
+                {t("plan.choisir")}
               </Link>
             </TiltCard>
           </div>
@@ -172,15 +165,15 @@ export default function HomePage() {
       </section>
 
       <ModuleVitrine
-        titre="Inventaire"
-        texte="Gérez votre inventaire de partout et connectez-le à votre système de vente"
+        titre={t("home.inventaire.titre")}
+        texte={t("home.inventaire.texte")}
         image="/marketing/inventaire-element.svg"
-        alt="Aperçu du module Inventaire de Gozly"
+        alt={t("home.inventaire.alt")}
       />
 
       <section className="promo">
         <div className="wrap promo-wrap">
-          <div className="promo-big top">1 mois!?</div>
+          <div className="promo-big top">{t("home.promo.haut")}</div>
           <div className="promo-card">
             <div className="promo-icon">
               <svg viewBox="0 0 1182 1182" xmlns="http://www.w3.org/2000/svg">
@@ -199,31 +192,31 @@ export default function HomePage() {
               </svg>
             </div>
             <div className="promo-text">
-              <p>Mais oui! Profitez d&apos;un mois entièrement gratuit sur tous nos forfaits.</p>
+              <p>{t("home.promo.texte")}</p>
               <a href="#pricing" className="promo-btn">
-                Voir les forfaits <IconFlecheDroite className="gozly-icon-inline" />
+                {t("home.promo.btn")} <IconFlecheDroite className="gozly-icon-inline" />
               </a>
             </div>
           </div>
-          <div className="promo-big bottom">Gratuit</div>
+          <div className="promo-big bottom">{t("home.promo.bas")}</div>
         </div>
       </section>
 
       <ModuleVitrine
-        titre="Suivi des ventes"
-        texte="Gardez un œil sur vos rapports de vente grâce au module de suivi des ventes et de conciliation"
+        titre={t("home.ventes.titre")}
+        texte={t("home.ventes.texte")}
         image="/marketing/ventes-element.svg"
-        alt="Aperçu du module Suivi des ventes de Gozly"
+        alt={t("home.ventes.alt")}
         inverse
       />
 
       <section id="contact-cta">
         <div className="wrap">
           <div className="cta-band">
-            <h2>Prêt à arrêter de jongler avec dix outils?</h2>
-            <p>Parle-nous de ton entreprise - on te propose une première étape simple.</p>
+            <h2>{t("home.cta.titre")}</h2>
+            <p>{t("home.cta.texte")}</p>
             <Link href="/contact" className="btn-pill-dark">
-              Démarrer un projet <IconFlecheDroite className="gozly-icon-inline" />
+              {t("home.cta.projet")} <IconFlecheDroite className="gozly-icon-inline" />
             </Link>
           </div>
         </div>

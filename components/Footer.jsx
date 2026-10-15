@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/components/LangProvider";
+import { LangFooterLink } from "@/components/LangSwitch";
 
 export default function Footer() {
+  const { t } = useT();
   return (
     <footer>
       <div className="wrap">
@@ -36,10 +41,11 @@ export default function Footer() {
           Gozly
         </div>
         <div className="footer-links">
-          <span>© 2026 Gozly - Tous droits réservés</span>
-          <Link href="/conditions">Conditions d'utilisation</Link>
-          <Link href="/confidentialite">Confidentialité</Link>
-          <Link href="/statut">Statut</Link>
+          <span>{t("footer.droits")}</span>
+          <Link href="/conditions">{t("footer.conditions")}</Link>
+          <Link href="/confidentialite">{t("footer.confidentialite")}</Link>
+          <Link href="/statut">{t("footer.statut")}</Link>
+          <LangFooterLink />
         </div>
       </div>
     </footer>
