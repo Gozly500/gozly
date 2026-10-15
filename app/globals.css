@@ -2349,8 +2349,8 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 .statut-icone-grande{width:36px;height:36px;}
 .statut-icone-ok{color:#0048ff;}
 .statut-icone-probleme{color:#83ff00;}
-.statut-icone-panne{color:#ff000b;animation:statut-clignote 2s ease-in-out infinite;}
-@keyframes statut-clignote{0%,100%{opacity:1;}50%{opacity:.35;}}
+.statut-icone-panne{color:#ff000b;animation:statut-clignote 3.5s ease-in-out infinite;}
+@keyframes statut-clignote{0%,57%,100%{opacity:1;}28.5%{opacity:.35;}}
 .statut-texte-ok{color:#8fb0ff;}
 .statut-texte-probleme{color:#83ff00;}
 .statut-texte-panne{color:#ff6b72;}
