@@ -2633,3 +2633,7 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) .integration-item{backg
 
 .scat-wrap{z-index:auto;}
 .scat-page section{overflow:visible;}
+
+.scat-popup-resultats{width:100%;max-width:1000px;max-height:92vh;overflow:auto;}
+.scat-popup-res-actions{margin-top:22px;}
+.scat-popup-resultats .scat-carte-tete h2{font-size:24px;}

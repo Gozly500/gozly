@@ -12,6 +12,7 @@ export default function ScategoriesGame() {
   const { t, lang } = useT();
   const zoneRef = useRef(null);
   const audioRef = useRef(null);
+  const sonFinRef = useRef(null);
   const finRef = useRef(0);
   const snapshotRef = useRef({});
   const courantRef = useRef({});
@@ -30,6 +31,7 @@ export default function ScategoriesGame() {
   const [message, setMessage] = useState("");
   const [pleinEcran, setPleinEcran] = useState(false);
   const [popup, setPopup] = useState(false);
+  const [resPopup, setResPopup] = useState(false);
 
   const salle = useSalleHote(snapshotRef);
   const salleRef = useRef(salle);
@@ -49,6 +51,11 @@ export default function ScategoriesGame() {
     if (salle.actif) salle.diffuser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, lettre, manche, categories, salle.actif, salle.resultat]);
+
+  // Les résultats d'une nouvelle manche s'ouvrent dans une fenêtre (les corrections ne la rouvrent pas).
+  useEffect(() => {
+    if (salle.resultat) setResPopup(true);
+  }, [salle.resultat?.manche]);
 
   const terminer = useCallback(() => {
     setRestant(0);
@@ -84,14 +91,42 @@ export default function ScategoriesGame() {
   }, [message]);
 
   function preparerSon() {
+    // Le fichier doit être "débloqué" pendant un clic (Démarrer) pour pouvoir jouer à la fin du temps.
+    try {
+      if (!sonFinRef.current) {
+        const a = new Audio("/scategories/fin-chrono.mp3");
+        a.preload = "auto";
+        sonFinRef.current = a;
+        a.muted = true;
+        a.play()
+          .then(() => {
+            a.pause();
+            a.currentTime = 0;
+            a.muted = false;
+          })
+          .catch(() => {
+            a.muted = false;
+          });
+      }
+    } catch {}
     try {
       if (!audioRef.current) audioRef.current = new (window.AudioContext || window.webkitAudioContext)();
       if (audioRef.current.state === "suspended") audioRef.current.resume();
     } catch {}
   }
 
-  // Alarme : 3 bips générés (aucun fichier audio à charger).
+  // Fin du temps : on joue le son de l'utilisateur ; si le navigateur refuse, 3 bips générés en secours.
   function sonner() {
+    const a = sonFinRef.current;
+    if (a) {
+      a.currentTime = 0;
+      a.play().catch(() => bips());
+      return;
+    }
+    bips();
+  }
+
+  function bips() {
     const ctx = audioRef.current;
     if (!ctx) return;
     try {
@@ -158,6 +193,7 @@ export default function ScategoriesGame() {
 
   function mancheSuivante() {
     setPopup(false);
+    setResPopup(false);
     salle.nouvelleManche();
     setManche((m) => m + 1);
     setEtat("idle");
@@ -243,6 +279,7 @@ export default function ScategoriesGame() {
 
   function terminerPartie() {
     setPopup(false);
+    setResPopup(false);
     salle.quitter();
     setEtat("idle");
     setLettre("?");
@@ -366,6 +403,11 @@ export default function ScategoriesGame() {
                   {t("scat.demarrer")}
                 </button>
               )}
+              {res && !resPopup && (
+                <button type="button" className="scat-btn" onClick={() => setResPopup(true)}>
+                  {t("scat.voirResultats")}
+                </button>
+              )}
               {(etat === "running" || etat === "paused") && (
                 <button type="button" className="scat-btn" onClick={arreter}>
                   {t("scat.arreter")}
@@ -384,72 +426,6 @@ export default function ScategoriesGame() {
               </p>
             )}
           </section>
-
-          {res && (
-            <section className="scat-carte scat-resultats">
-              <div className="scat-carte-tete">
-                <h2>
-                  {t("scat.resultats")} · {t("scat.manche").replace("{n}", res.manche)} · {res.lettre}
-                </h2>
-              </div>
-              {res.lignes.length === 0 ? (
-                <p className="scat-sous">{t("scat.aucunJoueur")}</p>
-              ) : (
-                <>
-                  <p className="scat-sous">{t("scat.clicBascule")}</p>
-                  <div className="scat-tableau-wrap">
-                    <table className="scat-tableau">
-                      <thead>
-                        <tr>
-                          <th>{t("scat.categories")}</th>
-                          {res.lignes.map((l) => (
-                            <th key={l.id}>{l.nom}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {res.categories.map((c, i) => (
-                          <tr key={`${i}-${c}`}>
-                            <td>{c}</td>
-                            {res.lignes.map((l) => {
-                              const cell = l.cellules[i];
-                              return (
-                                <td key={l.id}>
-                                  <button type="button" className={`scat-cell ${cell.ok ? "ok" : cell.doublon ? "doublon" : "ko"}`} onClick={() => salle.corriger(l.id, i)} title={cell.doublon ? t("scat.doublon") : ""}>
-                                    {cell.texte || "—"}
-                                    {cell.doublon && !cell.corrige ? <small> · {t("scat.doublon")}</small> : null}
-                                  </button>
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr>
-                          <td>{t("scat.points")}</td>
-                          {res.lignes.map((l) => (
-                            <td key={l.id}>
-                              <strong>{l.points}</strong>
-                            </td>
-                          ))}
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                  <h3 className="scat-joueurs-titre">{t("scat.classement")}</h3>
-                  <ol className="scat-classement">
-                    {salle.classement.map((c) => (
-                      <li key={c.id}>
-                        <span>{c.nom}</span>
-                        <strong>{c.total}</strong>
-                      </li>
-                    ))}
-                  </ol>
-                </>
-              )}
-            </section>
-          )}
 
           <section className="scat-carte">
             <div className="scat-carte-tete">
@@ -507,6 +483,85 @@ export default function ScategoriesGame() {
           </p>
         </aside>
       </div>
+
+      {res && resPopup && (
+        <div className="scat-popup scat-popup-res" role="dialog" aria-modal="true">
+          <section className="scat-popup-carte scat-popup-resultats">
+            <div className="scat-carte-tete">
+                <h2>
+                  {t("scat.resultats")} · {t("scat.manche").replace("{n}", res.manche)} · {res.lettre}
+                </h2>
+                <button type="button" className="scat-btn scat-btn-discret" onClick={() => setResPopup(false)}>
+                  {t("scat.fermer")}
+                </button>
+              </div>
+              {res.lignes.length === 0 ? (
+                <p className="scat-sous">{t("scat.aucunJoueur")}</p>
+              ) : (
+                <>
+                  <p className="scat-sous">{t("scat.clicBascule")}</p>
+                  <div className="scat-tableau-wrap">
+                    <table className="scat-tableau">
+                      <thead>
+                        <tr>
+                          <th>{t("scat.categories")}</th>
+                          {res.lignes.map((l) => (
+                            <th key={l.id}>{l.nom}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {res.categories.map((c, i) => (
+                          <tr key={`${i}-${c}`}>
+                            <td>{c}</td>
+                            {res.lignes.map((l) => {
+                              const cell = l.cellules[i];
+                              return (
+                                <td key={l.id}>
+                                  <button type="button" className={`scat-cell ${cell.ok ? "ok" : cell.doublon ? "doublon" : "ko"}`} onClick={() => salle.corriger(l.id, i)} title={cell.doublon ? t("scat.doublon") : ""}>
+                                    {cell.texte || "—"}
+                                    {cell.doublon && !cell.corrige ? <small> · {t("scat.doublon")}</small> : null}
+                                  </button>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td>{t("scat.points")}</td>
+                          {res.lignes.map((l) => (
+                            <td key={l.id}>
+                              <strong>{l.points}</strong>
+                            </td>
+                          ))}
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  <h3 className="scat-joueurs-titre">{t("scat.classement")}</h3>
+                  <ol className="scat-classement">
+                    {salle.classement.map((c) => (
+                      <li key={c.id}>
+                        <span>{c.nom}</span>
+                        <strong>{c.total}</strong>
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              )}
+            <div className="scat-popup-actions scat-popup-res-actions">
+              <button type="button" className="scat-btn scat-btn-go" onClick={mancheSuivante}>
+                {t("scat.mancheSuivante")}
+              </button>
+              <button type="button" className="scat-btn" onClick={() => setResPopup(false)}>
+                {t("scat.fermer")}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {popupOuvert && (
         <div className="scat-popup" role="dialog" aria-modal="true">
