@@ -146,7 +146,6 @@ export default function StatutContent() {
                     )}
                   </div>
                   {s.message && <p className="statut-message">{s.message}</p>}
-                  {admin && s.manuel && <p className="statut-manuel">Modifié manuellement (détecté : {ETATS[s.auto].label})</p>}
 
                   {admin && edition === s.cle && (
                     <div className="statut-edition">
