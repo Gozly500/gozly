@@ -2328,7 +2328,7 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 .statut-wrap{max-width:1000px;}
 .statut-chargement{text-align:center;color:var(--text-dim);padding:40px 0;}
 .statut-banniere{display:flex;align-items:center;gap:16px;padding:20px 24px;border-radius:22px;margin-bottom:20px;
-  background:rgba(var(--w),0.08);border:1px solid var(--glass-border);backdrop-filter:blur(14px);}
+  background:rgba(var(--w),0.2);border:1px solid var(--glass-border);backdrop-filter:blur(14px);}
 .statut-banniere strong{display:block;font-size:18px;color:var(--fg);}
 .statut-banniere small{color:var(--text-dim);font-size:13px;}
 .statut-banniere.statut-ok{border-color:rgba(52,211,153,0.45);}
@@ -2336,7 +2336,7 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 .statut-banniere.statut-panne{border-color:rgba(248,113,113,0.55);}
 
 .statut-bento{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
-.statut-carte{padding:24px;border-radius:24px;background:rgba(var(--w),0.08);border:1px solid var(--glass-border);backdrop-filter:blur(14px);}
+.statut-carte{padding:24px;border-radius:24px;background:rgba(var(--w),0.2);border:1px solid var(--glass-border);backdrop-filter:blur(14px);}
 .statut-carte h2{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:14px;}
 .statut-carte-modules{grid-row:span 2;}
 .statut-carte-externe{grid-column:1 / -1;}
