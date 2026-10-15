@@ -110,7 +110,7 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={() => setMotDePasseOublie(false)}
-            style={{ background: "none", border: "none", padding: 0, textDecoration: "underline", color: "#fff", cursor: "pointer", font: "inherit" }}
+            style={{ background: "none", border: "none", padding: 0, textDecoration: "underline", color: "var(--fg)", cursor: "pointer", font: "inherit" }}
           >
             <IconFlecheGauche className="gozly-icon" /> Retour à la connexion
           </button>
@@ -165,7 +165,7 @@ export default function LoginForm() {
         </p>
         <p style={{ color: "var(--text-dim)", textAlign: "center", marginTop: "10px", fontSize: "13.5px" }}>
           Pas encore de compte?{" "}
-          <a href="/inscription" style={{ textDecoration: "underline", color: "#fff" }}>
+          <a href="/inscription" style={{ textDecoration: "underline", color: "var(--fg)" }}>
             Crée-en un
           </a>
         </p>
