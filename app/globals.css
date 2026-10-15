@@ -21,7 +21,13 @@
     --text-dim: color-mix(in srgb, var(--text) 72%, var(--navy));
     --glass: rgba(var(--w),0.08);
     --glass-border: rgba(var(--w),0.18);
-    --glow: rgba(122,63,224,0.4);
+    --glow: rgba(138,86,254,0.18);
+    /* Dégradé de FOND des pages (tableau de bord, /moi, chargeur) : séparé de
+       --navy/--indigo/--purple, qui servent aussi aux boutons et aux accents et
+       doivent rester assez vifs. Fond sombre, éléments de premier plan plus clairs. */
+    --bg-a: #05051c;
+    --bg-b: #0b0b3a;
+    --bg-c: #17175f;
   }
 
 /* Thèmes du tableau de bord (Paramètres du compte > Apparence) et de l'app
@@ -34,7 +40,10 @@
     --indigo: #0a3d2c;
     --violet: #22b573;
     --purple: #0f6b46;
-    --glow: rgba(34,181,115,0.35);
+    --glow: rgba(34,181,115,0.18);
+    --bg-a: #020b08;
+    --bg-b: #04170f;
+    --bg-c: #082a1d;
   }
 [data-theme="sombre"]{
     --navy: #0a0a0d;
@@ -44,7 +53,10 @@
     /* Gris neutre, pas bleu comme le thème par défaut - contrairement à
        "vert" et "sunset", où le glow reprend la teinte du thème, "sombre"
        se veut sans couleur du tout. */
-    --glow: rgba(210,210,218,0.16);
+    --glow: rgba(210,210,218,0.10);
+    --bg-a: #050507;
+    --bg-b: #0d0d11;
+    --bg-c: #16161b;
   }
 /* Mode sobre (case "Couleur" décochée) : fond noir uni, sans dégradé ni lueur.
    Seuls les FONDS de page sont neutralisés - les boutons, textes et accents
@@ -127,14 +139,20 @@
     --indigo: #9b1f5c;
     --violet: #ff5c9d;
     --purple: #d6407f;
-    --glow: rgba(255,92,157,0.35);
+    --glow: rgba(255,92,157,0.18);
+    --bg-a: #1c0615;
+    --bg-b: #3f0c28;
+    --bg-c: #66143c;
   }
 [data-theme="sunset"]{
     --navy: #2b0f12;
     --indigo: #6b1f1a;
     --violet: #f2925a;
     --purple: #c1443f;
-    --glow: rgba(242,146,90,0.35);
+    --glow: rgba(242,146,90,0.18);
+    --bg-a: #150607;
+    --bg-b: #2e0d0b;
+    --bg-c: #521a13;
   }
 
 /* Site public (vitrine, /s-abonner, /contact) - palette plus bleue, moins
@@ -153,7 +171,7 @@
 .dash-page{
     background:
       radial-gradient(ellipse 900px 700px at 75% 60%, var(--glow), transparent 60%),
-      linear-gradient(135deg, var(--navy) 0%, var(--indigo) 45%, var(--purple) 100%);
+      linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 45%, var(--bg-c) 100%);
   }
 
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -165,7 +183,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px;}
    le blanc du navigateur, même une page vide sans contenu pour le
    masquer. .page-default (pages publiques) applique son propre dégradé
    par-dessus et le cache complètement - aucun changement visuel là. */
-body{margin:0;overflow-x:hidden;background:var(--navy);color:var(--text);font-family:'Inter',sans-serif;}
+body{margin:0;overflow-x:hidden;background:var(--bg-a);color:var(--text);font-family:'Inter',sans-serif;}
 
 .page{
     font-family:'Inter',sans-serif;
@@ -518,7 +536,7 @@ a{color:inherit;text-decoration:none;}
 .loader{
     position:fixed;inset:0;z-index:999;
     display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(135deg, var(--navy) 0%, var(--indigo) 45%, var(--purple) 100%);
+    background:linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 45%, var(--bg-c) 100%);
     transition:opacity .6s ease, visibility .6s ease;
   }
 
@@ -1758,7 +1776,7 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
     min-height:100vh;min-height:100dvh;
     background:
       radial-gradient(ellipse 900px 700px at 75% 60%, var(--glow), transparent 60%),
-      linear-gradient(135deg, var(--navy) 0%, var(--indigo) 45%, var(--purple) 100%);
+      linear-gradient(135deg, var(--bg-a) 0%, var(--bg-b) 45%, var(--bg-c) 100%);
   }
 .moi-loading{
     min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;
@@ -2410,3 +2428,13 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
   .vitrine-texte p{margin:0 auto;}
   .vitrine-visuel img{max-height:300px;}
 }
+
+
+/* ===== Surfaces de premier plan plus claires sur le fond plus sombre (thèmes colorés) =====
+   Même liste que le bloc des cartes blanches du thème Clair. Sombre ("sobre") et Clair
+   gardent leur propre rendu. */
+html:not([data-theme="clair"]):not([data-theme="sobre"]) :is(.settings-section,.settings-card,.widget-card,
+    .planning-day,.horaire-col,.admin-list,.admin-table-wrap,.switch-row,.dashboard-picker-card){
+    background:rgba(var(--w),0.09);border-color:rgba(var(--w),0.16);
+  }
+html:not([data-theme="clair"]):not([data-theme="sobre"]) .integration-item{background:rgba(var(--w),0.07);}
