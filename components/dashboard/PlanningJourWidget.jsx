@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { IconCrochet, IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 function todayISO() {
   const d = new Date();
@@ -12,6 +13,7 @@ function todayISO() {
 }
 
 export default function PlanningJourWidget({ entrepriseId }) {
+  const { t } = useT();
   const [taches, setTaches] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,11 +31,11 @@ export default function PlanningJourWidget({ entrepriseId }) {
   }, [entrepriseId]);
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   if (taches.length === 0) {
-    return <p className="widget-card-empty">Aucune tâche prévue aujourd'hui.</p>;
+    return <p className="widget-card-empty">{t("Aucune tâche prévue aujourd'hui.")}</p>;
   }
 
   const nomCategorie = (id) => categories.find((c) => c.id === id)?.nom;
@@ -41,7 +43,7 @@ export default function PlanningJourWidget({ entrepriseId }) {
   // Le widget reste court : 8 tâches au maximum, les "à faire" d'abord (pour ne
   // pas cacher ce qui reste derrière des tâches déjà faites). Le reste est sur la page Tâches.
   const MAX_TACHES = 8;
-  const triees = [...taches.filter((t) => !t.terminee), ...taches.filter((t) => t.terminee)];
+  const triees = [...taches.filter((tache) => !tache.terminee), ...taches.filter((tache) => tache.terminee)];
   const rangCategorie = (id) => {
     const i = categories.findIndex((c) => c.id === id);
     return i === -1 ? 9999 : i;
@@ -56,17 +58,17 @@ export default function PlanningJourWidget({ entrepriseId }) {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Tâche</th>
-              <th>Catégorie</th>
-              <th>Statut</th>
+              <th>{t("Tâche")}</th>
+              <th>{t("Catégorie")}</th>
+              <th>{t("Statut")}</th>
             </tr>
           </thead>
           <tbody>
-            {affichees.map((t) => (
-              <tr key={t.id}>
-                <td>{t.texte}</td>
-                <td>{nomCategorie(t.categorie_id) || "—"}</td>
-                <td>{t.terminee ? <><IconCrochet className="gozly-icon" /> Faite</> : "À faire"}</td>
+            {affichees.map((tache) => (
+              <tr key={tache.id}>
+                <td>{tache.texte}</td>
+                <td>{nomCategorie(tache.categorie_id) || "—"}</td>
+                <td>{tache.terminee ? <><IconCrochet className="gozly-icon" />{" "}{t("Faite")}</> : t("À faire")}</td>
               </tr>
             ))}
           </tbody>
@@ -74,11 +76,11 @@ export default function PlanningJourWidget({ entrepriseId }) {
       </div>
       {masquees > 0 && (
         <p style={{ color: "var(--text-dim)", fontSize: "13px", marginTop: "10px" }}>
-          + {masquees} autre{masquees > 1 ? "s" : ""} tâche{masquees > 1 ? "s" : ""}
+          + {masquees}{" "}{t("autre")}{masquees > 1 ? "s" : ""}{" "}{t("tâche")}{masquees > 1 ? "s" : ""}
         </p>
       )}
       <Link href="/dashboard/planning" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
-        Voir les tâches <IconFlecheDroite className="gozly-icon-inline" />
+        {t("Voir les tâches")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

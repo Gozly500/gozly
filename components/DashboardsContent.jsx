@@ -8,8 +8,10 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
 import { listerMesEntreprises, setEntrepriseSelectionnee } from "@/lib/entreprise";
 import CreerEntrepriseModal from "@/components/CreerEntrepriseModal";
+import { useT } from "@/components/LangProvider";
 
 export default function DashboardsContent() {
+  const { t } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [entreprises, setEntreprises] = useState([]);
@@ -44,7 +46,7 @@ export default function DashboardsContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -56,8 +58,8 @@ export default function DashboardsContent() {
 
       <header className="page-hero">
         <div className="wrap">
-          <h1>Choisis un dashboard</h1>
-          <p>Toutes les entreprises auxquelles ton compte a accès.</p>
+          <h1>{t("Choisis un dashboard")}</h1>
+          <p>{t("Toutes les entreprises auxquelles ton compte a accès.")}</p>
         </div>
       </header>
 
@@ -70,12 +72,12 @@ export default function DashboardsContent() {
                   {e.logo_url ? <img src={e.logo_url} alt="" /> : (e.nom || "?").charAt(0).toUpperCase()}
                 </div>
                 <div className="dashboard-picker-nom">{e.nom}</div>
-                <div className="dashboard-picker-role">{e.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
+                <div className="dashboard-picker-role">{e.role === "proprietaire" ? t("Propriétaire") : t("Membre")}</div>
               </button>
             ))}
             <button className="dashboard-picker-card" onClick={() => setCreerOpen(true)}>
               <div className="dashboard-picker-logo">+</div>
-              <div className="dashboard-picker-nom">Créer une entreprise</div>
+              <div className="dashboard-picker-nom">{t("Créer une entreprise")}</div>
             </button>
           </div>
         </div>

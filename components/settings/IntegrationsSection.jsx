@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { SERVICES_PAIE } from "@/lib/servicesPaie";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Regroupe les intégrations par catégorie pour les retrouver plus
 // facilement au fur et à mesure qu'on en ajoute (chaque catégorie est un
@@ -28,6 +29,7 @@ async function authHeaders() {
 }
 
 export default function IntegrationsSection({ entrepriseId }) {
+  const { t } = useT();
   const [categoriesOuvertes, setCategoriesOuvertes] = useState({});
 
   const [statut, setStatut] = useState("chargement"); // "chargement" | "deconnecte" | "en_attente" | "connecte"
@@ -78,14 +80,14 @@ export default function IntegrationsSection({ entrepriseId }) {
       const data = await res.json();
 
       if (!res.ok) {
-        setNethrisMsg({ type: "err", text: data.error || "La connexion a échoué." });
+        setNethrisMsg({ type: "err", text: data.error || t("La connexion a échoué.") });
       } else {
         setNethrisStatut("connecte");
         setNethrisForm({ codeEntreprise: "", codeUtilisateur: "", motDePasse: "" });
         setNethrisModalOuvert(false);
       }
     } catch {
-      setNethrisMsg({ type: "err", text: "La connexion a échoué." });
+      setNethrisMsg({ type: "err", text: t("La connexion a échoué.") });
     }
     setNethrisBusy(false);
   }
@@ -101,9 +103,9 @@ export default function IntegrationsSection({ entrepriseId }) {
         body: JSON.stringify({ entrepriseId }),
       });
       setNethrisStatut("deconnecte");
-      setNethrisMsg({ type: "ok", text: "Nethris est déconnecté." });
+      setNethrisMsg({ type: "ok", text: t("Nethris est déconnecté.") });
     } catch {
-      setNethrisMsg({ type: "err", text: "La déconnexion a échoué." });
+      setNethrisMsg({ type: "err", text: t("La déconnexion a échoué.") });
     }
     setNethrisBusy(false);
   }
@@ -151,7 +153,7 @@ export default function IntegrationsSection({ entrepriseId }) {
         setStatut("connecte");
       }
     } catch {
-      setMsg({ type: "err", text: "La connexion a échoué." });
+      setMsg({ type: "err", text: t("La connexion a échoué.") });
     }
     setBusy(false);
   }
@@ -181,7 +183,7 @@ export default function IntegrationsSection({ entrepriseId }) {
       const data = await res.json();
 
       if (!res.ok || !data.lienInstallation) {
-        setMsg({ type: "err", text: data.error || "La connexion a échoué." });
+        setMsg({ type: "err", text: data.error || t("La connexion a échoué.") });
         setBusy(false);
         return;
       }
@@ -190,7 +192,7 @@ export default function IntegrationsSection({ entrepriseId }) {
       setStatut("en_attente");
       demarrerSurveillance();
     } catch {
-      setMsg({ type: "err", text: "La connexion a échoué." });
+      setMsg({ type: "err", text: t("La connexion a échoué.") });
     }
     setBusy(false);
   }
@@ -207,9 +209,9 @@ export default function IntegrationsSection({ entrepriseId }) {
         body: JSON.stringify({ entrepriseId }),
       });
       setStatut("deconnecte");
-      setMsg({ type: "ok", text: "Wix est déconnecté." });
+      setMsg({ type: "ok", text: t("Wix est déconnecté.") });
     } catch {
-      setMsg({ type: "err", text: "La déconnexion a échoué." });
+      setMsg({ type: "err", text: t("La déconnexion a échoué.") });
     }
     setBusy(false);
   }
@@ -219,37 +221,36 @@ export default function IntegrationsSection({ entrepriseId }) {
       <div className="integration-item">
         <div className="integration-header open">
           <span className="ih-label">
-            Wix — Inventaire
+            {t("Wix — Inventaire")}
             {statut === "connecte" && (
               <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
-                <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} /> Connecté
+                <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} />{" "}{t("Connecté")}
               </span>
             )}
           </span>
         </div>
 
         <div className="integration-body">
-          {statut === "chargement" && <p className="section-hint">Vérification du statut...</p>}
+          {statut === "chargement" && <p className="section-hint">{t("Vérification du statut...")}</p>}
 
           {statut === "deconnecte" && (
             <>
               <p className="section-hint">
-                Connecte ton compte Wix pour lire l'inventaire de ta boutique Wix Stores directement dans Gozly.
+                {t("Connecte ton compte Wix pour lire l'inventaire de ta boutique Wix Stores directement dans Gozly.")}
               </p>
               <button type="button" className="submit-btn" onClick={handleConnecter} disabled={busy}>
-                {busy ? "..." : "Connecter Wix"}
+                {busy ? "..." : t("Connecter Wix")}
               </button>
 
               {autresDashboards.length > 0 && (
                 <div style={{ marginTop: "18px" }}>
                   <p className="section-hint">
-                    Ce site Wix est déjà connecté à un autre de tes dashboards (ex: l'autre succursale)? Réutilise la même
-                    connexion, sans réinstaller l'app.
+                    {t("Ce site Wix est déjà connecté à un autre de tes dashboards (ex: l'autre succursale)? Réutilise la même connexion, sans réinstaller l'app.")}
                   </p>
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                     {autresDashboards.map((e) => (
                       <button key={e.id} type="button" className="admin-icon-btn" onClick={() => handleUtiliserMemeConnexion(e.id)} disabled={busy}>
-                        Utiliser la connexion de « {e.nom} »
+                        {t("Utiliser la connexion de «")}{" "}{e.nom} »
                       </button>
                     ))}
                   </div>
@@ -261,14 +262,13 @@ export default function IntegrationsSection({ entrepriseId }) {
           {statut === "en_attente" && (
             <>
               <p className="section-hint">
-                En attente de la fin de l'installation sur Wix... Reviens ici une fois l'installation terminée,
-                cette page se met à jour automatiquement.
+                {t("En attente de la fin de l'installation sur Wix... Reviens ici une fois l'installation terminée, cette page se met à jour automatiquement.")}
               </p>
               <button type="button" className="admin-icon-btn" onClick={handleConnecter} disabled={busy}>
-                {busy ? "..." : "Réessayer / ouvrir le lien à nouveau"}
+                {busy ? "..." : t("Réessayer / ouvrir le lien à nouveau")}
               </button>
               <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
-                Annuler
+                {t("Annuler")}
               </button>
             </>
           )}
@@ -276,11 +276,10 @@ export default function IntegrationsSection({ entrepriseId }) {
           {statut === "connecte" && (
             <>
               <p className="section-hint">
-                Ton site Wix est connecté. Si le même site alimente plusieurs dashboards (une succursale chacun), choisis la
-                succursale de celui-ci dans Personnalisation → Commandes en ligne.
+                {t("Ton site Wix est connecté. Si le même site alimente plusieurs dashboards (une succursale chacun), choisis la succursale de celui-ci dans Personnalisation → Commandes en ligne.")}
               </p>
               <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
-                {busy ? "..." : "Déconnecter"}
+                {busy ? "..." : t("Déconnecter")}
               </button>
             </>
           )}
@@ -296,32 +295,32 @@ export default function IntegrationsSection({ entrepriseId }) {
       <div className="integration-item">
         <div className="integration-header open">
           <span className="ih-label">
-            Nethris
+            {t("Nethris")}
             {nethrisStatut === "connecte" && (
               <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
-                <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} /> Connecté
+                <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} />{" "}{t("Connecté")}
               </span>
             )}
           </span>
         </div>
 
         <div className="integration-body">
-          {nethrisStatut === "chargement" && <p className="section-hint">Vérification du statut...</p>}
+          {nethrisStatut === "chargement" && <p className="section-hint">{t("Vérification du statut...")}</p>}
 
           {nethrisStatut === "deconnecte" && (
             <>
-              <p className="section-hint">Connecte ton utilisateur de services Nethris pour envoyer la feuille de temps automatiquement.</p>
+              <p className="section-hint">{t("Connecte ton utilisateur de services Nethris pour envoyer la feuille de temps automatiquement.")}</p>
               <button type="button" className="submit-btn" onClick={() => setNethrisModalOuvert(true)}>
-                Connecter Nethris
+                {t("Connecter Nethris")}
               </button>
             </>
           )}
 
           {nethrisStatut === "connecte" && (
             <>
-              <p className="section-hint">Nethris est connecté.</p>
+              <p className="section-hint">{t("Nethris est connecté.")}</p>
               <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecterNethris} disabled={nethrisBusy}>
-                {nethrisBusy ? "..." : "Déconnecter"}
+                {nethrisBusy ? "..." : t("Déconnecter")}
               </button>
             </>
           )}
@@ -336,8 +335,8 @@ export default function IntegrationsSection({ entrepriseId }) {
     return (
       <div className="integration-item" key={service.id}>
         <div className="integration-header disabled">
-          <span className="ih-label">{service.label}</span>
-          <span className="ih-hint">Bientôt disponible</span>
+          <span className="ih-label">{t(service.label)}</span>
+          <span className="ih-hint">{t("Bientôt disponible")}</span>
         </div>
       </div>
     );
@@ -352,8 +351,8 @@ export default function IntegrationsSection({ entrepriseId }) {
 
   return (
     <div>
-      <h2>Intégrations</h2>
-      <p className="panel-hint">Connecte des services externes pour synchroniser leurs données avec Gozly.</p>
+      <h2>{t("Intégrations")}</h2>
+      <p className="panel-hint">{t("Connecte des services externes pour synchroniser leurs données avec Gozly.")}</p>
 
       <div className="integration-list">
         {CATEGORIES.map((cat) => {
@@ -361,7 +360,7 @@ export default function IntegrationsSection({ entrepriseId }) {
           return (
             <div className="integration-item" key={cat.id}>
               <button type="button" className={`integration-header${ouverte ? " open" : ""}`} onClick={() => toggleCategorie(cat.id)}>
-                <span className="ih-label">{cat.label}</span>
+                <span className="ih-label">{t(cat.label)}</span>
                 <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
               </button>
 
@@ -381,19 +380,18 @@ export default function IntegrationsSection({ entrepriseId }) {
         <div className="modal-overlay" onClick={() => setNethrisModalOuvert(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Connecter Nethris</h3>
+              <h3>{t("Connecter Nethris")}</h3>
               <button className="admin-icon-btn" onClick={() => setNethrisModalOuvert(false)}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
             <form onSubmit={handleConnecterNethris}>
               <p className="section-hint">
-                Entre les identifiants de l'utilisateur de services créé dans ta Suite Internet Nethris
-                (Administration → Ajout d'un utilisateur).
+                {t("Entre les identifiants de l'utilisateur de services créé dans ta Suite Internet Nethris (Administration → Ajout d'un utilisateur).")}
               </p>
               <div className="field-row">
                 <div className="field">
-                  <label>Code d'entreprise</label>
+                  <label>{t("Code d'entreprise")}</label>
                   <input
                     type="text"
                     value={nethrisForm.codeEntreprise}
@@ -402,7 +400,7 @@ export default function IntegrationsSection({ entrepriseId }) {
                   />
                 </div>
                 <div className="field">
-                  <label>Code d'utilisateur</label>
+                  <label>{t("Code d'utilisateur")}</label>
                   <input
                     type="text"
                     value={nethrisForm.codeUtilisateur}
@@ -412,7 +410,7 @@ export default function IntegrationsSection({ entrepriseId }) {
                 </div>
               </div>
               <div className="field">
-                <label>Mot de passe</label>
+                <label>{t("Mot de passe")}</label>
                 <input
                   type="password"
                   value={nethrisForm.motDePasse}
@@ -421,7 +419,7 @@ export default function IntegrationsSection({ entrepriseId }) {
                 />
               </div>
               <button type="submit" className="submit-btn" disabled={nethrisBusy} style={{ marginTop: "10px", width: "100%" }}>
-                {nethrisBusy ? "..." : "Connecter Nethris"}
+                {nethrisBusy ? "..." : t("Connecter Nethris")}
               </button>
               {nethrisMsg && <p className={`settings-msg ${nethrisMsg.type}`}>{nethrisMsg.text}</p>}
             </form>

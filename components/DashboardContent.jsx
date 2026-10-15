@@ -19,8 +19,10 @@ import CommandesWidget from "@/components/dashboard/CommandesWidget";
 import { WIDGETS, fusionnerConfigWidgets } from "@/lib/dashboardWidgets";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconEcran, IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 export default function DashboardContent() {
+  const { t } = useT();
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
@@ -168,7 +170,7 @@ export default function DashboardContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -230,7 +232,7 @@ export default function DashboardContent() {
     return (
       <WidgetCard
         key={w.id}
-        title={meta.nom}
+        title={t(meta.nom)}
         taille={meta.taille}
         editMode={editMode}
         dragOver={editMode && !!draggedId && draggedId !== w.id && dragOverSlot === w.id}
@@ -273,9 +275,9 @@ export default function DashboardContent() {
         <div className="dash-main-inner dash-main-wide">
           {noForfait && (
             <div className="dash-forfait-banner">
-              <span>Tu n'as aucun forfait actif.</span>
+              <span>{t("Tu n'as aucun forfait actif.")}</span>
               <Link href="/parametres?tab=abonnement" className="dash-forfait-banner-btn">
-                Choisir un forfait <IconFlecheDroite className="gozly-icon-inline" />
+                {t("Choisir un forfait")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
               </Link>
             </div>
           )}
@@ -285,18 +287,18 @@ export default function DashboardContent() {
             style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}
           >
             <div>
-              <h1>Bienvenue{displayName ? `, ${displayName}` : ""}</h1>
-              <p>Voici ton espace. Active un module pour commencer.</p>
+              <h1>{t("Bienvenue")}{displayName ? `, ${displayName}` : ""}</h1>
+              <p>{t("Voici ton espace. Active un module pour commencer.")}</p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Link href="/dashboard/kiosques" className="admin-icon-btn">
-              <IconEcran className="gozly-icon" /> Mode kiosque
+              <IconEcran className="gozly-icon" />{" "}{t("Mode kiosque")}
             </Link>
             <button
               type="button"
               className={`admin-icon-btn dash-edit-btn${editMode ? " active" : ""}`}
               onClick={() => setEditMode((v) => !v)}
-              title={editMode ? "Terminer la modification" : "Modifier le tableau de bord"}
+              title={editMode ? t("Terminer la modification") : t("Modifier le tableau de bord")}
             >
               <IconCrayon className="gozly-icon" />
             </button>

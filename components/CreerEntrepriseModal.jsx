@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { setEntrepriseSelectionnee } from "@/lib/entreprise";
 import { limiteEntreprises } from "@/lib/modules";
+import { useT } from "@/components/LangProvider";
 
 // Un même compte peut posséder plusieurs entreprises distinctes (ex: deux
 // succursales immatriculées séparément, avec leur propre paie et leurs
@@ -14,6 +15,7 @@ import { limiteEntreprises } from "@/lib/modules";
 // (lib/modules.js, LIMITES_ENTREPRISES). Un propriétaire qui veut une
 // facture séparée pour une autre entreprise doit utiliser un compte différent.
 export default function CreerEntrepriseModal({ onClose }) {
+  const { t } = useT();
   const [nom, setNom] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -59,7 +61,7 @@ export default function CreerEntrepriseModal({ onClose }) {
 
     if (!user) {
       setSaving(false);
-      setError("Session expirée. Reconnecte-toi et réessaie.");
+      setError(t("Session expirée. Reconnecte-toi et réessaie."));
       return;
     }
 
@@ -76,7 +78,7 @@ export default function CreerEntrepriseModal({ onClose }) {
 
     if (entrepriseError) {
       setSaving(false);
-      setError("La création de l'entreprise a échoué. Réessaie dans un instant.");
+      setError(t("La création de l'entreprise a échoué. Réessaie dans un instant."));
       return;
     }
 
@@ -89,7 +91,7 @@ export default function CreerEntrepriseModal({ onClose }) {
     setSaving(false);
 
     if (membreError) {
-      setError("L'entreprise a été créée, mais le lien avec ton compte a échoué. Contacte-nous.");
+      setError(t("L'entreprise a été créée, mais le lien avec ton compte a échoué. Contacte-nous."));
       return;
     }
 
@@ -104,33 +106,33 @@ export default function CreerEntrepriseModal({ onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          <h3>Créer une nouvelle entreprise</h3>
+          <h3>{t("Créer une nouvelle entreprise")}</h3>
           <button className="admin-icon-btn" onClick={onClose} type="button">
-            Fermer
+            {t("Fermer")}
           </button>
         </div>
         <p className="section-hint" style={{ marginBottom: "16px" }}>
-          Une entreprise séparée, avec ses propres modules et ses propres données - utile si tu gères deux
-          entreprises immatriculées différemment (par exemple deux succursales avec leur propre paie). Elle partage
-          le forfait de ton compte, une seule facture pour toutes tes entreprises.
+          {t("Une entreprise séparée, avec ses propres modules et ses propres données - utile si tu gères deux entreprises immatriculées différemment (par exemple deux succursales avec leur propre paie). Elle partage le forfait de ton compte, une seule facture pour toutes tes entreprises.")}
         </p>
 
         {!chargement && limiteAtteinte ? (
           <p className="settings-msg err">
-            Ton forfait actuel permet {limite === Infinity ? "un nombre illimité" : limite} entreprise
-            {limite > 1 ? "s" : ""} ({nbActuel}/{limite === Infinity ? "∞" : limite} déjà créées). Change de forfait
-            dans Paramètres &gt; Abonnement pour en ajouter d'autres.
-          </p>
+            {t(limite === Infinity || limite > 1 ? "Ton forfait actuel permet {limite} entreprises ({nb}/{max} déjà créées). Change de forfait dans Paramètres > Abonnement pour en ajouter d'autres." : "Ton forfait actuel permet {limite} entreprise ({nb}/{max} déjà créées). Change de forfait dans Paramètres > Abonnement pour en ajouter d'autres.", {
+            limite: limite === Infinity ? t("un nombre illimité d'") : limite,
+            nb: nbActuel,
+            max: limite === Infinity ? "∞" : limite,
+          })}
+        </p>
         ) : (
           <form onSubmit={handleSubmit}>
             <div className="field">
-              <label htmlFor="nom-entreprise">Nom de l'entreprise</label>
+              <label htmlFor="nom-entreprise">{t("Nom de l'entreprise")}</label>
               <input
                 id="nom-entreprise"
                 type="text"
                 value={nom}
                 onChange={(e) => setNom(e.target.value)}
-                placeholder="Ex: Mon restaurant - Centre-ville"
+                placeholder={t("Ex: Mon restaurant - Centre-ville")}
                 required
                 autoFocus
               />
@@ -140,7 +142,7 @@ export default function CreerEntrepriseModal({ onClose }) {
 
             <div className="submit-wrap" style={{ marginTop: "16px", position: "static" }}>
               <button type="submit" className="submit-btn" disabled={saving || !nom.trim() || chargement}>
-                {saving ? "Création..." : "Créer l'entreprise"}
+                {saving ? t("Création...") : t("Créer l'entreprise")}
               </button>
             </div>
           </form>

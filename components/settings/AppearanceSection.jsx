@@ -5,8 +5,10 @@ import { supabase } from "@/lib/supabaseClient";
 import ThemeGrids from "@/components/ThemeGrids";
 import LangueSection from "@/components/settings/LangueSection";
 import { THEME_SOBRE, DEFAULT_THEME, THEME_STORAGE_KEY, THEME_COULEUR_STORAGE_KEY, isValidTheme, estSobre, DEFAULT_ACCENT, THEME_ACCENT_STORAGE_KEY, isValidAccent } from "@/lib/themes";
+import { useT } from "@/components/LangProvider";
 
 export default function AppearanceSection({ profil, setProfil }) {
+  const { t } = useT();
   const [theme, setThemeState] = useState(profil?.theme || DEFAULT_THEME);
   const [accent, setAccentState] = useState(isValidAccent(profil?.theme_accent) ? profil.theme_accent : DEFAULT_ACCENT);
   const [saving, setSaving] = useState(false);
@@ -26,7 +28,7 @@ export default function AppearanceSection({ profil, setProfil }) {
 
     if (error) {
       setThemeState(previous);
-      setMsg({ type: "err", text: "Le changement de thème a échoué. Réessaie dans un instant." });
+      setMsg({ type: "err", text: t("Le changement de thème a échoué. Réessaie dans un instant.") });
       return;
     }
 
@@ -36,7 +38,7 @@ export default function AppearanceSection({ profil, setProfil }) {
     } catch {}
 
     setProfil({ ...profil, theme: id });
-    setMsg({ type: "ok", text: "Thème appliqué au tableau de bord !" });
+    setMsg({ type: "ok", text: t("Thème appliqué au tableau de bord !") });
     setTimeout(() => setMsg(null), 3000);
   }
 
@@ -57,7 +59,7 @@ export default function AppearanceSection({ profil, setProfil }) {
 
     if (error) {
       setAccentState(previous);
-      setMsg({ type: "err", text: "Le changement de couleur a échoué. Réessaie dans un instant." });
+      setMsg({ type: "err", text: t("Le changement de couleur a échoué. Réessaie dans un instant.") });
       return;
     }
 
@@ -66,7 +68,7 @@ export default function AppearanceSection({ profil, setProfil }) {
     } catch {}
 
     setProfil({ ...profil, theme_accent: id === DEFAULT_ACCENT ? null : id });
-    setMsg({ type: "ok", text: "Couleur appliquée au tableau de bord !" });
+    setMsg({ type: "ok", text: t("Couleur appliquée au tableau de bord !") });
     setTimeout(() => setMsg(null), 3000);
   }
 
@@ -87,13 +89,13 @@ export default function AppearanceSection({ profil, setProfil }) {
 
   return (
     <div>
-      <h2>Apparence</h2>
-      <p className="panel-hint">Choisis le thème visuel de ton tableau de bord.</p>
+      <h2>{t("Apparence")}</h2>
+      <p className="panel-hint">{t("Choisis le thème visuel de ton tableau de bord.")}</p>
 
       <div className="switch-row" style={{ marginBottom: "18px" }}>
         <div className="switch-row-text">
-          <h4>Couleur</h4>
-          <p>Décoche pour un affichage sobre, sans couleur de fond : Sombre ou Clair.</p>
+          <h4>{t("Couleur")}</h4>
+          <p>{t("Décoche pour un affichage sobre, sans couleur de fond : Sombre ou Clair.")}</p>
         </div>
         <label className="switch">
           <input type="checkbox" checked={!sobre} disabled={saving} onChange={(e) => handleToggleCouleur(e.target.checked)} />

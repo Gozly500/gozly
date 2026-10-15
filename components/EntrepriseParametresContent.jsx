@@ -12,6 +12,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconEquipe, IconEmplacement, IconIntegration } from "@/components/icons/GozlyIcons";
 import { IconPalette, IconProfil } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 const TABS = [
   { id: "informations", label: "Informations", Icone: IconProfil },
@@ -22,6 +23,7 @@ const TABS = [
 ];
 
 export default function EntrepriseParametresContent() {
+  const { t } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
@@ -86,7 +88,7 @@ export default function EntrepriseParametresContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -107,7 +109,7 @@ export default function EntrepriseParametresContent() {
       <main className="dash-main">
         <div className="dash-main-inner">
           {!entrepriseId ? (
-            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+            <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>
           ) : (
             <div className="settings-wrap" style={{ maxWidth: "none", padding: 0 }}>
               <nav className="settings-nav">
@@ -118,7 +120,7 @@ export default function EntrepriseParametresContent() {
                     className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
                     onClick={() => setActiveTab(tab.id)}
                   >
-                    <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
+                    <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {t(tab.label)}
                   </button>
                 ))}
               </nav>

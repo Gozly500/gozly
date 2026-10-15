@@ -1,6 +1,7 @@
 "use client";
 
 import { IconX } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 export default function WidgetCard({
   title,
@@ -14,6 +15,7 @@ export default function WidgetCard({
   onDragEnd,
   children,
 }) {
+  const { t } = useT();
   return (
     <div
       className={`widget-card${taille === "horizontal" ? " horizontal" : ""}${dragOver ? " drag-over" : ""}`}
@@ -28,9 +30,9 @@ export default function WidgetCard({
         {editMode && (
           <div className="widget-card-controls">
             <button type="button" className="widget-remove-btn" onClick={onRemove}>
-              <IconX className="gozly-icon" /> Retirer
+              <IconX className="gozly-icon" />{" "}{t("Retirer")}
             </button>
-            <span className="widget-drag-handle" title="Glisser pour réordonner">
+            <span className="widget-drag-handle" title={t("Glisser pour réordonner")}>
               ⠿
             </span>
           </div>

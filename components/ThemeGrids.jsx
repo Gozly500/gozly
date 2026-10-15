@@ -2,22 +2,24 @@
 
 import { THEMES_COULEUR, THEMES_SOBRES, ACCENTS, estSobre } from "@/lib/themes";
 import { IconCrochet } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
-function Choix({ t, theme, onSelect, disabled }) {
+function Choix({ th, theme, onSelect, disabled }) {
+  const { t } = useT();
   const inactif = disabled;
   return (
     <button
       type="button"
-      className={`theme-choice${theme === t.id ? " selected" : ""}`}
-      onClick={() => onSelect(t.id)}
+      className={`theme-choice${theme === th.id ? " selected" : ""}`}
+      onClick={() => onSelect(th.id)}
       disabled={inactif}
     >
-      <span className="theme-swatch" style={{ background: t.swatch }} />
+      <span className="theme-swatch" style={{ background: th.swatch }} />
       <span className="theme-choice-text">
-        <strong>{t.label}</strong>
-        <span>{t.description}</span>
+        <strong>{t(th.label)}</strong>
+        <span>{t(th.description)}</span>
       </span>
-      {theme === t.id && <span className="theme-check"><IconCrochet className="gozly-icon" /></span>}
+      {theme === th.id && <span className="theme-check"><IconCrochet className="gozly-icon" /></span>}
     </button>
   );
 }
@@ -25,13 +27,14 @@ function Choix({ t, theme, onSelect, disabled }) {
 // Thèmes colorés (interrupteur "Couleur" allumé) ; sinon Sombre/Clair + la couleur
 // d'accent (bouton principal et barre latérale).
 export default function ThemeGrids({ theme, onSelect, disabled, accent, onSelectAccent }) {
+  const { t } = useT();
   const sobre = estSobre(theme);
 
   if (!sobre) {
     return (
       <div className="theme-grid">
-        {THEMES_COULEUR.map((t) => (
-          <Choix key={t.id} t={t} theme={theme} onSelect={onSelect} disabled={disabled} />
+        {THEMES_COULEUR.map((th) => (
+          <Choix key={th.id} th={th} theme={theme} onSelect={onSelect} disabled={disabled} />
         ))}
       </div>
     );
@@ -40,14 +43,14 @@ export default function ThemeGrids({ theme, onSelect, disabled, accent, onSelect
   return (
     <>
       <div className="theme-grid" style={{ marginBottom: "26px" }}>
-        {THEMES_SOBRES.map((t) => (
-          <Choix key={t.id} t={t} theme={theme} onSelect={onSelect} disabled={disabled} />
+        {THEMES_SOBRES.map((th) => (
+          <Choix key={th.id} th={th} theme={theme} onSelect={onSelect} disabled={disabled} />
         ))}
       </div>
 
-      <h4 style={{ fontSize: "14.5px", fontWeight: 600 }}>Couleur d'accent</h4>
+      <h4 style={{ fontSize: "14.5px", fontWeight: 600 }}>{t("Couleur d'accent")}</h4>
       <p className="panel-hint" style={{ margin: "2px 0 0" }}>
-        Colore le bouton principal et la barre latérale. Le reste garde un fond neutre.
+        {t("Colore le bouton principal et la barre latérale. Le reste garde un fond neutre.")}
       </p>
       <div className="accent-row">
         {ACCENTS.map((a) => (
@@ -60,7 +63,7 @@ export default function ThemeGrids({ theme, onSelect, disabled, accent, onSelect
             aria-pressed={accent === a.id}
           >
             <span className="accent-dot" style={{ background: a.couleur }} />
-            {a.label}
+            {t(a.label)}
           </button>
         ))}
       </div>

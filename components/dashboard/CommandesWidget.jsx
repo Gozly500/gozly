@@ -14,8 +14,10 @@ import {
   libelleRamassage,
 } from "@/lib/commandes";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 export default function CommandesWidget({ entrepriseId }) {
+  const { t } = useT();
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +38,7 @@ export default function CommandesWidget({ entrepriseId }) {
   }, [entrepriseId]);
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   const valides = commandes.filter((c) => c.statut !== "CANCELED");
@@ -46,9 +48,9 @@ export default function CommandesWidget({ entrepriseId }) {
   if (commandes.length === 0) {
     return (
       <>
-        <p className="widget-card-empty">Aucune commande en ligne aujourd&apos;hui.</p>
+        <p className="widget-card-empty">{t("Aucune commande en ligne aujourd'hui.")}</p>
         <Link href="/dashboard/commandes" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "10px" }}>
-          Voir les commandes <IconFlecheDroite className="gozly-icon-inline" />
+          {t("Voir les commandes")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
         </Link>
       </>
     );
@@ -58,8 +60,8 @@ export default function CommandesWidget({ entrepriseId }) {
     <>
       <p style={{ fontSize: "28px", fontWeight: 700 }}>{formatMontant(total)}</p>
       <p className="section-hint" style={{ marginTop: "-4px" }}>
-        {valides.length} commande{valides.length > 1 ? "s" : ""} à ramasser aujourd&apos;hui
-        {aPreparer > 0 && ` · ${aPreparer} en attente`}
+        {valides.length}{" "}{t("commande")}{valides.length > 1 ? "s" : ""}{" "}{t("à ramasser aujourd'hui")}
+        {aPreparer > 0 && ` · ${t("{n} en attente", { n: aPreparer })}`}
       </p>
 
       {valides.slice(0, 3).map((c) => (
@@ -73,7 +75,7 @@ export default function CommandesWidget({ entrepriseId }) {
       ))}
 
       <Link href="/dashboard/commandes" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "12px" }}>
-        Voir les commandes <IconFlecheDroite className="gozly-icon-inline" />
+        {t("Voir les commandes")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

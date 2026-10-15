@@ -7,8 +7,10 @@ import { MODULES, limiteModules } from "@/lib/modules";
 import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { IconCrochet } from "@/components/icons/Pictogrammes";
 import { IconeModule } from "@/components/icons/iconesModules";
+import { useT } from "@/components/LangProvider";
 
 export default function ModulesModal({ entrepriseId, onClose, onChange }) {
+  const { t } = useT();
   const [loading, setLoading] = useState(true);
   const [forfait, setForfait] = useState(null);
   const [actifs, setActifs] = useState([]);
@@ -83,23 +85,25 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          <h3>Gérer les modules</h3>
+          <h3>{t("Gérer les modules")}</h3>
           <button className="admin-icon-btn" onClick={onClose}>
-            Fermer
+            {t("Fermer")}
           </button>
         </div>
 
         {loading ? (
-          <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+          <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
         ) : (
           <>
             <p className="panel-hint">
-              {Number.isFinite(limite) ? `${compte} / ${limite} modules activés` : `${compte} module${compte > 1 ? "s" : ""} activé${compte > 1 ? "s" : ""} (illimité)`}
+              {Number.isFinite(limite)
+                ? t("{n} / {limite} modules activés", { n: compte, limite })
+                : t(compte > 1 ? "{n} modules activés (illimité)" : "{n} module activé (illimité)", { n: compte })}
             </p>
 
             {limite === 0 && (
               <p className="settings-msg err">
-                Aucun forfait actif — <Link href="/parametres" style={{ color: "inherit", textDecoration: "underline" }}>choisis un forfait</Link> pour activer des modules.
+                {t("Aucun forfait actif —")}{" "}<Link href="/parametres" style={{ color: "inherit", textDecoration: "underline" }}>{t("choisis un forfait")}</Link>{" "}{t("pour activer des modules.")}
               </p>
             )}
 
@@ -113,14 +117,14 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
                     className={`modules-picker-tile${estActif ? " active" : ""}${bloque ? " disabled" : ""}`}
                     onClick={() => !bloque && handleToggle(mod.id)}
                     disabled={busyId === mod.id || bloque}
-                    title={bloque ? "Limite de modules atteinte pour ton forfait" : mod.nom}
+                    title={bloque ? t("Limite de modules atteinte pour ton forfait") : t(mod.nom)}
                   >
                     {mod.image ? (
-                      <img src={mod.image} alt={mod.nom} />
+                      <img src={mod.image} alt={t(mod.nom)} />
                     ) : (
                       <div className="modules-picker-fallback">
                         <span><IconeModule id={mod.id} className="gozly-icon" style={{ width: 28, height: 28 }} /></span>
-                        <small>{mod.nom}</small>
+                        <small>{t(mod.nom)}</small>
                       </div>
                     )}
                     {estActif && <span className="modules-picker-check"><IconCrochet className="gozly-icon" /></span>}
@@ -129,11 +133,11 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
               })}
             </div>
 
-            <div className="settings-divider">Autre service</div>
+            <div className="settings-divider">{t("Autre service")}</div>
             <div className="switch-row">
               <div className="switch-row-text">
-                <h4>Site vitrine</h4>
-                <p>Un site rapide, moderne et à ton image, propulsé par Wix - construit pour toi par l&apos;équipe Gozly.</p>
+                <h4>{t("Site vitrine")}</h4>
+                <p>{t("Un site rapide, moderne et à ton image, propulsé par Wix - construit pour toi par l'équipe Gozly.")}</p>
               </div>
               <button
                 type="button"
@@ -142,14 +146,14 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
                 disabled={demandeVitrineStatut === "envoi" || demandeVitrineStatut === "envoye"}
               >
                 {demandeVitrineStatut === "envoye"
-                  ? <>Demande envoyée <IconCrochet className="gozly-icon" /></>
+                  ? <>{t("Demande envoyée")}{" "}<IconCrochet className="gozly-icon" /></>
                   : demandeVitrineStatut === "envoi"
-                  ? "Envoi..."
-                  : "Demander"}
+                  ? t("Envoi...")
+                  : t("Demander")}
               </button>
             </div>
             {demandeVitrineStatut === "erreur" && (
-              <p className="settings-msg err">La demande a échoué. Réessaie dans un instant.</p>
+              <p className="settings-msg err">{t("La demande a échoué. Réessaie dans un instant.")}</p>
             )}
           </>
         )}

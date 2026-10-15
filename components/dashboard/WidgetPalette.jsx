@@ -1,11 +1,13 @@
 "use client";
+import { useT } from "@/components/LangProvider";
 
 export default function WidgetPalette({ widgets, onDragStart }) {
+  const { t } = useT();
   return (
     <aside className="widget-palette">
-      <h4>Widgets disponibles</h4>
+      <h4>{t("Widgets disponibles")}</h4>
       {widgets.length === 0 ? (
-        <p className="widget-palette-empty">Tout est déjà sur le tableau de bord.</p>
+        <p className="widget-palette-empty">{t("Tout est déjà sur le tableau de bord.")}</p>
       ) : (
         widgets.map((w) => (
           <div
@@ -17,7 +19,7 @@ export default function WidgetPalette({ widgets, onDragStart }) {
               onDragStart(w.id);
             }}
           >
-            {w.nom}
+            {t(w.nom)}
           </div>
         ))
       )}

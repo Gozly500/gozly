@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { creneauActuel } from "@/lib/temperature";
 import { IconAttention, IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Une alerte disparaît du widget après ce nombre de jours (le registre complet
 // reste dans Températures > Historique).
@@ -31,6 +32,7 @@ function quand(r, aujourdhui) {
 }
 
 export default function TemperatureWidget({ entrepriseId }) {
+  const { t } = useT();
   const [releves, setReleves] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,14 +53,14 @@ export default function TemperatureWidget({ entrepriseId }) {
   }, [entrepriseId]);
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   const nonConformes = releves.filter((r) => !r.conforme);
   const aujourdhui = creneauActuel().date;
 
   if (nonConformes.length === 0) {
-    return <p className="widget-card-empty">Aucun relevé hors norme dans les 3 derniers jours.</p>;
+    return <p className="widget-card-empty">{t("Aucun relevé hors norme dans les 3 derniers jours.")}</p>;
   }
 
   return (
@@ -67,10 +69,10 @@ export default function TemperatureWidget({ entrepriseId }) {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Équipement</th>
-              <th>Quand</th>
-              <th>Température</th>
-              <th>Relevé par</th>
+              <th>{t("Équipement")}</th>
+              <th>{t("Quand")}</th>
+              <th>{t("Température")}</th>
+              <th>{t("Relevé par")}</th>
             </tr>
           </thead>
           <tbody>
@@ -78,7 +80,7 @@ export default function TemperatureWidget({ entrepriseId }) {
               <tr key={r.id}>
                 <td>{r.equipement?.nom || "?"}</td>
                 <td>{quand(r, aujourdhui)}</td>
-                <td><IconAttention className="gozly-icon" /> {r.temperature}°C</td>
+                <td><IconAttention className="gozly-icon" /> {r.temperature}{t("°C")}</td>
                 <td>{r.releve_par}</td>
               </tr>
             ))}
@@ -86,7 +88,7 @@ export default function TemperatureWidget({ entrepriseId }) {
         </table>
       </div>
       <Link href="/dashboard/temperature" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
-        Voir le registre <IconFlecheDroite className="gozly-icon-inline" />
+        {t("Voir le registre")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

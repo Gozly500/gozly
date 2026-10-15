@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { MODULES, LABELS_FORFAIT } from "@/lib/modules";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { IconeModule } from "@/components/icons/iconesModules";
+import { useT } from "@/components/LangProvider";
 
 // Bloque tout le tableau de bord (rendu par DashSidebar, donc présent sur
 // chaque page /dashboard/*) quand l'entreprise a plus de modules actifs que
@@ -15,11 +16,12 @@ import { IconeModule } from "@/components/icons/iconesModules";
 // désactivant des modules jusqu'à revenir dans la limite, ou en changeant
 // de forfait.
 export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limite, onChange }) {
+  const { t } = useT();
   const [busyId, setBusyId] = useState(null);
 
   const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
   const enTrop = actifs.length - limite;
-  const forfaitLabel = forfait ? LABELS_FORFAIT[forfait] || forfait : "aucun forfait actif";
+  const forfaitLabel = forfait ? LABELS_FORFAIT[forfait] || forfait : t("aucun forfait actif");
 
   async function desactiver(moduleId) {
     setBusyId(moduleId);
@@ -32,13 +34,18 @@ export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limi
     <div className="modal-overlay">
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          <h3>Trop de modules actifs</h3>
+          <h3>{t("Trop de modules actifs")}</h3>
         </div>
 
         <p className="panel-hint">
-          Ton forfait actuel ({forfaitLabel}) permet{" "}
-          {Number.isFinite(limite) ? `${limite} module${limite > 1 ? "s" : ""}` : "un nombre illimité de modules"}, mais{" "}
-          {actifs.length} sont actifs. Désactive-en {enTrop} pour continuer, ou choisis un forfait qui les couvre tous.
+          {t("Ton forfait actuel ({forfait}) permet {limite}, mais {actifs} sont actifs. Désactive-en {enTrop} pour continuer, ou choisis un forfait qui les couvre tous.", {
+            forfait: forfaitLabel,
+            limite: Number.isFinite(limite)
+              ? t(limite > 1 ? "{n} modules" : "{n} module", { n: limite })
+              : t("un nombre illimité de modules"),
+            actifs: actifs.length,
+            enTrop,
+          })}
         </p>
 
         <div className="admin-list" style={{ marginBottom: "18px" }}>
@@ -46,7 +53,7 @@ export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limi
             <div className="admin-row" key={mod.id}>
               <div className="admin-row-main">
                 <div className="admin-row-title">
-                  <IconeModule id={mod.id} className="gozly-icon" /> {mod.nom}
+                  <IconeModule id={mod.id} className="gozly-icon" /> {t(mod.nom)}
                 </div>
               </div>
               <div className="admin-row-controls">
@@ -56,7 +63,7 @@ export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limi
                   onClick={() => desactiver(mod.id)}
                   disabled={busyId === mod.id}
                 >
-                  {busyId === mod.id ? "..." : "Désactiver"}
+                  {busyId === mod.id ? "..." : t("Désactiver")}
                 </button>
               </div>
             </div>
@@ -64,7 +71,7 @@ export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limi
         </div>
 
         <Link href="/parametres?tab=abonnement" className="submit-btn" style={{ width: "100%", textAlign: "center", textDecoration: "none", display: "block" }}>
-          Choisir un nouveau forfait <IconFlecheDroite className="gozly-icon-inline" />
+          {t("Choisir un nouveau forfait")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
         </Link>
       </div>
     </div>

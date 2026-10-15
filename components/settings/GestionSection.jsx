@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useT } from "@/components/LangProvider";
 
 export default function GestionSection({ user, profil, router }) {
+  const { t } = useT();
   const [desactive, setDesactive] = useState(profil?.desactive || false);
   const [toggling, setToggling] = useState(false);
   const [toggleMsg, setToggleMsg] = useState(null);
@@ -22,19 +24,19 @@ export default function GestionSection({ user, profil, router }) {
     setToggling(false);
 
     if (error) {
-      setToggleMsg({ type: "err", text: "L'opération a échoué. Réessaie dans un instant." });
+      setToggleMsg({ type: "err", text: t("L'opération a échoué. Réessaie dans un instant.") });
       return;
     }
 
     setDesactive(next);
     if (next) {
-      setToggleMsg({ type: "ok", text: "Compte désactivé. Déconnexion..." });
+      setToggleMsg({ type: "ok", text: t("Compte désactivé. Déconnexion...") });
       setTimeout(async () => {
         await supabase.auth.signOut();
         router.push("/login?desactive=1");
       }, 1500);
     } else {
-      setToggleMsg({ type: "ok", text: "Compte réactivé !" });
+      setToggleMsg({ type: "ok", text: t("Compte réactivé !") });
       setTimeout(() => setToggleMsg(null), 3000);
     }
   }
@@ -64,19 +66,18 @@ export default function GestionSection({ user, profil, router }) {
 
   return (
     <div>
-      <h2>Gestion du compte</h2>
-      <p className="panel-hint">Désactive ou supprime ton compte Gozly.</p>
+      <h2>{t("Gestion du compte")}</h2>
+      <p className="panel-hint">{t("Désactive ou supprime ton compte Gozly.")}</p>
 
       <div className="settings-section">
-        <h3>Désactiver mon compte</h3>
+        <h3>{t("Désactiver mon compte")}</h3>
         <p className="section-hint">
-          Un compte désactivé ne peut plus se connecter. Tu peux le réactiver ici à tout moment
-          (en te reconnectant en cas de doute, contacte-nous).
+          {t("Un compte désactivé ne peut plus se connecter. Tu peux le réactiver ici à tout moment (en te reconnectant en cas de doute, contacte-nous).")}
         </p>
         <div className="switch-row">
           <div className="switch-row-text">
-            <h4>{desactive ? "Compte actuellement désactivé" : "Compte actif"}</h4>
-            <p>{desactive ? "Personne ne peut se connecter à ce compte." : "Le compte fonctionne normalement."}</p>
+            <h4>{desactive ? t("Compte actuellement désactivé") : t("Compte actif")}</h4>
+            <p>{desactive ? t("Personne ne peut se connecter à ce compte.") : t("Le compte fonctionne normalement.")}</p>
           </div>
           <label className="switch">
             <input
@@ -92,18 +93,18 @@ export default function GestionSection({ user, profil, router }) {
         {toggleMsg && <p className={`settings-msg ${toggleMsg.type}`}>{toggleMsg.text}</p>}
       </div>
 
-      <div className="settings-divider">Zone dangereuse</div>
+      <div className="settings-divider">{t("Zone dangereuse")}</div>
 
       <div className="settings-section">
         <div className="danger-zone">
           <div>
-            <h4>Supprimer mon compte</h4>
+            <h4>{t("Supprimer mon compte")}</h4>
             <p>
               {deleteStatus === "sent"
-                ? "Ta demande a été envoyée. On te contacte à " + user?.email + " pour confirmer la suppression."
+                ? t("Ta demande a été envoyée. On te contacte à {email} pour confirmer la suppression.", { email: user?.email })
                 : confirmingDelete
-                ? "Confirme : on va t'envoyer les prochaines étapes par courriel."
-                : "Envoie une demande de suppression définitive de ton compte et de tes données."}
+                ? t("Confirme : on va t'envoyer les prochaines étapes par courriel.")
+                : t("Envoie une demande de suppression définitive de ton compte et de tes données.")}
             </p>
           </div>
           <button
@@ -112,12 +113,12 @@ export default function GestionSection({ user, profil, router }) {
             disabled={deleteStatus === "sending" || deleteStatus === "sent"}
           >
             {deleteStatus === "sent"
-              ? "Demande envoyée"
+              ? t("Demande envoyée")
               : deleteStatus === "sending"
-              ? "Envoi..."
+              ? t("Envoi...")
               : confirmingDelete
-              ? "Confirmer la demande"
-              : "Supprimer mon compte"}
+              ? t("Confirmer la demande")
+              : t("Supprimer mon compte")}
           </button>
         </div>
       </div>

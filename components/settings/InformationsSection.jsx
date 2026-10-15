@@ -2,12 +2,14 @@
 
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useT } from "@/components/LangProvider";
 
 // Informations PERSONNELLES du compte uniquement - le logo, le nom, le
 // secteur d'activité et les coordonnées de l'entreprise se gèrent
 // maintenant depuis Entreprise > Informations (un compte peut posséder
 // plusieurs entreprises distinctes, chacune avec les siennes).
 export default function InformationsSection({ user, profil, setProfil }) {
+  const { t } = useT();
   const fileInputRef = useRef(null);
 
   const [prenom, setPrenom] = useState(profil?.prenom || "");
@@ -46,10 +48,10 @@ export default function InformationsSection({ user, profil, setProfil }) {
     setSaving(false);
 
     if (authError || profilError) {
-      setMsg({ type: "err", text: "La mise à jour a échoué. Réessaie dans un instant." });
+      setMsg({ type: "err", text: t("La mise à jour a échoué. Réessaie dans un instant.") });
       return;
     }
-    setMsg({ type: "ok", text: "Modifications enregistrées !" });
+    setMsg({ type: "ok", text: t("Modifications enregistrées !") });
     setTimeout(() => setMsg(null), 3000);
   }
 
@@ -69,7 +71,7 @@ export default function InformationsSection({ user, profil, setProfil }) {
 
     if (uploadError) {
       setUploadingAvatar(false);
-      setAvatarMsg({ type: "err", text: "L'envoi de la photo a échoué. Réessaie." });
+      setAvatarMsg({ type: "err", text: t("L'envoi de la photo a échoué. Réessaie.") });
       return;
     }
 
@@ -81,12 +83,12 @@ export default function InformationsSection({ user, profil, setProfil }) {
     setUploadingAvatar(false);
 
     if (updateError) {
-      setAvatarMsg({ type: "err", text: "La photo a été envoyée, mais n'a pas pu être enregistrée." });
+      setAvatarMsg({ type: "err", text: t("La photo a été envoyée, mais n'a pas pu être enregistrée.") });
       return;
     }
 
     setProfil({ ...profil, avatar_url: avatarUrl });
-    setAvatarMsg({ type: "ok", text: "Photo de profil mise à jour !" });
+    setAvatarMsg({ type: "ok", text: t("Photo de profil mise à jour !") });
     setTimeout(() => setAvatarMsg(null), 3000);
   }
 
@@ -102,28 +104,28 @@ export default function InformationsSection({ user, profil, setProfil }) {
     setPwdStatus("idle");
 
     if (error) {
-      setPwdMsg({ type: "err", text: "L'envoi a échoué. Réessaie dans un instant." });
+      setPwdMsg({ type: "err", text: t("L'envoi a échoué. Réessaie dans un instant.") });
       return;
     }
     setPwdMsg({
       type: "ok",
-      text: `Un lien de réinitialisation a été envoyé à ${user.email}. Vérifie ta boîte courriel.`,
+      text: t("Un lien de réinitialisation a été envoyé à {email}. Vérifie ta boîte courriel.", { email: user.email }),
     });
   }
 
   return (
     <div>
-      <h2>Informations</h2>
-      <p className="panel-hint">Ta photo, ton nom et tes coordonnées personnelles.</p>
+      <h2>{t("Informations")}</h2>
+      <p className="panel-hint">{t("Ta photo, ton nom et tes coordonnées personnelles.")}</p>
 
       <form onSubmit={handleSave}>
         <div className="settings-section">
-          <h3>Général</h3>
+          <h3>{t("Général")}</h3>
 
           <div className="avatar-upload">
             <div className="avatar-preview">
               {profil?.avatar_url ? (
-                <img src={profil.avatar_url} alt="Photo de profil" />
+                <img src={profil.avatar_url} alt={t("Photo de profil")} />
               ) : (
                 (prenom || nom || "?").charAt(0).toUpperCase()
               )}
@@ -135,9 +137,9 @@ export default function InformationsSection({ user, profil, setProfil }) {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar || !profil}
               >
-                {uploadingAvatar ? "Envoi..." : "Changer la photo"}
+                {uploadingAvatar ? t("Envoi...") : t("Changer la photo")}
               </button>
-              <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>PNG ou JPG, carré de préférence</span>
+              <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{t("PNG ou JPG, carré de préférence")}</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -151,28 +153,28 @@ export default function InformationsSection({ user, profil, setProfil }) {
 
           <div className="field-row" style={{ marginTop: "18px" }}>
             <div className="field">
-              <label htmlFor="prenom">Prénom</label>
-              <input type="text" id="prenom" value={prenom} onChange={(e) => setPrenom(e.target.value)} placeholder="Prénom" />
+              <label htmlFor="prenom">{t("Prénom")}</label>
+              <input type="text" id="prenom" value={prenom} onChange={(e) => setPrenom(e.target.value)} placeholder={t("Prénom")} />
             </div>
             <div className="field">
-              <label htmlFor="nom">Nom de famille</label>
-              <input type="text" id="nom" value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom de famille" />
+              <label htmlFor="nom">{t("Nom de famille")}</label>
+              <input type="text" id="nom" value={nom} onChange={(e) => setNom(e.target.value)} placeholder={t("Nom de famille")} />
             </div>
           </div>
         </div>
 
-        <div className="settings-divider">Contact</div>
+        <div className="settings-divider">{t("Contact")}</div>
 
         <div className="settings-section">
-          <p className="section-hint">Tes propres coordonnées, distinctes de celles de tes entreprises.</p>
+          <p className="section-hint">{t("Tes propres coordonnées, distinctes de celles de tes entreprises.")}</p>
 
           <div className="field">
-            <label>Courriel de connexion</label>
+            <label>{t("Courriel de connexion")}</label>
             <input type="email" value={user?.email || ""} disabled />
           </div>
 
           <div className="field">
-            <label htmlFor="telephonePerso">Téléphone personnel (optionnel)</label>
+            <label htmlFor="telephonePerso">{t("Téléphone personnel (optionnel)")}</label>
             <input
               type="tel"
               id="telephonePerso"
@@ -185,18 +187,18 @@ export default function InformationsSection({ user, profil, setProfil }) {
 
         <div className="submit-wrap">
           <button type="submit" className="submit-btn" disabled={saving}>
-            {saving ? "Enregistrement..." : "Enregistrer"}
+            {saving ? t("Enregistrement...") : t("Enregistrer")}
           </button>
         </div>
         {msg && <p className={`settings-msg ${msg.type}`} style={{ textAlign: "center" }}>{msg.text}</p>}
       </form>
 
-      <div className="settings-divider">Sécurité</div>
+      <div className="settings-divider">{t("Sécurité")}</div>
 
       <div className="settings-section">
-        <h3>Mot de passe</h3>
+        <h3>{t("Mot de passe")}</h3>
         <p className="section-hint">
-          Pour ta sécurité, le changement de mot de passe se fait par un lien envoyé à ton courriel.
+          {t("Pour ta sécurité, le changement de mot de passe se fait par un lien envoyé à ton courriel.")}
         </p>
         <button
           type="button"
@@ -204,7 +206,7 @@ export default function InformationsSection({ user, profil, setProfil }) {
           onClick={handlePasswordReset}
           disabled={pwdStatus === "sending"}
         >
-          {pwdStatus === "sending" ? "Envoi..." : "Envoyer un lien de réinitialisation"}
+          {pwdStatus === "sending" ? t("Envoi...") : t("Envoyer un lien de réinitialisation")}
         </button>
         {pwdMsg && <p className={`settings-msg ${pwdMsg.type}`}>{pwdMsg.text}</p>}
       </div>

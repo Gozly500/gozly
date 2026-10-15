@@ -20,6 +20,7 @@ import {
   IconCommandes,
 } from "@/components/icons/GozlyIcons";
 import { IconBouclier, IconCategorie, IconEchange, IconEngrenage, IconFlecheDroite, IconFlecheGauche, IconMaison } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 const ICONES_MODULES = {
   planning: IconPlanning,
@@ -31,6 +32,7 @@ const ICONES_MODULES = {
 };
 
 export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout, entrepriseId }) {
+  const { t } = useT();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [actifs, setActifs] = useState([]);
@@ -97,7 +99,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
       <button
         className={`dash-sidebar-tab${sidebarOpen ? " open" : ""}`}
         onClick={() => setSidebarOpen((v) => !v)}
-        aria-label="Ouvrir le menu"
+        aria-label={t("Ouvrir le menu")}
       >
         {sidebarOpen ? <IconFlecheGauche className="gozly-icon" /> : <IconFlecheDroite className="gozly-icon" />}
       </button>
@@ -130,46 +132,46 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
               </g>
             </g>
           </svg>
-          <span>Gozly</span>
+          <span>{t("Gozly")}</span>
         </Link>
 
         {impersonation && (
           <div className="impersonation-banner">
             <div>
-              <strong>Mode admin</strong>
+              <strong>{t("Mode admin")}</strong>
               <div>{impersonation.nom}</div>
             </div>
-            <button onClick={quitterImpersonation}>Quitter</button>
+            <button onClick={quitterImpersonation}>{t("Quitter")}</button>
           </div>
         )}
 
         <nav className="dash-nav">
           <Link href="/dashboard" className={`dash-nav-item${active === "dashboard" ? " active" : ""}`}>
-            <IconMaison className="gozly-icon" /> Tableau de bord
+            <IconMaison className="gozly-icon" />{" "}{t("Tableau de bord")}
           </Link>
           <Link href="/dashboard/discussion" className={`dash-nav-item${active === "discussion" ? " active" : ""}`}>
-            <IconDiscussion className="gozly-icon" /> Discussion
+            <IconDiscussion className="gozly-icon" />{" "}{t("Discussion")}
           </Link>
           <Link href="/dashboard/entreprise/employes" className={`dash-nav-item${active === "employes" ? " active" : ""}`}>
-            <IconEmployes className="gozly-icon" /> Employés
+            <IconEmployes className="gozly-icon" />{" "}{t("Employés")}
           </Link>
           <Link href="/dashboard/entreprise/parametres" className={`dash-nav-item${active === "entreprise" ? " active" : ""}`}>
-            <IconEngrenage className="gozly-icon" /> Paramètres
+            <IconEngrenage className="gozly-icon" />{" "}{t("Paramètres")}
           </Link>
-          <div className="dash-nav-label">Modules</div>
+          <div className="dash-nav-label">{t("Modules")}</div>
           {modulesActifs.filter((mod) => mod.id !== "horaire" || peutVoirHoraire).map((mod) => {
             const IconeModule = ICONES_MODULES[mod.id];
             return (
             <div key={mod.id}>
               <Link href={mod.href} className={`dash-nav-item${active === mod.id ? " active" : ""}`}>
-                {IconeModule ? <IconeModule className="gozly-icon" /> : null} {mod.nom}
+                {IconeModule ? <IconeModule className="gozly-icon" /> : null} {t(mod.nom)}
               </Link>
               {mod.id === "planning" && (active === "planning" || active === "categories") && (
                 <Link
                   href="/dashboard/planning/categories"
                   className={`dash-nav-item dash-nav-sub${active === "categories" ? " active" : ""}`}
                 >
-                  <IconCategorie className="gozly-icon" /> Catégories
+                  <IconCategorie className="gozly-icon" />{" "}{t("Catégories")}
                 </Link>
               )}
               {mod.id === "inventaire" && (active === "inventaire" || active === "inventaire-categories") && (
@@ -177,7 +179,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
                   href="/dashboard/inventaire/categories"
                   className={`dash-nav-item dash-nav-sub${active === "inventaire-categories" ? " active" : ""}`}
                 >
-                  <IconCategorie className="gozly-icon" /> Catégories
+                  <IconCategorie className="gozly-icon" />{" "}{t("Catégories")}
                 </Link>
               )}
               {mod.id === "temperature" && (active === "temperature" || active === "temperature-equipements") && (
@@ -185,7 +187,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
                   href="/dashboard/temperature/equipements"
                   className={`dash-nav-item dash-nav-sub${active === "temperature-equipements" ? " active" : ""}`}
                 >
-                  <IconCategorie className="gozly-icon" /> Équipements
+                  <IconCategorie className="gozly-icon" />{" "}{t("Équipements")}
                 </Link>
               )}
             </div>
@@ -193,7 +195,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           })}
           {entrepriseId && (
             <button className="dash-nav-item dash-nav-manage" onClick={() => setModalOpen(true)}>
-              <span>+</span> Gérer les modules
+              <span>+</span>{" "}{t("Gérer les modules")}
             </button>
           )}
         </nav>
@@ -207,20 +209,20 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
           </div>
           <div className="dash-user-actions">
             {isAdmin && (
-              <Link href="/admin" className="dash-settings-btn" title="Panneau admin">
+              <Link href="/admin" className="dash-settings-btn" title={t("Panneau admin")}>
                 <IconBouclier className="gozly-icon" />
               </Link>
             )}
-            <Link href="/parametres" className="dash-settings-btn" title="Paramètres du compte">
+            <Link href="/parametres" className="dash-settings-btn" title={t("Paramètres du compte")}>
               <IconEngrenage className="gozly-icon" />
             </Link>
             <button onClick={onLogout} className="dash-logout-btn">
-              Déconnexion
+              {t("Déconnexion")}
             </button>
           </div>
           {!impersonation && (
-            <Link href="/dashboards" className="dash-switch-link" title="Changer de dashboard">
-              <IconEchange className="gozly-icon" /> {nomEntreprise || "Changer de dashboard"}
+            <Link href="/dashboards" className="dash-switch-link" title={t("Changer de dashboard")}>
+              <IconEchange className="gozly-icon" /> {nomEntreprise || t("Changer de dashboard")}
             </Link>
           )}
         </div>

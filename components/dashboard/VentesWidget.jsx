@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 function formatMontant(n) {
   return n.toLocaleString("fr-CA", { style: "currency", currency: "CAD" });
 }
 
 export default function VentesWidget({ entrepriseId }) {
+  const { t } = useT();
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -28,17 +30,17 @@ export default function VentesWidget({ entrepriseId }) {
   }, [entrepriseId]);
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   return (
     <>
       <p style={{ fontSize: "28px", fontWeight: 700 }}>{formatMontant(total)}</p>
       <p className="section-hint" style={{ marginTop: "-4px" }}>
-        Ventes aujourd'hui, toutes sources confondues.
+        {t("Ventes aujourd'hui, toutes sources confondues.")}
       </p>
       <Link href="/dashboard/ventes" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "10px" }}>
-        Voir le suivi des ventes <IconFlecheDroite className="gozly-icon-inline" />
+        {t("Voir le suivi des ventes")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

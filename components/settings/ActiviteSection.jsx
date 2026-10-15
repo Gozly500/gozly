@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/LangProvider";
 
 function formatDate(value) {
   if (!value) return "—";
@@ -9,6 +10,7 @@ function formatDate(value) {
 }
 
 export default function ActiviteSection({ user }) {
+  const { t } = useT();
   const rows = [
     { label: "Dernière connexion", value: formatDate(user?.last_sign_in_at) },
     { label: "Compte créé le", value: formatDate(user?.created_at) },
@@ -18,14 +20,14 @@ export default function ActiviteSection({ user }) {
 
   return (
     <div>
-      <h2>Activité du compte</h2>
-      <p className="panel-hint">Un aperçu de l'activité récente de ton compte.</p>
+      <h2>{t("Activité du compte")}</h2>
+      <p className="panel-hint">{t("Un aperçu de l'activité récente de ton compte.")}</p>
 
       <div className="settings-card">
         <div className="activity-list">
           {rows.map((row) => (
             <div className="activity-row" key={row.label}>
-              <span className="activity-row-label">{row.label}</span>
+              <span className="activity-row-label">{t(row.label)}</span>
               <span className="activity-row-value">{row.value}</span>
             </div>
           ))}
@@ -33,7 +35,7 @@ export default function ActiviteSection({ user }) {
       </div>
 
       <p className="section-hint" style={{ marginTop: "18px" }}>
-        L'historique détaillé des connexions (appareil, localisation) n'est pas encore disponible.
+        {t("L'historique détaillé des connexions (appareil, localisation) n'est pas encore disponible.")}
       </p>
     </div>
   );

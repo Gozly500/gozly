@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 export default function InventaireWidget({ entrepriseId }) {
+  const { t } = useT();
   const [produits, setProduits] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,13 +23,13 @@ export default function InventaireWidget({ entrepriseId }) {
   }, [entrepriseId]);
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   const enAlerte = produits.filter((p) => p.quantite <= p.seuil_alerte);
 
   if (enAlerte.length === 0) {
-    return <p className="widget-card-empty">Aucun produit en alerte de stock.</p>;
+    return <p className="widget-card-empty">{t("Aucun produit en alerte de stock.")}</p>;
   }
 
   return (
@@ -36,9 +38,9 @@ export default function InventaireWidget({ entrepriseId }) {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Produit</th>
-              <th>Quantité</th>
-              <th>Seuil</th>
+              <th>{t("Produit")}</th>
+              <th>{t("Quantité")}</th>
+              <th>{t("Seuil")}</th>
             </tr>
           </thead>
           <tbody>
@@ -53,7 +55,7 @@ export default function InventaireWidget({ entrepriseId }) {
         </table>
       </div>
       <Link href="/dashboard/inventaire" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
-        Voir l'Inventaire <IconFlecheDroite className="gozly-icon-inline" />
+        {t("Voir l'Inventaire")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );

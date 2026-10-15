@@ -9,6 +9,7 @@ import ActiviteSection from "@/components/settings/ActiviteSection";
 import AppearanceSection from "@/components/settings/AppearanceSection";
 import GestionSection from "@/components/settings/GestionSection";
 import { IconCarte, IconEngrenage, IconHorloge, IconPalette, IconProfil } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 const TABS = [
   { id: "informations", label: "Informations", Icone: IconProfil },
@@ -19,6 +20,7 @@ const TABS = [
 ];
 
 export default function SettingsContent() {
+  const { t } = useT();
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [profil, setProfil] = useState(null);
@@ -34,7 +36,7 @@ export default function SettingsContent() {
       return;
     }
     const tab = params.get("tab");
-    if (TABS.some((t) => t.id === tab)) setActiveTab(tab);
+    if (TABS.some((tb) => tb.id === tab)) setActiveTab(tab);
   }, []);
 
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function SettingsContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -99,7 +101,7 @@ export default function SettingsContent() {
             className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
+            <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {t(tab.label)}
           </button>
         ))}
       </nav>

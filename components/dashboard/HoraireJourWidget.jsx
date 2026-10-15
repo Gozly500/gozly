@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 function todayISO() {
   const d = new Date();
@@ -12,6 +13,7 @@ function todayISO() {
 }
 
 export default function HoraireJourWidget({ entrepriseId }) {
+  const { t } = useT();
   const [quarts, setQuarts] = useState([]);
   const [employes, setEmployes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,11 +36,11 @@ export default function HoraireJourWidget({ entrepriseId }) {
   }, [entrepriseId]);
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   if (quarts.length === 0) {
-    return <p className="widget-card-empty">Personne de planifié aujourd'hui.</p>;
+    return <p className="widget-card-empty">{t("Personne de planifié aujourd'hui.")}</p>;
   }
 
   const nomEmploye = (id) => employes.find((e) => e.id === id)?.nom || "—";
@@ -49,9 +51,9 @@ export default function HoraireJourWidget({ entrepriseId }) {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Employé</th>
-              <th>Début</th>
-              <th>Fin</th>
+              <th>{t("Employé")}</th>
+              <th>{t("Début")}</th>
+              <th>{t("Fin")}</th>
             </tr>
           </thead>
           <tbody>
@@ -66,7 +68,7 @@ export default function HoraireJourWidget({ entrepriseId }) {
         </table>
       </div>
       <Link href="/dashboard/horaire" className="admin-icon-btn" style={{ display: "inline-block", marginTop: "14px" }}>
-        Voir l'Horaire <IconFlecheDroite className="gozly-icon-inline" />
+        {t("Voir l'Horaire")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
       </Link>
     </>
   );
