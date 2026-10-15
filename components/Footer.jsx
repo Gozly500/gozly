@@ -44,6 +44,7 @@ export default function Footer() {
           <span>{t("footer.droits")}</span>
           <Link href="/conditions">{t("footer.conditions")}</Link>
           <Link href="/confidentialite">{t("footer.confidentialite")}</Link>
+          <Link href="/scategories">{t("footer.scat")}</Link>
           <Link href="/statut">{t("footer.statut")}</Link>
           <LangFooterLink />
         </div>
