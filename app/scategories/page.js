@@ -1,7 +1,7 @@
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import ScategoriesGame from "@/components/ScategoriesGame";
+import ScategoriesApp from "@/components/ScategoriesApp";
 import { getT } from "@/lib/i18n/siteServer";
 
 export function generateMetadata() {
@@ -25,7 +25,7 @@ export default function ScategoriesPage() {
 
       <section id="scategories">
         <div className="wrap scat-wrap">
-          <ScategoriesGame />
+          <ScategoriesApp />
 
           <div className="scat-regles">
             <h2>{t("scat.regles")}</h2>
