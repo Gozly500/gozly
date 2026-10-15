@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { useT } from "@/components/LangProvider";
 
 // Même contenu que /s-abonner. Le forfait n'est JAMAIS activé ici : le bouton
 // ouvre Stripe Checkout, et c'est le webhook qui active le forfait après paiement.
@@ -39,6 +40,7 @@ const FORFAITS = [
 ];
 
 export default function ChoisirForfaitContent() {
+  const { t } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [choix, setChoix] = useState(null);
@@ -87,20 +89,20 @@ export default function ChoisirForfaitContent() {
       const data = await res.json();
 
       if (!res.ok || !data.url) {
-        setError(data.error || "Le paiement n'est pas disponible pour le moment. Tu peux réessayer depuis Paramètres > Abonnement.");
+        setError(data.error || t("Le paiement n'est pas disponible pour le moment. Tu peux réessayer depuis Paramètres > Abonnement."));
         setChoix(null);
         return;
       }
 
       window.location.href = data.url;
     } catch (e) {
-      setError("Le paiement n'est pas disponible pour le moment. Tu peux réessayer depuis Paramètres > Abonnement.");
+      setError(t("Le paiement n'est pas disponible pour le moment. Tu peux réessayer depuis Paramètres > Abonnement."));
       setChoix(null);
     }
   }
 
   if (checking) {
-    return <p style={{ color: "var(--text-dim)", textAlign: "center" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)", textAlign: "center" }}>{t("Chargement...")}</p>;
   }
 
   return (
@@ -113,12 +115,12 @@ export default function ChoisirForfaitContent() {
               <h3>{f.nom}</h3>
             </div>
             <div className="price">
-              {f.prix}
-              <span>/mois</span>
+              {t(f.prix)}
+              <span>{t("/mois")}</span>
             </div>
             <ul>
               {f.points.map((p) => (
-                <li key={p}>{p}</li>
+                <li key={p}>{t(p)}</li>
               ))}
             </ul>
             <button
@@ -128,7 +130,7 @@ export default function ChoisirForfaitContent() {
               disabled={choix !== null}
               onClick={() => choisir(f.id)}
             >
-              {choix === f.id ? "Redirection vers le paiement..." : "Choisir ce forfait"}
+              {choix === f.id ? t("Redirection vers le paiement...") : t("Choisir ce forfait")}
             </button>
           </div>
         ))}
@@ -142,7 +144,7 @@ export default function ChoisirForfaitContent() {
 
       <p style={{ textAlign: "center", marginTop: "26px", fontSize: "13px" }}>
         <Link href="/dashboard" style={{ color: "var(--text-dim)", textDecoration: "underline" }}>
-          Ignorer pour l'instant
+          {t("Ignorer pour l'instant")}
         </Link>
       </p>
     </>

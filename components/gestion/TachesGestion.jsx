@@ -7,11 +7,13 @@ import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entr
 import { useGestion } from "@/components/gestion/GestionShell";
 import { dateAujourdhui, decalerJour, NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Tâches du jour pour le téléphone : on change de jour avec ‹ ›, on coche les tâches,
 // on en ajoute dans une catégorie ou on les retire. La catégorie "Réservations" est
 // gérée par le module Commandes (on peut cocher, pas retirer).
 export default function TachesGestion() {
+  const { t: tr } = useT();
   const { entrepriseId } = useGestion();
   const [date, setDate] = useState(dateAujourdhui);
   const [categories, setCategories] = useState([]);
@@ -95,7 +97,7 @@ export default function TachesGestion() {
       emplacement_id: emplacementId,
     });
     if (error) {
-      setErreur("Impossible d'ajouter la tâche.");
+      setErreur(tr("Impossible d'ajouter la tâche."));
       return;
     }
     setTexte("");
@@ -112,7 +114,7 @@ export default function TachesGestion() {
       <div className="planning-day gestion-tache-categorie" key={cat.id}>
         <div className="gestion-tache-tete">
           <span className="planning-day-title">{cat.nom}</span>
-          {geree && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11px" }}>Géré par un module</span>}
+          {geree && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11px" }}>{tr("Géré par un module")}</span>}
         </div>
         {liste.map((t) => (
           <div className="gestion-tache-ligne" key={t.id}>
@@ -121,7 +123,7 @@ export default function TachesGestion() {
               <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{t.texte}</span>
             </label>
             {t.source !== "commande" && (
-              <button type="button" className="admin-icon-btn danger gestion-tache-retirer" onClick={() => retirer(t)} aria-label="Retirer la tâche">
+              <button type="button" className="admin-icon-btn danger gestion-tache-retirer" onClick={() => retirer(t)} aria-label={tr("Retirer la tâche")}>
                 <IconX className="gozly-icon" />
               </button>
             )}
@@ -130,9 +132,9 @@ export default function TachesGestion() {
         {!geree &&
           (ajoutPour === cat.id ? (
             <form className="gestion-tache-ajout" onSubmit={(e) => ajouter(e, cat.id)}>
-              <input type="text" value={texte} onChange={(e) => setTexte(e.target.value)} placeholder="Nouvelle tâche" maxLength={200} autoFocus />
+              <input type="text" value={texte} onChange={(e) => setTexte(e.target.value)} placeholder={tr("Nouvelle tâche")} maxLength={200} autoFocus />
               <button type="submit" className="btn-small" disabled={!texte.trim()}>
-                Ajouter
+                {tr("Ajouter")}
               </button>
               <button type="button" className="admin-icon-btn" onClick={() => { setAjoutPour(null); setTexte(""); }}>
                 <IconX className="gozly-icon" />
@@ -140,7 +142,7 @@ export default function TachesGestion() {
             </form>
           ) : (
             <button type="button" className="gestion-tache-plus" onClick={() => { setAjoutPour(cat.id); setTexte(""); }}>
-              + Ajouter
+              {tr("+ Ajouter")}
             </button>
           ))}
       </div>
@@ -149,7 +151,7 @@ export default function TachesGestion() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: "10px" }}>Tâches</h2>
+      <h2 style={{ marginBottom: "10px" }}>{tr("Tâches")}</h2>
 
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, -1))}>
@@ -165,7 +167,7 @@ export default function TachesGestion() {
       {date !== aujourdhui && (
         <div style={{ textAlign: "center", marginTop: "-8px", marginBottom: "12px" }}>
           <button className="admin-icon-btn" onClick={() => setDate(aujourdhui)}>
-            Aujourd&apos;hui
+            {tr("Aujourd'hui")}
           </button>
         </div>
       )}
@@ -175,9 +177,9 @@ export default function TachesGestion() {
       {erreur && <p className="settings-msg err">{erreur}</p>}
 
       {!pret || loading ? (
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>
       ) : categories.length === 0 && taches.length === 0 ? (
-        <p className="chat-empty">Aucune catégorie de tâches. Crée-en une sur l&apos;ordinateur (Tâches, Catégories).</p>
+        <p className="chat-empty">{tr("Aucune catégorie de tâches. Crée-en une sur l'ordinateur (Tâches, Catégories).")}</p>
       ) : (
         <div className="gestion-cartes" style={{ marginTop: "12px" }}>
           {categories.map((cat) => {

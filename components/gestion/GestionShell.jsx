@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
 import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu } from "@/components/icons/GozlyIcons";
+import { useT } from "@/components/LangProvider";
 
 const GestionContexte = createContext(null);
 export function useGestion() {
@@ -19,6 +20,7 @@ const PERMISSIONS_FEUILLE = ["voir_feuille_temps", "corriger_feuille_temps", "ap
 // permissions, modules actifs, en-tête et barre d'onglets du bas. Les pages
 // s'affichent dedans et lisent l'état avec useGestion().
 export default function GestionShell({ actif, children }) {
+  const { t } = useT();
   const router = useRouter();
   const [pret, setPret] = useState(false);
   const [user, setUser] = useState(null);
@@ -96,7 +98,7 @@ export default function GestionShell({ actif, children }) {
   if (!pret) {
     return (
       <div className="moi-shell">
-        <p style={{ color: "var(--text-dim)", textAlign: "center", padding: "120px 20px" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)", textAlign: "center", padding: "120px 20px" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -129,17 +131,17 @@ export default function GestionShell({ actif, children }) {
       <div className={`moi-shell${actif === "discussion" ? " moi-shell-chat" : ""}`}>
         <header className="moi-header">
           <Link href="/gestion" className="moi-header-identite" style={{ textDecoration: "none" }}>
-            <div className="moi-header-nom">{entrepriseNom || "Gozly"}</div>
-            <div className="moi-header-entreprise">Gestion</div>
+            <div className="moi-header-nom">{entrepriseNom || t("Gozly")}</div>
+            <div className="moi-header-entreprise">{t("Gestion")}</div>
           </Link>
           <div className="moi-header-actions">
             {plusieursEntreprises && (
               <Link href="/dashboards?retour=/gestion" className="admin-icon-btn">
-                Changer
+                {t("Changer")}
               </Link>
             )}
             <button type="button" className="admin-icon-btn" onClick={deconnexion}>
-              Déconnexion
+              {t("Déconnexion")}
             </button>
           </div>
         </header>
@@ -147,17 +149,17 @@ export default function GestionShell({ actif, children }) {
         {impersonation && (
           <div className="impersonation-banner" style={{ margin: 0, borderRadius: 0 }}>
             <div>
-              <strong>Mode admin</strong>
+              <strong>{t("Mode admin")}</strong>
               <div>{impersonation.nom}</div>
             </div>
             <button type="button" onClick={quitterModeAdmin}>
-              Quitter
+              {t("Quitter")}
             </button>
           </div>
         )}
 
         <main className={`moi-main${actif === "discussion" ? " moi-main-chat" : ""}`}>
-          {entrepriseId ? children : <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>}
+          {entrepriseId ? children : <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>}
         </main>
 
         <nav className="moi-tabbar">
@@ -166,7 +168,7 @@ export default function GestionShell({ actif, children }) {
               <span className="moi-tab-icon">
                 <o.Icone className="gozly-icon" />
               </span>
-              <span>{o.label}</span>
+              <span>{t(o.label)}</span>
             </Link>
           ))}
           {ongletsMenu.length > 0 && (
@@ -174,7 +176,7 @@ export default function GestionShell({ actif, children }) {
               <span className="moi-tab-icon">
                 <IconMenu className="gozly-icon" />
               </span>
-              <span>Menu</span>
+              <span>{t("Menu")}</span>
             </button>
           )}
         </nav>
@@ -183,9 +185,9 @@ export default function GestionShell({ actif, children }) {
           <div className="modal-overlay" onClick={() => setMenuOuvert(false)}>
             <div className="modal-card" onClick={(e) => e.stopPropagation()}>
               <div className="modal-head">
-                <h3>Menu</h3>
+                <h3>{t("Menu")}</h3>
                 <button className="admin-icon-btn" onClick={() => setMenuOuvert(false)}>
-                  Fermer
+                  {t("Fermer")}
                 </button>
               </div>
               <div className="dash-nav">
@@ -197,7 +199,7 @@ export default function GestionShell({ actif, children }) {
                     onClick={() => setMenuOuvert(false)}
                     style={{ textDecoration: "none" }}
                   >
-                    <o.Icone className="gozly-icon" /> {o.label}
+                    <o.Icone className="gozly-icon" /> {t(o.label)}
                   </Link>
                 ))}
               </div>

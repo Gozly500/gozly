@@ -7,6 +7,7 @@ import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { useGestion } from "@/components/gestion/GestionShell";
 import { telechargerPdfFeuilleTemps } from "@/lib/exportPdf";
 import { IconAttention, IconCrochet, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -40,6 +41,7 @@ function versDatetimeLocal(iso) {
 // qu'on ouvre pour voir ses 7 jours, plus l'approbation de la semaine.
 // Mêmes données et mêmes règles de calcul que la feuille de temps du dashboard.
 export default function FeuilleTempsMobile() {
+  const { t: tr } = useT();
   const { entrepriseId, entrepriseNom, a, user } = useGestion();
   const peutApprouver = a("approuver_feuille_temps");
   const peutCorriger = a("corriger_feuille_temps");
@@ -214,7 +216,7 @@ export default function FeuilleTempsMobile() {
       });
       await telechargerPdfFeuilleTemps({
         entrepriseNom,
-        succursaleNom: emplacements.find((e) => e.id === emplacementId)?.nom || (emplacements.length > 1 ? "Toutes les succursales" : ""),
+        succursaleNom: emplacements.find((e) => e.id === emplacementId)?.nom || (emplacements.length > 1 ? tr("Toutes les succursales") : ""),
         semaineLabel: libelleSemaine,
         jours: jours.map((d) => `${d.toLocaleDateString("fr-CA", { weekday: "short" })} ${d.getDate()}`),
         lignes: lignesPdf,
@@ -259,10 +261,11 @@ export default function FeuilleTempsMobile() {
   }
 
   function Pointage({ x, nom }) {
+  const { t: tr } = useT();
     const contenu = (
       <>
-        {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>en cours</em>}
-        {x.auto && <span className="gestion-oubli"><IconAttention className="gozly-icon" /> oubli potentiel</span>}
+        {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>{tr("en cours")}</em>}
+        {x.auto && <span className="gestion-oubli"><IconAttention className="gozly-icon" />{" "}{tr("oubli potentiel")}</span>}
       </>
     );
     return peutCorriger ? (
@@ -291,45 +294,45 @@ export default function FeuilleTempsMobile() {
       <div className="gestion-approbation">
         {approbationActuelle ? (
           <>
-            <span className="gestion-approuvee"><IconCrochet className="gozly-icon" /> Semaine approuvée</span>
+            <span className="gestion-approuvee"><IconCrochet className="gozly-icon" />{" "}{tr("Semaine approuvée")}</span>
             {peutApprouver && (
               <button className="admin-icon-btn" onClick={() => desapprouver(approbationActuelle)} disabled={approving}>
-                Retirer
+                {tr("Retirer")}
               </button>
             )}
           </>
         ) : peutApprouver ? (
           doitChoisirSuccursale ? (
             <span className="section-hint" style={{ margin: 0 }}>
-              Choisis une succursale pour approuver la semaine.
+              {tr("Choisis une succursale pour approuver la semaine.")}
             </span>
           ) : (
             <button className="btn-small" onClick={approuver} disabled={approving}>
-              Approuver cette semaine
+              {tr("Approuver cette semaine")}
             </button>
           )
         ) : (
           <span className="section-hint" style={{ margin: 0 }}>
-            Semaine pas encore approuvée.
+            {tr("Semaine pas encore approuvée.")}
           </span>
         )}
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>
       ) : !aDesPointages && seulementVoir && !autoVisible ? (
-        <p className="chat-empty">Rien à afficher : cette semaine n'a pas encore été approuvée, ou il n'y a aucun pointage.</p>
+        <p className="chat-empty">{tr("Rien à afficher : cette semaine n'a pas encore été approuvée, ou il n'y a aucun pointage.")}</p>
       ) : employesAffiches.length === 0 ? (
-        <p className="chat-empty">Aucun employé à afficher.</p>
+        <p className="chat-empty">{tr("Aucun employé à afficher.")}</p>
       ) : (
         <>
           <div className="gestion-resume">
             <span>
-              Total de la semaine : <strong>{heures(totalGeneral)}</strong>
+              {tr("Total de la semaine :")}{" "}<strong>{heures(totalGeneral)}</strong>
             </span>
             {peutExporter && (
               <button type="button" className="admin-icon-btn" onClick={exporterPdf} disabled={exportEnCours}>
-                {exportEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> PDF</>}
+                {exportEnCours ? tr("PDF...") : <><IconTelecharger className="gozly-icon" />{" "}{tr("PDF")}</>}
               </button>
             )}
           </div>
@@ -380,9 +383,9 @@ export default function FeuilleTempsMobile() {
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Corriger le pointage</h3>
+              <h3>{tr("Corriger le pointage")}</h3>
               <button className="admin-icon-btn" onClick={() => setModal(null)}>
-                Fermer
+                {tr("Fermer")}
               </button>
             </div>
             <p className="section-hint" style={{ marginBottom: "14px" }}>
@@ -390,16 +393,16 @@ export default function FeuilleTempsMobile() {
             </p>
             <form onSubmit={enregistrerCorrection}>
               <div className="field">
-                <label>Arrivée</label>
+                <label>{tr("Arrivée")}</label>
                 <input type="datetime-local" value={modal.entree} onChange={(e) => setModal((m) => ({ ...m, entree: e.target.value }))} required />
               </div>
               <div className="field">
-                <label>Départ (laisser vide si toujours en cours)</label>
+                <label>{tr("Départ (laisser vide si toujours en cours)")}</label>
                 <input type="datetime-local" value={modal.sortie} onChange={(e) => setModal((m) => ({ ...m, sortie: e.target.value }))} />
               </div>
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn" disabled={saving}>
-                  {saving ? "Enregistrement..." : "Enregistrer"}
+                  {saving ? tr("Enregistrement...") : tr("Enregistrer")}
                 </button>
               </div>
             </form>

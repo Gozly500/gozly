@@ -9,6 +9,7 @@ export function generateMetadata() {
 }
 
 export default function SettingsPage() {
+  const { t } = getT();
   return (
     <div className="page page-default">
       <Loader />
@@ -16,8 +17,8 @@ export default function SettingsPage() {
 
       <header className="page-hero">
         <div className="wrap">
-          <h1>Paramètres du compte</h1>
-          <p>Gère ton compte, ton entreprise et ton abonnement.</p>
+          <h1>{t("Paramètres du compte")}</h1>
+          <p>{t("Gère ton compte, ton entreprise et ton abonnement.")}</p>
         </div>
       </header>
 

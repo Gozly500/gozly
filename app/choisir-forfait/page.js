@@ -9,6 +9,7 @@ export function generateMetadata() {
 }
 
 export default function ChoisirForfaitPage() {
+  const { t } = getT();
   return (
     <div className="page page-default">
       <Loader />
@@ -16,8 +17,8 @@ export default function ChoisirForfaitPage() {
 
       <header className="page-hero">
         <div className="wrap">
-          <h1>Choisis ton forfait</h1>
-          <p>Ton compte est créé. Choisis ton forfait pour activer tes modules.</p>
+          <h1>{t("Choisis ton forfait")}</h1>
+          <p>{t("Ton compte est créé. Choisis ton forfait pour activer tes modules.")}</p>
         </div>
       </header>
 

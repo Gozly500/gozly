@@ -5,9 +5,11 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useGestion } from "@/components/gestion/GestionShell";
 import { dateAujourdhui, bornesJour, filtrerParDateEffective, etatCommande, formatMontant } from "@/lib/commandes";
+import { useT } from "@/components/LangProvider";
 
 // Accueil de l'app gestionnaire : un coup d'œil sur ce qui demande l'attention maintenant.
 export default function AccueilGestion() {
+  const { t } = useT();
   const { entrepriseId, modulesActifs, onglets, a } = useGestion();
   const [enPoste, setEnPoste] = useState(null); // noms des employés actuellement en poste
   const [commandes, setCommandes] = useState(null); // commandes du jour
@@ -61,18 +63,18 @@ export default function AccueilGestion() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: "14px" }}>Aujourd&apos;hui</h2>
+      <h2 style={{ marginBottom: "14px" }}>{t("Aujourd'hui")}</h2>
 
       <div className="gestion-accueil-cartes">
         {horaire && (
           <Link href="/gestion/horaire" className="planning-day gestion-accueil-carte">
-            <div className="gestion-accueil-titre">En poste maintenant</div>
+            <div className="gestion-accueil-titre">{t("En poste maintenant")}</div>
             {enPoste === null ? (
               <div className="gestion-accueil-valeur">…</div>
             ) : (
               <>
                 <div className="gestion-accueil-valeur">{enPoste.length}</div>
-                <div className="gestion-accueil-detail">{enPoste.length > 0 ? enPoste.join(", ") : "Personne pour l'instant"}</div>
+                <div className="gestion-accueil-detail">{enPoste.length > 0 ? enPoste.join(", ") : t("Personne pour l'instant")}</div>
               </>
             )}
           </Link>
@@ -80,7 +82,7 @@ export default function AccueilGestion() {
 
         {commandesActif && (
           <Link href="/gestion/commandes" className="planning-day gestion-accueil-carte">
-            <div className="gestion-accueil-titre">Commandes du jour</div>
+            <div className="gestion-accueil-titre">{t("Commandes du jour")}</div>
             {commandes === null ? (
               <div className="gestion-accueil-valeur">…</div>
             ) : (
@@ -88,7 +90,7 @@ export default function AccueilGestion() {
                 <div className="gestion-accueil-valeur">{commandes.length}</div>
                 <div className="gestion-accueil-detail">
                   {commandes.length === 0
-                    ? "Aucune commande aujourd'hui"
+                    ? t("Aucune commande aujourd'hui")
                     : `${aTraiter > 0 ? `${aTraiter} en attente · ` : ""}${formatMontant(totalCommandes)}`}
                 </div>
               </>
@@ -98,14 +100,14 @@ export default function AccueilGestion() {
 
         {horaire && demandes !== null && (
           <Link href="/gestion/demandes" className="planning-day gestion-accueil-carte">
-            <div className="gestion-accueil-titre">Demandes à traiter</div>
+            <div className="gestion-accueil-titre">{t("Demandes à traiter")}</div>
             <div className="gestion-accueil-valeur">{demandes}</div>
-            <div className="gestion-accueil-detail">{demandes > 0 ? "Congés et échanges de quart" : "Rien en attente"}</div>
+            <div className="gestion-accueil-detail">{demandes > 0 ? t("Congés et échanges de quart") : t("Rien en attente")}</div>
           </Link>
         )}
       </div>
 
-      {onglets.length <= 1 && <p className="chat-empty">Aucun module disponible pour l&apos;instant.</p>}
+      {onglets.length <= 1 && <p className="chat-empty">{t("Aucun module disponible pour l'instant.")}</p>}
     </div>
   );
 }

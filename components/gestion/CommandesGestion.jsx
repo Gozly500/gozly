@@ -24,6 +24,7 @@ import {
   noteCommande,
 } from "@/lib/commandes";
 import { IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconRafraichir, IconTelecharger } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 const INTERVALLE_SYNC_MS = 30000;
 
@@ -37,6 +38,7 @@ const FILTRES = [
 // Commandes pour le téléphone : une carte par commande avec le bouton de l'étape suivante
 // bien visible, navigation par jour, filtres, total à préparer par produit.
 export default function CommandesGestion() {
+  const { t } = useT();
   const { entrepriseId, entrepriseNom } = useGestion();
   const [exportEnCours, setExportEnCours] = useState(false);
   const [date, setDate] = useState(dateAujourdhui);
@@ -74,13 +76,13 @@ export default function CommandesGestion() {
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
-          if (!silencieux) setMessage({ type: "ok", text: `${data.count} commande(s) synchronisée(s).` });
+          if (!silencieux) setMessage({ type: "ok", text: t("{n} commande(s) synchronisée(s).", { n: data.count }) });
           await charger();
         } else if (!silencieux) {
-          setMessage({ type: "err", text: data.error || "La synchronisation a échoué." });
+          setMessage({ type: "err", text: data.error || t("La synchronisation a échoué.") });
         }
       } catch {
-        if (!silencieux) setMessage({ type: "err", text: "La synchronisation a échoué." });
+        if (!silencieux) setMessage({ type: "err", text: t("La synchronisation a échoué.") });
       }
       if (!silencieux) setSyncing(false);
     },
@@ -114,12 +116,12 @@ export default function CommandesGestion() {
   async function imprimer(c) {
     const { ok, error } = await imprimerCommande(entrepriseId, c.id, "manuel");
     setMessage(
-      ok ? { type: "ok", text: `Bon #${c.numero} envoyé à l'imprimante.` } : { type: "err", text: error || "L'impression a échoué." }
+      ok ? { type: "ok", text: t("Bon #{n} envoyé à l'imprimante.", { n: c.numero }) } : { type: "err", text: error || t("L'impression a échoué.") }
     );
   }
 
   async function retirer(c) {
-    if (!window.confirm(`Retirer la commande #${c.numero}?`)) return;
+    if (!window.confirm(t("Retirer la commande #{n}?", { n: c.numero }))) return;
     await supabase.from("commandes_en_ligne").delete().eq("id", c.id);
     await mettreAJourTachesCommandes(entrepriseId);
     charger();
@@ -162,9 +164,9 @@ export default function CommandesGestion() {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "10px" }}>
-        <h2 style={{ margin: 0 }}>Commandes</h2>
+        <h2 style={{ margin: 0 }}>{t("Commandes")}</h2>
         <button type="button" className="btn-small" onClick={() => setNouvelle(true)}>
-          + Nouvelle
+          {t("+ Nouvelle")}
         </button>
       </div>
 
@@ -182,7 +184,7 @@ export default function CommandesGestion() {
       {date !== aujourdhui && (
         <div style={{ textAlign: "center", marginTop: "-8px", marginBottom: "12px" }}>
           <button className="admin-icon-btn" onClick={() => setDate(aujourdhui)}>
-            Aujourd&apos;hui
+            {t("Aujourd'hui")}
           </button>
         </div>
       )}
@@ -191,25 +193,25 @@ export default function CommandesGestion() {
 
       <div className="gestion-resume">
         <span>
-          {valides.length} commande{valides.length > 1 ? "s" : ""} · <strong>{formatMontant(totalJour)}</strong>
+          {valides.length}{" "}{t("commande")}{valides.length > 1 ? "s" : ""} · <strong>{formatMontant(totalJour)}</strong>
         </span>
         <span style={{ display: "flex", gap: "6px" }}>
           <button type="button" className="admin-icon-btn" onClick={exporterPdf} disabled={exportEnCours || commandes.length === 0}>
-            {exportEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> PDF</>}
+            {exportEnCours ? t("PDF...") : <><IconTelecharger className="gozly-icon" />{" "}{t("PDF")}</>}
           </button>
           <button type="button" className="admin-icon-btn" onClick={() => synchroniser()} disabled={syncing}>
-            {syncing ? "..." : <><IconRafraichir className="gozly-icon" /> Actualiser</>}
+            {syncing ? "..." : <><IconRafraichir className="gozly-icon" />{" "}{t("Actualiser")}</>}
           </button>
         </span>
       </div>
 
       {totauxProduits.length > 0 && (
         <details className="planning-day gestion-apreparer">
-          <summary>À préparer ({totauxProduits.length} produit{totauxProduits.length > 1 ? "s" : ""})</summary>
+          <summary>{t("À préparer (")}{totauxProduits.length}{" "}{t("produit")}{totauxProduits.length > 1 ? "s" : ""})</summary>
           {totauxProduits.map((p) => (
             <div className="gestion-ligne-produit" key={p.cle}>
               <span>{p.nom}</span>
-              <strong>× {p.quantite}</strong>
+              <strong>{t("×")}{" "}{p.quantite}</strong>
             </div>
           ))}
         </details>
@@ -224,15 +226,15 @@ export default function CommandesGestion() {
             style={filtre === id ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
             onClick={() => setFiltre(id)}
           >
-            {label}
+            {t(label)}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       ) : visibles.length === 0 ? (
-        <p className="chat-empty">Aucune commande.</p>
+        <p className="chat-empty">{t("Aucune commande.")}</p>
       ) : (
         <div className="gestion-cartes">
           {visibles.map((c) => {
@@ -243,7 +245,7 @@ export default function CommandesGestion() {
               <div className="planning-day gestion-commande" key={c.id}>
                 <div className="gestion-commande-tete">
                   <strong>
-                    #{c.numero || "—"} · {libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}
+                    #{c.numero || "—"} · {libelleRamassage(c) ? t("Ramassage {x}", { x: libelleRamassage(c) }) : heureCommande(c.date_commande)}
                   </strong>
                   <span style={{ color: etat.couleur, fontWeight: 600, fontSize: "12.5px", whiteSpace: "nowrap" }}>{etat.texte}</span>
                 </div>
@@ -266,7 +268,7 @@ export default function CommandesGestion() {
                 <div className="gestion-commande-items">
                   {(c.items || []).map((it, i) => (
                     <div key={i}>
-                      {it.quantite} × {it.nom}
+                      {it.quantite}{" "}{t("×")}{" "}{it.nom}
                       {it.options?.length > 0 && <span style={{ color: "var(--text-dim)", fontSize: "12.5px" }}> ({it.options.join(", ")})</span>}
                     </div>
                   ))}
@@ -277,12 +279,12 @@ export default function CommandesGestion() {
                   <div className="gestion-commande-actions">
                     {etat.id === "en_attente" && (
                       <button className="btn-small" onClick={() => passerEtape(c, "traitee")}>
-                        Traiter <IconFlecheDroite className="gozly-icon-inline" />
+                        {t("Traiter")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
                       </button>
                     )}
                     {etat.id === "traitee" && (
                       <button className="btn-small" onClick={() => passerEtape(c, "terminee")}>
-                        Terminer <IconCrochet className="gozly-icon" />
+                        {t("Terminer")}{" "}<IconCrochet className="gozly-icon" />
                       </button>
                     )}
                   </div>
@@ -290,21 +292,21 @@ export default function CommandesGestion() {
                 <div className="gestion-commande-secondaire">
                   {imprimanteActive && etat.id !== "annulee" && (
                     <button className="admin-icon-btn" onClick={() => imprimer(c)}>
-                      {c.imprime_le ? "Réimprimer" : "Imprimer"}
+                      {c.imprime_le ? t("Réimprimer") : t("Imprimer")}
                     </button>
                   )}
                   {(etat.id === "traitee" || etat.id === "terminee") && (
                     <button className="admin-icon-btn" onClick={() => passerEtape(c, "en_attente")}>
-                      Rouvrir
+                      {t("Rouvrir")}
                     </button>
                   )}
                   {c.source === "manuel" && (
                     <>
                       <button className="admin-icon-btn" onClick={() => setModal({ commande: c })}>
-                        Modifier
+                        {t("Modifier")}
                       </button>
                       <button className="admin-icon-btn danger" onClick={() => retirer(c)}>
-                        Retirer
+                        {t("Retirer")}
                       </button>
                     </>
                   )}

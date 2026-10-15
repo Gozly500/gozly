@@ -17,6 +17,7 @@ import {
   estSobre,
 } from "@/lib/themes";
 import { IconAttention } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Parcours obligatoire juste après la création d'un compte : (1) créer sa
 // première entreprise (impossible d'avoir un tableau de bord sans elle),
@@ -24,6 +25,7 @@ import { IconAttention } from "@/components/icons/Pictogrammes";
 // détestent le bleu coincés avec le dégradé par défaut sans jamais penser à
 // aller fouiller dans Paramètres > Apparence pour le changer.
 export default function OnboardingContent() {
+  const { t } = useT();
   const router = useRouter();
   const fileInputRef = useRef(null);
 
@@ -129,7 +131,7 @@ export default function OnboardingContent() {
 
     if (entrepriseError) {
       setCreating(false);
-      setError("La création de l'entreprise a échoué. Réessaie dans un instant.");
+      setError(t("La création de l'entreprise a échoué. Réessaie dans un instant."));
       return;
     }
 
@@ -140,7 +142,7 @@ export default function OnboardingContent() {
     setCreating(false);
 
     if (membreError) {
-      setError("L'entreprise a été créée, mais le lien avec ton compte a échoué. Contacte-nous.");
+      setError(t("L'entreprise a été créée, mais le lien avec ton compte a échoué. Contacte-nous."));
       return;
     }
 
@@ -186,30 +188,29 @@ export default function OnboardingContent() {
   }
 
   if (checking) {
-    return <p style={{ color: "var(--text-dim)", textAlign: "center" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)", textAlign: "center" }}>{t("Chargement...")}</p>;
   }
 
   if (etape === "entreprise") {
     return (
       <div className="contact-card">
         <h1 style={{ fontSize: "clamp(26px,4vw,34px)", marginBottom: "8px", textAlign: "center" }}>
-          Crée ta première entreprise
+          {t("Crée ta première entreprise")}
         </h1>
         <p className="section-hint" style={{ textAlign: "center", marginBottom: "22px" }}>
-          C'est elle qui aura son tableau de bord. Tu pourras en ajouter d'autres plus tard si tu gères plusieurs
-          entreprises distinctes.
+          {t("C'est elle qui aura son tableau de bord. Tu pourras en ajouter d'autres plus tard si tu gères plusieurs entreprises distinctes.")}
         </p>
 
         <form onSubmit={handleCreerEntreprise}>
           <div className="avatar-upload">
             <div className="avatar-preview">
-              {logoApercu ? <img src={logoApercu} alt="Logo" /> : (nom || "?").charAt(0).toUpperCase()}
+              {logoApercu ? <img src={logoApercu} alt={t("Logo")} /> : (nom || "?").charAt(0).toUpperCase()}
             </div>
             <div className="avatar-actions">
               <button type="button" className="btn-small" onClick={() => fileInputRef.current?.click()}>
-                Ajouter un logo
+                {t("Ajouter un logo")}
               </button>
-              <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>Optionnel, tu peux l'ajouter plus tard</span>
+              <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{t("Optionnel, tu peux l'ajouter plus tard")}</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -222,31 +223,31 @@ export default function OnboardingContent() {
 
           <div className="field-row" style={{ marginTop: "18px" }}>
             <div className="field">
-              <label htmlFor="nom-entreprise">Nom de l'entreprise</label>
+              <label htmlFor="nom-entreprise">{t("Nom de l'entreprise")}</label>
               <input
                 id="nom-entreprise"
                 type="text"
                 value={nom}
                 onChange={(e) => setNom(e.target.value)}
-                placeholder="Nom de l'entreprise"
+                placeholder={t("Nom de l'entreprise")}
                 required
                 autoFocus
               />
             </div>
             <div className="field">
-              <label htmlFor="secteur">Secteur d'activité</label>
+              <label htmlFor="secteur">{t("Secteur d'activité")}</label>
               <input
                 id="secteur"
                 type="text"
                 value={secteurActivite}
                 onChange={(e) => setSecteurActivite(e.target.value)}
-                placeholder="Ex: Restauration, Détail..."
+                placeholder={t("Ex: Restauration, Détail...")}
               />
             </div>
           </div>
 
           <div className="field">
-            <label htmlFor="adresse">Adresse physique</label>
+            <label htmlFor="adresse">{t("Adresse physique")}</label>
             <input
               id="adresse"
               type="text"
@@ -255,28 +256,28 @@ export default function OnboardingContent() {
                 setAdresse(e.target.value);
                 setAdresseIntrouvable(false);
               }}
-              placeholder="123 rue Exemple, Ville, Province"
+              placeholder={t("123 rue Exemple, Ville, Province")}
             />
             {adresseIntrouvable && (
               <p className="section-hint" style={{ color: "#f2b95a", marginTop: "4px" }}>
-                <IconAttention className="gozly-icon" /> Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
+                <IconAttention className="gozly-icon" />{" "}{t("Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.")}
               </p>
             )}
           </div>
 
           <div className="field-row">
             <div className="field">
-              <label htmlFor="courriel">Courriel de contact</label>
+              <label htmlFor="courriel">{t("Courriel de contact")}</label>
               <input
                 id="courriel"
                 type="email"
                 value={courrielContact}
                 onChange={(e) => setCourrielContact(e.target.value)}
-                placeholder="contact@entreprise.com"
+                placeholder={t("contact@entreprise.com")}
               />
             </div>
             <div className="field">
-              <label htmlFor="telephone">Téléphone</label>
+              <label htmlFor="telephone">{t("Téléphone")}</label>
               <input
                 id="telephone"
                 type="tel"
@@ -291,7 +292,7 @@ export default function OnboardingContent() {
 
           <div className="submit-wrap">
             <button type="submit" className="submit-btn" disabled={creating || !nom.trim()}>
-              {creating ? "Création..." : "Continuer"}
+              {creating ? t("Création...") : t("Continuer")}
             </button>
           </div>
         </form>
@@ -302,16 +303,16 @@ export default function OnboardingContent() {
   return (
     <div className="contact-card">
       <h1 style={{ fontSize: "clamp(26px,4vw,34px)", marginBottom: "8px", textAlign: "center" }}>
-        Personnalise ton expérience
+        {t("Personnalise ton expérience")}
       </h1>
       <p className="section-hint" style={{ textAlign: "center", marginBottom: "22px" }}>
-        Choisis l'apparence de ton tableau de bord - tu pourras toujours en changer plus tard dans Paramètres.
+        {t("Choisis l'apparence de ton tableau de bord - tu pourras toujours en changer plus tard dans Paramètres.")}
       </p>
 
       <div className="switch-row" style={{ marginBottom: "18px" }}>
         <div className="switch-row-text">
-          <h4>Couleur</h4>
-          <p>Décoche pour un affichage sobre, sans couleur de fond : Sombre ou Clair.</p>
+          <h4>{t("Couleur")}</h4>
+          <p>{t("Décoche pour un affichage sobre, sans couleur de fond : Sombre ou Clair.")}</p>
         </div>
         <label className="switch">
           <input type="checkbox" checked={!estSobre(theme)} onChange={(e) => handleToggleCouleur(e.target.checked)} />
@@ -324,7 +325,7 @@ export default function OnboardingContent() {
 
       <div className="submit-wrap" style={{ marginTop: "22px" }}>
         <button type="button" className="submit-btn" onClick={handleTerminer}>
-          Continuer
+          {t("Continuer")}
         </button>
       </div>
     </div>

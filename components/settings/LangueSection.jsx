@@ -17,21 +17,16 @@ export default function LangueSection({ profil, setProfil }) {
   const { t, lang } = useT();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState(null);
 
   async function choisir(id) {
     if (id === lang || saving) return;
     setSaving(true);
-    setMsg(null);
 
+    // Sauvegarde sur le compte (suit l'utilisateur d'un appareil à l'autre). Si la colonne n'existe pas
+    // encore (profil_langue.sql pas exécuté), on applique quand même la langue sur cet appareil (cookie).
     if (profil) {
       const { error } = await supabase.from("profils").update({ langue: id }).eq("id", profil.id);
-      if (error) {
-        setSaving(false);
-        setMsg({ type: "err", text: t("Le changement de langue a échoué. Réessaie dans un instant.") });
-        return;
-      }
-      setProfil({ ...profil, langue: id });
+      if (!error) setProfil({ ...profil, langue: id });
     }
 
     document.cookie = `${LANG_COOKIE}=${id}; path=/; max-age=31536000; samesite=lax`;
@@ -57,7 +52,6 @@ export default function LangueSection({ profil, setProfil }) {
           </button>
         ))}
       </div>
-      {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
     </div>
   );
 }

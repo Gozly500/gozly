@@ -7,6 +7,7 @@ import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { useGestion } from "@/components/gestion/GestionShell";
 import { IconCrayon, IconFlecheBas, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -19,6 +20,7 @@ function heure(t) {
 
 // Menu déroulant maison pour choisir l'employé (pas de <select> natif).
 function ChoixEmploye({ employes, value, onChange }) {
+  const { t: tr } = useT();
   const [ouvert, setOuvert] = useState(false);
   const ref = useRef(null);
   useFermerAuClicExterieur(ref, ouvert, () => setOuvert(false));
@@ -26,7 +28,7 @@ function ChoixEmploye({ employes, value, onChange }) {
   return (
     <div className="emplacement-select-wrap" ref={ref} style={{ marginBottom: 0 }}>
       <div className={`emplacement-select-trigger${ouvert ? " open" : ""}`} onClick={() => setOuvert((v) => !v)}>
-        <span>{courant?.nom || "Choisis un employé"}</span>
+        <span>{courant?.nom || tr("Choisis un employé")}</span>
         <span className="fs-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
       </div>
       {ouvert && (
@@ -52,6 +54,7 @@ function ChoixEmploye({ employes, value, onChange }) {
 // Horaire pour le téléphone : les quarts de la semaine, jour par jour. Avec la permission « Gérer l'horaire »,
 // un bouton Modifier fait apparaître un crayon sur chaque quart et « + Ajouter » sur chaque journée.
 export default function HoraireMobile() {
+  const { t: tr } = useT();
   const { entrepriseId, a } = useGestion();
   const peutModifier = a("gerer_horaire");
   const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
@@ -122,7 +125,7 @@ export default function HoraireMobile() {
 
   const jours = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const aujourdhui = dateStr(new Date());
-  const nomEmploye = (id) => employes.find((e) => e.id === id)?.nom || "Employé";
+  const nomEmploye = (id) => employes.find((e) => e.id === id)?.nom || tr("Employé");
   const nomEmplacement = (id) => emplacements.find((e) => e.id === id)?.nom;
 
   // Succursale où ajouter un quart : l'unique succursale, ou celle choisie. Plusieurs succursales et aucune choisie : on ne peut pas ajouter.
@@ -174,7 +177,7 @@ export default function HoraireMobile() {
 
   async function retirer() {
     if (!modal.quartId) return;
-    if (!window.confirm("Retirer ce quart?")) return;
+    if (!window.confirm(tr("Retirer ce quart?"))) return;
     await supabase.from("planning_quarts").delete().eq("id", modal.quartId);
     setModal(null);
     charger();
@@ -207,7 +210,7 @@ export default function HoraireMobile() {
     }).catch(() => {});
 
     setPublication(false);
-    setMessage({ type: "ok", text: "Semaine publiée : les employés sont avertis." });
+    setMessage({ type: "ok", text: tr("Semaine publiée : les employés sont avertis.") });
     charger();
   }
 
@@ -233,20 +236,20 @@ export default function HoraireMobile() {
       {peutModifier && (
         <div className="gestion-horaire-barre">
           <button type="button" className={edition ? "btn-small" : "admin-icon-btn"} onClick={() => setEdition((v) => !v)}>
-            {edition ? "Terminer" : <><IconCrayon className="gozly-icon" /> Modifier</>}
+            {edition ? tr("Terminer") : <><IconCrayon className="gozly-icon" />{" "}{tr("Modifier")}</>}
           </button>
           {edition && brouillons > 0 && (
             <button type="button" className="btn-small" onClick={publier} disabled={publication || !peutAjouter}>
-              {publication ? "Publication..." : `Publier (${brouillons} brouillon${brouillons > 1 ? "s" : ""})`}
+              {publication ? tr("Publication...") : tr(brouillons > 1 ? "Publier ({n} brouillons)" : "Publier ({n} brouillon)", { n: brouillons })}
             </button>
           )}
         </div>
       )}
-      {edition && !peutAjouter && <p className="section-hint">Choisis une succursale pour ajouter un quart ou publier la semaine.</p>}
+      {edition && !peutAjouter && <p className="section-hint">{tr("Choisis une succursale pour ajouter un quart ou publier la semaine.")}</p>}
       {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>
       ) : (
         <div className="gestion-cartes" style={{ marginTop: "12px" }}>
           {jours.map((d) => {
@@ -258,7 +261,7 @@ export default function HoraireMobile() {
                 <div className="gestion-jour-horaire-titre">{titre.charAt(0).toUpperCase() + titre.slice(1)}</div>
                 {duJour.length === 0 ? (
                   <p className="moi-jour-repos" style={{ margin: 0 }}>
-                    Aucun quart
+                    {tr("Aucun quart")}
                   </p>
                 ) : (
                   duJour.map((q) => (
@@ -273,11 +276,11 @@ export default function HoraireMobile() {
                             {[q.poste, !emplacementId && emplacements.length > 1 ? nomEmplacement(q.emplacement_id) : null].filter(Boolean).join(" · ")}
                           </span>
                         )}
-                        {!q.publie && <span className="gestion-brouillon">Brouillon</span>}
-                        {q.echange_de && <span className="gestion-echange">Échange · de {nomEmploye(q.echange_de)}</span>}
+                        {!q.publie && <span className="gestion-brouillon">{tr("Brouillon")}</span>}
+                        {q.echange_de && <span className="gestion-echange">{tr("Échange · de")}{" "}{nomEmploye(q.echange_de)}</span>}
                       </div>
                       {edition && (
-                        <button type="button" className="admin-icon-btn gestion-crayon" onClick={() => ouvrirModif(q)} aria-label="Modifier ce quart">
+                        <button type="button" className="admin-icon-btn gestion-crayon" onClick={() => ouvrirModif(q)} aria-label={tr("Modifier ce quart")}>
                           <IconCrayon className="gozly-icon" />
                         </button>
                       )}
@@ -286,7 +289,7 @@ export default function HoraireMobile() {
                 )}
                 {edition && (
                   <button type="button" className="gestion-tache-plus" disabled={!peutAjouter} onClick={() => ouvrirAjout(iso)}>
-                    + Ajouter à cette journée
+                    {tr("+ Ajouter à cette journée")}
                   </button>
                 )}
               </div>
@@ -299,9 +302,9 @@ export default function HoraireMobile() {
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>{modal.quartId ? "Modifier le quart" : "Ajouter un quart"}</h3>
+              <h3>{modal.quartId ? tr("Modifier le quart") : tr("Ajouter un quart")}</h3>
               <button className="admin-icon-btn" onClick={() => setModal(null)}>
-                Fermer
+                {tr("Fermer")}
               </button>
             </div>
             <p className="section-hint" style={{ marginBottom: "12px" }}>
@@ -310,30 +313,30 @@ export default function HoraireMobile() {
             </p>
             <form onSubmit={enregistrer}>
               <div className="field">
-                <label>Employé</label>
+                <label>{tr("Employé")}</label>
                 <ChoixEmploye employes={employesPour(modal.emplacementId)} value={modal.employeId} onChange={(id) => setModal((m) => ({ ...m, employeId: id }))} />
               </div>
               <div className="field-row">
                 <div className="field">
-                  <label>Début</label>
+                  <label>{tr("Début")}</label>
                   <input type="time" value={modal.heureDebut} onChange={(e) => setModal((m) => ({ ...m, heureDebut: e.target.value }))} required />
                 </div>
                 <div className="field">
-                  <label>Fin</label>
+                  <label>{tr("Fin")}</label>
                   <input type="time" value={modal.heureFin} onChange={(e) => setModal((m) => ({ ...m, heureFin: e.target.value }))} required />
                 </div>
               </div>
               <div className="field">
-                <label>Poste (optionnel)</label>
-                <input type="text" value={modal.poste} onChange={(e) => setModal((m) => ({ ...m, poste: e.target.value }))} placeholder="Ex: Caisse, Cuisine" maxLength={60} />
+                <label>{tr("Poste (optionnel)")}</label>
+                <input type="text" value={modal.poste} onChange={(e) => setModal((m) => ({ ...m, poste: e.target.value }))} placeholder={tr("Ex: Caisse, Cuisine")} maxLength={60} />
               </div>
               <div className="admin-edit-actions" style={{ display: "flex", gap: "8px" }}>
                 <button type="submit" className="submit-btn" disabled={saving || !modal.employeId}>
-                  {saving ? "Enregistrement..." : "Enregistrer"}
+                  {saving ? tr("Enregistrement...") : tr("Enregistrer")}
                 </button>
                 {modal.quartId && (
                   <button type="button" className="admin-icon-btn danger" onClick={retirer}>
-                    Retirer
+                    {tr("Retirer")}
                   </button>
                 )}
               </div>
