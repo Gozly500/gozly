@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import EmployesContent from "@/components/EmployesContent";
 
-export const metadata = {
-  title: "Gozly - Employés",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Employés") };
+}
 
 export default function EmployesPage() {
   return (

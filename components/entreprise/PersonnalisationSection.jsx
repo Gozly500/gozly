@@ -7,6 +7,7 @@ import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import ImpressionCommandesBloc from "@/components/entreprise/ImpressionCommandesBloc";
 import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 const OPTIONS_PREMIER_JOUR = [
   { id: "lundi", label: "Lundi" },
@@ -99,6 +100,7 @@ const OPTIONS_RETENTION_TEMPERATURE = [
 // Liste déroulante maison (voir .forfait-select-*) avec sa bulle d'aide "i".
 // Gère son propre état ouvert/fermé et se ferme au clic à l'extérieur.
 function ParametreSelect({ label, info, options, value, onChange, disabled }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -107,7 +109,7 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
   return (
     <div className="field param-field" ref={ref}>
       <label>
-        {label}
+        {t(label)}
         {info && <InfoTooltip>{info}</InfoTooltip>}
       </label>
       <div className="forfait-select-wrap">
@@ -126,7 +128,7 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
                   onChange(o.id);
                 }}
               >
-                <div className="fo-label">{o.label}</div>
+                <div className="fo-label">{t(o.label)}</div>
               </div>
             ))}
           </div>
@@ -137,6 +139,7 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
 }
 
 export default function PersonnalisationSection({ entrepriseId }) {
+  const { t } = useT();
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
   const [approbationEchanges, setApprobationEchanges] = useState("manuelle");
@@ -227,7 +230,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeLieuWix(value) {
@@ -248,13 +251,13 @@ export default function PersonnalisationSection({ entrepriseId }) {
           ? {
               type: "ok",
               text: value
-                ? `Succursale enregistrée${data.retirees ? ` (${data.retirees} commande(s) d'une autre succursale retirée(s))` : ""}.`
-                : "Toutes les succursales : la prochaine synchro ramènera toutes les commandes.",
+                ? t("Succursale enregistrée") + (data.retirees ? " (" + t("{n} commande(s) d'une autre succursale retirée(s)", { n: data.retirees }) + ")" : "") + "."
+                : t("Toutes les succursales : la prochaine synchro ramènera toutes les commandes."),
             }
-          : { type: "err", text: data.error || "L'enregistrement a échoué." }
+          : { type: "err", text: data.error || t("L'enregistrement a échoué.") }
       );
     } catch {
-      setMsg({ type: "err", text: "L'enregistrement a échoué." });
+      setMsg({ type: "err", text: t("L'enregistrement a échoué.") });
     }
     setSaving(false);
   }
@@ -271,7 +274,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
 
     if (!error) await mettreAJourTachesCommandes(entrepriseId); // crée ou retire les tâches tout de suite
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeKiosqueCommandes(value) {
@@ -284,8 +287,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setSaving(false);
     setMsg(
       error
-        ? { type: "err", text: "L'enregistrement a échoué. As-tu exécuté commandes_kiosque_mode.sql dans Supabase?" }
-        : { type: "ok", text: "Préférence enregistrée. Recharge le kiosque pour l'appliquer." }
+        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_kiosque_mode.sql dans Supabase?") }
+        : { type: "ok", text: t("Préférence enregistrée. Recharge le kiosque pour l'appliquer.") }
     );
   }
 
@@ -300,7 +303,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeRetentionCommandes(value) {
@@ -314,7 +317,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeRetentionTemperature(value) {
@@ -328,7 +331,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeRappelsTemperature(value) {
@@ -344,8 +347,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setSaving(false);
     setMsg(
       error
-        ? { type: "err", text: "L'enregistrement a échoué (le fichier SQL des rappels est-il exécuté ?)." }
-        : { type: "ok", text: "Préférence enregistrée." }
+        ? { type: "err", text: t("L'enregistrement a échoué (le fichier SQL des rappels est-il exécuté ?).") }
+        : { type: "ok", text: t("Préférence enregistrée.") }
     );
   }
 
@@ -362,8 +365,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setSaving(false);
     setMsg(
       error
-        ? { type: "err", text: "L'enregistrement a échoué (le fichier SQL du rappel de pointage est-il exécuté ?)." }
-        : { type: "ok", text: "Préférence enregistrée." }
+        ? { type: "err", text: t("L'enregistrement a échoué (le fichier SQL du rappel de pointage est-il exécuté ?).") }
+        : { type: "ok", text: t("Préférence enregistrée.") }
     );
   }
 
@@ -375,7 +378,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     const { error } = await supabase.from("entreprises").update({ premier_jour_semaine: value }).eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeApprobation(value) {
@@ -389,7 +392,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeApprobationConges(value) {
@@ -403,7 +406,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeCalculPointage(value) {
@@ -414,7 +417,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     const { error } = await supabase.from("entreprises").update({ pointage_calcul_mode: value }).eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangePointageMobile(value) {
@@ -428,7 +431,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangePushWix(value) {
@@ -439,7 +442,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
     const { error } = await supabase.from("entreprises").update({ sync_produits_auto: value === "automatique" }).eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeVisibiliteFeuilleTemps(value) {
@@ -453,7 +456,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   async function handleChangeRetentionDemandes(value) {
@@ -467,7 +470,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
       .eq("id", entrepriseId);
 
     setSaving(false);
-    setMsg(error ? { type: "err", text: "L'enregistrement a échoué." } : { type: "ok", text: "Préférence enregistrée." });
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
   function toggleSection(id) {
@@ -475,7 +478,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   const horaireActif = modulesActifs.includes("horaire");
@@ -485,14 +488,14 @@ export default function PersonnalisationSection({ entrepriseId }) {
 
   return (
     <div>
-      <h2>Personnalisation</h2>
-      <p className="panel-hint">Ajuste le comportement de tes modules actifs.</p>
+      <h2>{t("Personnalisation")}</h2>
+      <p className="panel-hint">{t("Ajuste le comportement de tes modules actifs.")}</p>
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
       {!horaireActif && !inventaireActif && !temperatureActif && !commandesActif ? (
         <p className="section-hint">
-          Active un module (ex: Horaire &amp; Pointage) pour voir apparaître ici ses options de personnalisation.
+          {t("Active un module (ex: Horaire & Pointage) pour voir apparaître ici ses options de personnalisation.")}
         </p>
       ) : (
         <div className="integration-list">
@@ -503,17 +506,17 @@ export default function PersonnalisationSection({ entrepriseId }) {
             className={`integration-header${sectionsOuvertes.horaire ? " open" : ""}`}
             onClick={() => toggleSection("horaire")}
           >
-            <span className="ih-label">Horaire &amp; Pointage</span>
+            <span className="ih-label">{t("Horaire & Pointage")}</span>
             <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
           </button>
           {sectionsOuvertes.horaire && (
             <div className="integration-body">
               <div className="param-subgroup">
-                <div className="param-subgroup-label">Horaire</div>
+                <div className="param-subgroup-label">{t("Horaire")}</div>
                 <div className="param-grid">
                   <ParametreSelect
-                    label="Premier jour de la semaine"
-                    info="Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps."
+                    label={t("Premier jour de la semaine")}
+                    info={t("Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps.")}
                     options={OPTIONS_PREMIER_JOUR}
                     value={premierJourSemaine}
                     onChange={handleChangePremierJour}
@@ -523,35 +526,35 @@ export default function PersonnalisationSection({ entrepriseId }) {
               </div>
 
               <div className="param-subgroup">
-                <div className="param-subgroup-label">Pointage</div>
+                <div className="param-subgroup-label">{t("Pointage")}</div>
                 <div className="param-grid">
                   <ParametreSelect
-                    label="Pointage mobile (GPS)"
-                    info="Permet de pointer depuis l'app mobile plutôt qu'au kiosque, en vérifiant la position GPS par rapport à l'adresse de la succursale (voir Emplacements). Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, les jours où ils ont un quart prévu."
+                    label={t("Pointage mobile (GPS)")}
+                    info={t("Permet de pointer depuis l'app mobile plutôt qu'au kiosque, en vérifiant la position GPS par rapport à l'adresse de la succursale (voir Emplacements). Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, les jours où ils ont un quart prévu.")}
                     options={OPTIONS_POINTAGE_MOBILE}
                     value={pointageMobile}
                     onChange={handleChangePointageMobile}
                     disabled={saving}
                   />
                   <ParametreSelect
-                    label="Rappel de pointage"
-                    info="Envoie une notification « N'oublie pas de pointer » à l'employé dont le quart publié a commencé depuis 10 minutes sans qu'il ait pointé. Les employés doivent avoir activé les notifications dans l'app."
+                    label={t("Rappel de pointage")}
+                    info={t("Envoie une notification « N'oublie pas de pointer » à l'employé dont le quart publié a commencé depuis 10 minutes sans qu'il ait pointé. Les employés doivent avoir activé les notifications dans l'app.")}
                     options={OPTIONS_RAPPELS_POINTAGE}
                     value={rappelsPointage}
                     onChange={handleChangeRappelsPointage}
                     disabled={saving}
                   />
                   <ParametreSelect
-                    label="Calcul des heures"
-                    info="Heure réelle : les heures comptent dès que l'employé pointe. Heure prévue : s'il pointe en avance, elles comptent à partir de l'heure de son quart. S'il pointe en retard ou sans quart prévu, l'heure réelle est toujours utilisée."
+                    label={t("Calcul des heures")}
+                    info={t("Heure réelle : les heures comptent dès que l'employé pointe. Heure prévue : s'il pointe en avance, elles comptent à partir de l'heure de son quart. S'il pointe en retard ou sans quart prévu, l'heure réelle est toujours utilisée.")}
                     options={OPTIONS_CALCUL_POINTAGE}
                     value={calculPointage}
                     onChange={handleChangeCalculPointage}
                     disabled={saving}
                   />
                   <ParametreSelect
-                    label="Visibilité de la feuille de temps"
-                    info="Les membres en lecture seule (ex: comptable) doivent-ils attendre ton approbation pour voir une semaine (manuelle), ou la voient-ils dès qu'elle existe (automatique) ?"
+                    label={t("Visibilité de la feuille de temps")}
+                    info={t("Les membres en lecture seule (ex: comptable) doivent-ils attendre ton approbation pour voir une semaine (manuelle), ou la voient-ils dès qu'elle existe (automatique) ?")}
                     options={OPTIONS_VISIBILITE_FEUILLE_TEMPS}
                     value={visibiliteFeuilleTemps}
                     onChange={handleChangeVisibiliteFeuilleTemps}
@@ -561,27 +564,27 @@ export default function PersonnalisationSection({ entrepriseId }) {
               </div>
 
               <div className="param-subgroup">
-                <div className="param-subgroup-label">Demandes</div>
+                <div className="param-subgroup-label">{t("Demandes")}</div>
                 <div className="param-grid">
                   <ParametreSelect
-                    label="Approbation des congés"
-                    info="Quand un employé demande un congé : approuver toi-même (manuelle), valider tout de suite (automatique), ou désactiver complètement les demandes de congé."
+                    label={t("Approbation des congés")}
+                    info={t("Quand un employé demande un congé : approuver toi-même (manuelle), valider tout de suite (automatique), ou désactiver complètement les demandes de congé.")}
                     options={OPTIONS_APPROBATION_DEMANDES}
                     value={approbationConges}
                     onChange={handleChangeApprobationConges}
                     disabled={saving}
                   />
                   <ParametreSelect
-                    label="Approbation des échanges"
-                    info="Quand un employé accepte de prendre le quart d'un collègue : approuver l'échange toi-même (manuelle), le valider tout de suite (automatique), ou désactiver complètement les échanges."
+                    label={t("Approbation des échanges")}
+                    info={t("Quand un employé accepte de prendre le quart d'un collègue : approuver l'échange toi-même (manuelle), le valider tout de suite (automatique), ou désactiver complètement les échanges.")}
                     options={OPTIONS_APPROBATION_DEMANDES}
                     value={approbationEchanges}
                     onChange={handleChangeApprobation}
                     disabled={saving}
                   />
                   <ParametreSelect
-                    label="Conservation des demandes"
-                    info="Combien de temps garder une demande de congé ou d'échange une fois traitée avant sa suppression automatique. Une demande jamais traitée est supprimée après 2 semaines, peu importe ce réglage."
+                    label={t("Conservation des demandes")}
+                    info={t("Combien de temps garder une demande de congé ou d'échange une fois traitée avant sa suppression automatique. Une demande jamais traitée est supprimée après 2 semaines, peu importe ce réglage.")}
                     options={OPTIONS_RETENTION_DEMANDES}
                     value={retentionDemandes}
                     onChange={handleChangeRetentionDemandes}
@@ -601,23 +604,23 @@ export default function PersonnalisationSection({ entrepriseId }) {
             className={`integration-header${sectionsOuvertes.temperature ? " open" : ""}`}
             onClick={() => toggleSection("temperature")}
           >
-            <span className="ih-label">Températures</span>
+            <span className="ih-label">{t("Températures")}</span>
             <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
           </button>
           {sectionsOuvertes.temperature && (
             <div className="integration-body">
               <div className="param-grid">
                 <ParametreSelect
-                  label="Conservation des fiches"
-                  info="Combien de temps garder les fiches de température avant leur suppression automatique. Pense à les exporter (Températures → Historique → Exporter) pour les garder en local."
+                  label={t("Conservation des fiches")}
+                  info={t("Combien de temps garder les fiches de température avant leur suppression automatique. Pense à les exporter (Températures → Historique → Exporter) pour les garder en local.")}
                   options={OPTIONS_RETENTION_TEMPERATURE}
                   value={retentionTemperature}
                   onChange={handleChangeRetentionTemperature}
                   disabled={saving}
                 />
                 <ParametreSelect
-                  label="Rappels d'enregistrement"
-                  info="Envoie une notification « N'oubliez pas d'enregistrer les températures » aux employés au travail, 30 minutes avant la fin du créneau (11 h 30 pour le matin, 23 h 30 pour le soir), si aucun relevé n'a encore été enregistré pour ce créneau. Les employés doivent avoir activé les notifications dans l'app."
+                  label={t("Rappels d'enregistrement")}
+                  info={t("Envoie une notification « N'oubliez pas d'enregistrer les températures » aux employés au travail, 30 minutes avant la fin du créneau (11 h 30 pour le matin, 23 h 30 pour le soir), si aucun relevé n'a encore été enregistré pour ce créneau. Les employés doivent avoir activé les notifications dans l'app.")}
                   options={OPTIONS_RAPPELS_TEMPERATURE}
                   value={rappelsTemperature}
                   onChange={handleChangeRappelsTemperature}
@@ -636,25 +639,25 @@ export default function PersonnalisationSection({ entrepriseId }) {
             className={`integration-header${sectionsOuvertes.commandes ? " open" : ""}`}
             onClick={() => toggleSection("commandes")}
           >
-            <span className="ih-label">Commandes</span>
+            <span className="ih-label">{t("Commandes")}</span>
             <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
           </button>
           {sectionsOuvertes.commandes && (
             <div className="integration-body">
               <div className="param-subgroup">
-                <div className="param-subgroup-label">Général</div>
+                <div className="param-subgroup-label">{t("Général")}</div>
               <div className="param-grid">
                 <ParametreSelect
-                  label="Conservation des commandes"
-                  info="Combien de temps garder la copie des commandes reçues de Wix avant sa suppression automatique. Ton registre officiel reste dans ton tableau de bord Wix. Les commandes que tu entres à la main dans Gozly ne sont jamais supprimées automatiquement."
+                  label={t("Conservation des commandes")}
+                  info={t("Combien de temps garder la copie des commandes reçues de Wix avant sa suppression automatique. Ton registre officiel reste dans ton tableau de bord Wix. Les commandes que tu entres à la main dans Gozly ne sont jamais supprimées automatiquement.")}
                   options={OPTIONS_RETENTION_COMMANDES}
                   value={retentionCommandes}
                   onChange={handleChangeRetentionCommandes}
                   disabled={saving}
                 />
                 <ParametreSelect
-                  label="Succursale Wix de ce dashboard"
-                  info="Si le même site Wix alimente plusieurs dashboards Gozly (une succursale chacun), choisis ici la succursale dont CE dashboard reçoit les commandes et les ventes. Les commandes d'une autre succursale sont retirées de ce dashboard. « Toutes » = aucune séparation. La liste vient des commandes déjà reçues : synchronise d'abord, ou repasse sur « Toutes » pour revoir toutes les succursales."
+                  label={t("Succursale Wix de ce dashboard")}
+                  info={t("Si le même site Wix alimente plusieurs dashboards Gozly (une succursale chacun), choisis ici la succursale dont CE dashboard reçoit les commandes et les ventes. Les commandes d'une autre succursale sont retirées de ce dashboard. « Toutes » = aucune séparation. La liste vient des commandes déjà reçues : synchronise d'abord, ou repasse sur « Toutes » pour revoir toutes les succursales.")}
                   options={[
                     { id: "", label: "Toutes les succursales" },
                     ...[...new Set([...lieuxWixDispo, ...(lieuWix ? [lieuWix] : [])])].map((nom) => ({ id: nom, label: nom })),
@@ -664,24 +667,24 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   disabled={saving}
                 />
                 <ParametreSelect
-                  label="Planification dans les commandes"
-                  info="Ajoute une boîte « Planification » à droite de la page Commandes : les jours de la semaine (avec le nombre de réservations), et pour le jour choisi les catégories de tâches où tu peux ajouter ta production, sans quitter les réservations. Nécessite le module Tâches."
+                  label={t("Planification dans les commandes")}
+                  info={t("Ajoute une boîte « Planification » à droite de la page Commandes : les jours de la semaine (avec le nombre de réservations), et pour le jour choisi les catégories de tâches où tu peux ajouter ta production, sans quitter les réservations. Nécessite le module Tâches.")}
                   options={OPTIONS_PLANIF_COMMANDES}
                   value={planifDansCommandes}
                   onChange={handleChangePlanifDansCommandes}
                   disabled={saving}
                 />
                 <ParametreSelect
-                  label="Affichage du kiosque des commandes"
-                  info="Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »). 3 sections : toutes les commandes arrivent dans « En attente », puis passent à « Traitées » et « Terminées », peu importe leur date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées (bouton Vider, et celles d'avant hier disparaissent seules). Recharge le kiosque après un changement."
+                  label={t("Affichage du kiosque des commandes")}
+                  info={t("Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »). 3 sections : toutes les commandes arrivent dans « En attente », puis passent à « Traitées » et « Terminées », peu importe leur date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées (bouton Vider, et celles d'avant hier disparaissent seules). Recharge le kiosque après un changement.")}
                   options={OPTIONS_KIOSQUE_COMMANDES}
                   value={kiosqueCommandes}
                   onChange={handleChangeKiosqueCommandes}
                   disabled={saving}
                 />
                 <ParametreSelect
-                  label="Tâches automatiques des commandes"
-                  info="Crée automatiquement, dans le module Tâches, une tâche par produit avec le total à préparer pour chaque jour de ramassage (ex: « Pizza au tomate × 6 »), dans la catégorie « Réservations ». Cocher la tâche veut dire que c'est préparé. Nécessite le module Tâches."
+                  label={t("Tâches automatiques des commandes")}
+                  info={t("Crée automatiquement, dans le module Tâches, une tâche par produit avec le total à préparer pour chaque jour de ramassage (ex: « Pizza au tomate × 6 »), dans la catégorie « Réservations ». Cocher la tâche veut dire que c'est préparé. Nécessite le module Tâches.")}
                   options={OPTIONS_COMMANDES_VERS_TACHES}
                   value={commandesVersTaches}
                   onChange={handleChangeCommandesVersTaches}
@@ -693,8 +696,8 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 entrepriseId={entrepriseId}
                 selecteur={
                       <ParametreSelect
-                        label="Impression des commandes manuelles"
-                        info="Pour les commandes que tu entres à la main dans Gozly (nécessite l'impression activée avec le bouton à côté). Désactivée : jamais imprimées. Manuelle : tu imprimes avec le bouton Imprimer. Automatique : le bon sort dès que la commande est créée. Les commandes Wix s'impriment quand elles passent à « Traitée »."
+                        label={t("Impression des commandes manuelles")}
+                        info={t("Pour les commandes que tu entres à la main dans Gozly (nécessite l'impression activée avec le bouton à côté). Désactivée : jamais imprimées. Manuelle : tu imprimes avec le bouton Imprimer. Automatique : le bon sort dès que la commande est créée. Les commandes Wix s'impriment quand elles passent à « Traitée ».")}
                         options={OPTIONS_IMPRESSION_MANUELLES}
                         value={impressionManuelles}
                         onChange={handleChangeImpressionManuelles}
@@ -714,15 +717,15 @@ export default function PersonnalisationSection({ entrepriseId }) {
             className={`integration-header${sectionsOuvertes.inventaire ? " open" : ""}`}
             onClick={() => toggleSection("inventaire")}
           >
-            <span className="ih-label">Inventaire</span>
+            <span className="ih-label">{t("Inventaire")}</span>
             <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
           </button>
           {sectionsOuvertes.inventaire && (
             <div className="integration-body">
               <div className="param-grid">
                 <ParametreSelect
-                  label="Synchronisation vers Wix"
-                  info="Une fois Wix connecté (Entreprise → Intégrations) : pousser tes produits vers Wix automatiquement à chaque ajout/modification/suppression, ou seulement quand tu cliques « Synchroniser »."
+                  label={t("Synchronisation vers Wix")}
+                  info={t("Une fois Wix connecté (Entreprise → Intégrations) : pousser tes produits vers Wix automatiquement à chaque ajout/modification/suppression, ou seulement quand tu cliques « Synchroniser ».")}
                   options={OPTIONS_PUSH_WIX}
                   value={pushWix}
                   onChange={handleChangePushWix}

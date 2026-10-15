@@ -1,11 +1,12 @@
+import { getT } from "@/lib/i18n/siteServer";
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import ChoisirForfaitContent from "@/components/ChoisirForfaitContent";
 
-export const metadata = {
-  title: "Gozly - Choisir un forfait",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Choisir un forfait") };
+}
 
 export default function ChoisirForfaitPage() {
   return (

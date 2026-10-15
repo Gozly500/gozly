@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import DiscussionContent from "@/components/DiscussionContent";
 
-export const metadata = {
-  title: "Gozly - Discussion",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Discussion") };
+}
 
 export default function DiscussionPage() {
   return (

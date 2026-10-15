@@ -2,11 +2,13 @@
 
 import { createContext, useContext, useMemo } from "react";
 import { createT } from "@/lib/i18n/site";
+import { setLocaleLang } from "@/lib/i18n/locale";
 
 const LangContext = createContext({ lang: "fr", t: createT("fr") });
 
 // Fournit la langue (lue côté serveur dans le cookie) aux composants client du site public.
 export function LangProvider({ lang, children }) {
+  setLocaleLang(lang);
   const value = useMemo(() => ({ lang, t: createT(lang) }), [lang]);
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
 }

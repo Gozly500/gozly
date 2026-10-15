@@ -9,6 +9,7 @@ import DemandeReapproSection from "@/components/inventaire/DemandeReapproSection
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconInventaire, IconDemande } from "@/components/icons/GozlyIcons";
+import { useT } from "@/components/LangProvider";
 
 const TABS = [
   { id: "produits", label: "Produits", Icone: IconInventaire },
@@ -16,6 +17,7 @@ const TABS = [
 ];
 
 export default function InventaireContent() {
+  const { t } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
@@ -71,7 +73,7 @@ export default function InventaireContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -96,13 +98,13 @@ export default function InventaireContent() {
             style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}
           >
             <div>
-              <h1>Inventaire</h1>
-              <p>Tes produits et la liste de ce qu'il faut aller chercher.</p>
+              <h1>{t("Inventaire")}</h1>
+              <p>{t("Tes produits et la liste de ce qu'il faut aller chercher.")}</p>
             </div>
           </header>
 
           {!entrepriseId ? (
-            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+            <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>
           ) : (
             <>
               <div className="settings-nav horaire-tabs-sticky" style={{ flexDirection: "row", width: "fit-content" }}>
@@ -113,7 +115,7 @@ export default function InventaireContent() {
                     className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
                     onClick={() => setActiveTab(tab.id)}
                   >
-                    <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
+                    <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {t(tab.label)}
                   </button>
                 ))}
               </div>

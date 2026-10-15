@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { formatMontant, bornesJour } from "@/lib/commandes";
 import { imprimerCommande, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { IconX } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitId: null, sku: null, options: [] };
 
@@ -39,6 +40,7 @@ function versIsoQuebec(date, heure) {
 }
 
 function BoutonsChoix({ valeur, onChange, choix }) {
+  const { t } = useT();
   return (
     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
       {choix.map(([id, label]) => (
@@ -49,7 +51,7 @@ function BoutonsChoix({ valeur, onChange, choix }) {
           style={valeur === id ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
           onClick={() => onChange(id)}
         >
-          {label}
+          {t(label)}
         </button>
       ))}
     </div>
@@ -59,6 +61,7 @@ function BoutonsChoix({ valeur, onChange, choix }) {
 // Création / modification d'une commande saisie à la main (source = 'manuel').
 // `commande` = la ligne à modifier, ou null pour une nouvelle commande.
 export default function CommandeManuelleModal({ entrepriseId, commande, onClose, onSaved }) {
+  const { t } = useT();
   const [clientNom, setClientNom] = useState(commande?.client_nom || "");
   const [telephone, setTelephone] = useState(commande?.client_telephone || "");
   const [note, setNote] = useState(commande?.note || "");
@@ -150,7 +153,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
   async function handleSubmit(e) {
     e.preventDefault();
     if (articlesValides.length === 0) {
-      setErreur("Ajoute au moins un article.");
+      setErreur(t("Ajoute au moins un article."));
       return;
     }
     setSaving(true);
@@ -208,7 +211,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
 
     setSaving(false);
     if (error) {
-      setErreur("Impossible d'enregistrer la commande. As-tu exécuté commandes_manuelles.sql dans Supabase?");
+      setErreur(t("Impossible d'enregistrer la commande. As-tu exécuté commandes_manuelles.sql dans Supabase?"));
       return;
     }
     // Info supplémentaire : écrite à part (la commande s'enregistre même si commandes_note.sql n'est pas exécuté).
@@ -229,25 +232,25 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          <h3>{commande ? "Modifier la commande" : "Nouvelle commande"}</h3>
+          <h3>{commande ? t("Modifier la commande") : t("Nouvelle commande")}</h3>
           <button className="admin-icon-btn" onClick={onClose}>
-            Fermer
+            {t("Fermer")}
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="field">
-            <label>Nom du client (optionnel)</label>
-            <input type="text" value={clientNom} onChange={(e) => setClientNom(e.target.value)} placeholder="Ex: Marie Tremblay" />
+            <label>{t("Nom du client (optionnel)")}</label>
+            <input type="text" value={clientNom} onChange={(e) => setClientNom(e.target.value)} placeholder={t("Ex: Marie Tremblay")} />
           </div>
 
           <div className="field">
-            <label>Téléphone (optionnel)</label>
-            <input type="tel" value={telephone} onChange={(e) => setTelephone(e.target.value)} placeholder="Ex: 514 555-0123" maxLength={40} />
+            <label>{t("Téléphone (optionnel)")}</label>
+            <input type="tel" value={telephone} onChange={(e) => setTelephone(e.target.value)} placeholder={t("Ex: 514 555-0123")} maxLength={40} />
           </div>
 
           <div className="field">
-            <label>Ramassage ou livraison</label>
+            <label>{t("Ramassage ou livraison")}</label>
             <BoutonsChoix
               valeur={mode}
               onChange={setMode}
@@ -259,7 +262,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
           </div>
 
           <div className="field">
-            <label>Date et heure de ramassage (optionnel, pour une précommande)</label>
+            <label>{t("Date et heure de ramassage (optionnel, pour une précommande)")}</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: "8px" }}>
               <input type="date" value={dateRamassage} onChange={(e) => setDateRamassage(e.target.value)} />
               <input type="time" value={heureRamassage} onChange={(e) => setHeureRamassage(e.target.value)} disabled={!dateRamassage} />
@@ -267,7 +270,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
           </div>
 
           <div className="field">
-            <label>Articles</label>
+            <label>{t("Articles")}</label>
             {articles.map((a, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 56px 80px auto", gap: "6px", marginBottom: "6px" }}>
                 <div className="emplacement-select-wrap" style={{ minWidth: 0 }}>
@@ -277,7 +280,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
                     onChange={(e) => taperNom(i, e.target.value)}
                     onFocus={() => setOuvert(i)}
                     onBlur={() => setTimeout(() => setOuvert((o) => (o === i ? null : o)), 150)}
-                    placeholder="Cherche un produit de l'inventaire"
+                    placeholder={t("Cherche un produit de l'inventaire")}
                     autoComplete="off"
                   />
                   {ouvert === i && (
@@ -300,38 +303,38 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
                         ))}
                       {produits.length === 0 && (
                         <div className="emplacement-select-option" style={{ color: "var(--text-dim)", cursor: "default" }}>
-                          Aucun produit dans l'inventaire : l'article sera libre.
+                          {t("Aucun produit dans l'inventaire : l'article sera libre.")}
                         </div>
                       )}
                     </div>
                   )}
                 </div>
-                <input type="number" min="1" value={a.quantite} onChange={(e) => majArticle(i, "quantite", e.target.value)} aria-label="Quantité" />
+                <input type="number" min="1" value={a.quantite} onChange={(e) => majArticle(i, "quantite", e.target.value)} aria-label={t("Quantité")} />
                 <input
                   type="text"
                   inputMode="decimal"
                   value={a.prix}
                   onChange={(e) => majArticle(i, "prix", e.target.value)}
-                  placeholder="Prix"
-                  aria-label="Prix unitaire"
+                  placeholder={t("Prix")}
+                  aria-label={t("Prix unitaire")}
                 />
                 <button
                   type="button"
                   className="admin-icon-btn danger"
                   onClick={() => setArticles((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== i) : [{ ...ARTICLE_VIDE }]))}
-                  aria-label="Retirer l'article"
+                  aria-label={t("Retirer l'article")}
                 >
                   <IconX className="gozly-icon" />
                 </button>
               </div>
             ))}
             <button type="button" className="admin-icon-btn" onClick={() => setArticles((prev) => [...prev, { ...ARTICLE_VIDE }])}>
-              + Ajouter un article
+              {t("+ Ajouter un article")}
             </button>
           </div>
 
           <div className="field">
-            <label>Paiement</label>
+            <label>{t("Paiement")}</label>
             <BoutonsChoix
               valeur={paye}
               onChange={setPaye}
@@ -342,12 +345,12 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
             />
           </div>
 
-          <p style={{ fontWeight: 700, margin: "12px 0" }}>Total : {formatMontant(total)}</p>
+          <p style={{ fontWeight: 700, margin: "12px 0" }}>{t("Total :")}{" "}{formatMontant(total)}</p>
           {erreur && <p className="settings-msg err">{erreur}</p>}
 
           <div className="admin-edit-actions">
             <button type="submit" className="submit-btn" disabled={saving}>
-              {saving ? "Enregistrement..." : commande ? "Enregistrer" : "Ajouter la commande"}
+              {saving ? t("Enregistrement...") : commande ? t("Enregistrer") : t("Ajouter la commande")}
             </button>
           </div>
         </form>

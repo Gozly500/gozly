@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { geocoderAdresse } from "@/lib/geocode";
 import { IconAttention, IconCrochet } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Jours dans l'ordre d'affichage ; l'id est le numéro de jour JS (0 = dimanche).
 const JOURS_OUVERTURE = [
@@ -17,6 +18,7 @@ const JOURS_OUVERTURE = [
 ];
 
 export default function EmplacementsSection({ entrepriseId }) {
+  const { t } = useT();
   const [horairesModal, setHorairesModal] = useState(null); // { emp, draft: { "1": { ouvert, debut, fin }, ... } }
   const [horairesSaving, setHorairesSaving] = useState(false);
 
@@ -125,16 +127,14 @@ export default function EmplacementsSection({ entrepriseId }) {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   return (
     <div>
-      <h2>Emplacements</h2>
+      <h2>{t("Emplacements")}</h2>
       <p className="panel-hint">
-        Tes succursales. Dès qu'il y en a plus d'une, l'Horaire et le Pointage se gèrent séparément pour chacune.
-        Ajoute une adresse pour activer le pointage mobile (GPS) pour les employés qui y sont assignés (à
-        activer dans Personnalisation &gt; Horaire &amp; Pointage).
+        {t("Tes succursales. Dès qu'il y en a plus d'une, l'Horaire et le Pointage se gèrent séparément pour chacune. Ajoute une adresse pour activer le pointage mobile (GPS) pour les employés qui y sont assignés (à activer dans Personnalisation > Horaire & Pointage).")}
       </p>
 
       <div className="admin-list" style={{ marginBottom: "20px", maxWidth: "500px" }}>
@@ -142,12 +142,12 @@ export default function EmplacementsSection({ entrepriseId }) {
           <div className="admin-row" key={emp.id}>
             {editingId === emp.id ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
-                <input type="text" value={editNom} onChange={(e) => setEditNom(e.target.value)} placeholder="Nom" />
+                <input type="text" value={editNom} onChange={(e) => setEditNom(e.target.value)} placeholder={t("Nom")} />
                 <input
                   type="text"
                   value={editAdresse}
                   onChange={(e) => setEditAdresse(e.target.value)}
-                  placeholder="Adresse (optionnel)"
+                  placeholder={t("Adresse (optionnel)")}
                 />
               </div>
             ) : (
@@ -156,7 +156,7 @@ export default function EmplacementsSection({ entrepriseId }) {
                 {emp.adresse && (
                   <div className="admin-row-sub">
                     {emp.adresse}
-                    {emp.latitude == null && <> — <IconAttention className="gozly-icon" /> position introuvable, pointage mobile indisponible</>}
+                    {emp.latitude == null && <> — <IconAttention className="gozly-icon" />{" "}{t("position introuvable, pointage mobile indisponible")}</>}
                   </div>
                 )}
               </div>
@@ -166,43 +166,42 @@ export default function EmplacementsSection({ entrepriseId }) {
               {editingId === emp.id ? (
                 <>
                   <button className="admin-icon-btn" onClick={() => handleSaveEdit(emp.id)} disabled={geocodage}>
-                    {geocodage ? "Localisation..." : "Enregistrer"}
+                    {geocodage ? t("Localisation...") : t("Enregistrer")}
                   </button>
                   <button className="admin-icon-btn" onClick={() => setEditingId(null)}>
-                    Annuler
+                    {t("Annuler")}
                   </button>
                 </>
               ) : (
                 <>
                   <button className="admin-icon-btn" onClick={() => ouvrirHoraires(emp)}>
-                    {emp.horaires_ouverture ? <>Horaires <IconCrochet className="gozly-icon" /></> : "Horaires"}
+                    {emp.horaires_ouverture ? <>{t("Horaires")}{" "}<IconCrochet className="gozly-icon" /></> : t("Horaires")}
                   </button>
                   <button className="admin-icon-btn" onClick={() => startEdit(emp)}>
-                    Modifier
+                    {t("Modifier")}
                   </button>
                   <button className="admin-icon-btn danger" onClick={() => handleDelete(emp.id)}>
-                    Retirer
+                    {t("Retirer")}
                   </button>
                 </>
               )}
             </div>
           </div>
         ))}
-        {emplacements.length === 0 && <div className="admin-empty">Un seul emplacement implicite pour l'instant.</div>}
+        {emplacements.length === 0 && <div className="admin-empty">{t("Un seul emplacement implicite pour l'instant.")}</div>}
       </div>
 
       {horairesModal && (
         <div className="modal-overlay" onClick={() => setHorairesModal(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Horaires d&apos;ouverture — {horairesModal.emp.nom}</h3>
+              <h3>{t("Horaires d'ouverture —")}{" "}{horairesModal.emp.nom}</h3>
               <button className="admin-icon-btn" onClick={() => setHorairesModal(null)}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
             <p className="section-hint">
-              Si un employé oublie de pointer son départ, il est pointé automatiquement 1 h 30 après la fermeture (avec l&apos;heure de
-              fermeture comme départ) et la feuille de temps affiche « oubli potentiel ». Laisse tous les jours fermés pour désactiver.
+              {t("Si un employé oublie de pointer son départ, il est pointé automatiquement 1 h 30 après la fermeture (avec l'heure de fermeture comme départ) et la feuille de temps affiche « oubli potentiel ». Laisse tous les jours fermés pour désactiver.")}
             </p>
             <form onSubmit={enregistrerHoraires}>
               {JOURS_OUVERTURE.map((j) => {
@@ -211,9 +210,9 @@ export default function EmplacementsSection({ entrepriseId }) {
                   setHorairesModal((m) => ({ ...m, draft: { ...m.draft, [j.id]: { ...m.draft[j.id], [champ]: valeur } } }));
                 return (
                   <div key={j.id} style={{ display: "grid", gridTemplateColumns: "110px 90px 1fr 1fr", gap: "8px", alignItems: "center", marginBottom: "8px" }}>
-                    <span>{j.label}</span>
+                    <span>{t(j.label)}</span>
                     <label style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "13px" }}>
-                      <input type="checkbox" checked={h.ouvert} onChange={(e) => maj("ouvert", e.target.checked)} /> Ouvert
+                      <input type="checkbox" checked={h.ouvert} onChange={(e) => maj("ouvert", e.target.checked)} />{" "}{t("Ouvert")}
                     </label>
                     <input type="time" value={h.debut} onChange={(e) => maj("debut", e.target.value)} disabled={!h.ouvert} />
                     <input type="time" value={h.fin} onChange={(e) => maj("fin", e.target.value)} disabled={!h.ouvert} />
@@ -222,7 +221,7 @@ export default function EmplacementsSection({ entrepriseId }) {
               })}
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn" disabled={horairesSaving}>
-                  {horairesSaving ? "Enregistrement..." : "Enregistrer"}
+                  {horairesSaving ? t("Enregistrement...") : t("Enregistrer")}
                 </button>
               </div>
             </form>
@@ -231,15 +230,15 @@ export default function EmplacementsSection({ entrepriseId }) {
       )}
 
       <form className="admin-add-form" onSubmit={handleAdd}>
-        <input type="text" placeholder="Nom de la succursale" value={nom} onChange={(e) => setNom(e.target.value)} required />
+        <input type="text" placeholder={t("Nom de la succursale")} value={nom} onChange={(e) => setNom(e.target.value)} required />
         <input
           type="text"
-          placeholder="Adresse (optionnel)"
+          placeholder={t("Adresse (optionnel)")}
           value={adresse}
           onChange={(e) => setAdresse(e.target.value)}
         />
         <button type="submit" className="btn-small" disabled={geocodage}>
-          {geocodage ? "Localisation..." : "Ajouter"}
+          {geocodage ? t("Localisation...") : t("Ajouter")}
         </button>
       </form>
     </div>

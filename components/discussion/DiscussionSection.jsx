@@ -10,9 +10,11 @@ import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMe
 import AnnoncesModal from "@/components/discussion/AnnoncesModal";
 import RappelsModal from "@/components/discussion/RappelsModal";
 import { IconCloche, IconEnvoyer, IconFlecheGauche, IconMegaphone, IconProfils, IconX } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // mobile : une seule colonne à la fois (liste des conversations OU conversation ouverte), pour l'app /gestion.
 export default function DiscussionSection({ entrepriseId, userId, mobile = false }) {
+  const { t: tr } = useT();
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [vueMobile, setVueMobile] = useState("liste"); // "liste" | "thread" (mobile seulement)
@@ -85,7 +87,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
       await chargerConversationsImpl();
     } catch (err) {
       console.error("Erreur chargement conversations:", err);
-      setErreur(err?.message || "Le chargement des conversations a échoué.");
+      setErreur(err?.message || tr("Le chargement des conversations a échoué."));
     }
     setLoading(false);
   }
@@ -145,8 +147,8 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
     ]);
 
     function nomParticipant(p) {
-      if (p.employe_id) return employesAutres?.find((e) => e.id === p.employe_id)?.nom || "Employé";
-      return profilsAutres?.find((pr) => pr.id === p.user_id)?.full_name || "Administration";
+      if (p.employe_id) return employesAutres?.find((e) => e.id === p.employe_id)?.nom || tr("Employé");
+      return profilsAutres?.find((pr) => pr.id === p.user_id)?.full_name || tr("Administration");
     }
 
     function nomAutre(conversationId) {
@@ -162,7 +164,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
       {
         id: equipeId,
         type: "equipe",
-        titre: "Équipe",
+        titre: tr("Équipe"),
         dernierMessage: dernierPar[equipeId]?.contenu || null,
         dernierMessageDate: dernierPar[equipeId]?.created_at || null,
       },
@@ -244,7 +246,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
     // Colonne reponse_a pas encore créée (SQL pas exécuté) : on envoie sans la citation.
     if (error && citation) ({ error } = await supabase.from("messages").insert(base));
     if (error) {
-      setErreur("L'envoi a échoué.");
+      setErreur(tr("L'envoi a échoué."));
       setTexte(contenu);
       chargerMessages(activeId);
       return;
@@ -269,7 +271,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
       conversationId = await getOrCreateDirecteConversation(supabase, entrepriseId, { userId }, { employeId });
     } catch (err) {
       console.error("Erreur création conversation:", err);
-      setErreur(err?.message || "Impossible de démarrer cette conversation.");
+      setErreur(err?.message || tr("Impossible de démarrer cette conversation."));
       return;
     }
     await chargerConversations();
@@ -291,7 +293,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
       .from("conversations")
       .insert({ id: conversationId, entreprise_id: entrepriseId, type: "groupe", titre: nom, cree_par: userId });
     if (error) {
-      setErreur("Impossible de créer le groupe. As-tu exécuté chat_groupes.sql dans Supabase?");
+      setErreur(tr("Impossible de créer le groupe. As-tu exécuté chat_groupes.sql dans Supabase?"));
       setGroupeBusy(false);
       return;
     }
@@ -301,7 +303,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
       ...[...groupeModal.ids].map((employeId) => ({ conversation_id: conversationId, employe_id: employeId })),
     ]);
     if (erreurParticipants) {
-      setErreur("Le groupe a été créé, mais ses membres n'ont pas pu être ajoutés.");
+      setErreur(tr("Le groupe a été créé, mais ses membres n'ont pas pu être ajoutés."));
     }
 
     setGroupeBusy(false);
@@ -352,7 +354,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
       await chargerConversations();
     } catch (err) {
       console.error("Erreur envoi à plusieurs:", err);
-      setErreur("L'envoi à plusieurs a échoué.");
+      setErreur(tr("L'envoi à plusieurs a échoué."));
     }
     setGroupeBusy(false);
   }
@@ -366,7 +368,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
 
     const { error } = await supabase.from("conversations").delete().eq("id", conversation.id);
     if (error) {
-      setErreur("Impossible de supprimer la conversation. As-tu exécuté chat_groupes.sql dans Supabase?");
+      setErreur(tr("Impossible de supprimer la conversation. As-tu exécuté chat_groupes.sql dans Supabase?"));
       return;
     }
     setMessages([]);
@@ -376,14 +378,14 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
   }
 
   function nomExpediteur(m) {
-    if (m.user_id === userId) return "Toi";
+    if (m.user_id === userId) return tr("Toi");
     if (m.employe_id) {
-      return conversationActive?.type === "directe" ? conversationActive?.titre : employes.find((e) => e.id === m.employe_id)?.nom || "Employé";
+      return conversationActive?.type === "directe" ? conversationActive?.titre : employes.find((e) => e.id === m.employe_id)?.nom || tr("Employé");
     }
     if (m.user_id) {
-      return conversationActive?.type === "directe" ? conversationActive?.titre : "Administration";
+      return conversationActive?.type === "directe" ? conversationActive?.titre : tr("Administration");
     }
-    return "Compte supprimé";
+    return tr("Compte supprimé");
   }
 
   const conversationActive = conversations.find((c) => c.id === activeId);
@@ -402,7 +404,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
     : tousLesElements;
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>;
   }
 
   if (erreur && conversations.length === 0) {
@@ -411,17 +413,17 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
 
   return (
     <div>
-      {!mobile && <h2>Discussion</h2>}
-      {!mobile && <p className="panel-hint">Le fil d'équipe, une conversation avec chacun de tes employés, et tes groupes.</p>}
+      {!mobile && <h2>{tr("Discussion")}</h2>}
+      {!mobile && <p className="panel-hint">{tr("Le fil d'équipe, une conversation avec chacun de tes employés, et tes groupes.")}</p>}
       {erreur && <p className="settings-msg err">{erreur}</p>}
       {confirmation && <p className="settings-msg ok">{confirmation}</p>}
 
       <div className={`chat-layout${mobile ? " chat-layout-mobile" : ""}`}>
         <div className={`chat-conv-list${mobile && vueMobile === "thread" ? " hidden-mobile" : ""}`}>
           <div className="chat-conv-list-head">
-            <strong style={{ fontSize: "13px" }}>Conversations</strong>
+            <strong style={{ fontSize: "13px" }}>{tr("Conversations")}</strong>
             <button type="button" className="admin-icon-btn" onClick={() => setMenuNouveauOuvert((v) => !v)}>
-              + Nouveau
+              {tr("+ Nouveau")}
             </button>
           </div>
           {menuNouveauOuvert && (
@@ -434,7 +436,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                   setGroupeModal({ mode: "groupe", nom: "", message: "", ids: new Set() });
                 }}
               >
-                <IconProfils className="gozly-icon" /> Nouveau groupe
+                <IconProfils className="gozly-icon" />{" "}{tr("Nouveau groupe")}
               </button>
               <button
                 type="button"
@@ -444,7 +446,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                   setGroupeModal({ mode: "diffusion", nom: "", message: "", ids: new Set() });
                 }}
               >
-                <IconMegaphone className="gozly-icon" /> Message à plusieurs
+                <IconMegaphone className="gozly-icon" />{" "}{tr("Message à plusieurs")}
               </button>
               <button
                 type="button"
@@ -454,7 +456,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                   setAnnoncesOuvert(true);
                 }}
               >
-                <IconCloche className="gozly-icon" /> Annonce
+                <IconCloche className="gozly-icon" />{" "}{tr("Annonce")}
               </button>
               <button
                 type="button"
@@ -464,7 +466,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                   setRappelsOuvert(true);
                 }}
               >
-                <IconCloche className="gozly-icon" /> Rappel
+                <IconCloche className="gozly-icon" />{" "}{tr("Rappel")}
               </button>
             </div>
           )}
@@ -473,12 +475,12 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
               type="search"
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher un employé..."
+              placeholder={tr("Rechercher un employé...")}
               style={{ width: "100%", boxSizing: "border-box" }}
             />
           </div>
-          <div className="chat-section-label">{recherche.trim() ? "Résultats" : "Conversations"}</div>
-          {elementsVisibles.length === 0 && <p className="chat-empty">Aucun employé trouvé.</p>}
+          <div className="chat-section-label">{recherche.trim() ? tr("Résultats") : tr("Conversations")}</div>
+          {elementsVisibles.length === 0 && <p className="chat-empty">{tr("Aucun employé trouvé.")}</p>}
           {elementsVisibles.map((c) => (
             <button
               key={c.id}
@@ -496,8 +498,8 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
               {c.dernierMessage ? (
                 <div className="chat-conv-apercu">{c.dernierMessage}</div>
               ) : (
-                (c.type === "groupe" && <div className="chat-conv-apercu">Groupe · {(c.membres?.length || 0) + 1} membres</div>) ||
-                (c.type === "employe" && <div className="chat-conv-apercu">Pas encore de message</div>)
+                (c.type === "groupe" && <div className="chat-conv-apercu">{tr("Groupe ·")}{" "}{(c.membres?.length || 0) + 1}{" "}{tr("membres")}</div>) ||
+                (c.type === "employe" && <div className="chat-conv-apercu">{tr("Pas encore de message")}</div>)
               )}
             </button>
           ))}
@@ -505,13 +507,13 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
 
         <div className={`chat-thread${mobile && vueMobile === "liste" ? " hidden-mobile" : ""}`}>
           {!activeId ? (
-            <p className="chat-empty">Sélectionne une conversation.</p>
+            <p className="chat-empty">{tr("Sélectionne une conversation.")}</p>
           ) : (
             <>
               {conversationActive && (mobile || conversationActive.type !== "equipe") && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", padding: "10px 14px", borderBottom: "1px solid rgba(var(--w),0.12)" }}>
                   {mobile && (
-                    <button type="button" className="admin-icon-btn" onClick={() => setVueMobile("liste")} aria-label="Retour">
+                    <button type="button" className="admin-icon-btn" onClick={() => setVueMobile("liste")} aria-label={tr("Retour")}>
                       <IconFlecheGauche className="gozly-icon" />
                     </button>
                   )}
@@ -519,19 +521,19 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                     <strong>{conversationActive.type === "groupe" || conversationActive.type === "equipe" ? <><IconProfils className="gozly-icon" /> </> : ""}{conversationActive.titre}</strong>
                     {conversationActive.type === "groupe" && (
                       <div className="section-hint" style={{ margin: 0, fontSize: "12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {conversationActive.membres?.length ? `Toi, ${conversationActive.membres.join(", ")}` : "Toi seulement"}
+                        {conversationActive.membres?.length ? tr("Toi, {noms}", { noms: conversationActive.membres.join(", ") }) : tr("Toi seulement")}
                       </div>
                     )}
                   </div>
                   {conversationActive.type === "groupe" && (
                     <button type="button" className="admin-icon-btn danger" onClick={() => supprimerConversation(conversationActive)}>
-                      Supprimer le groupe
+                      {tr("Supprimer le groupe")}
                     </button>
                   )}
                 </div>
               )}
               <div className="chat-messages">
-                {messages.length === 0 && <p className="chat-empty">Aucun message pour l'instant.</p>}
+                {messages.length === 0 && <p className="chat-empty">{tr("Aucun message pour l'instant.")}</p>}
                 {(() => {
                   const dernierDeMoi = [...messages].reverse().find((m) => m.user_id === userId);
                   return messages.map((m) => {
@@ -571,7 +573,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
               {repondreA && (
                 <div className="chat-reponse-banniere">
                   <span>
-                    Réponse à {repondreA.auteur} : {repondreA.contenu}
+                    {tr("Réponse à")}{" "}{repondreA.auteur} : {repondreA.contenu}
                   </span>
                   <button type="button" className="admin-icon-btn" onClick={() => setRepondreA(null)}>
                     <IconX className="gozly-icon" />
@@ -587,9 +589,9 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                     if (e.target.value.trim()) presence.signalerEcriture();
                     else presence.arreterEcriture();
                   }}
-                  placeholder="Écrire un message..."
+                  placeholder={tr("Écrire un message...")}
                 />
-                <button type="submit" className="chat-send-btn" disabled={!texte.trim()} aria-label="Envoyer">
+                <button type="submit" className="chat-send-btn" disabled={!texte.trim()} aria-label={tr("Envoyer")}>
                   <IconEnvoyer className="gozly-icon" />
                 </button>
               </form>
@@ -605,19 +607,19 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
         <div className="modal-overlay" onClick={() => setGroupeModal(null)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>{groupeModal.mode === "diffusion" ? "Message à plusieurs" : "Nouveau groupe"}</h3>
+              <h3>{groupeModal.mode === "diffusion" ? tr("Message à plusieurs") : tr("Nouveau groupe")}</h3>
               <button className="admin-icon-btn" onClick={() => setGroupeModal(null)}>
-                Fermer
+                {tr("Fermer")}
               </button>
             </div>
             <form onSubmit={groupeModal.mode === "diffusion" ? envoyerDiffusion : creerGroupe}>
               {groupeModal.mode === "diffusion" ? (
                 <div className="field">
-                  <label>Message</label>
+                  <label>{tr("Message")}</label>
                   <textarea
                     value={groupeModal.message}
                     onChange={(e) => setGroupeModal((m) => ({ ...m, message: e.target.value }))}
-                    placeholder="Ex: Réunion dimanche à 9 h, merci de confirmer ta présence."
+                    placeholder={tr("Ex: Réunion dimanche à 9 h, merci de confirmer ta présence.")}
                     rows={4}
                     maxLength={2000}
                     autoFocus
@@ -625,18 +627,17 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                     style={{ width: "100%", boxSizing: "border-box", resize: "vertical" }}
                   />
                   <p className="section-hint" style={{ marginTop: "6px" }}>
-                    Chaque personne cochée reçoit ce message dans sa propre conversation avec toi. Elles ne se voient pas entre
-                    elles, et leurs réponses restent séparées.
+                    {tr("Chaque personne cochée reçoit ce message dans sa propre conversation avec toi. Elles ne se voient pas entre elles, et leurs réponses restent séparées.")}
                   </p>
                 </div>
               ) : (
                 <div className="field">
-                  <label>Nom du groupe</label>
+                  <label>{tr("Nom du groupe")}</label>
                   <input
                     type="text"
                     value={groupeModal.nom}
                     onChange={(e) => setGroupeModal((m) => ({ ...m, nom: e.target.value }))}
-                    placeholder="Ex: Équipe du dimanche"
+                    placeholder={tr("Ex: Équipe du dimanche")}
                     maxLength={60}
                     autoFocus
                     required
@@ -645,7 +646,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
               )}
               <div className="field">
                 <label>
-                  Membres ({groupeModal.ids.size})
+                  {tr("Membres (")}{groupeModal.ids.size})
                   <button
                     type="button"
                     className="admin-icon-btn"
@@ -654,7 +655,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                       setGroupeModal((m) => ({ ...m, ids: m.ids.size === employes.length ? new Set() : new Set(employes.map((emp) => emp.id)) }))
                     }
                   >
-                    {groupeModal.ids.size === employes.length ? "Tout décocher" : "Tout cocher"}
+                    {groupeModal.ids.size === employes.length ? tr("Tout décocher") : tr("Tout cocher")}
                   </button>
                 </label>
                 <div style={{ maxHeight: "260px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -675,7 +676,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                       {emp.nom}
                     </label>
                   ))}
-                  {employes.length === 0 && <p className="chat-empty">Aucun employé pour l&apos;instant.</p>}
+                  {employes.length === 0 && <p className="chat-empty">{tr("Aucun employé pour l'instant.")}</p>}
                 </div>
               </div>
               <div className="admin-edit-actions">
@@ -690,11 +691,11 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                 >
                   {groupeModal.mode === "diffusion"
                     ? groupeBusy
-                      ? "Envoi..."
-                      : `Envoyer à ${groupeModal.ids.size} personne${groupeModal.ids.size > 1 ? "s" : ""}`
+                      ? tr("Envoi...")
+                      : tr(groupeModal.ids.size > 1 ? "Envoyer à {n} personnes" : "Envoyer à {n} personne", { n: groupeModal.ids.size })
                     : groupeBusy
-                    ? "Création..."
-                    : "Créer le groupe"}
+                    ? tr("Création...")
+                    : tr("Créer le groupe")}
                 </button>
               </div>
             </form>

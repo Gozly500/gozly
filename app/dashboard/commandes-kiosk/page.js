@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import CommandesKioskContent from "@/components/CommandesKioskContent";
 
-export const metadata = {
-  title: "Gozly - Kiosque des commandes",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Kiosque des commandes") };
+}
 
 export default function CommandesKioskPage() {
   return (

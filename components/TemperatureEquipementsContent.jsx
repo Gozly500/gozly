@@ -8,8 +8,10 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { TYPES_EQUIPEMENT, UNITES } from "@/lib/temperature";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import SimpleSelect from "@/components/SimpleSelect";
+import { useT } from "@/components/LangProvider";
 
 export default function TemperatureEquipementsContent() {
+  const { t: tr } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
@@ -126,7 +128,7 @@ export default function TemperatureEquipementsContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>
       </div>
     );
   }
@@ -148,19 +150,19 @@ export default function TemperatureEquipementsContent() {
         <div className="dash-main-inner">
           <header className="dash-hero-inline">
             <div>
-              <h1>Équipements - Températures</h1>
-              <p>Les équipements à surveiller (frigos, congélateurs, maintien au chaud).</p>
+              <h1>{tr("Équipements - Températures")}</h1>
+              <p>{tr("Les équipements à surveiller (frigos, congélateurs, maintien au chaud).")}</p>
             </div>
           </header>
 
           {!entrepriseId ? (
-            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+            <p style={{ color: "var(--text-dim)" }}>{tr("Aucune entreprise associée à ce compte.")}</p>
           ) : loadingDonnees ? (
-            <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+            <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>
           ) : (
             <>
               <div className="settings-section">
-                <h3>Équipements</h3>
+                <h3>{tr("Équipements")}</h3>
                 <div className="admin-list" style={{ marginTop: "14px", maxWidth: "560px" }}>
                   {equipements.map((eq) => (
                     <div className="admin-row" style={{ flexDirection: "column", alignItems: "stretch" }} key={eq.id}>
@@ -176,19 +178,19 @@ export default function TemperatureEquipementsContent() {
                           {editingId === eq.id ? (
                             <>
                               <button className="admin-icon-btn" onClick={() => handleSaveEdit(eq.id)}>
-                                Enregistrer
+                                {tr("Enregistrer")}
                               </button>
                               <button className="admin-icon-btn" onClick={() => setEditingId(null)}>
-                                Annuler
+                                {tr("Annuler")}
                               </button>
                             </>
                           ) : (
                             <>
                               <button className="admin-icon-btn" onClick={() => startEdit(eq)}>
-                                Modifier
+                                {tr("Modifier")}
                               </button>
                               <button className="admin-icon-btn danger" onClick={() => handleDeleteEquipement(eq.id)}>
-                                Retirer
+                                {tr("Retirer")}
                               </button>
                             </>
                           )}
@@ -198,7 +200,7 @@ export default function TemperatureEquipementsContent() {
                       {editingId === eq.id && (
                         <div className="field-row" style={{ marginTop: "12px" }}>
                           <div className="field" style={{ minWidth: "200px" }}>
-                            <label>Type</label>
+                            <label>{tr("Type")}</label>
                             <SimpleSelect
                               options={TYPES_EQUIPEMENT.map((t) => ({ id: t.id, label: t.label }))}
                               value={editType}
@@ -206,32 +208,32 @@ export default function TemperatureEquipementsContent() {
                             />
                           </div>
                           <div className="field" style={{ minWidth: "180px" }}>
-                            <label>Unité</label>
+                            <label>{tr("Unité")}</label>
                             <SimpleSelect options={UNITES} value={editUnite} onChange={setEditUnite} />
                           </div>
                         </div>
                       )}
                     </div>
                   ))}
-                  {equipements.length === 0 && <div className="admin-empty">Aucun équipement pour l'instant.</div>}
+                  {equipements.length === 0 && <div className="admin-empty">{tr("Aucun équipement pour l'instant.")}</div>}
                 </div>
               </div>
 
               <div className="settings-section">
-                <h3>Ajouter un équipement</h3>
+                <h3>{tr("Ajouter un équipement")}</h3>
                 <form className="field-row" onSubmit={handleAddEquipement} style={{ alignItems: "flex-end" }}>
                   <div className="field">
-                    <label>Nom</label>
+                    <label>{tr("Nom")}</label>
                     <input
                       type="text"
-                      placeholder="Frigo cuisine"
+                      placeholder={tr("Frigo cuisine")}
                       value={nomEquipement}
                       onChange={(e) => setNomEquipement(e.target.value)}
                       required
                     />
                   </div>
                   <div className="field" style={{ minWidth: "200px" }}>
-                    <label>Type</label>
+                    <label>{tr("Type")}</label>
                     <SimpleSelect
                       options={TYPES_EQUIPEMENT.map((t) => ({ id: t.id, label: t.label }))}
                       value={typeEquipement}
@@ -239,17 +241,17 @@ export default function TemperatureEquipementsContent() {
                     />
                   </div>
                   <div className="field" style={{ minWidth: "180px" }}>
-                    <label>Unité</label>
+                    <label>{tr("Unité")}</label>
                     <SimpleSelect options={UNITES} value={uniteEquipement} onChange={setUniteEquipement} />
                   </div>
                   {emplacements.length > 1 && (
                     <div className="field">
-                      <label>Succursale</label>
+                      <label>{tr("Succursale")}</label>
                       <EmplacementSelect emplacements={emplacements} value={emplacementEquipement} onChange={setEmplacementEquipement} />
                     </div>
                   )}
                   <button type="submit" className="btn-small">
-                    Ajouter
+                    {tr("Ajouter")}
                   </button>
                 </form>
               </div>

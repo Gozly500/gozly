@@ -6,8 +6,10 @@ import DashSidebar from "@/components/DashSidebar";
 import CommandesSection from "@/components/commandes/CommandesSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
+import { useT } from "@/components/LangProvider";
 
 export default function CommandesContent() {
+  const { t } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
@@ -62,7 +64,7 @@ export default function CommandesContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -83,7 +85,7 @@ export default function CommandesContent() {
       <main className="dash-main">
         <div className="dash-main-inner dash-main-wide">
           {!entrepriseId ? (
-            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+            <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>
           ) : (
             <CommandesSection entrepriseId={entrepriseId} />
           )}

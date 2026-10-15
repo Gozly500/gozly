@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { IconAttention, IconFlecheBas, IconFlecheDroite, IconLoupe } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 const FORM_VIDE = { nom: "", variante: "", sku: "", quantite: "", seuilAlerte: "", prix: "", notes: "", categorieId: "" };
 
@@ -78,6 +80,7 @@ function MenuChoix({ options, value, onChange }) {
 }
 
 export default function ProduitsSection({ entrepriseId }) {
+  const { t } = useT();
   const [produits, setProduits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [wixConnecte, setWixConnecte] = useState(false);
@@ -128,13 +131,13 @@ export default function ProduitsSection({ entrepriseId }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setSyncMsg({ type: "err", text: `${data.error || "L'envoi vers Wix a échoué."}${data.detail ? ` [${data.detail}]` : ""}` });
+        setSyncMsg({ type: "err", text: `${data.error || t("L'envoi vers Wix a échoué.")}${data.detail ? ` [${data.detail}]` : ""}` });
       } else if (data.cree) {
-        setSyncMsg({ type: "ok", text: "Produit créé sur Wix (masqué : affiche-le dans Wix quand tu es prêt). Il est maintenant lié à Wix." });
+        setSyncMsg({ type: "ok", text: t("Produit créé sur Wix (masqué : affiche-le dans Wix quand tu es prêt). Il est maintenant lié à Wix.") });
         load();
       }
     } catch {
-      setSyncMsg({ type: "err", text: "L'envoi vers Wix a échoué." });
+      setSyncMsg({ type: "err", text: t("L'envoi vers Wix a échoué.") });
     }
     setPushingId(null);
   }
@@ -150,13 +153,13 @@ export default function ProduitsSection({ entrepriseId }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setSyncMsg({ type: "err", text: data.error || "La synchronisation a échoué." });
+        setSyncMsg({ type: "err", text: data.error || t("La synchronisation a échoué.") });
       } else {
-        setSyncMsg({ type: "ok", text: `${data.count} produit(s) synchronisé(s) depuis Wix${typeof data.categories === "number" ? ` · ${data.categories} catégorie(s)` : ""}.` });
+        setSyncMsg({ type: "ok", text: t("{n} produit(s) synchronisé(s) depuis Wix", { n: data.count }) + (typeof data.categories === "number" ? " · " + t("{n} catégorie(s)", { n: data.categories }) : "") + "." });
         load();
       }
     } catch {
-      setSyncMsg({ type: "err", text: "La synchronisation a échoué." });
+      setSyncMsg({ type: "err", text: t("La synchronisation a échoué.") });
     }
     setSyncing(false);
   }
@@ -174,7 +177,7 @@ export default function ProduitsSection({ entrepriseId }) {
       const data = await res.json();
       setDiagResultat(res.ok ? data.diagnostic : { erreur: data.error, detail: data.detail });
     } catch {
-      setDiagResultat({ erreur: "Le diagnostic a échoué." });
+      setDiagResultat({ erreur: t("Le diagnostic a échoué.") });
     }
     setDiagBusy(false);
   }
@@ -283,7 +286,7 @@ export default function ProduitsSection({ entrepriseId }) {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   // ---------- Recherche + affichage groupé par catégorie ----------
@@ -304,16 +307,16 @@ export default function ProduitsSection({ entrepriseId }) {
     categoriesPretes && categories.length > 0
       ? [
           ...categories.map((c) => ({ id: c.id, nom: c.nom, produits: produitsVisibles.filter((p) => appartient(p, c)) })),
-          { id: "sans", nom: "Sans catégorie", produits: produitsVisibles.filter(sansCategorie) },
+          { id: "sans", nom: t("Sans catégorie"), produits: produitsVisibles.filter(sansCategorie) },
         ].filter((g) => g.produits.length > 0 && (filtreCategorie === "toutes" || (filtreCategorie === "sans" ? g.id === "sans" : g.id === filtreCategorie)))
       : [{ id: "tous", nom: null, produits: produitsVisibles }];
 
   const optionsFiltre = [
-    { id: "toutes", nom: "Toutes les catégories" },
+    { id: "toutes", nom: t("Toutes les catégories") },
     ...categories.map((c) => ({ id: c.id, nom: c.nom })),
-    { id: "sans", nom: "Sans catégorie" },
+    { id: "sans", nom: t("Sans catégorie") },
   ];
-  const optionsCategorieProduit = [{ id: "", nom: "Sans catégorie" }, ...categories.map((c) => ({ id: c.id, nom: c.nom }))];
+  const optionsCategorieProduit = [{ id: "", nom: t("Sans catégorie") }, ...categories.map((c) => ({ id: c.id, nom: c.nom }))];
 
   function ligneProduit(p, { variante = false } = {}) {
     const enAlerte = p.quantite <= p.seuil_alerte;
@@ -326,22 +329,22 @@ export default function ProduitsSection({ entrepriseId }) {
           </div>
           <div className="admin-row-sub">
             {p.sku && `SKU: ${p.sku} · `}
-            Quantité: {p.quantite} · Seuil d'alerte: {p.seuil_alerte}
-            {p.prix != null && ` · Prix: ${Number(p.prix).toLocaleString("fr-CA", { style: "currency", currency: "CAD" })}`}
+            {t("Quantité:")}{" "}{p.quantite}{" "}{t("· Seuil d'alerte:")}{" "}{p.seuil_alerte}
+            {p.prix != null && ` · ${t("Prix:")} ${Number(p.prix).toLocaleString(loc(), { style: "currency", currency: "CAD" })}`}
             {p.notes && ` · ${p.notes}`}
           </div>
         </div>
         <div className="admin-row-controls">
           {((p.source === "wix" && !wixPushAuto) || (wixConnecte && !p.source && !separerNom(p.nom).variante)) && (
             <button className="admin-icon-btn" onClick={() => pousserVersWix(p.id)} disabled={pushingId === p.id}>
-              {pushingId === p.id ? "..." : <><IconIntegration className="gozly-icon" /> Pousser vers Wix</>}
+              {pushingId === p.id ? "..." : <><IconIntegration className="gozly-icon" />{" "}{t("Pousser vers Wix")}</>}
             </button>
           )}
           <button className="admin-icon-btn" onClick={() => openEdit(p)}>
-            Modifier
+            {t("Modifier")}
           </button>
           <button className="admin-icon-btn danger" onClick={() => handleDelete(p.id)}>
-            Retirer
+            {t("Retirer")}
           </button>
         </div>
       </div>
@@ -374,7 +377,7 @@ export default function ProduitsSection({ entrepriseId }) {
               <span className="inventaire-chevron">{ouvert ? <IconFlecheBas className="gozly-icon-inline" /> : <IconFlecheDroite className="gozly-icon-inline" />}</span> {e.base} {enAlerte && <IconAttention className="gozly-icon" />}
             </div>
             <div className="admin-row-sub">
-              {e.produits.length} variante{e.produits.length > 1 ? "s" : ""} · Quantité totale: {total}
+              {e.produits.length}{" "}{t("variante")}{e.produits.length > 1 ? "s" : ""}{" "}{t("· Quantité totale:")}{" "}{total}
             </div>
           </div>
           <div className="admin-row-controls">
@@ -385,7 +388,7 @@ export default function ProduitsSection({ entrepriseId }) {
                 ouvrirAjoutVariante(e.base, e.produits[0].categorie_id);
               }}
             >
-              + Variante
+              {t("+ Variante")}
             </button>
           </div>
         </div>
@@ -407,24 +410,24 @@ export default function ProduitsSection({ entrepriseId }) {
         }}
       >
         <div>
-          <h2>Produits</h2>
+          <h2>{t("Produits")}</h2>
           <p className="panel-hint" style={{ marginBottom: 0 }}>
-            Tes produits, leurs quantités en stock et leur seuil d'alerte.
+            {t("Tes produits, leurs quantités en stock et leur seuil d'alerte.")}
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           {wixConnecte && (
             <button className="admin-icon-btn" onClick={handleSyncWix} disabled={syncing}>
-              {syncing ? "Synchronisation..." : <><IconIntegration className="gozly-icon" /> Synchroniser Wix</>}
+              {syncing ? t("Synchronisation...") : <><IconIntegration className="gozly-icon" />{" "}{t("Synchroniser Wix")}</>}
             </button>
           )}
           {wixConnecte && (
             <button className="admin-icon-btn" onClick={() => setDiagOuvert(true)}>
-              <IconLoupe className="gozly-icon" /> Diagnostic Wix
+              <IconLoupe className="gozly-icon" />{" "}{t("Diagnostic Wix")}
             </button>
           )}
           <button className="submit-btn" onClick={openAdd}>
-            + Ajouter un produit
+            {t("+ Ajouter un produit")}
           </button>
         </div>
       </div>
@@ -437,7 +440,7 @@ export default function ProduitsSection({ entrepriseId }) {
             type="search"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Rechercher un produit (nom, variante, SKU...)"
+            placeholder={t("Rechercher un produit (nom, variante, SKU...)")}
             style={{ flex: "1 1 260px", maxWidth: "420px", minWidth: 0, margin: 0, boxSizing: "border-box" }}
           />
           {categoriesPretes && categories.length > 0 && (
@@ -450,11 +453,11 @@ export default function ProduitsSection({ entrepriseId }) {
 
       {produits.length === 0 ? (
         <div className="admin-list" style={{ maxWidth: "900px" }}>
-          <div className="admin-empty">Aucun produit pour l'instant.</div>
+          <div className="admin-empty">{t("Aucun produit pour l'instant.")}</div>
         </div>
       ) : groupes.length === 0 ? (
         <div className="admin-list" style={{ maxWidth: "900px" }}>
-          <div className="admin-empty">{mots.length > 0 ? "Aucun produit pour cette recherche." : "Aucun produit dans cette catégorie."}</div>
+          <div className="admin-empty">{mots.length > 0 ? t("Aucun produit pour cette recherche.") : t("Aucun produit dans cette catégorie.")}</div>
         </div>
       ) : (
         groupes.map((g) => (
@@ -475,18 +478,18 @@ export default function ProduitsSection({ entrepriseId }) {
         <div className="modal-overlay" onClick={() => setDiagOuvert(false)}>
           <div className="modal-card" style={{ maxWidth: "620px" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Diagnostic Wix</h3>
+              <h3>{t("Diagnostic Wix")}</h3>
               <button className="admin-icon-btn" onClick={() => setDiagOuvert(false)}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
             <p className="section-hint">
-              Montre ce que Wix répond pour tes produits. Tape le début du nom d&apos;un produit qui manque (ex: Lasagne) pour voir si Wix le renvoie.
+              {t("Montre ce que Wix répond pour tes produits. Tape le début du nom d'un produit qui manque (ex: Lasagne) pour voir si Wix le renvoie.")}
             </p>
             <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-              <input type="text" value={diagTerme} onChange={(e) => setDiagTerme(e.target.value)} placeholder="Début du nom (optionnel)" style={{ flex: 1, minWidth: 0, margin: 0 }} />
+              <input type="text" value={diagTerme} onChange={(e) => setDiagTerme(e.target.value)} placeholder={t("Début du nom (optionnel)")} style={{ flex: 1, minWidth: 0, margin: 0 }} />
               <button className="submit-btn" onClick={lancerDiagnostic} disabled={diagBusy}>
-                {diagBusy ? "..." : "Lancer"}
+                {diagBusy ? "..." : t("Lancer")}
               </button>
             </div>
             {diagResultat && <pre className="diag-resultat">{JSON.stringify(diagResultat, null, 2)}</pre>}
@@ -498,53 +501,53 @@ export default function ProduitsSection({ entrepriseId }) {
         <div className="modal-overlay" onClick={() => setModalOpen(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>{editingId ? "Modifier le produit" : "Ajouter un produit"}</h3>
+              <h3>{editingId ? t("Modifier le produit") : t("Ajouter un produit")}</h3>
               <button className="admin-icon-btn" onClick={() => setModalOpen(false)}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
 
             <form onSubmit={handleSubmit}>
               <div className="field-row">
                 <div className="field">
-                  <label>Nom du produit</label>
+                  <label>{t("Nom du produit")}</label>
                   <input
                     type="text"
                     value={form.nom}
                     onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))}
-                    placeholder="Ex: T-shirt noir M"
+                    placeholder={t("Ex: T-shirt noir M")}
                     required
                   />
                 </div>
                 <div className="field">
-                  <label>SKU (optionnel)</label>
+                  <label>{t("SKU (optionnel)")}</label>
                   <input
                     type="text"
                     value={form.sku}
                     onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
-                    placeholder="Ex: TSN-M"
+                    placeholder={t("Ex: TSN-M")}
                   />
                 </div>
               </div>
 
               <div className="field">
-                <label>Variante (optionnel)</label>
+                <label>{t("Variante (optionnel)")}</label>
                 <input
                   type="text"
                   value={form.variante}
                   onChange={(e) => setForm((f) => ({ ...f, variante: e.target.value }))}
-                  placeholder="Ex: Complète, Demi, Quart"
+                  placeholder={t("Ex: Complète, Demi, Quart")}
                   maxLength={60}
                 />
               </div>
 
               {categoriesPretes && (
                 <div className="field">
-                  <label>Catégorie</label>
+                  <label>{t("Catégorie")}</label>
                   <MenuChoix options={optionsCategorieProduit} value={form.categorieId} onChange={(id) => setForm((f) => ({ ...f, categorieId: id }))} />
                   {categories.length === 0 && (
                     <p className="section-hint" style={{ marginTop: "6px" }}>
-                      Aucune catégorie pour l'instant : crée-en dans le sous-menu « Catégories » d'Inventaire (menu de gauche).
+                      {t("Aucune catégorie pour l'instant : crée-en dans le sous-menu « Catégories » d'Inventaire (menu de gauche).")}
                     </p>
                   )}
                 </div>
@@ -552,7 +555,7 @@ export default function ProduitsSection({ entrepriseId }) {
 
               <div className="field-row">
                 <div className="field">
-                  <label>Quantité</label>
+                  <label>{t("Quantité")}</label>
                   <input
                     type="number"
                     value={form.quantite}
@@ -561,7 +564,7 @@ export default function ProduitsSection({ entrepriseId }) {
                   />
                 </div>
                 <div className="field">
-                  <label>Seuil d'alerte</label>
+                  <label>{t("Seuil d'alerte")}</label>
                   <input
                     type="number"
                     value={form.seuilAlerte}
@@ -572,29 +575,29 @@ export default function ProduitsSection({ entrepriseId }) {
               </div>
 
               <div className="field">
-                <label>Prix de vente (optionnel)</label>
+                <label>{t("Prix de vente (optionnel)")}</label>
                 <input
                   type="text"
                   inputMode="decimal"
                   value={form.prix}
                   onChange={(e) => setForm((f) => ({ ...f, prix: e.target.value }))}
-                  placeholder="Ex: 12.50 (utilisé pour les commandes manuelles)"
+                  placeholder={t("Ex: 12.50 (utilisé pour les commandes manuelles)")}
                 />
               </div>
 
               <div className="field">
-                <label>Notes (optionnel)</label>
+                <label>{t("Notes (optionnel)")}</label>
                 <input
                   type="text"
                   value={form.notes}
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                  placeholder="Ex: fournisseur, emplacement en entrepôt..."
+                  placeholder={t("Ex: fournisseur, emplacement en entrepôt...")}
                 />
               </div>
 
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn" disabled={saving}>
-                  {saving ? "Enregistrement..." : editingId ? "Enregistrer" : "Ajouter"}
+                  {saving ? t("Enregistrement...") : editingId ? t("Enregistrer") : t("Ajouter")}
                 </button>
               </div>
             </form>

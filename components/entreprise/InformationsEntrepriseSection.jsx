@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { geocoderAdresse } from "@/lib/geocode";
 import { IconAttention } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 async function authFetch(path, options = {}) {
   const { data: sessionData } = await supabase.auth.getSession();
@@ -22,6 +23,7 @@ async function authFetch(path, options = {}) {
 // sens une fois qu'un compte peut posséder plusieurs entreprises distinctes.
 // Chaque entreprise gère maintenant les siennes ici.
 export default function InformationsEntrepriseSection({ entrepriseId, userId }) {
+  const { t } = useT();
   const router = useRouter();
   const fileInputRef = useRef(null);
 
@@ -100,11 +102,11 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
     setSaving(false);
 
     if (error) {
-      setMsg({ type: "err", text: "La mise à jour a échoué. Réessaie dans un instant." });
+      setMsg({ type: "err", text: t("La mise à jour a échoué. Réessaie dans un instant.") });
       return;
     }
     setEntreprise((prev) => ({ ...prev, ...champs }));
-    setMsg({ type: "ok", text: "Modifications enregistrées !" });
+    setMsg({ type: "ok", text: t("Modifications enregistrées !") });
     setTimeout(() => setMsg(null), 3000);
   }
 
@@ -124,7 +126,7 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
 
     if (uploadError) {
       setUploadingLogo(false);
-      setLogoMsg({ type: "err", text: "L'envoi du logo a échoué. Réessaie." });
+      setLogoMsg({ type: "err", text: t("L'envoi du logo a échoué. Réessaie.") });
       return;
     }
 
@@ -136,12 +138,12 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
     setUploadingLogo(false);
 
     if (updateError) {
-      setLogoMsg({ type: "err", text: "Le logo a été envoyé, mais n'a pas pu être enregistré." });
+      setLogoMsg({ type: "err", text: t("Le logo a été envoyé, mais n'a pas pu être enregistré.") });
       return;
     }
 
     setEntreprise((prev) => ({ ...prev, logo_url: logoUrl }));
-    setLogoMsg({ type: "ok", text: "Logo mis à jour !" });
+    setLogoMsg({ type: "ok", text: t("Logo mis à jour !") });
     setTimeout(() => setLogoMsg(null), 3000);
   }
 
@@ -155,7 +157,7 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
     setDeleting(false);
 
     if (!ok) {
-      setDeleteError(data.error || "La suppression a échoué.");
+      setDeleteError(data.error || t("La suppression a échoué."));
       return;
     }
 
@@ -163,31 +165,31 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   return (
     <div>
-      <h2>Informations</h2>
-      <p className="panel-hint">Le logo, le nom et les coordonnées de cette entreprise.</p>
+      <h2>{t("Informations")}</h2>
+      <p className="panel-hint">{t("Le logo, le nom et les coordonnées de cette entreprise.")}</p>
 
       <form onSubmit={handleSave}>
         <div className="settings-section">
-          <h3>Général</h3>
+          <h3>{t("Général")}</h3>
 
           <div className="avatar-upload">
             <div className="avatar-preview">
               {entreprise?.logo_url ? (
-                <img src={entreprise.logo_url} alt="Logo de l'entreprise" />
+                <img src={entreprise.logo_url} alt={t("Logo de l'entreprise")} />
               ) : (
                 (nom || "?").charAt(0).toUpperCase()
               )}
             </div>
             <div className="avatar-actions">
               <button type="button" className="btn-small" onClick={() => fileInputRef.current?.click()} disabled={uploadingLogo}>
-                {uploadingLogo ? "Envoi..." : "Changer le logo"}
+                {uploadingLogo ? t("Envoi...") : t("Changer le logo")}
               </button>
-              <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>PNG ou JPG, carré de préférence</span>
+              <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{t("PNG ou JPG, carré de préférence")}</span>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -201,29 +203,29 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
 
           <div className="field-row" style={{ marginTop: "18px" }}>
             <div className="field">
-              <label htmlFor="nom-entreprise">Nom de l'entreprise</label>
+              <label htmlFor="nom-entreprise">{t("Nom de l'entreprise")}</label>
               <input type="text" id="nom-entreprise" value={nom} onChange={(e) => setNom(e.target.value)} required />
             </div>
             <div className="field">
-              <label htmlFor="secteur">Secteur d'activité</label>
+              <label htmlFor="secteur">{t("Secteur d'activité")}</label>
               <input
                 type="text"
                 id="secteur"
                 value={secteurActivite}
                 onChange={(e) => setSecteurActivite(e.target.value)}
-                placeholder="Ex: Restauration, Détail, Construction..."
+                placeholder={t("Ex: Restauration, Détail, Construction...")}
               />
             </div>
           </div>
         </div>
 
-        <div className="settings-divider">Contact</div>
+        <div className="settings-divider">{t("Contact")}</div>
 
         <div className="settings-section">
-          <p className="section-hint">Ces informations servent à contacter l'entreprise.</p>
+          <p className="section-hint">{t("Ces informations servent à contacter l'entreprise.")}</p>
 
           <div className="field">
-            <label htmlFor="adresse-entreprise">Adresse physique</label>
+            <label htmlFor="adresse-entreprise">{t("Adresse physique")}</label>
             <input
               type="text"
               id="adresse-entreprise"
@@ -232,28 +234,28 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
                 setAdresse(e.target.value);
                 setAdresseIntrouvable(false);
               }}
-              placeholder="123 rue Exemple, Ville, Province"
+              placeholder={t("123 rue Exemple, Ville, Province")}
             />
             {adresseIntrouvable && (
               <p className="section-hint" style={{ color: "#f2b95a", marginTop: "4px" }}>
-                <IconAttention className="gozly-icon" /> Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.
+                <IconAttention className="gozly-icon" />{" "}{t("Adresse introuvable - vérifie l'orthographe. Enregistrée quand même.")}
               </p>
             )}
           </div>
 
           <div className="field-row">
             <div className="field">
-              <label htmlFor="courriel-entreprise">Courriel de contact</label>
+              <label htmlFor="courriel-entreprise">{t("Courriel de contact")}</label>
               <input
                 type="email"
                 id="courriel-entreprise"
                 value={courrielContact}
                 onChange={(e) => setCourrielContact(e.target.value)}
-                placeholder="contact@entreprise.com"
+                placeholder={t("contact@entreprise.com")}
               />
             </div>
             <div className="field">
-              <label htmlFor="telephone-entreprise">Téléphone</label>
+              <label htmlFor="telephone-entreprise">{t("Téléphone")}</label>
               <input
                 type="tel"
                 id="telephone-entreprise"
@@ -267,7 +269,7 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
 
         <div className="submit-wrap">
           <button type="submit" className="submit-btn" disabled={saving}>
-            {saving ? "Enregistrement..." : "Enregistrer"}
+            {saving ? t("Enregistrement...") : t("Enregistrer")}
           </button>
         </div>
         {msg && (
@@ -279,28 +281,26 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
 
       {monRole === "proprietaire" && (
         <>
-          <div className="settings-divider">Zone dangereuse</div>
+          <div className="settings-divider">{t("Zone dangereuse")}</div>
 
           {!confirmingDelete ? (
             <div className="danger-zone">
               <div>
-                <h4>Supprimer cette entreprise</h4>
+                <h4>{t("Supprimer cette entreprise")}</h4>
                 <p>
-                  Efface définitivement cette entreprise et toutes ses données (planning, employés, etc). Le compte
-                  de connexion et tes autres entreprises ne sont pas touchés.
+                  {t("Efface définitivement cette entreprise et toutes ses données (planning, employés, etc). Le compte de connexion et tes autres entreprises ne sont pas touchés.")}
                 </p>
               </div>
               <button className="btn-danger" onClick={() => setConfirmingDelete(true)}>
-                Supprimer l'entreprise
+                {t("Supprimer l'entreprise")}
               </button>
             </div>
           ) : (
             <div className="danger-zone" style={{ flexDirection: "column", alignItems: "stretch", gap: "12px" }}>
               <div>
-                <h4>Confirmer la suppression</h4>
+                <h4>{t("Confirmer la suppression")}</h4>
                 <p>
-                  Tape le nom de l'entreprise (<strong>{entreprise?.nom}</strong>) pour confirmer. Cette action est
-                  irréversible.
+                  {t("Tape le nom de l'entreprise (")}<strong>{entreprise?.nom}</strong>{t(") pour confirmer. Cette action est irréversible.")}
                 </p>
               </div>
               {deleteError && <p className="settings-msg err">{deleteError}</p>}
@@ -316,7 +316,7 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
                   disabled={deleteConfirmText !== entreprise?.nom || deleting}
                   onClick={handleDelete}
                 >
-                  {deleting ? "Suppression..." : "Confirmer la suppression définitive"}
+                  {deleting ? t("Suppression...") : t("Confirmer la suppression définitive")}
                 </button>
                 <button
                   className="admin-icon-btn"
@@ -325,7 +325,7 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
                     setDeleteConfirmText("");
                   }}
                 >
-                  Annuler
+                  {t("Annuler")}
                 </button>
               </div>
             </div>

@@ -4,11 +4,13 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 import { IconFlecheBas, IconFlecheHaut, IconX } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Liste des tâches "modèles" d'une catégorie (ex: les sortes de pizza) -
 // repliée sous chaque catégorie, voir JourEditor.jsx pour leur utilisation
 // au moment de créer la journée.
 function ModelesSection({ entrepriseId, categorieId }) {
+  const { t } = useT();
   const [modeles, setModeles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [nom, setNom] = useState("");
@@ -38,7 +40,7 @@ function ModelesSection({ entrepriseId, categorieId }) {
       .insert({ entreprise_id: entrepriseId, categorie_id: categorieId, nom: nom.trim() });
     if (insertError) {
       console.error("Erreur ajout tâche modèle:", insertError);
-      setError(insertError.message || "L'ajout a échoué.");
+      setError(insertError.message || t("L'ajout a échoué."));
       return;
     }
     setNom("");
@@ -53,8 +55,7 @@ function ModelesSection({ entrepriseId, categorieId }) {
   return (
     <div style={{ padding: "4px 20px 16px" }}>
       <p className="section-hint" style={{ marginBottom: "10px" }}>
-        Les tâches qui reviennent chaque jour dans cette catégorie (ex: les sortes de pizza) - elles apparaîtront
-        toutes prêtes, avec juste une courte note ou une quantité à écrire, quand tu crées une journée.
+        {t("Les tâches qui reviennent chaque jour dans cette catégorie (ex: les sortes de pizza) - elles apparaîtront toutes prêtes, avec juste une courte note ou une quantité à écrire, quand tu crées une journée.")}
       </p>
       {!loading && modeles.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "10px" }}>
@@ -65,7 +66,7 @@ function ModelesSection({ entrepriseId, categorieId }) {
                 type="button"
                 onClick={() => handleDelete(m.id)}
                 style={{ background: "none", border: "none", padding: 0, color: "inherit", cursor: "pointer", fontSize: "13px" }}
-                title="Retirer"
+                title={t("Retirer")}
               >
                 <IconX className="gozly-icon" />
               </button>
@@ -74,9 +75,9 @@ function ModelesSection({ entrepriseId, categorieId }) {
         </div>
       )}
       <form className="admin-add-form" onSubmit={handleAdd} style={{ maxWidth: "none" }}>
-        <input type="text" placeholder="Ex: Pizza Margherita" value={nom} onChange={(e) => setNom(e.target.value)} required />
+        <input type="text" placeholder={t("Ex: Pizza Margherita")} value={nom} onChange={(e) => setNom(e.target.value)} required />
         <button type="submit" className="btn-small">
-          Ajouter
+          {t("Ajouter")}
         </button>
       </form>
       {error && <p className="settings-msg err">{error}</p>}
@@ -85,6 +86,7 @@ function ModelesSection({ entrepriseId, categorieId }) {
 }
 
 export default function CategoriesSection({ entrepriseId }) {
+  const { t } = useT();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [nom, setNom] = useState("");
@@ -174,13 +176,13 @@ export default function CategoriesSection({ entrepriseId }) {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   return (
     <div>
-      <h2>Catégories</h2>
-      <p className="panel-hint">Les catégories dans lesquelles tes tâches sont classées (ex: Cuisine, Ménage).</p>
+      <h2>{t("Catégories")}</h2>
+      <p className="panel-hint">{t("Les catégories dans lesquelles tes tâches sont classées (ex: Cuisine, Ménage).")}</p>
 
       <div className="admin-list" style={{ marginBottom: "20px", maxWidth: "560px" }}>
         {categories.map((cat, index) => (
@@ -205,10 +207,10 @@ export default function CategoriesSection({ entrepriseId }) {
                 <div className="admin-row-main">
                   <div className="admin-row-title">
                     {cat.nom}
-                    {cat.nom === NOM_CATEGORIE_COMMANDES && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px", marginLeft: "10px" }}>Géré par un module</span>}
+                    {cat.nom === NOM_CATEGORIE_COMMANDES && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px", marginLeft: "10px" }}>{t("Géré par un module")}</span>}
                   </div>
                   {cat.nom === NOM_CATEGORIE_COMMANDES && (
-                    <div className="admin-row-sub">Remplie automatiquement par le module Commandes en ligne.</div>
+                    <div className="admin-row-sub">{t("Remplie automatiquement par le module Commandes en ligne.")}</div>
                   )}
                 </div>
               )}
@@ -216,15 +218,15 @@ export default function CategoriesSection({ entrepriseId }) {
               <div className="admin-row-controls">
                 {cat.nom === NOM_CATEGORIE_COMMANDES ? (
                   <>
-                    <button className="admin-icon-btn" onClick={() => deplacer(index, -1)} disabled={index === 0} title="Monter" aria-label="Monter la catégorie">
+                    <button className="admin-icon-btn" onClick={() => deplacer(index, -1)} disabled={index === 0} title={t("Monter")} aria-label={t("Monter la catégorie")}>
                       <IconFlecheHaut className="gozly-icon" />
                     </button>
                     <button
                       className="admin-icon-btn"
                       onClick={() => deplacer(index, 1)}
                       disabled={index === categories.length - 1}
-                      title="Descendre"
-                      aria-label="Descendre la catégorie"
+                      title={t("Descendre")}
+                      aria-label={t("Descendre la catégorie")}
                     >
                       <IconFlecheBas className="gozly-icon" />
                     </button>
@@ -232,10 +234,10 @@ export default function CategoriesSection({ entrepriseId }) {
                 ) : editingId === cat.id ? (
                   <>
                     <button className="admin-icon-btn" onClick={() => handleSaveEdit(cat.id)}>
-                      Enregistrer
+                      {t("Enregistrer")}
                     </button>
                     <button className="admin-icon-btn" onClick={() => setEditingId(null)}>
-                      Annuler
+                      {t("Annuler")}
                     </button>
                   </>
                 ) : (
@@ -244,8 +246,8 @@ export default function CategoriesSection({ entrepriseId }) {
                       className="admin-icon-btn"
                       onClick={() => deplacer(index, -1)}
                       disabled={index === 0}
-                      title="Monter"
-                      aria-label="Monter la catégorie"
+                      title={t("Monter")}
+                      aria-label={t("Monter la catégorie")}
                     >
                       <IconFlecheHaut className="gozly-icon" />
                     </button>
@@ -253,8 +255,8 @@ export default function CategoriesSection({ entrepriseId }) {
                       className="admin-icon-btn"
                       onClick={() => deplacer(index, 1)}
                       disabled={index === categories.length - 1}
-                      title="Descendre"
-                      aria-label="Descendre la catégorie"
+                      title={t("Descendre")}
+                      aria-label={t("Descendre la catégorie")}
                     >
                       <IconFlecheBas className="gozly-icon" />
                     </button>
@@ -262,13 +264,13 @@ export default function CategoriesSection({ entrepriseId }) {
                       className="admin-icon-btn"
                       onClick={() => setModelesOuvertId((cur) => (cur === cat.id ? null : cat.id))}
                     >
-                      {modelesOuvertId === cat.id ? "Fermer" : "Tâches pré-enregistrées"}
+                      {modelesOuvertId === cat.id ? t("Fermer") : t("Tâches pré-enregistrées")}
                     </button>
                     <button className="admin-icon-btn" onClick={() => startEdit(cat)}>
-                      Modifier
+                      {t("Modifier")}
                     </button>
                     <button className="admin-icon-btn danger" onClick={() => handleDelete(cat.id)}>
-                      Retirer
+                      {t("Retirer")}
                     </button>
                   </>
                 )}
@@ -278,13 +280,13 @@ export default function CategoriesSection({ entrepriseId }) {
             {modelesOuvertId === cat.id && <ModelesSection entrepriseId={entrepriseId} categorieId={cat.id} />}
           </div>
         ))}
-        {categories.length === 0 && <div className="admin-empty">Aucune catégorie pour l'instant.</div>}
+        {categories.length === 0 && <div className="admin-empty">{t("Aucune catégorie pour l'instant.")}</div>}
       </div>
 
       <form className="admin-add-form" onSubmit={handleAdd}>
-        <input type="text" placeholder="Nom de la catégorie" value={nom} onChange={(e) => setNom(e.target.value)} required />
+        <input type="text" placeholder={t("Nom de la catégorie")} value={nom} onChange={(e) => setNom(e.target.value)} required />
         <button type="submit" className="btn-small">
-          Ajouter
+          {t("Ajouter")}
         </button>
       </form>
     </div>

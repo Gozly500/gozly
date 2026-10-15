@@ -7,6 +7,8 @@ import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { IconCrochet, IconDocument } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 // integre : version sans titre ni bouton "Terminé" (boîte intégrée à une autre page).
 // sansEmplacement : cache le sélecteur de succursale (la page qui l'intègre a le sien).
@@ -14,6 +16,7 @@ import { IconCrochet, IconDocument } from "@/components/icons/Pictogrammes";
 // qui l'intègre garde ses compteurs à jour.
 // suppressionJournee : affiche, après la date, un petit texte "Supprimer cette journée".
 export default function JourEditor({ entrepriseId, date, integre = false, sansEmplacement = false, suppressionJournee = false, onChange }) {
+  const { t: tr } = useT();
   const [categories, setCategories] = useState([]);
   const [taches, setTaches] = useState([]);
   const [modeles, setModeles] = useState([]);
@@ -127,7 +130,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
     loadTaches(emplacementId);
   }
 
-  const dateLabel = new Date(date + "T00:00:00").toLocaleDateString("fr-CA", {
+  const dateLabel = new Date(date + "T00:00:00").toLocaleDateString(loc(), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -135,7 +138,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
   });
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>;
   }
 
   return (
@@ -146,13 +149,13 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
           {suppressionJournee &&
             (confirmerSuppression ? (
               <span style={{ fontSize: "13px" }}>
-                Supprimer toutes les tâches de ce jour ?{" "}
+                {tr("Supprimer toutes les tâches de ce jour ?")}{" "}
                 <button type="button" onClick={supprimerJournee} style={{ background: "none", border: "none", padding: 0, color: "#ff9494", fontWeight: 700, cursor: "pointer", font: "inherit", textDecoration: "underline" }}>
-                  Confirmer
+                  {tr("Confirmer")}
                 </button>{" "}
                 ·{" "}
                 <button type="button" onClick={() => setConfirmerSuppression(false)} style={{ background: "none", border: "none", padding: 0, color: "var(--text-dim)", cursor: "pointer", font: "inherit", textDecoration: "underline" }}>
-                  Annuler
+                  {tr("Annuler")}
                 </button>
               </span>
             ) : (
@@ -161,7 +164,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                 onClick={() => setConfirmerSuppression(true)}
                 style={{ background: "none", border: "none", padding: 0, color: "var(--text-dim)", fontSize: "13px", cursor: "pointer", textDecoration: "underline" }}
               >
-                Supprimer cette journée
+                {tr("Supprimer cette journée")}
               </button>
             ))}
         </div>
@@ -169,10 +172,10 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
           <div>
             <h2 style={{ textTransform: "capitalize" }}>{dateLabel}</h2>
-            <p className="panel-hint">Les tâches à faire ce jour-là, par catégorie.</p>
+            <p className="panel-hint">{tr("Les tâches à faire ce jour-là, par catégorie.")}</p>
           </div>
           <Link href="/dashboard/planning" className="submit-btn" style={{ textDecoration: "none" }}>
-            <IconCrochet className="gozly-icon" /> Terminé
+            <IconCrochet className="gozly-icon" />{" "}{tr("Terminé")}
           </Link>
         </div>
       )}
@@ -181,11 +184,11 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
 
       {categories.length === 0 ? (
         <p style={{ color: "var(--text-dim)" }}>
-          Aucune catégorie pour l'instant.{" "}
+          {tr("Aucune catégorie pour l'instant.")}{" "}
           <Link href="/dashboard/planning/categories" style={{ textDecoration: "underline", color: "var(--fg)" }}>
-            Crée-en une
+            {tr("Crée-en une")}
           </Link>{" "}
-          pour pouvoir ajouter des tâches.
+          {tr("pour pouvoir ajouter des tâches.")}
         </p>
       ) : (
         <div className="planning-days">
@@ -197,16 +200,16 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                 <div className="planning-day-head">
                   <span className="planning-day-title">
                     {cat.nom}
-                    {cat.nom === NOM_CATEGORIE_COMMANDES && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px", marginLeft: "10px" }}>Géré par un module</span>}
+                    {cat.nom === NOM_CATEGORIE_COMMANDES && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px", marginLeft: "10px" }}>{tr("Géré par un module")}</span>}
                   </span>
                   <div style={{ display: "flex", gap: "8px" }}>
                     {catModeles.length > 0 && (
                       <button className="admin-icon-btn" onClick={() => setModelesPourCategorie(cat.id)}>
-                        <IconDocument className="gozly-icon" /> Modèles
+                        <IconDocument className="gozly-icon" />{" "}{tr("Modèles")}
                       </button>
                     )}
                     <button className="admin-icon-btn" onClick={() => setAddingFor(cat.id)}>
-                      + Ajouter une tâche
+                      {tr("+ Ajouter une tâche")}
                     </button>
                   </div>
                 </div>
@@ -224,14 +227,14 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                           handleDelete(t.id);
                         }}
                       >
-                        Retirer
+                        {tr("Retirer")}
                       </button>
                     )}
                   </label>
                 ))}
 
                 {catTaches.length === 0 && addingFor !== cat.id && (
-                  <p style={{ color: "var(--text-dim)", fontSize: "13px" }}>Aucune tâche.</p>
+                  <p style={{ color: "var(--text-dim)", fontSize: "13px" }}>{tr("Aucune tâche.")}</p>
                 )}
 
                 {addingFor === cat.id && (
@@ -239,12 +242,12 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                     <input
                       type="text"
                       autoFocus
-                      placeholder="Décris la tâche"
+                      placeholder={tr("Décris la tâche")}
                       value={texte}
                       onChange={(e) => setTexte(e.target.value)}
                     />
                     <button type="submit" className="btn-small">
-                      Ajouter
+                      {tr("Ajouter")}
                     </button>
                     <button
                       type="button"
@@ -254,7 +257,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                         setTexte("");
                       }}
                     >
-                      Annuler
+                      {tr("Annuler")}
                     </button>
                   </form>
                 )}
@@ -270,7 +273,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
             <div className="modal-head">
               <h3>{categories.find((c) => c.id === modelesPourCategorie)?.nom}</h3>
               <button className="admin-icon-btn" onClick={() => setModelesPourCategorie(null)}>
-                Fermer
+                {tr("Fermer")}
               </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -288,13 +291,13 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                     <span style={{ fontSize: "13.5px", minWidth: "0", flex: "1 1 40%" }}>{m.nom}</span>
                     <input
                       type="text"
-                      placeholder="Quantité ou note"
+                      placeholder={tr("Quantité ou note")}
                       value={valeursModeles[m.id] || ""}
                       onChange={(e) => setValeursModeles((prev) => ({ ...prev, [m.id]: e.target.value }))}
                       style={{ flex: "1 1 auto", minWidth: 0 }}
                     />
                     <button type="submit" className="btn-small">
-                      Ajouter
+                      {tr("Ajouter")}
                     </button>
                   </form>
                 ))}

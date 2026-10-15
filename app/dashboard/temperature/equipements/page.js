@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import TemperatureEquipementsContent from "@/components/TemperatureEquipementsContent";
 
-export const metadata = {
-  title: "Gozly - Équipements (Températures)",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Équipements (Températures)") };
+}
 
 export default function TemperatureEquipementsPage() {
   return (

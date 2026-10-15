@@ -10,6 +10,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { resoudreEntrepriseActive, getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -17,6 +19,7 @@ function dateStr(d) {
 }
 
 export default function PlanningContent() {
+  const { t: tr } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
@@ -135,7 +138,7 @@ export default function PlanningContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>
       </div>
     );
   }
@@ -165,8 +168,8 @@ export default function PlanningContent() {
         <div className="dash-main-inner">
           <header className="dash-hero-inline" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}>
             <div>
-              <h1>Tâches</h1>
-              <p>Choisis un jour pour voir ou préparer ses tâches.</p>
+              <h1>{tr("Tâches")}</h1>
+              <p>{tr("Choisis un jour pour voir ou préparer ses tâches.")}</p>
             </div>
           </header>
 
@@ -176,19 +179,19 @@ export default function PlanningContent() {
             <div className="cmd-planif" style={{ position: "static", maxHeight: "none", marginBottom: "26px" }}>
               <div className="cmd-planif-head">
                 <h3 style={{ textTransform: "capitalize" }}>
-                  {debutSemaine.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} –{" "}
-                  {addDays(debutSemaine, 6).toLocaleDateString("fr-CA", { day: "numeric", month: "long" })}
+                  {debutSemaine.toLocaleDateString(loc(), { day: "numeric", month: "long" })} –{" "}
+                  {addDays(debutSemaine, 6).toLocaleDateString(loc(), { day: "numeric", month: "long" })}
                 </h3>
                 <div style={{ display: "flex", gap: "6px" }}>
                   {date !== aujourdhui && (
                     <button className="admin-icon-btn" onClick={() => setDate(aujourdhui)}>
-                      Aujourd&apos;hui
+                      {tr("Aujourd'hui")}
                     </button>
                   )}
-                  <button className="admin-icon-btn" aria-label="Semaine précédente" onClick={() => decalerSemaine(-1)}>
+                  <button className="admin-icon-btn" aria-label={tr("Semaine précédente")} onClick={() => decalerSemaine(-1)}>
                     <IconFlecheGauche className="gozly-icon" />
                   </button>
-                  <button className="admin-icon-btn" aria-label="Semaine suivante" onClick={() => decalerSemaine(1)}>
+                  <button className="admin-icon-btn" aria-label={tr("Semaine suivante")} onClick={() => decalerSemaine(1)}>
                     <IconFlecheDroite className="gozly-icon" />
                   </button>
                 </div>
@@ -205,7 +208,7 @@ export default function PlanningContent() {
                       className={`cmd-planif-jour${id === date ? " actif" : ""}${id === aujourdhui ? " aujourdhui" : ""}`}
                       onClick={() => setDate(id)}
                     >
-                      <span className="cmd-planif-jour-nom">{d.toLocaleDateString("fr-CA", { weekday: "short" }).replace(".", "")}</span>
+                      <span className="cmd-planif-jour-nom">{d.toLocaleDateString(loc(), { weekday: "short" }).replace(".", "")}</span>
                       <span className="cmd-planif-jour-num">{d.getDate()}</span>
                       <span className="cmd-planif-jour-nb">{stats ? `${stats.faites}/${stats.total}` : "—"}</span>
                     </button>
@@ -226,18 +229,18 @@ export default function PlanningContent() {
               ) : (
                 <div style={{ textAlign: "center", padding: "26px 10px" }}>
                   <p style={{ color: "var(--text-dim)", marginBottom: "14px" }}>
-                    Aucune tâche pour le{" "}
-                    {new Date(`${date}T00:00:00`).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}.
+                    {tr("Aucune tâche pour le")}{" "}
+                    {new Date(`${date}T00:00:00`).toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long" })}.
                   </p>
                   <button className="submit-btn" onClick={() => setCreees((prev) => new Set(prev).add(date))}>
-                    Créer cette journée
+                    {tr("Créer cette journée")}
                   </button>
                 </div>
               )}
             </div>
           )}
 
-          {!entrepriseId && <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>}
+          {!entrepriseId && <p style={{ color: "var(--text-dim)" }}>{tr("Aucune entreprise associée à ce compte.")}</p>}
         </div>
       </main>
     </div>

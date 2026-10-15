@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import SimpleSelect from "@/components/SimpleSelect";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 const DUREES = [
   { id: "3", label: "3 heures" },
@@ -16,6 +18,7 @@ const DUREES = [
 // retirer tous ceux en cours, y compris ceux créés par les employés. Ils s'affichent en évidence en haut de l'app des
 // destinataires, qui reçoivent aussi une notification.
 export default function RappelsModal({ entrepriseId, onClose }) {
+  const { t } = useT();
   const [contenu, setContenu] = useState("");
   const [duree, setDuree] = useState("24");
   const [pourTous, setPourTous] = useState(true);
@@ -69,15 +72,15 @@ export default function RappelsModal({ entrepriseId, onClose }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMsg({ type: "err", text: data.error || "La création a échoué." });
+        setMsg({ type: "err", text: data.error || t("La création a échoué.") });
       } else {
         setContenu("");
         setIds(new Set());
-        setMsg({ type: "ok", text: "Rappel créé. Les destinataires ont reçu une notification." });
+        setMsg({ type: "ok", text: t("Rappel créé. Les destinataires ont reçu une notification.") });
         charger();
       }
     } catch {
-      setMsg({ type: "err", text: "La création a échoué." });
+      setMsg({ type: "err", text: t("La création a échoué.") });
     }
     setBusy(false);
   }
@@ -91,28 +94,28 @@ export default function RappelsModal({ entrepriseId, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" style={{ maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          <h3>Rappel</h3>
+          <h3>{t("Rappel")}</h3>
           <button className="admin-icon-btn" onClick={onClose}>
-            Fermer
+            {t("Fermer")}
           </button>
         </div>
 
-        <p className="panel-hint">Un rappel mis en évidence en haut de l'app des personnes choisies, pendant la durée que tu veux (1 semaine au maximum).</p>
+        <p className="panel-hint">{t("Un rappel mis en évidence en haut de l'app des personnes choisies, pendant la durée que tu veux (1 semaine au maximum).")}</p>
 
         <form onSubmit={creer}>
           <div className="field">
-            <label>Rappel</label>
-            <textarea value={contenu} onChange={(e) => setContenu(e.target.value)} rows={3} maxLength={400} placeholder="Ex: N'oubliez pas de signer la feuille d'inventaire." />
+            <label>{t("Rappel")}</label>
+            <textarea value={contenu} onChange={(e) => setContenu(e.target.value)} rows={3} maxLength={400} placeholder={t("Ex: N'oubliez pas de signer la feuille d'inventaire.")} />
           </div>
           <div className="field">
-            <label>Affiché pendant</label>
+            <label>{t("Affiché pendant")}</label>
             <SimpleSelect options={DUREES} value={duree} onChange={setDuree} />
           </div>
 
           <div className="switch-row" style={{ marginBottom: "10px" }}>
             <div className="switch-row-text">
-              <h4>Pour tout le monde</h4>
-              <p>Décoche pour choisir les personnes.</p>
+              <h4>{t("Pour tout le monde")}</h4>
+              <p>{t("Décoche pour choisir les personnes.")}</p>
             </div>
             <label className="switch">
               <input type="checkbox" checked={pourTous} onChange={(e) => setPourTous(e.target.checked)} />
@@ -145,13 +148,13 @@ export default function RappelsModal({ entrepriseId, onClose }) {
 
           {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
           <button type="submit" className="submit-btn" disabled={busy || !contenu.trim() || (!pourTous && ids.size === 0)}>
-            {busy ? "Création..." : "Créer le rappel"}
+            {busy ? t("Création...") : t("Créer le rappel")}
           </button>
         </form>
 
         {encours.length > 0 && (
           <div style={{ marginTop: "22px" }}>
-            <h4 style={{ fontSize: "14.5px", fontWeight: 600 }}>En cours</h4>
+            <h4 style={{ fontSize: "14.5px", fontWeight: 600 }}>{t("En cours")}</h4>
             <div className="admin-list">
               {encours.map((r) => (
                 <div className="admin-row" key={r.id}>
@@ -159,13 +162,13 @@ export default function RappelsModal({ entrepriseId, onClose }) {
                     <div className="admin-row-title" style={{ whiteSpace: "normal" }}>{r.contenu}</div>
                     <div className="admin-row-sub">
                       {r.auteur_nom}
-                      {r.anonyme ? " (anonyme pour les destinataires)" : ""} · {r.pour_tous ? "Pour tout le monde" : `Pour ${nbParRappel[r.id] || 0} personne(s)`} · jusqu'au{" "}
-                      {new Date(r.fin).toLocaleDateString("fr-CA", { weekday: "short", day: "numeric", month: "short" })}
+                      {r.anonyme ? t(" (anonyme pour les destinataires)") : ""} · {r.pour_tous ? t("Pour tout le monde") : t("Pour {n} personne(s)", { n: nbParRappel[r.id] || 0 })}{" "}{t("· jusqu'au")}{" "}
+                      {new Date(r.fin).toLocaleDateString(loc(), { weekday: "short", day: "numeric", month: "short" })}
                     </div>
                   </div>
                   <div className="admin-row-controls">
                     <button className="admin-icon-btn danger" onClick={() => retirer(r.id)}>
-                      Retirer
+                      {t("Retirer")}
                     </button>
                   </div>
                 </div>

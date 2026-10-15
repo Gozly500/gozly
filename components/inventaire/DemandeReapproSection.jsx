@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useT } from "@/components/LangProvider";
 
 export default function DemandeReapproSection({ entrepriseId }) {
+  const { t } = useT();
   const [produits, setProduits] = useState([]);
   const [selections, setSelections] = useState({}); // produitId -> quantité (string)
   const [libreNom, setLibreNom] = useState("");
@@ -76,10 +78,10 @@ export default function DemandeReapproSection({ entrepriseId }) {
 
     setBusy(false);
     if (error) {
-      setMsg({ type: "err", text: "L'envoi a échoué." });
+      setMsg({ type: "err", text: t("L'envoi a échoué.") });
     } else {
       setSelections({});
-      setMsg({ type: "ok", text: "Envoyé au mode kiosk." });
+      setMsg({ type: "ok", text: t("Envoyé au mode kiosk.") });
       loadListe();
     }
   }
@@ -100,11 +102,11 @@ export default function DemandeReapproSection({ entrepriseId }) {
 
     setBusy(false);
     if (error) {
-      setMsg({ type: "err", text: "L'envoi a échoué." });
+      setMsg({ type: "err", text: t("L'envoi a échoué.") });
     } else {
       setLibreNom("");
       setLibreQte("1");
-      setMsg({ type: "ok", text: "Envoyé au mode kiosk." });
+      setMsg({ type: "ok", text: t("Envoyé au mode kiosk.") });
       loadListe();
     }
   }
@@ -117,15 +119,14 @@ export default function DemandeReapproSection({ entrepriseId }) {
   const nbSelections = Object.keys(selections).length;
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   return (
     <div>
-      <h2>Liste à préparer</h2>
+      <h2>{t("Liste à préparer")}</h2>
       <p className="panel-hint">
-        Coche les produits à aller chercher (avec la quantité), ou ajoute un item qui n'est pas dans l'Inventaire.
-        Ça s'affiche en direct sur l'écran en mode kiosk.
+        {t("Coche les produits à aller chercher (avec la quantité), ou ajoute un item qui n'est pas dans l'Inventaire. Ça s'affiche en direct sur l'écran en mode kiosk.")}
       </p>
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
@@ -161,23 +162,23 @@ export default function DemandeReapproSection({ entrepriseId }) {
       )}
 
       <div className="settings-section" style={{ marginTop: "26px", maxWidth: "560px" }}>
-        <h3>Item hors catalogue</h3>
+        <h3>{t("Item hors catalogue")}</h3>
         <form onSubmit={handleAjouterLibre} className="field-row" style={{ alignItems: "flex-end" }}>
           <div className="field" style={{ flex: 1 }}>
-            <label>Nom</label>
+            <label>{t("Nom")}</label>
             <input
               type="text"
               value={libreNom}
               onChange={(e) => setLibreNom(e.target.value)}
-              placeholder="Ex: Boîtes en carton"
+              placeholder={t("Ex: Boîtes en carton")}
             />
           </div>
           <div className="field" style={{ maxWidth: "100px" }}>
-            <label>Qté</label>
+            <label>{t("Qté")}</label>
             <input type="number" min="1" value={libreQte} onChange={(e) => setLibreQte(e.target.value)} />
           </div>
           <button type="submit" className="admin-icon-btn" disabled={busy || !libreNom.trim()}>
-            + Ajouter
+            {t("+ Ajouter")}
           </button>
         </form>
       </div>
@@ -188,22 +189,22 @@ export default function DemandeReapproSection({ entrepriseId }) {
         onClick={handleEnvoyer}
         disabled={busy || nbSelections === 0}
       >
-        Ajouter à la liste{nbSelections > 0 && ` (${nbSelections})`}
+        {t("Ajouter à la liste")}{nbSelections > 0 && ` (${nbSelections})`}
       </button>
 
       {liste.length > 0 && (
         <div style={{ marginTop: "26px" }}>
-          <h3>Sur la liste en ce moment ({liste.length})</h3>
+          <h3>{t("Sur la liste en ce moment (")}{liste.length})</h3>
           <div className="admin-list" style={{ maxWidth: "560px" }}>
             {liste.map((item) => (
               <div className="admin-row" key={item.id}>
                 <div className="admin-row-main">
                   <div className="admin-row-title">{item.nom}</div>
-                  <div className="admin-row-sub">Quantité: {item.quantite}</div>
+                  <div className="admin-row-sub">{t("Quantité:")}{" "}{item.quantite}</div>
                 </div>
                 <div className="admin-row-controls">
                   <button className="admin-icon-btn danger" onClick={() => handleRetirer(item.id)}>
-                    Retirer
+                    {t("Retirer")}
                   </button>
                 </div>
               </div>

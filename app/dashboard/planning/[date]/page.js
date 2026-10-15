@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import JourContent from "@/components/JourContent";
 
-export const metadata = {
-  title: "Gozly - Journée",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Journée") };
+}
 
 export default async function JourPage({ params }) {
   const { date } = await params;

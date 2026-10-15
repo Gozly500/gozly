@@ -25,6 +25,8 @@ import {
   noteCommande,
 } from "@/lib/commandes";
 import { IconDocument, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 const INTERVALLE_SYNC_MS = 30000;
 
@@ -35,6 +37,7 @@ async function authHeaders() {
 }
 
 export default function CommandesSection({ entrepriseId }) {
+  const { t } = useT();
   const [date, setDate] = useState(dateAujourdhui);
   const [commandes, setCommandes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,15 +87,15 @@ export default function CommandesSection({ entrepriseId }) {
           if (!silencieux) {
             setSyncMsg({
               type: "err",
-              text: `${data.error || "La synchronisation a échoué."}${data.detail ? ` [${data.detail}]` : ""}`,
+              text: `${data.error || t("La synchronisation a échoué.")}${data.detail ? ` [${data.detail}]` : ""}`,
             });
           }
         } else {
-          setSyncMsg(silencieux ? null : { type: "ok", text: `${data.count} commande(s) synchronisée(s) depuis Wix.` });
+          setSyncMsg(silencieux ? null : { type: "ok", text: t("{n} commande(s) synchronisée(s) depuis Wix.", { n: data.count }) });
           await charger();
         }
       } catch {
-        if (!silencieux) setSyncMsg({ type: "err", text: "La synchronisation a échoué." });
+        if (!silencieux) setSyncMsg({ type: "err", text: t("La synchronisation a échoué.") });
       }
       if (!silencieux) setSyncing(false);
     },
@@ -132,8 +135,8 @@ export default function CommandesSection({ entrepriseId }) {
     const { ok, error } = await imprimerCommande(entrepriseId, c.id, "manuel");
     setSyncMsg(
       ok
-        ? { type: "ok", text: `Bon de la commande #${c.numero} envoyé à l'imprimante.` }
-        : { type: "err", text: error || "L'impression a échoué." }
+        ? { type: "ok", text: t("Bon de la commande #{n} envoyé à l'imprimante.", { n: c.numero }) }
+        : { type: "err", text: error || t("L'impression a échoué.") }
     );
   }
 
@@ -144,13 +147,13 @@ export default function CommandesSection({ entrepriseId }) {
   }
 
   async function retirer(c) {
-    if (!window.confirm(`Retirer la commande #${c.numero}?`)) return;
+    if (!window.confirm(t("Retirer la commande #{n}?", { n: c.numero }))) return;
     await supabase.from("commandes_en_ligne").delete().eq("id", c.id);
     await mettreAJourTachesCommandes(entrepriseId);
     charger();
   }
 
-  const dateLabelPdf = () => new Date(`${date}T00:00:00`).toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const dateLabelPdf = () => new Date(`${date}T00:00:00`).toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   async function exporterPdf() {
     setExportEnCours(true);
@@ -162,7 +165,7 @@ export default function CommandesSection({ entrepriseId }) {
   }
 
   const aujourdhui = dateAujourdhui();
-  const dateLabel = new Date(`${date}T00:00:00`).toLocaleDateString("fr-CA", {
+  const dateLabel = new Date(`${date}T00:00:00`).toLocaleDateString(loc(), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -208,18 +211,18 @@ export default function CommandesSection({ entrepriseId }) {
         }}
       >
         <div>
-          <h2>Commandes</h2>
+          <h2>{t("Commandes")}</h2>
           <p className="panel-hint" style={{ marginBottom: 0 }}>
-            Les commandes reçues sur ton site Wix, mises à jour automatiquement.
+            {t("Les commandes reçues sur ton site Wix, mises à jour automatiquement.")}
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button className="submit-btn" onClick={() => setModal({ commande: null })}>
-            + Nouvelle commande
+            {t("+ Nouvelle commande")}
           </button>
           <div className="account-wrap" ref={exportRef}>
             <button className="admin-icon-btn" onClick={() => setExportOuvert((v) => !v)} disabled={exportEnCours || commandes.length === 0}>
-              {exportEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> Exporter <IconFlecheBas className="gozly-icon-inline" /></>}
+              {exportEnCours ? t("PDF...") : <><IconTelecharger className="gozly-icon" />{" "}{t("Exporter")}{" "}<IconFlecheBas className="gozly-icon-inline" /></>}
             </button>
             {exportOuvert && (
               <div className="account-dropdown open">
@@ -231,13 +234,13 @@ export default function CommandesSection({ entrepriseId }) {
                     exporterPdf();
                   }}
                 >
-                  PDF (commandes du jour)
+                  {t("PDF (commandes du jour)")}
                 </button>
               </div>
             )}
           </div>
           <button className="admin-icon-btn" onClick={() => synchroniser()} disabled={syncing}>
-            <IconIntegration className="gozly-icon" /> {syncing ? "Synchronisation..." : "Synchroniser Wix"}
+            <IconIntegration className="gozly-icon" /> {syncing ? t("Synchronisation...") : t("Synchroniser Wix")}
           </button>
         </div>
       </div>
@@ -258,46 +261,46 @@ export default function CommandesSection({ entrepriseId }) {
             <span className="icon">
               <tab.Icone className="gozly-icon" />
             </span>{" "}
-            {tab.label}
+            {t(tab.label)}
           </button>
         ))}
       </div>
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, -1))}>
-          <IconFlecheGauche className="gozly-icon" /> Jour précédent
+          <IconFlecheGauche className="gozly-icon" />{" "}{t("Jour précédent")}
         </button>
         <span className="planning-week-label" style={{ textTransform: "capitalize" }}>
           {dateLabel}
           {date !== aujourdhui && (
             <button className="admin-icon-btn" style={{ marginLeft: "10px" }} onClick={() => setDate(aujourdhui)}>
-              Aujourd&apos;hui
+              {t("Aujourd'hui")}
             </button>
           )}
         </span>
         <button className="admin-icon-btn" onClick={() => setDate((d) => decalerJour(d, 1))}>
-          Jour suivant <IconFlecheDroite className="gozly-icon" />
+          {t("Jour suivant")}{" "}<IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       ) : commandes.length === 0 ? (
         <div className="admin-list" style={{ maxWidth: "700px" }}>
-          <div className="admin-empty">Aucune commande ce jour-là.</div>
+          <div className="admin-empty">{t("Aucune commande ce jour-là.")}</div>
         </div>
       ) : vue === "apercu" ? (
         <>
           <div className="admin-list" style={{ maxWidth: "500px", marginBottom: "16px" }}>
             <div className="admin-row">
               <div className="admin-row-main">
-                <div className="admin-row-title">Commandes</div>
+                <div className="admin-row-title">{t("Commandes")}</div>
               </div>
               <div className="admin-row-controls">{valides.length}</div>
             </div>
             <div className="admin-row">
               <div className="admin-row-main">
-                <div className="admin-row-title">Total (sans les annulées)</div>
+                <div className="admin-row-title">{t("Total (sans les annulées)")}</div>
               </div>
               <div className="admin-row-controls" style={{ fontWeight: 700 }}>
                 {formatMontant(totalJour)}
@@ -324,16 +327,16 @@ export default function CommandesSection({ entrepriseId }) {
               >
                 <div style={{ fontSize: "26px", fontWeight: 700 }}>{commandes.filter((c) => etapeCommande(c) === id).length}</div>
                 <div className="section-hint" style={{ margin: 0 }}>
-                  {label}
+                  {t(label)}
                 </div>
               </button>
             ))}
           </div>
 
-          <h3 style={{ marginBottom: "10px" }}>À préparer ce jour-là</h3>
+          <h3 style={{ marginBottom: "10px" }}>{t("À préparer ce jour-là")}</h3>
           {totauxProduits.length === 0 ? (
             <div className="admin-list" style={{ maxWidth: "700px" }}>
-              <div className="admin-empty">Aucun produit à préparer.</div>
+              <div className="admin-empty">{t("Aucun produit à préparer.")}</div>
             </div>
           ) : (
             <div className="admin-list" style={{ maxWidth: "700px" }}>
@@ -343,7 +346,7 @@ export default function CommandesSection({ entrepriseId }) {
                     <div className="admin-row-title">{p.nom}</div>
                   </div>
                   <div className="admin-row-controls" style={{ fontWeight: 700 }}>
-                    × {p.quantite}
+                    {t("×")}{" "}{p.quantite}
                   </div>
                 </div>
               ))}
@@ -366,13 +369,13 @@ export default function CommandesSection({ entrepriseId }) {
                 style={filtre === id ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
                 onClick={() => setFiltre(id)}
               >
-                {label}
+                {t(label)}
               </button>
             ))}
           </div>
 
           <div className="admin-list" style={{ maxWidth: "700px" }}>
-            {visibles.length === 0 && <div className="admin-empty">Aucune commande dans ce filtre.</div>}
+            {visibles.length === 0 && <div className="admin-empty">{t("Aucune commande dans ce filtre.")}</div>}
             {visibles.map((c) => {
               const etat = etatCommande(c);
               const mode = libelleMode(c.mode);
@@ -381,20 +384,20 @@ export default function CommandesSection({ entrepriseId }) {
                 <div className="admin-row" key={c.id} style={{ alignItems: "flex-start" }}>
                   <div className="admin-row-main">
                     <div className="admin-row-title">
-                      #{c.numero || "—"} · {libelleRamassage(c) ? `Ramassage ${libelleRamassage(c)}` : heureCommande(c.date_commande)}
+                      #{c.numero || "—"} · {libelleRamassage(c) ? t("Ramassage {x}", { x: libelleRamassage(c) }) : heureCommande(c.date_commande)}
                       {c.client_nom ? ` · ${c.client_nom}` : ""}
                       {c.client_telephone ? ` · ${c.client_telephone}` : ""}
                     </div>
                     <div className="admin-row-sub" style={{ marginBottom: "6px" }}>
-                      <span style={{ color: etat.couleur, fontWeight: 600 }}>{etat.texte}</span>
+                      <span style={{ color: etat.couleur, fontWeight: 600 }}>{t(etat.texte)}</span>
                       {mode && ` · ${mode}`}
                       {c.lieu_nom && ` · ${c.lieu_nom}`}
                       {paiement && ` · ${paiement}`}
-                      {c.source === "manuel" && " · Manuelle"}
+                      {c.source === "manuel" && t(" · Manuelle")}
                     </div>
                     {(c.items || []).map((it, i) => (
                       <div key={i} style={{ fontSize: "13.5px" }}>
-                        {it.quantite} × {it.nom}
+                        {it.quantite}{" "}{t("×")}{" "}{it.nom}
                         {it.options?.length > 0 && (
                           <span style={{ color: "var(--text-dim)", fontSize: "12.5px" }}> ({it.options.join(", ")})</span>
                         )}
@@ -407,31 +410,31 @@ export default function CommandesSection({ entrepriseId }) {
                     <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
                       {etat.id === "en_attente" && (
                         <button className="admin-icon-btn" onClick={() => passerEtape(c, "traitee")}>
-                          Traiter
+                          {t("Traiter")}
                         </button>
                       )}
                       {etat.id === "traitee" && (
                         <button className="admin-icon-btn" onClick={() => passerEtape(c, "terminee")}>
-                          Terminer
+                          {t("Terminer")}
                         </button>
                       )}
                       {imprimanteActive && etat.id !== "annulee" && (
                         <button className="admin-icon-btn" onClick={() => imprimer(c)}>
-                          {c.imprime_le ? "Réimprimer" : "Imprimer"}
+                          {c.imprime_le ? t("Réimprimer") : t("Imprimer")}
                         </button>
                       )}
                       {(etat.id === "traitee" || etat.id === "terminee") && (
                         <button className="admin-icon-btn" onClick={() => passerEtape(c, "en_attente")}>
-                          Rouvrir
+                          {t("Rouvrir")}
                         </button>
                       )}
                       {c.source === "manuel" && (
                         <>
                           <button className="admin-icon-btn" onClick={() => setModal({ commande: c })}>
-                            Modifier
+                            {t("Modifier")}
                           </button>
                           <button className="admin-icon-btn danger" onClick={() => retirer(c)}>
-                            Retirer
+                            {t("Retirer")}
                           </button>
                         </>
                       )}

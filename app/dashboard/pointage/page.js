@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import PointageKioskContent from "@/components/PointageKioskContent";
 
-export const metadata = {
-  title: "Gozly - Pointage",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Pointage") };
+}
 
 export default function PointagePage() {
   return (

@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import EntrepriseParametresContent from "@/components/EntrepriseParametresContent";
 
-export const metadata = {
-  title: "Gozly - Paramètres",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Paramètres") };
+}
 
 export default function EntrepriseParametresPage() {
   return (

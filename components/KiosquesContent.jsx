@@ -9,9 +9,11 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { MODULES } from "@/lib/modules";
 import { KIOSQUES } from "@/lib/kiosques";
 import { IconEcran } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Tous les écrans kiosque de l'entreprise, au même endroit (un par module actif qui en a un).
 export default function KiosquesContent() {
+  const { t } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
@@ -70,7 +72,7 @@ export default function KiosquesContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -92,18 +94,18 @@ export default function KiosquesContent() {
       <main className="dash-main">
         <div className="dash-main-inner">
           <header className="dash-hero-inline">
-            <h1>Mode kiosque</h1>
-            <p>Les écrans à laisser ouverts sur une tablette ou un écran du commerce. Chacun s&apos;ouvre dans un nouvel onglet.</p>
+            <h1>{t("Mode kiosque")}</h1>
+            <p>{t("Les écrans à laisser ouverts sur une tablette ou un écran du commerce. Chacun s'ouvre dans un nouvel onglet.")}</p>
             <p style={{ marginTop: "8px" }}>
-              Pour une tablette : ouvre <strong>gozly.net/kiosque</strong> dessus, installe l&apos;app, puis connecte-toi — tu pourras choisir le kiosque à afficher.{" "}
-              <Link href="/kiosque" target="_blank">Ouvrir la page d&apos;installation</Link>
+              {t("Pour une tablette : ouvre")}{" "}<strong>{t("gozly.net/kiosque")}</strong>{" "}{t("dessus, installe l'app, puis connecte-toi — tu pourras choisir le kiosque à afficher.")}{" "}
+              <Link href="/kiosque" target="_blank">{t("Ouvrir la page d'installation")}</Link>
             </p>
           </header>
 
           {!entrepriseId ? (
-            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+            <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>
           ) : disponibles.length === 0 ? (
-            <p className="chat-empty">Aucun kiosque disponible : active un module (Horaire &amp; Pointage, Tâches, Inventaire ou Commandes) avec « Gérer les modules ».</p>
+            <p className="chat-empty">{t("Aucun kiosque disponible : active un module (Horaire & Pointage, Tâches, Inventaire ou Commandes) avec « Gérer les modules ».")}</p>
           ) : (
             <div className="admin-list" style={{ maxWidth: "720px" }}>
               {disponibles.map((k) => {
@@ -121,7 +123,7 @@ export default function KiosquesContent() {
                     </div>
                     <div className="admin-row-controls">
                       <Link href={k.href} target="_blank" className="submit-btn" style={{ textDecoration: "none" }}>
-                        <IconEcran className="gozly-icon" /> Ouvrir
+                        <IconEcran className="gozly-icon" />{" "}{t("Ouvrir")}
                       </Link>
                     </div>
                   </div>

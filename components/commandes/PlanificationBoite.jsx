@@ -6,6 +6,8 @@ import JourEditor from "@/components/planning/JourEditor";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { bornesJour, filtrerParDateEffective, decalerJour, dateAujourdhui } from "@/lib/commandes";
 import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -22,6 +24,7 @@ function dateQuebec(iso) {
 // tâches où on peut ajouter directement la production à faire - sans quitter
 // les commandes. Le jour choisi est partagé avec la liste de commandes.
 export default function PlanificationBoite({ entrepriseId, date, onChangerDate, versionCommandes, premierJourDimanche }) {
+  const { t } = useT();
   const [compteParJour, setCompteParJour] = useState({});
 
   const debutSemaine = getDebutSemaine(new Date(`${date}T00:00:00`), premierJourDimanche);
@@ -57,12 +60,12 @@ export default function PlanificationBoite({ entrepriseId, date, onChangerDate, 
   return (
     <aside className="cmd-planif">
       <div className="cmd-planif-head">
-        <h3>Planification</h3>
+        <h3>{t("Planification")}</h3>
         <div style={{ display: "flex", gap: "6px" }}>
-          <button className="admin-icon-btn" aria-label="Semaine précédente" onClick={() => onChangerDate(decalerJour(date, -7))}>
+          <button className="admin-icon-btn" aria-label={t("Semaine précédente")} onClick={() => onChangerDate(decalerJour(date, -7))}>
             <IconFlecheGauche className="gozly-icon" />
           </button>
-          <button className="admin-icon-btn" aria-label="Semaine suivante" onClick={() => onChangerDate(decalerJour(date, 7))}>
+          <button className="admin-icon-btn" aria-label={t("Semaine suivante")} onClick={() => onChangerDate(decalerJour(date, 7))}>
             <IconFlecheDroite className="gozly-icon" />
           </button>
         </div>
@@ -79,9 +82,9 @@ export default function PlanificationBoite({ entrepriseId, date, onChangerDate, 
               className={`cmd-planif-jour${id === date ? " actif" : ""}${id === aujourdhui ? " aujourdhui" : ""}`}
               onClick={() => onChangerDate(id)}
             >
-              <span className="cmd-planif-jour-nom">{d.toLocaleDateString("fr-CA", { weekday: "short" }).replace(".", "")}</span>
+              <span className="cmd-planif-jour-nom">{d.toLocaleDateString(loc(), { weekday: "short" }).replace(".", "")}</span>
               <span className="cmd-planif-jour-num">{d.getDate()}</span>
-              <span className="cmd-planif-jour-nb">{nb > 0 ? `${nb} rés.` : "—"}</span>
+              <span className="cmd-planif-jour-nb">{nb > 0 ? t("{n} rés.", { n: nb }) : "—"}</span>
             </button>
           );
         })}

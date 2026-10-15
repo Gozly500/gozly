@@ -1,11 +1,12 @@
+import { getT } from "@/lib/i18n/siteServer";
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import SettingsContent from "@/components/SettingsContent";
 
-export const metadata = {
-  title: "Gozly - Paramètres",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Paramètres") };
+}
 
 export default function SettingsPage() {
   return (

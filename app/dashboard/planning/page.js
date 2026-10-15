@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import PlanningContent from "@/components/PlanningContent";
 
-export const metadata = {
-  title: "Gozly - Tâches",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Tâches") };
+}
 
 export default function PlanningPage() {
   return (

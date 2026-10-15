@@ -10,6 +10,8 @@ import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { PERMISSIONS } from "@/lib/permissions";
 import { telechargerPdfFeuilleTemps } from "@/lib/exportPdf";
 import { IconAttention, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 function heuresDecimal(minutes) {
   return (minutes / 60).toFixed(2);
@@ -57,6 +59,7 @@ function combineDateHeure(date, heure) {
 }
 
 export default function FeuilleTempsSection({ entrepriseId }) {
+  const { t: tr } = useT();
   const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
   const [employes, setEmployes] = useState([]);
   const [assignes, setAssignes] = useState(null); // ids des employés de la succursale choisie (null = tous)
@@ -283,12 +286,12 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   }
 
   function libelleJour(d) {
-    const nom = d.toLocaleDateString("fr-CA", { weekday: "long" });
+    const nom = d.toLocaleDateString(loc(), { weekday: "long" });
     return nom.charAt(0).toUpperCase() + nom.slice(1);
   }
 
   function heureCourte(iso) {
-    return new Date(iso).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+    return new Date(iso).toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit" });
   }
 
   function openEdit(ligne) {
@@ -371,11 +374,11 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       const data = await res.json();
       setNethrisMsg(
         res.ok
-          ? { type: "ok", text: "Les heures ont été envoyées à Nethris." }
-          : { type: "err", text: data.error || "L'envoi a échoué." }
+          ? { type: "ok", text: tr("Les heures ont été envoyées à Nethris.") }
+          : { type: "err", text: data.error || tr("L'envoi a échoué.") }
       );
     } catch {
-      setNethrisMsg({ type: "err", text: "L'envoi a échoué." });
+      setNethrisMsg({ type: "err", text: tr("L'envoi a échoué.") });
     }
     setEnvoiNethris(false);
   }
@@ -400,7 +403,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       const totalMinutes = employesAffiches.reduce((somme, emp) => somme + sessionsPour(emp.id).reduce((t, x) => t + x.minutes, 0), 0);
       await telechargerPdfFeuilleTemps({
         entrepriseNom,
-        succursaleNom: emplacements.find((e) => e.id === emplacementId)?.nom || (emplacements.length > 1 ? "Toutes les succursales" : ""),
+        succursaleNom: emplacements.find((e) => e.id === emplacementId)?.nom || (emplacements.length > 1 ? tr("Toutes les succursales") : ""),
         semaineLabel: weekLabel,
         jours: jours.map((d) => `${libelleJour(d)} ${d.getDate()}`),
         lignes: lignesPdf,
@@ -413,10 +416,10 @@ export default function FeuilleTempsSection({ entrepriseId }) {
     }
   }
 
-  const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${addDays(
+  const weekLabel = `${weekStart.toLocaleDateString(loc(), { day: "numeric", month: "long" })} - ${addDays(
     weekStart,
     6
-  ).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}`;
+  ).toLocaleDateString(loc(), { day: "numeric", month: "long", year: "numeric" })}`;
 
   const approbationActuelle = semainesApprouvees.find((s) => s.emplacement_id === emplacementId);
 
@@ -426,31 +429,31 @@ export default function FeuilleTempsSection({ entrepriseId }) {
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          <IconFlecheGauche className="gozly-icon" /> Semaine précédente
+          <IconFlecheGauche className="gozly-icon" />{" "}{tr("Semaine précédente")}
         </button>
         <span className="planning-week-label">{weekLabel}</span>
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-          Semaine suivante <IconFlecheDroite className="gozly-icon" />
+          {tr("Semaine suivante")}{" "}<IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
         {autoVisible && (
           <span className="section-hint" style={{ margin: 0 }}>
-            Mode automatique actif (Personnalisation) - visible sans approbation.
+            {tr("Mode automatique actif (Personnalisation) - visible sans approbation.")}
           </span>
         )}
 
         {peutApprouver &&
           (emplacements.length > 1 && !emplacementId ? (
-            <span className="section-hint" style={{ margin: 0 }}>Choisis une succursale pour approuver.</span>
+            <span className="section-hint" style={{ margin: 0 }}>{tr("Choisis une succursale pour approuver.")}</span>
           ) : approbationActuelle ? (
             <button className="admin-icon-btn" onClick={() => handleDesapprouverSemaine(approbationActuelle)} disabled={approving}>
-              Retirer l'approbation
+              {tr("Retirer l'approbation")}
             </button>
           ) : (
             <button className="btn-small" onClick={() => handleApprouverSemaine(emplacementId)} disabled={approving}>
-              Approuver cette semaine
+              {tr("Approuver cette semaine")}
             </button>
           ))}
 
@@ -461,7 +464,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
               onClick={() => setExportOpen((v) => !v)}
               disabled={lignes.length === 0 || envoiNethris}
             >
-              {envoiNethris ? "Envoi..." : exportPdfEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> Exporter <IconFlecheBas className="gozly-icon-inline" /></>}
+              {envoiNethris ? tr("Envoi...") : exportPdfEnCours ? tr("PDF...") : <><IconTelecharger className="gozly-icon" />{" "}{tr("Exporter")}{" "}<IconFlecheBas className="gozly-icon-inline" /></>}
             </button>
             {exportOpen && (
               <div className="account-dropdown open">
@@ -474,7 +477,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                     handleExportPdf();
                   }}
                 >
-                  PDF
+                  {tr("PDF")}
                 </button>
                 {SERVICES_PAIE.map((s) => (
                   <button
@@ -484,8 +487,8 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                     disabled={!s.disponible}
                     onClick={s.id === "nethris" ? (nethrisConnecte ? handleEnvoyerNethris : handleExportNethris) : undefined}
                   >
-                    {s.id === "nethris" && nethrisConnecte ? "Envoyer à Nethris" : s.label}
-                    {!s.disponible && " (bientôt disponible)"}
+                    {s.id === "nethris" && nethrisConnecte ? tr("Envoyer à Nethris") : tr(s.label)}
+                    {!s.disponible && tr(" (bientôt disponible)")}
                     {s.id === "nethris" && s.disponible && nethrisConnecte && <IconIntegration className="gozly-icon" />}
                   </button>
                 ))}
@@ -501,26 +504,26 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>
       ) : lignes.length === 0 && seulementVoir && !autoVisible ? (
-        <p style={{ color: "var(--text-dim)" }}>Rien à afficher : cette semaine n'a pas encore été approuvée, ou il n'y a aucun pointage.</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("Rien à afficher : cette semaine n'a pas encore été approuvée, ou il n'y a aucun pointage.")}</p>
       ) : employesAffiches.length === 0 ? (
-        <p style={{ color: "var(--text-dim)" }}>Aucun employé à afficher.</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("Aucun employé à afficher.")}</p>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Employé</th>
+                <th>{tr("Employé")}</th>
                 {jours.map((d, i) => (
                   <th key={dateStr(d)} style={{ whiteSpace: "nowrap", textAlign: "center", ...fondJour(i) }}>
                     {libelleJour(d)}
                     <div style={{ fontWeight: 400, fontSize: "11.5px", color: "var(--text-dim)" }}>
-                      {d.toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}
+                      {d.toLocaleDateString(loc(), { day: "numeric", month: "short" })}
                     </div>
                   </th>
                 ))}
-                <th style={{ whiteSpace: "nowrap", textAlign: "center" }}>Total de la semaine</th>
+                <th style={{ whiteSpace: "nowrap", textAlign: "center" }}>{tr("Total de la semaine")}</th>
               </tr>
             </thead>
             <tbody>
@@ -542,29 +545,29 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                                 {peutCorriger ? (
                                   <button
                                     type="button"
-                                    title="Corriger ce pointage"
+                                    title={tr("Corriger ce pointage")}
                                     onClick={() => openEdit({ ...x, employe: emp.nom })}
                                     style={{ background: "none", border: "none", color: "inherit", font: "inherit", cursor: "pointer", padding: 0 }}
                                   >
-                                    {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>en cours</em>}
+                                    {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>{tr("en cours")}</em>}
                                     {x.auto && (
                                       <span
-                                        title="Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin."
+                                        title={tr("Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin.")}
                                         style={{ color: "#ffd479", fontSize: "11.5px", marginLeft: "6px" }}
                                       >
-                                        <IconAttention className="gozly-icon" /> oubli potentiel
+                                        <IconAttention className="gozly-icon" />{" "}{tr("oubli potentiel")}
                                       </span>
                                     )}
                                   </button>
                                 ) : (
                                   <>
-                                    {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>en cours</em>}
+                                    {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>{tr("en cours")}</em>}
                                     {x.auto && (
                                       <span
-                                        title="Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin."
+                                        title={tr("Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin.")}
                                         style={{ color: "#ffd479", fontSize: "11.5px", marginLeft: "6px" }}
                                       >
-                                        <IconAttention className="gozly-icon" /> oubli potentiel
+                                        <IconAttention className="gozly-icon" />{" "}{tr("oubli potentiel")}
                                       </span>
                                     )}
                                   </>
@@ -590,15 +593,15 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal-card" style={{ maxWidth: "360px" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Corriger le pointage</h3>
+              <h3>{tr("Corriger le pointage")}</h3>
               <button className="admin-icon-btn" onClick={() => setModal(null)}>
-                Fermer
+                {tr("Fermer")}
               </button>
             </div>
             <p className="section-hint" style={{ marginBottom: "14px" }}>{modal.employeNom}</p>
             <form onSubmit={handleSaveModal}>
               <div className="field">
-                <label>Arrivée</label>
+                <label>{tr("Arrivée")}</label>
                 <input
                   type="datetime-local"
                   value={modal.entree}
@@ -607,7 +610,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                 />
               </div>
               <div className="field">
-                <label>Départ (laisser vide si toujours en cours)</label>
+                <label>{tr("Départ (laisser vide si toujours en cours)")}</label>
                 <input
                   type="datetime-local"
                   value={modal.sortie}
@@ -616,7 +619,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
               </div>
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn" disabled={saving}>
-                  {saving ? "Enregistrement..." : "Enregistrer"}
+                  {saving ? tr("Enregistrement...") : tr("Enregistrer")}
                 </button>
               </div>
             </form>

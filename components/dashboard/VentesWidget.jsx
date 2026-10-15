@@ -5,9 +5,10 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 function formatMontant(n) {
-  return n.toLocaleString("fr-CA", { style: "currency", currency: "CAD" });
+  return n.toLocaleString(loc(), { style: "currency", currency: "CAD" });
 }
 
 export default function VentesWidget({ entrepriseId }) {

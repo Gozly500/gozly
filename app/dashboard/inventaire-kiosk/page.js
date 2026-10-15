@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import InventaireKioskContent from "@/components/InventaireKioskContent";
 
-export const metadata = {
-  title: "Gozly - Liste à préparer",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Liste à préparer") };
+}
 
 export default function InventaireKioskPage() {
   return (

@@ -1,9 +1,10 @@
 "use client";
 import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 function formatDate(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleString("fr-CA", {
+  return new Date(value).toLocaleString(loc(), {
     dateStyle: "long",
     timeStyle: "short",
   });

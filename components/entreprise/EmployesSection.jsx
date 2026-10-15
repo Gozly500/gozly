@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabaseClient";
 import InfoTooltip from "@/components/InfoTooltip";
 import { IconTelephone } from "@/components/icons/GozlyIcons";
 import { IconCalendrier, IconLocalisation, IconMessage } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 const FORM_VIDE = { nom: "", role: "", telephone: "", courriel: "", nip: "", numeroPaie: "", emplacementIds: [] };
 
@@ -20,9 +22,9 @@ function estConnecteRecemment(emp) {
   return new Date(emp.derniere_connexion) >= seuil;
 }
 
-function libelleConnexion(emp) {
-  if (!emp.derniere_connexion) return "N'a jamais ouvert l'application";
-  return `Dernière connexion : ${new Date(emp.derniere_connexion).toLocaleDateString("fr-CA", {
+function libelleConnexion(emp, t) {
+  if (!emp.derniere_connexion) return t("N'a jamais ouvert l'application");
+  return `${t("Dernière connexion :")} ${new Date(emp.derniere_connexion).toLocaleDateString(loc(), {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -30,6 +32,7 @@ function libelleConnexion(emp) {
 }
 
 export default function EmployesSection({ entrepriseId }) {
+  const { t } = useT();
   const [employes, setEmployes] = useState([]);
   const [emplacements, setEmplacements] = useState([]);
   const [associations, setAssociations] = useState([]); // { employe_id, emplacement_id }
@@ -149,7 +152,7 @@ export default function EmployesSection({ entrepriseId }) {
       const { error } = await supabase.from("employes").update(payload).eq("id", editingId);
       if (error) {
         setSaving(false);
-        setError(error.code === "23505" ? "Ce NIP est déjà utilisé par un autre employé." : "La mise à jour a échoué.");
+        setError(error.code === "23505" ? t("Ce NIP est déjà utilisé par un autre employé.") : t("La mise à jour a échoué."));
         return;
       }
       await supabase.from("employe_emplacements").delete().eq("employe_id", editingId);
@@ -161,7 +164,7 @@ export default function EmployesSection({ entrepriseId }) {
         .single();
       if (error) {
         setSaving(false);
-        setError(error.code === "23505" ? "Ce NIP est déjà utilisé par un autre employé." : "L'ajout a échoué.");
+        setError(error.code === "23505" ? t("Ce NIP est déjà utilisé par un autre employé.") : t("L'ajout a échoué."));
         return;
       }
       employeId = data.id;
@@ -196,7 +199,7 @@ export default function EmployesSection({ entrepriseId }) {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   return (
@@ -212,26 +215,25 @@ export default function EmployesSection({ entrepriseId }) {
         }}
       >
         <div>
-          <h2>Employés</h2>
+          <h2>{t("Employés")}</h2>
           <p className="panel-hint" style={{ marginBottom: 0 }}>
-            La fiche de tes employés, partagée par tous les modules qui en ont besoin.
+            {t("La fiche de tes employés, partagée par tous les modules qui en ont besoin.")}
           </p>
         </div>
         <button className="submit-btn" onClick={openAdd}>
-          + Ajouter un employé
+          {t("+ Ajouter un employé")}
         </button>
       </div>
 
       {codeAcces && (
         <div className="admin-list" style={{ maxWidth: "640px", marginBottom: "24px", padding: "16px 20px" }}>
           <p className="section-hint" style={{ marginBottom: "8px" }}>
-            Code d'accès de l'app "Gozly Équipe" — chaque employé l'utilise avec son NIP pour voir son horaire sur son
-            téléphone.
+            {t("Code d'accès de l'app \"Gozly Équipe\" — chaque employé l'utilise avec son NIP pour voir son horaire sur son téléphone.")}
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <span style={{ fontSize: "20px", fontWeight: 700, letterSpacing: "0.12em" }}>{codeAcces}</span>
             <button type="button" className="admin-icon-btn" onClick={copierCode}>
-              {codeCopie ? "Copié !" : "Copier"}
+              {codeCopie ? t("Copié !") : t("Copier")}
             </button>
           </div>
         </div>
@@ -242,7 +244,7 @@ export default function EmployesSection({ entrepriseId }) {
           type="text"
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
-          placeholder="Rechercher un employé..."
+          placeholder={t("Rechercher un employé...")}
         />
       </div>
 
@@ -258,35 +260,35 @@ export default function EmployesSection({ entrepriseId }) {
                 <div className="admin-row-title">{emp.nom}</div>
                 <div className="admin-row-sub">
                   {[emp.role, emp.courriel, emp.numero_paie && `# paie: ${emp.numero_paie}`].filter(Boolean).join(" · ") ||
-                    "Aucune info de contact"}
+                    t("Aucune info de contact")}
                 </div>
                 {empEmplacements.length > 0 && <div className="admin-row-sub"><IconLocalisation className="gozly-icon" /> {empEmplacements.join(", ")}</div>}
               </div>
               <div className="admin-row-controls">
                 <IconTelephone
                   className="gozly-icon"
-                  title={libelleConnexion(emp)}
+                  title={libelleConnexion(emp, t)}
                   style={{ width: "15px", height: "15px", color: connecte ? "var(--text-dim)" : "#ff8a8a" }}
                 />
                 <button className="admin-icon-btn" onClick={() => setViewingEmp({ ...emp, emplacements: empEmplacements })}>
-                  Voir
+                  {t("Voir")}
                 </button>
                 <button className="admin-icon-btn" onClick={() => setCommunicationEmp(emp)}>
-                  Discussion
+                  {t("Discussion")}
                 </button>
                 <button className="admin-icon-btn" onClick={() => openEdit(emp)}>
-                  Modifier
+                  {t("Modifier")}
                 </button>
                 <button className="admin-icon-btn danger" onClick={() => openConfirmDelete(emp)}>
-                  Retirer
+                  {t("Retirer")}
                 </button>
               </div>
             </div>
           );
         })}
-        {employes.length === 0 && <div className="admin-empty">Aucun employé pour l'instant.</div>}
+        {employes.length === 0 && <div className="admin-empty">{t("Aucun employé pour l'instant.")}</div>}
         {employes.length > 0 && employesFiltres.length === 0 && (
-          <div className="admin-empty">Aucun employé ne correspond à "{recherche}".</div>
+          <div className="admin-empty">{t("Aucun employé ne correspond à \"")}{recherche}".</div>
         )}
       </div>
 
@@ -304,38 +306,38 @@ export default function EmployesSection({ entrepriseId }) {
         <div className="modal-overlay" onClick={() => setModalOpen(false)}>
           <div className="modal-card" style={{ maxWidth: "560px" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>{editingId ? "Modifier l'employé" : "Ajouter un employé"}</h3>
+              <h3>{editingId ? t("Modifier l'employé") : t("Ajouter un employé")}</h3>
               <button className="admin-icon-btn" onClick={() => setModalOpen(false)}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
 
             <form onSubmit={handleSubmit}>
               <div className="field-row">
                 <div className="field">
-                  <label>Nom</label>
+                  <label>{t("Nom")}</label>
                   <input
                     type="text"
                     value={form.nom}
                     onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))}
-                    placeholder="Nom de l'employé"
+                    placeholder={t("Nom de l'employé")}
                     required
                   />
                 </div>
                 <div className="field">
-                  <label>Rôle (optionnel)</label>
+                  <label>{t("Rôle (optionnel)")}</label>
                   <input
                     type="text"
                     value={form.role}
                     onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                    placeholder="Ex: cuisinier"
+                    placeholder={t("Ex: cuisinier")}
                   />
                 </div>
               </div>
 
               <div className="field-row">
                 <div className="field">
-                  <label>Téléphone (optionnel)</label>
+                  <label>{t("Téléphone (optionnel)")}</label>
                   <input
                     type="tel"
                     value={form.telephone}
@@ -344,19 +346,19 @@ export default function EmployesSection({ entrepriseId }) {
                   />
                 </div>
                 <div className="field">
-                  <label>Courriel (optionnel)</label>
+                  <label>{t("Courriel (optionnel)")}</label>
                   <input
                     type="email"
                     value={form.courriel}
                     onChange={(e) => setForm((f) => ({ ...f, courriel: e.target.value }))}
-                    placeholder="employe@courriel.com"
+                    placeholder={t("employe@courriel.com")}
                   />
                 </div>
               </div>
 
               <div className="field-row">
                 <div className="field" style={{ maxWidth: "140px" }}>
-                  <label>NIP (optionnel)</label>
+                  <label>{t("NIP (optionnel)")}</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -368,24 +370,23 @@ export default function EmployesSection({ entrepriseId }) {
                 </div>
                 <div className="field">
                   <label>
-                    Numéro d'employé - paie (optionnel)
+                    {t("Numéro d'employé - paie (optionnel)")}
                     <InfoTooltip>
-                      Utilisé pour faire correspondre l'employé lors de l'exportation vers un service de paie
-                      (Nethris, etc.).
+                      {t("Utilisé pour faire correspondre l'employé lors de l'exportation vers un service de paie (Nethris, etc.).")}
                     </InfoTooltip>
                   </label>
                   <input
                     type="text"
                     value={form.numeroPaie}
                     onChange={(e) => setForm((f) => ({ ...f, numeroPaie: e.target.value }))}
-                    placeholder="Ex: 42 (numéro dans Nethris)"
+                    placeholder={t("Ex: 42 (numéro dans Nethris)")}
                   />
                 </div>
               </div>
 
               {emplacements.length > 0 && (
                 <div className="field">
-                  <label>Emplacements</label>
+                  <label>{t("Emplacements")}</label>
                   <div className="emplacement-checks">
                     {emplacements.map((e) => (
                       <label key={e.id} className="emplacement-check">
@@ -399,7 +400,7 @@ export default function EmployesSection({ entrepriseId }) {
                     ))}
                   </div>
                   <p className="section-hint" style={{ marginTop: "6px" }}>
-                    Aucune case cochée = disponible partout.
+                    {t("Aucune case cochée = disponible partout.")}
                   </p>
                 </div>
               )}
@@ -408,7 +409,7 @@ export default function EmployesSection({ entrepriseId }) {
 
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn" disabled={saving}>
-                  {saving ? "Enregistrement..." : editingId ? "Enregistrer" : "Ajouter"}
+                  {saving ? t("Enregistrement...") : editingId ? t("Enregistrer") : t("Ajouter")}
                 </button>
               </div>
             </form>
@@ -420,32 +421,32 @@ export default function EmployesSection({ entrepriseId }) {
         <div className="modal-overlay" onClick={() => !deleting && setConfirmDelete(null)}>
           <div className="modal-card" style={{ maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Retirer {confirmDelete.emp.nom} ?</h3>
+              <h3>{t("Retirer")}{" "}{confirmDelete.emp.nom} ?</h3>
               <button className="admin-icon-btn" onClick={() => setConfirmDelete(null)} disabled={deleting}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
 
             <p className="section-hint" style={{ marginBottom: "14px" }}>
-              Cette action est irréversible. En plus de sa fiche, ça supprimera aussi :
+              {t("Cette action est irréversible. En plus de sa fiche, ça supprimera aussi :")}
             </p>
 
             <ul style={{ margin: "0 0 18px", paddingLeft: "20px", fontSize: "13.5px", color: "var(--text-dim)" }}>
               <li>
                 {confirmDelete.quartsCount > 0
-                  ? <><IconCalendrier className="gozly-icon" /> {confirmDelete.quartsCount} quart{confirmDelete.quartsCount > 1 ? "s" : ""} de travail assigné{confirmDelete.quartsCount > 1 ? "s" : ""}</>
-                  : <><IconCalendrier className="gozly-icon" /> Aucun quart de travail assigné</>}
+                  ? <><IconCalendrier className="gozly-icon" /> {confirmDelete.quartsCount}{" "}{t("quart")}{confirmDelete.quartsCount > 1 ? "s" : ""}{" "}{t("de travail assigné")}{confirmDelete.quartsCount > 1 ? "s" : ""}</>
+                  : <><IconCalendrier className="gozly-icon" />{" "}{t("Aucun quart de travail assigné")}</>}
               </li>
               <li>
                 {confirmDelete.messagesCount > 0
-                  ? <><IconMessage className="gozly-icon" /> {confirmDelete.messagesCount} message{confirmDelete.messagesCount > 1 ? "s" : ""} (fil d'équipe et conversations privées)</>
-                  : <><IconMessage className="gozly-icon" /> Aucun message dans les discussions</>}
+                  ? <><IconMessage className="gozly-icon" /> {confirmDelete.messagesCount}{" "}{t("message")}{confirmDelete.messagesCount > 1 ? "s" : ""}{" "}{t("(fil d'équipe et conversations privées)")}</>
+                  : <><IconMessage className="gozly-icon" />{" "}{t("Aucun message dans les discussions")}</>}
               </li>
             </ul>
 
             <div className="admin-edit-actions">
               <button type="button" className="admin-icon-btn danger" onClick={handleConfirmDelete} disabled={deleting}>
-                {deleting ? "Suppression..." : "Confirmer la suppression"}
+                {deleting ? t("Suppression...") : t("Confirmer la suppression")}
               </button>
             </div>
           </div>
@@ -458,52 +459,52 @@ export default function EmployesSection({ entrepriseId }) {
             <div className="modal-head">
               <h3>{viewingEmp.nom}</h3>
               <button className="admin-icon-btn" onClick={() => setViewingEmp(null)}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
             <div className="admin-list">
               <div className="admin-row">
                 <div className="admin-row-main">
-                  <div className="admin-row-sub">Rôle</div>
+                  <div className="admin-row-sub">{t("Rôle")}</div>
                   <div className="admin-row-title">{viewingEmp.role || "—"}</div>
                 </div>
               </div>
               <div className="admin-row">
                 <div className="admin-row-main">
-                  <div className="admin-row-sub">Téléphone</div>
+                  <div className="admin-row-sub">{t("Téléphone")}</div>
                   <div className="admin-row-title">{viewingEmp.telephone || "—"}</div>
                 </div>
               </div>
               <div className="admin-row">
                 <div className="admin-row-main">
-                  <div className="admin-row-sub">Courriel</div>
+                  <div className="admin-row-sub">{t("Courriel")}</div>
                   <div className="admin-row-title">{viewingEmp.courriel || "—"}</div>
                 </div>
               </div>
               <div className="admin-row">
                 <div className="admin-row-main">
-                  <div className="admin-row-sub">NIP</div>
+                  <div className="admin-row-sub">{t("NIP")}</div>
                   <div className="admin-row-title">{viewingEmp.nip || "—"}</div>
                 </div>
               </div>
               <div className="admin-row">
                 <div className="admin-row-main">
-                  <div className="admin-row-sub">Numéro d'employé - paie</div>
+                  <div className="admin-row-sub">{t("Numéro d'employé - paie")}</div>
                   <div className="admin-row-title">{viewingEmp.numero_paie || "—"}</div>
                 </div>
               </div>
               <div className="admin-row">
                 <div className="admin-row-main">
-                  <div className="admin-row-sub">Emplacements</div>
+                  <div className="admin-row-sub">{t("Emplacements")}</div>
                   <div className="admin-row-title">
-                    {viewingEmp.emplacements.length > 0 ? viewingEmp.emplacements.join(", ") : "Disponible partout"}
+                    {viewingEmp.emplacements.length > 0 ? viewingEmp.emplacements.join(", ") : t("Disponible partout")}
                   </div>
                 </div>
               </div>
               <div className="admin-row">
                 <div className="admin-row-main">
-                  <div className="admin-row-sub">App mobile "Gozly Équipe"</div>
-                  <div className="admin-row-title">{libelleConnexion(viewingEmp)}</div>
+                  <div className="admin-row-sub">{t("App mobile \"Gozly Équipe\"")}</div>
+                  <div className="admin-row-title">{libelleConnexion(viewingEmp, t)}</div>
                 </div>
               </div>
             </div>

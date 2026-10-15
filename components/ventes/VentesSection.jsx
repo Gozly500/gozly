@@ -7,6 +7,8 @@ import { SOURCES_VENTE } from "@/lib/modules";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 const FORM_VIDE = { source: "comptant", montant: "", date: "", description: "" };
 
@@ -15,10 +17,11 @@ function labelSource(id) {
 }
 
 function formatMontant(n) {
-  return n.toLocaleString("fr-CA", { style: "currency", currency: "CAD" });
+  return n.toLocaleString(loc(), { style: "currency", currency: "CAD" });
 }
 
 export default function VentesSection({ entrepriseId }) {
+  const { t } = useT();
   const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
   const [ventes, setVentes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,14 +87,14 @@ export default function VentesSection({ entrepriseId }) {
         if (!silencieux) {
           setSyncMsg({
             type: "ok",
-            text: `Ventes Wix importées : ${data.enLigne} commande(s) en ligne et ${data.jours} jour(s) de point de vente.`,
+            text: t("Ventes Wix importées : {enLigne} commande(s) en ligne et {jours} jour(s) de point de vente.", { enLigne: data.enLigne, jours: data.jours }),
           });
         }
       } else if (!silencieux) {
-        setSyncMsg({ type: "err", text: `${data.error || "L'import a échoué."}${data.detail ? ` [${data.detail}]` : ""}` });
+        setSyncMsg({ type: "err", text: `${data.error || t("L'import a échoué.")}${data.detail ? ` [${data.detail}]` : ""}` });
       }
     } catch {
-      if (!silencieux) setSyncMsg({ type: "err", text: "L'import a échoué." });
+      if (!silencieux) setSyncMsg({ type: "err", text: t("L'import a échoué.") });
     }
     if (!silencieux) setSyncing(false);
   }
@@ -155,10 +158,10 @@ export default function VentesSection({ entrepriseId }) {
   })).filter((s) => s.total > 0);
   const totalGeneral = ventes.reduce((sum, v) => sum + Number(v.montant), 0);
 
-  const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${addDays(
+  const weekLabel = `${weekStart.toLocaleDateString(loc(), { day: "numeric", month: "long" })} - ${addDays(
     weekStart,
     6
-  ).toLocaleDateString("fr-CA", { day: "numeric", month: "long", year: "numeric" })}`;
+  ).toLocaleDateString(loc(), { day: "numeric", month: "long", year: "numeric" })}`;
 
   return (
     <div>
@@ -173,17 +176,17 @@ export default function VentesSection({ entrepriseId }) {
         }}
       >
         <div>
-          <h2>Suivi des ventes</h2>
+          <h2>{t("Suivi des ventes")}</h2>
           <p className="panel-hint" style={{ marginBottom: 0 }}>
-            Toutes tes ventes, peu importe la source, au même endroit.
+            {t("Toutes tes ventes, peu importe la source, au même endroit.")}
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button className="admin-icon-btn" onClick={() => synchroniserWix({ jours: 30, silencieux: false })} disabled={syncing}>
-            <IconIntegration className="gozly-icon" /> {syncing ? "Import en cours..." : "Importer les ventes Wix (30 jours)"}
+            <IconIntegration className="gozly-icon" /> {syncing ? t("Import en cours...") : t("Importer les ventes Wix (30 jours)")}
           </button>
           <button className="submit-btn" onClick={openAdd}>
-            + Ajouter une vente
+            {t("+ Ajouter une vente")}
           </button>
         </div>
       </div>
@@ -192,19 +195,19 @@ export default function VentesSection({ entrepriseId }) {
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          <IconFlecheGauche className="gozly-icon" /> Semaine précédente
+          <IconFlecheGauche className="gozly-icon" />{" "}{t("Semaine précédente")}
         </button>
         <span className="planning-week-label">{weekLabel}</span>
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-          Semaine suivante <IconFlecheDroite className="gozly-icon" />
+          {t("Semaine suivante")}{" "}<IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       ) : ventes.length === 0 ? (
         <div className="admin-list" style={{ maxWidth: "700px" }}>
-          <div className="admin-empty">Aucune vente cette semaine.</div>
+          <div className="admin-empty">{t("Aucune vente cette semaine.")}</div>
         </div>
       ) : (
         <>
@@ -212,14 +215,14 @@ export default function VentesSection({ entrepriseId }) {
             {totauxParSource.map((s) => (
               <div className="admin-row" key={s.id}>
                 <div className="admin-row-main">
-                  <div className="admin-row-title">{s.label}</div>
+                  <div className="admin-row-title">{t(s.label)}</div>
                 </div>
                 <div className="admin-row-controls">{formatMontant(s.total)}</div>
               </div>
             ))}
             <div className="admin-row">
               <div className="admin-row-main">
-                <div className="admin-row-title">Total</div>
+                <div className="admin-row-title">{t("Total")}</div>
               </div>
               <div className="admin-row-controls" style={{ fontWeight: 700 }}>
                 {formatMontant(totalGeneral)}
@@ -235,7 +238,7 @@ export default function VentesSection({ entrepriseId }) {
                     {formatMontant(v.montant)} · {labelSource(v.source)}
                   </div>
                   <div className="admin-row-sub">
-                    {new Date(v.date + "T00:00:00").toLocaleDateString("fr-CA", {
+                    {new Date(v.date + "T00:00:00").toLocaleDateString(loc(), {
                       weekday: "long",
                       day: "numeric",
                       month: "long",
@@ -245,14 +248,14 @@ export default function VentesSection({ entrepriseId }) {
                 </div>
                 <div className="admin-row-controls">
                   {v.source_id ? (
-                    <span className="admin-row-sub">Importée de Wix</span>
+                    <span className="admin-row-sub">{t("Importée de Wix")}</span>
                   ) : (
                     <>
                       <button className="admin-icon-btn" onClick={() => openEdit(v)}>
-                        Modifier
+                        {t("Modifier")}
                       </button>
                       <button className="admin-icon-btn danger" onClick={() => handleDelete(v.id)}>
-                        Retirer
+                        {t("Retirer")}
                       </button>
                     </>
                   )}
@@ -267,16 +270,16 @@ export default function VentesSection({ entrepriseId }) {
         <div className="modal-overlay" onClick={() => setModalOpen(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>{editingId ? "Modifier la vente" : "Ajouter une vente"}</h3>
+              <h3>{editingId ? t("Modifier la vente") : t("Ajouter une vente")}</h3>
               <button className="admin-icon-btn" onClick={() => setModalOpen(false)}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
 
             <form onSubmit={handleSubmit}>
               <div className="field-row">
                 <div className="field">
-                  <label>Source</label>
+                  <label>{t("Source")}</label>
                   <div className="emplacement-select-wrap" style={{ minWidth: 0 }} ref={sourceRef}>
                     <div
                       className={`emplacement-select-trigger${sourceOpen ? " open" : ""}`}
@@ -296,7 +299,7 @@ export default function VentesSection({ entrepriseId }) {
                               setSourceOpen(false);
                             }}
                           >
-                            {s.label}
+                            {t(s.label)}
                           </div>
                         ))}
                       </div>
@@ -304,7 +307,7 @@ export default function VentesSection({ entrepriseId }) {
                   </div>
                 </div>
                 <div className="field">
-                  <label>Montant</label>
+                  <label>{t("Montant")}</label>
                   <input
                     type="number"
                     step="0.01"
@@ -317,7 +320,7 @@ export default function VentesSection({ entrepriseId }) {
               </div>
 
               <div className="field">
-                <label>Date</label>
+                <label>{t("Date")}</label>
                 <input
                   type="date"
                   value={form.date}
@@ -327,18 +330,18 @@ export default function VentesSection({ entrepriseId }) {
               </div>
 
               <div className="field">
-                <label>Description (optionnel)</label>
+                <label>{t("Description (optionnel)")}</label>
                 <input
                   type="text"
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="Ex: référence de transaction"
+                  placeholder={t("Ex: référence de transaction")}
                 />
               </div>
 
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn" disabled={saving}>
-                  {saving ? "Enregistrement..." : editingId ? "Enregistrer" : "Ajouter"}
+                  {saving ? t("Enregistrement...") : editingId ? t("Enregistrer") : t("Ajouter")}
                 </button>
               </div>
             </form>

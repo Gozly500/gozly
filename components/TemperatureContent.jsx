@@ -12,8 +12,11 @@ import TemperatureInput from "@/components/TemperatureInput";
 import { telechargerPdfTemperatures } from "@/lib/exportPdf";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { IconAttention, IconCrochet, IconEngrenage, IconFlecheBas, IconFlecheHaut, IconPoint, IconTelecharger } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 export default function TemperatureContent() {
+  const { t } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
@@ -173,11 +176,11 @@ export default function TemperatureContent() {
     setSaving(false);
 
     if (error) {
-      setMsg({ type: "err", text: "L'enregistrement a échoué." });
+      setMsg({ type: "err", text: t("L'enregistrement a échoué.") });
       return;
     }
 
-    setMsg({ type: "ok", text: "Relevés enregistrés !" });
+    setMsg({ type: "ok", text: t("Relevés enregistrés !") });
     setTimeout(() => setMsg(null), 3000);
     load();
   }
@@ -185,7 +188,7 @@ export default function TemperatureContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -213,7 +216,7 @@ export default function TemperatureContent() {
       const { data: ent } = await supabase.from("entreprises").select("nom").eq("id", entrepriseId).maybeSingle();
       await telechargerPdfTemperatures({
         entrepriseNom: ent?.nom || "",
-        succursaleNom: emplacements.find((e) => e.id === emplacementFiltre)?.nom || (emplacements.length > 1 ? "Toutes les succursales" : ""),
+        succursaleNom: emplacements.find((e) => e.id === emplacementFiltre)?.nom || (emplacements.length > 1 ? t("Toutes les succursales") : ""),
         releves,
         equipements,
         emplacements,
@@ -242,18 +245,18 @@ export default function TemperatureContent() {
             style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}
           >
             <div>
-              <h1>Températures</h1>
-              <p>Registre de conformité MAPAQ - frigos, congélateurs et maintien au chaud.</p>
+              <h1>{t("Températures")}</h1>
+              <p>{t("Registre de conformité MAPAQ - frigos, congélateurs et maintien au chaud.")}</p>
             </div>
             <Link href="/dashboard/temperature/equipements" className="admin-icon-btn">
-              <IconEngrenage className="gozly-icon" /> Gérer les équipements
+              <IconEngrenage className="gozly-icon" />{" "}{t("Gérer les équipements")}
             </Link>
           </header>
 
           {!entrepriseId ? (
-            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+            <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>
           ) : loadingDonnees ? (
-            <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+            <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
           ) : (
             <>
               <div style={{ marginBottom: "14px" }}>
@@ -261,23 +264,23 @@ export default function TemperatureContent() {
               </div>
 
               <div className="settings-section">
-                <h3>Créneau actuel : {periodeLabel}</h3>
+                <h3>{t("Créneau actuel :")}{" "}{periodeLabel}</h3>
                 <p className="section-hint">
-                  Une fenêtre manquée ne revient pas - inutile de rattraper un relevé oublié, on passe simplement au prochain créneau.
+                  {t("Une fenêtre manquée ne revient pas - inutile de rattraper un relevé oublié, on passe simplement au prochain créneau.")}
                 </p>
 
                 {equipementsFiltres.length === 0 ? (
                   <p className="section-hint">
-                    Aucun équipement pour l'instant -{" "}
+                    {t("Aucun équipement pour l'instant -")}{" "}
                     <Link href="/dashboard/temperature/equipements" style={{ color: "var(--text)" }}>
-                      ajoutes-en un
+                      {t("ajoutes-en un")}
                     </Link>{" "}
-                    pour commencer.
+                    {t("pour commencer.")}
                   </p>
                 ) : (
                   <>
                     <div style={{ ...grilleAmPm, fontSize: "12px", fontWeight: 700, color: "var(--text-dim)" }}>
-                      <div>Équipement</div>
+                      <div>{t("Équipement")}</div>
                       {["am", "pm"].map((p) => (
                         <div key={p} style={{ textAlign: "center", color: p === creneau.periode ? "var(--text)" : undefined }}>
                           {p.toUpperCase()}
@@ -291,7 +294,7 @@ export default function TemperatureContent() {
                         <div key={eq.id} style={grilleAmPm}>
                           <div style={{ fontSize: "13.5px", fontWeight: 600, minWidth: 0 }}>
                             {eq.nom}
-                            {actuel && <div style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-dim)" }}>par {actuel.releve_par}</div>}
+                            {actuel && <div style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-dim)" }}>{t("par")}{" "}{actuel.releve_par}</div>}
                           </div>
                           {["am", "pm"].map((p) => {
                             if (p === creneau.periode) {
@@ -316,20 +319,20 @@ export default function TemperatureContent() {
                     })}
 
                     <button type="button" className="submit-btn" onClick={handleSaveGrille} disabled={saving || !estModifie()}>
-                      {saving ? "Enregistrement..." : "Enregistrer"}
+                      {saving ? t("Enregistrement...") : t("Enregistrer")}
                     </button>
                     {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
                   </>
                 )}
               </div>
 
-              <div className="settings-divider">Historique</div>
+              <div className="settings-divider">{t("Historique")}</div>
 
               {fiches.length > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
                   <div className="account-wrap" ref={exportRef}>
                     <button type="button" className="admin-icon-btn" onClick={() => setExportOuvert((v) => !v)} disabled={exportPdfEnCours}>
-                      {exportPdfEnCours ? "PDF..." : <><IconTelecharger className="gozly-icon" /> Exporter <IconFlecheBas className="gozly-icon-inline" /></>}
+                      {exportPdfEnCours ? t("PDF...") : <><IconTelecharger className="gozly-icon" />{" "}{t("Exporter")}{" "}<IconFlecheBas className="gozly-icon-inline" /></>}
                     </button>
                     {exportOuvert && (
                       <div className="account-dropdown open">
@@ -341,7 +344,7 @@ export default function TemperatureContent() {
                             exporter(historiqueFiltre, `temperatures_${creneau.date}.csv`);
                           }}
                         >
-                          Excel (CSV)
+                          {t("Excel (CSV)")}
                         </button>
                         <button
                           type="button"
@@ -351,19 +354,19 @@ export default function TemperatureContent() {
                             exporterPdf(historiqueFiltre, `registre-temperatures-${creneau.date}.pdf`);
                           }}
                         >
-                          PDF
+                          {t("PDF")}
                         </button>
                       </div>
                     )}
                   </div>
                   <span className="section-hint" style={{ margin: 0 }}>
-                    Les fiches sont supprimées automatiquement après la durée choisie dans Personnalisation - exporte-les pour les garder.
+                    {t("Les fiches sont supprimées automatiquement après la durée choisie dans Personnalisation - exporte-les pour les garder.")}
                   </span>
                 </div>
               )}
 
               {fiches.length === 0 ? (
-                <p style={{ color: "var(--text-dim)" }}>Aucune fiche pour l'instant.</p>
+                <p style={{ color: "var(--text-dim)" }}>{t("Aucune fiche pour l'instant.")}</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "720px" }}>
                   {fiches.map((f) => {
@@ -381,19 +384,19 @@ export default function TemperatureContent() {
                           }}
                         >
                           <span style={{ fontWeight: 600 }}>
-                            {new Date(f.date + "T00:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                            {enCours && <span style={{ color: "var(--text-dim)", fontWeight: 400 }}> · en cours</span>}
+                            {new Date(f.date + "T00:00:00").toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                            {enCours && <span style={{ color: "var(--text-dim)", fontWeight: 400 }}>{" "}{t("· en cours")}</span>}
                           </span>
                           <span style={{ fontSize: "12.5px", color: "var(--text-dim)" }}>
-                            {f.nonConformes > 0 ? <><IconAttention className="gozly-icon" /> {f.nonConformes} non conforme{f.nonConformes > 1 ? "s" : ""}</> : <><IconCrochet className="gozly-icon" /> conforme</>} {ouvert ? <IconFlecheHaut className="gozly-icon-inline" /> : <IconFlecheBas className="gozly-icon-inline" />}
+                            {f.nonConformes > 0 ? <><IconAttention className="gozly-icon" /> {f.nonConformes}{" "}{t("non conforme")}{f.nonConformes > 1 ? "s" : ""}</> : <><IconCrochet className="gozly-icon" />{" "}{t("conforme")}</>} {ouvert ? <IconFlecheHaut className="gozly-icon-inline" /> : <IconFlecheBas className="gozly-icon-inline" />}
                           </span>
                         </button>
                         {ouvert && (
                           <div style={{ padding: "0 14px 12px" }}>
                             <div style={{ ...grilleAmPm, gridTemplateColumns: "1fr 120px 120px", maxWidth: "none", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)" }}>
-                              <div>Équipement</div>
-                              <div style={{ textAlign: "center" }}>AM</div>
-                              <div style={{ textAlign: "center" }}>PM</div>
+                              <div>{t("Équipement")}</div>
+                              <div style={{ textAlign: "center" }}>{t("AM")}</div>
+                              <div style={{ textAlign: "center" }}>{t("PM")}</div>
                             </div>
                             {equipementsDuJour.map((eq) => (
                               <div key={eq.id} style={{ ...grilleAmPm, gridTemplateColumns: "1fr 120px 120px", maxWidth: "none" }}>
@@ -411,7 +414,7 @@ export default function TemperatureContent() {
                             ))}
                             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                               <button type="button" className="admin-icon-btn" onClick={() => exporter(f.releves, `temperatures_${f.date}.csv`)}>
-                                <IconTelecharger className="gozly-icon" /> Cette fiche (Excel)
+                                <IconTelecharger className="gozly-icon" />{" "}{t("Cette fiche (Excel)")}
                               </button>
                               <button
                                 type="button"
@@ -419,7 +422,7 @@ export default function TemperatureContent() {
                                 disabled={exportPdfEnCours}
                                 onClick={() => exporterPdf(f.releves, `registre-temperatures-${f.date}.pdf`)}
                               >
-                                <IconTelecharger className="gozly-icon" /> Cette fiche (PDF)
+                                <IconTelecharger className="gozly-icon" />{" "}{t("Cette fiche (PDF)")}
                               </button>
                             </div>
                           </div>

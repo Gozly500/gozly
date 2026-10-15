@@ -6,6 +6,8 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import SimpleSelect from "@/components/SimpleSelect";
 import { IconCrochet, IconDocument, IconEtoile, IconEtoilePleine, IconFlecheDroite, IconFlecheGauche, IconMegaphone } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 
@@ -14,6 +16,7 @@ function toISODate(date) {
 }
 
 export default function HoraireSection({ entrepriseId }) {
+  const { t } = useT();
   const [weekStart, setWeekStart] = useState(() => getDebutSemaine(new Date()));
   const [employes, setEmployes] = useState([]);
   const [associations, setAssociations] = useState([]);
@@ -80,7 +83,7 @@ export default function HoraireSection({ entrepriseId }) {
     const estFavori = favoris.includes(iso);
 
     if (!estFavori && favoris.length >= MAX_FAVORIS) {
-      setFavoriMsg(`Maximum ${MAX_FAVORIS} semaines en favoris - retires-en une avant d'en ajouter une nouvelle.`);
+      setFavoriMsg(t("Maximum {max} semaines en favoris - retires-en une avant d'en ajouter une nouvelle.", { max: MAX_FAVORIS }));
       return;
     }
 
@@ -135,7 +138,7 @@ export default function HoraireSection({ entrepriseId }) {
   }
 
   function employeNom(id) {
-    return employes.find((e) => e.id === id)?.nom || "Employé retiré";
+    return employes.find((e) => e.id === id)?.nom || t("Employé retiré");
   }
 
   // Un employé sans aucun emplacement assigné est considéré disponible
@@ -291,7 +294,7 @@ export default function HoraireSection({ entrepriseId }) {
 
     if (!quartsSource || quartsSource.length === 0) {
       setImporting(false);
-      setImportModal((m) => ({ ...m, error: "Aucun quart trouvé pour cette semaine-là." }));
+      setImportModal((m) => ({ ...m, error: t("Aucun quart trouvé pour cette semaine-là.") }));
       return;
     }
 
@@ -327,8 +330,8 @@ export default function HoraireSection({ entrepriseId }) {
     load();
   }
 
-  const weekLabel = `${weekStart.toLocaleDateString("fr-CA", { day: "numeric", month: "long" })} - ${weekEnd.toLocaleDateString(
-    "fr-CA",
+  const weekLabel = `${weekStart.toLocaleDateString(loc(), { day: "numeric", month: "long" })} - ${weekEnd.toLocaleDateString(
+    loc(),
     { day: "numeric", month: "long", year: "numeric" }
   )}`;
 
@@ -338,28 +341,28 @@ export default function HoraireSection({ entrepriseId }) {
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          <IconFlecheGauche className="gozly-icon" /> Semaine précédente
+          <IconFlecheGauche className="gozly-icon" />{" "}{t("Semaine précédente")}
         </button>
         <span className="planning-week-label">{weekLabel}</span>
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-          Semaine suivante <IconFlecheDroite className="gozly-icon" />
+          {t("Semaine suivante")}{" "}<IconFlecheDroite className="gozly-icon" />
         </button>
         <button
           className="admin-icon-btn"
-          title={favoris.includes(toISODate(weekStart)) ? "Retirer des favoris" : "Garder cette semaine en favori (accessible même après 8 semaines)"}
+          title={favoris.includes(toISODate(weekStart)) ? t("Retirer des favoris") : t("Garder cette semaine en favori (accessible même après 8 semaines)")}
           onClick={() => toggleFavori(toISODate(weekStart))}
         >
           {favoris.includes(toISODate(weekStart)) ? <IconEtoilePleine className="gozly-icon" /> : <IconEtoile className="gozly-icon" />}
         </button>
         <button className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={openImportModal}>
-          <IconDocument className="gozly-icon" /> Importer une semaine
+          <IconDocument className="gozly-icon" />{" "}{t("Importer une semaine")}
         </button>
         <button
           className="submit-btn"
           onClick={handlePublierSemaine}
           disabled={publishing || quarts.length === 0 || quarts.every((q) => q.publie)}
         >
-          {publishing ? "Publication..." : <><IconMegaphone className="gozly-icon" /> Publier la semaine</>}
+          {publishing ? t("Publication...") : <><IconMegaphone className="gozly-icon" />{" "}{t("Publier la semaine")}</>}
         </button>
       </div>
       {favoriMsg && (
@@ -369,23 +372,22 @@ export default function HoraireSection({ entrepriseId }) {
       )}
       {quarts.some((q) => !q.publie) && (
         <p className="section-hint" style={{ marginBottom: "10px" }}>
-          Les quarts marqués <strong>Brouillon</strong> ne sont pas encore visibles des employés - clique "Publier la
-          semaine" quand l'horaire est prêt.
+          {t("Les quarts marqués")}{" "}<strong>{t("Brouillon")}</strong>{" "}{t("ne sont pas encore visibles des employés - clique \"Publier la semaine\" quand l'horaire est prêt.")}
         </p>
       )}
 
       {loading ? (
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       ) : employes.length === 0 ? (
         <p style={{ color: "var(--text-dim)" }}>
-          Ajoute d'abord des employés dans Entreprise → Employés pour pouvoir les placer dans l'horaire.
+          {t("Ajoute d'abord des employés dans Entreprise → Employés pour pouvoir les placer dans l'horaire.")}
         </p>
       ) : employesVisibles.length === 0 ? (
-        <p style={{ color: "var(--text-dim)" }}>Aucun employé assigné à cet emplacement pour l'instant.</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Aucun employé assigné à cet emplacement pour l'instant.")}</p>
       ) : (
         <>
           <p className="section-hint" style={{ marginBottom: "14px" }}>
-            Glisse un employé sur une journée pour lui assigner un quart.
+            {t("Glisse un employé sur une journée pour lui assigner un quart.")}
           </p>
           <div className="horaire-layout">
             <div className="horaire-employees">
@@ -394,7 +396,7 @@ export default function HoraireSection({ entrepriseId }) {
                   type="text"
                   value={rechercheEmploye}
                   onChange={(e) => setRechercheEmploye(e.target.value)}
-                  placeholder="Rechercher..."
+                  placeholder={t("Rechercher...")}
                 />
               </div>
               {employesAffiches.map((emp) => (
@@ -409,7 +411,7 @@ export default function HoraireSection({ entrepriseId }) {
               ))}
               {employesAffiches.length === 0 && (
                 <p className="section-hint" style={{ padding: "0 4px" }}>
-                  Aucun employé trouvé.
+                  {t("Aucun employé trouvé.")}
                 </p>
               )}
             </div>
@@ -432,17 +434,17 @@ export default function HoraireSection({ entrepriseId }) {
                   >
                     <div className="horaire-col-head">
                       <div className="horaire-col-day">{JOURS[(day.getDay() + 6) % 7]}</div>
-                      <div className="horaire-col-date">{day.toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}</div>
+                      <div className="horaire-col-date">{day.toLocaleDateString(loc(), { day: "numeric", month: "short" })}</div>
                     </div>
 
                     {dayQuarts.map((q) => (
                       <div className={`horaire-chip${q.publie ? "" : " brouillon"}`} key={q.id} onClick={() => openEdit(q)}>
                         <div className="horaire-chip-nom">
                           {employeNom(q.employe_id)}
-                          {!q.publie && <span className="horaire-chip-badge">Brouillon</span>}
+                          {!q.publie && <span className="horaire-chip-badge">{t("Brouillon")}</span>}
                           {q.echange_de && (
-                            <span className="horaire-chip-badge horaire-chip-echange" title={`Quart reçu de ${employeNom(q.echange_de)} par échange`}>
-                              Échange
+                            <span className="horaire-chip-badge horaire-chip-echange" title={t("Quart reçu de {nom} par échange", { nom: employeNom(q.echange_de) })}>
+                              {t("Échange")}
                             </span>
                           )}
                         </div>
@@ -454,7 +456,7 @@ export default function HoraireSection({ entrepriseId }) {
                     ))}
 
                     <button className="horaire-col-add" onClick={() => openAddViaButton(dateISO)}>
-                      + Ajouter
+                      {t("+ Ajouter")}
                     </button>
                   </div>
                 );
@@ -468,14 +470,14 @@ export default function HoraireSection({ entrepriseId }) {
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal-card" style={{ maxWidth: "360px" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>{modal.quartId ? "Modifier le quart" : "Nouveau quart"}</h3>
+              <h3>{modal.quartId ? t("Modifier le quart") : t("Nouveau quart")}</h3>
               <button className="admin-icon-btn" onClick={() => setModal(null)}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
             <form onSubmit={handleSaveModal}>
               <div className="field">
-                <label>Employé</label>
+                <label>{t("Employé")}</label>
                 {modal.quartId || employes.find((e) => e.id === modal.employeId) ? (
                   <SimpleSelect
                     options={(employesVisibles.some((e) => e.id === modal.employeId)
@@ -491,7 +493,7 @@ export default function HoraireSection({ entrepriseId }) {
               </div>
               <div className="field-row">
                 <div className="field">
-                  <label>Début</label>
+                  <label>{t("Début")}</label>
                   <input
                     type="time"
                     value={modal.heureDebut}
@@ -500,7 +502,7 @@ export default function HoraireSection({ entrepriseId }) {
                   />
                 </div>
                 <div className="field">
-                  <label>Fin</label>
+                  <label>{t("Fin")}</label>
                   <input
                     type="time"
                     value={modal.heureFin}
@@ -510,21 +512,21 @@ export default function HoraireSection({ entrepriseId }) {
                 </div>
               </div>
               <div className="field">
-                <label>Poste (optionnel)</label>
+                <label>{t("Poste (optionnel)")}</label>
                 <input
                   type="text"
                   value={modal.poste}
                   onChange={(e) => setModal((m) => ({ ...m, poste: e.target.value }))}
-                  placeholder="Ex: Machine 3, Cuisine, Caisse..."
+                  placeholder={t("Ex: Machine 3, Cuisine, Caisse...")}
                 />
               </div>
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn">
-                  {modal.quartId ? "Enregistrer" : "Ajouter"}
+                  {modal.quartId ? t("Enregistrer") : t("Ajouter")}
                 </button>
                 {modal.quartId && (
                   <button type="button" className="btn-danger" onClick={handleDeleteModal}>
-                    Retirer ce quart
+                    {t("Retirer ce quart")}
                   </button>
                 )}
               </div>
@@ -537,18 +539,17 @@ export default function HoraireSection({ entrepriseId }) {
         <div className="modal-overlay" onClick={() => !importing && setImportModal(null)}>
           <div className="modal-card" style={{ maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Importer une semaine</h3>
+              <h3>{t("Importer une semaine")}</h3>
               <button className="admin-icon-btn" onClick={() => setImportModal(null)} disabled={importing}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
             <p className="section-hint" style={{ marginBottom: "14px" }}>
-              Copie tous les quarts d'une semaine existante vers la semaine affichée ({weekLabel}). Les quarts copiés
-              restent en <strong>Brouillon</strong> - tu peux les ajuster avant de publier.
+              {t("Copie tous les quarts d'une semaine existante vers la semaine affichée (")}{weekLabel}{t("). Les quarts copiés restent en")}{" "}<strong>{t("Brouillon")}</strong>{" "}{t("- tu peux les ajuster avant de publier.")}
             </p>
             <form onSubmit={handleImporterSemaine}>
               <div className="field">
-                <label>Semaine à copier</label>
+                <label>{t("Semaine à copier")}</label>
                 <div className="admin-list" style={{ maxHeight: "260px", overflowY: "auto" }}>
                   {semainesRecentes.map((debut) => {
                     const iso = toISODate(debut);
@@ -565,14 +566,14 @@ export default function HoraireSection({ entrepriseId }) {
                         <div className="admin-row-main">
                           <div className="admin-row-title">
                             {selectionne ? <><IconCrochet className="gozly-icon" /> </> : ""}
-                            {debut.toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} –{" "}
-                            {fin.toLocaleDateString("fr-CA", { day: "numeric", month: "short", year: "numeric" })}
+                            {debut.toLocaleDateString(loc(), { day: "numeric", month: "short" })} –{" "}
+                            {fin.toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" })}
                           </div>
                         </div>
                         <button
                           type="button"
                           className="admin-icon-btn"
-                          title={estFavori ? "Retirer des favoris" : "Garder en favori"}
+                          title={estFavori ? t("Retirer des favoris") : t("Garder en favori")}
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleFavori(iso);
@@ -589,15 +590,14 @@ export default function HoraireSection({ entrepriseId }) {
               {favoriMsg && <p className="settings-msg err">{favoriMsg}</p>}
               {importModal.confirmerRemplacement && (
                 <p className="settings-msg err">
-                  La semaine affichée a déjà des quarts - ils seront tous supprimés et remplacés par la copie. Clique
-                  à nouveau sur "Importer" pour confirmer.
+                  {t("La semaine affichée a déjà des quarts - ils seront tous supprimés et remplacés par la copie. Clique à nouveau sur \"Importer\" pour confirmer.")}
                 </p>
               )}
               {importModal.error && <p className="settings-msg err">{importModal.error}</p>}
 
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn" disabled={importing}>
-                  {importing ? "Importation..." : importModal.confirmerRemplacement ? "Confirmer le remplacement" : "Importer"}
+                  {importing ? t("Importation...") : importModal.confirmerRemplacement ? t("Confirmer le remplacement") : t("Importer")}
                 </button>
               </div>
             </form>

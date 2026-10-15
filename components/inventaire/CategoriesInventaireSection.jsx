@@ -3,10 +3,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheBas, IconFlecheHaut } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Catégories de produits de l'Inventaire : créer, renommer, ordonner (▲▼) et retirer.
 // Retirer une catégorie ne supprime pas ses produits : ils passent « Sans catégorie ».
 export default function CategoriesInventaireSection({ entrepriseId }) {
+  const { t } = useT();
   const [categories, setCategories] = useState([]);
   const [produits, setProduits] = useState([]); // seulement pour compter les produits de chaque catégorie
   const [loading, setLoading] = useState(true);
@@ -46,7 +48,7 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
       supabase.from("categories_inventaire").select("*").eq("entreprise_id", entrepriseId).order("ordre", { ascending: true }).order("created_at", { ascending: true }),
       supabase.from("produits_inventaire").select("id, categorie_id").eq("entreprise_id", entrepriseId),
     ]);
-    if (error) setErreur("Les catégories ne sont pas prêtes. As-tu exécuté inventaire_categories.sql dans Supabase?");
+    if (error) setErreur(t("Les catégories ne sont pas prêtes. As-tu exécuté inventaire_categories.sql dans Supabase?"));
     setCategories(cats || []);
     setProduits(prods || []);
     setLoading(false);
@@ -60,7 +62,7 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
     const ordre = categories.reduce((max, c) => Math.max(max, c.ordre || 0), 0) + 1;
     const { error } = await supabase.from("categories_inventaire").insert({ entreprise_id: entrepriseId, nom, ordre });
     if (error) {
-      setErreur("Impossible d'ajouter la catégorie. As-tu exécuté inventaire_categories.sql dans Supabase?");
+      setErreur(t("Impossible d'ajouter la catégorie. As-tu exécuté inventaire_categories.sql dans Supabase?"));
       return;
     }
     setNouvelle("");
@@ -100,30 +102,30 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
     );
   }
 
-  if (loading) return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+  if (loading) return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
 
   return (
     <div>
-      <h2>Catégories</h2>
-      <p className="panel-hint">Classe tes produits par catégorie (ex: Boissons, Desserts). Tu choisis la catégorie de chaque produit dans l&apos;onglet Produits.</p>
+      <h2>{t("Catégories")}</h2>
+      <p className="panel-hint">{t("Classe tes produits par catégorie (ex: Boissons, Desserts). Tu choisis la catégorie de chaque produit dans l'onglet Produits.")}</p>
 
       <form onSubmit={ajouter} style={{ display: "flex", gap: "8px", marginBottom: "16px", maxWidth: "520px" }}>
         <input
           type="text"
           value={nouvelle}
           onChange={(e) => setNouvelle(e.target.value)}
-          placeholder="Nouvelle catégorie (ex: Boissons)"
+          placeholder={t("Nouvelle catégorie (ex: Boissons)")}
           maxLength={60}
           style={{ flex: 1, minWidth: 0, margin: 0 }}
         />
         <button type="submit" className="submit-btn" disabled={!nouvelle.trim()}>
-          Ajouter
+          {t("Ajouter")}
         </button>
       </form>
       {erreur && <p className="settings-msg err">{erreur}</p>}
 
       <div className="admin-list" style={{ maxWidth: "720px" }}>
-        {categories.length === 0 && <div className="admin-empty">Aucune catégorie pour l&apos;instant.</div>}
+        {categories.length === 0 && <div className="admin-empty">{t("Aucune catégorie pour l'instant.")}</div>}
         {categories.map((c, i) => (
           <div
             className="admin-row"
@@ -144,21 +146,21 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
                 >
                   <input type="text" value={renommerNom} onChange={(e) => setRenommerNom(e.target.value)} maxLength={60} autoFocus style={{ flex: 1, minWidth: 0, margin: 0 }} />
                   <button type="submit" className="admin-icon-btn">
-                    OK
+                    {t("OK")}
                   </button>
                 </form>
               ) : (
                 <>
                   <div className="admin-row-title">{c.nom}</div>
-                  <div className="admin-row-sub">{produits.filter((p) => p.categorie_id === c.id).length} produit(s)</div>
+                  <div className="admin-row-sub">{produits.filter((p) => p.categorie_id === c.id).length}{" "}{t("produit(s)")}</div>
                 </>
               )}
             </div>
             <div className="admin-row-controls" style={{ gap: "6px" }}>
-              <button className="admin-icon-btn" disabled={i === 0} onClick={() => deplacer(i, -1)} aria-label="Monter">
+              <button className="admin-icon-btn" disabled={i === 0} onClick={() => deplacer(i, -1)} aria-label={t("Monter")}>
                 <IconFlecheHaut className="gozly-icon" />
               </button>
-              <button className="admin-icon-btn" disabled={i === categories.length - 1} onClick={() => deplacer(i, 1)} aria-label="Descendre">
+              <button className="admin-icon-btn" disabled={i === categories.length - 1} onClick={() => deplacer(i, 1)} aria-label={t("Descendre")}>
                 <IconFlecheBas className="gozly-icon" />
               </button>
               <button
@@ -168,10 +170,10 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
                   setRenommerNom(c.nom);
                 }}
               >
-                Renommer
+                {t("Renommer")}
               </button>
               <button className="admin-icon-btn danger" onClick={() => retirer(c)}>
-                Retirer
+                {t("Retirer")}
               </button>
             </div>
           </div>

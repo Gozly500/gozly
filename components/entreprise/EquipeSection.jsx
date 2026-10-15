@@ -6,12 +6,14 @@ import EmplacementMultiSelectModal from "@/components/entreprise/EmplacementMult
 import { permissionsParModule } from "@/lib/permissions";
 import { MODULES } from "@/lib/modules";
 import { IconFlecheBas, IconFlecheHaut, IconLocalisation } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 function normaliserScope(ids) {
   return [...ids].map((id) => id ?? "toutes").sort().join(",");
 }
 
 export default function EquipeSection({ entrepriseId, userId, onLeft }) {
+  const { t } = useT();
   const [loading, setLoading] = useState(true);
   const [membres, setMembres] = useState([]);
   const [invitations, setInvitations] = useState([]);
@@ -54,7 +56,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
     const membresRes = await membresResRaw.json();
 
     if (!membresResRaw.ok) {
-      setError(membresRes.error || "Impossible de charger l'équipe.");
+      setError(membresRes.error || t("Impossible de charger l'équipe."));
       setMembres([]);
     } else {
       setMembres(membresRes.membres || []);
@@ -173,7 +175,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
     setInviting(false);
 
     if (error) {
-      setError("L'invitation a échoué : " + error.message);
+      setError(t("L'invitation a échoué : ") + error.message);
       return;
     }
 
@@ -191,19 +193,19 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
 
     if (estMoi && membre.role === "proprietaire") {
       setError(
-        "Un propriétaire ne peut pas quitter son propre dashboard. Passe par \"Supprimer mon compte\" dans Paramètres si tu ne veux plus t'en occuper."
+        t("Un propriétaire ne peut pas quitter son propre dashboard. Passe par \"Supprimer mon compte\" dans Paramètres si tu ne veux plus t'en occuper.")
       );
       return;
     }
 
-    if (estMoi && !window.confirm("Quitter ce dashboard ? Tu perdras l'accès immédiatement.")) {
+    if (estMoi && !window.confirm(t("Quitter ce dashboard ? Tu perdras l'accès immédiatement."))) {
       return;
     }
 
     const { error } = await supabase.from("membres").delete().eq("id", membre.id);
 
     if (error) {
-      setError("L'opération a échoué : " + error.message);
+      setError(t("L'opération a échoué : ") + error.message);
       return;
     }
 
@@ -216,7 +218,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
   const monRole = membres.find((m) => m.user_id === userId)?.role;
@@ -225,16 +227,16 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
   const categoriesActives = Object.entries(permissionsParModule()).filter(([module]) => modulesActifs.includes(module));
 
   function labelScope(emplacementIds) {
-    if (emplacementIds.includes(null)) return "Toutes les succursales";
-    if (emplacementIds.length === 0) return "Aucune succursale";
-    if (emplacementIds.length === 1) return emplacements.find((e) => e.id === emplacementIds[0])?.nom || "1 succursale";
-    return `${emplacementIds.length} succursales`;
+    if (emplacementIds.includes(null)) return t("Toutes les succursales");
+    if (emplacementIds.length === 0) return t("Aucune succursale");
+    if (emplacementIds.length === 1) return emplacements.find((e) => e.id === emplacementIds[0])?.nom || t("1 succursale");
+    return t("{n} succursales", { n: emplacementIds.length });
   }
 
   return (
     <div>
-      <h2>Équipe</h2>
-      <p className="panel-hint">Les comptes qui ont accès à ce dashboard.</p>
+      <h2>{t("Équipe")}</h2>
+      <p className="panel-hint">{t("Les comptes qui ont accès à ce dashboard.")}</p>
       {error && <p className="settings-msg err">{error}</p>}
 
       <div className="admin-list" style={{ marginBottom: "24px", maxWidth: "560px" }}>
@@ -242,23 +244,23 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
           <div className="admin-row" key={m.id}>
             <div className="admin-row-main">
               <div className="admin-row-title">{m.email}</div>
-              <div className="admin-row-sub">{m.role === "proprietaire" ? "Propriétaire" : "Membre"}</div>
+              <div className="admin-row-sub">{m.role === "proprietaire" ? t("Propriétaire") : t("Membre")}</div>
             </div>
             <div className="admin-row-controls">
               {jeSuisProprietaire && m.role !== "proprietaire" && (
                 <button className="admin-icon-btn" onClick={() => handleToggleOuvert(m)}>
-                  Permissions {ouverts.has(m.id) ? <IconFlecheHaut className="gozly-icon-inline" /> : <IconFlecheBas className="gozly-icon-inline" />}
+                  {t("Permissions")}{" "}{ouverts.has(m.id) ? <IconFlecheHaut className="gozly-icon-inline" /> : <IconFlecheBas className="gozly-icon-inline" />}
                 </button>
               )}
               {m.user_id === userId
                 ? m.role !== "proprietaire" && (
                     <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
-                      Quitter
+                      {t("Quitter")}
                     </button>
                   )
                 : jeSuisProprietaire && (
                     <button className="admin-icon-btn danger" onClick={() => handleRemoveMembre(m)}>
-                      Retirer
+                      {t("Retirer")}
                     </button>
                   )}
             </div>
@@ -273,10 +275,10 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
           .filter((m) => m.role !== "proprietaire" && ouverts.has(m.id))
           .map((m) => (
             <div className="settings-section" style={{ marginBottom: "14px", maxWidth: "560px" }} key={m.id}>
-              <h3 style={{ fontSize: "14px" }}>Permissions - {m.email}</h3>
+              <h3 style={{ fontSize: "14px" }}>{t("Permissions -")}{" "}{m.email}</h3>
 
               {categoriesActives.length === 0 ? (
-                <p className="section-hint">Active un module (ex: Horaire &amp; Pointage) pour voir apparaître ses permissions ici.</p>
+                <p className="section-hint">{t("Active un module (ex: Horaire & Pointage) pour voir apparaître ses permissions ici.")}</p>
               ) : (
                 categoriesActives.map(([module, perms]) => (
                   <div key={module} style={{ marginTop: "12px" }}>
@@ -297,8 +299,8 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
                               onChange={(e) => handleToggleDraftPermission(m, p.id, e.target.checked)}
                             />
                             <span>
-                              <strong style={{ fontSize: "13.5px" }}>{p.label}</strong>
-                              <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>{p.description}</div>
+                              <strong style={{ fontSize: "13.5px" }}>{t(p.label)}</strong>
+                              <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>{t(p.description)}</div>
                             </span>
                           </label>
                           {checked && emplacements.length > 1 && (
@@ -326,7 +328,7 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
                     onClick={() => handleSavePermissions(m)}
                     disabled={savingPermissions === m.id}
                   >
-                    {savingPermissions === m.id ? "Enregistrement..." : "Enregistrer"}
+                    {savingPermissions === m.id ? t("Enregistrement...") : t("Enregistrer")}
                   </button>
                   <button
                     type="button"
@@ -334,9 +336,9 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
                     onClick={() => handleAnnulerPermissions(m)}
                     disabled={savingPermissions === m.id}
                   >
-                    Annuler
+                    {t("Annuler")}
                   </button>
-                  <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>Modifications non enregistrées</span>
+                  <span style={{ fontSize: "12px", color: "var(--text-dim)" }}>{t("Modifications non enregistrées")}</span>
                 </div>
               )}
             </div>
@@ -360,17 +362,17 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
 
       {invitations.length > 0 && (
         <>
-          <div className="settings-divider">Invitations en attente</div>
+          <div className="settings-divider">{t("Invitations en attente")}</div>
           <div className="admin-list" style={{ marginBottom: "24px", maxWidth: "560px" }}>
             {invitations.map((inv) => (
               <div className="admin-row" key={inv.id}>
                 <div className="admin-row-main">
                   <div className="admin-row-title">{inv.email}</div>
-                  <div className="admin-row-sub">En attente de réponse</div>
+                  <div className="admin-row-sub">{t("En attente de réponse")}</div>
                 </div>
                 <div className="admin-row-controls">
                   <button className="admin-icon-btn" onClick={() => handleCancelInvite(inv.id)}>
-                    Annuler
+                    {t("Annuler")}
                   </button>
                 </div>
               </div>
@@ -379,22 +381,21 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
         </>
       )}
 
-      <div className="settings-divider">Inviter quelqu'un</div>
+      <div className="settings-divider">{t("Inviter quelqu'un")}</div>
       <form className="admin-add-form" onSubmit={handleInvite}>
         <input
           type="email"
-          placeholder="courriel@exemple.com"
+          placeholder={t("courriel@exemple.com")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <button type="submit" className="btn-small" disabled={inviting}>
-          {inviting ? "Envoi..." : "Inviter"}
+          {inviting ? t("Envoi...") : t("Inviter")}
         </button>
       </form>
       <p className="section-hint" style={{ marginTop: "10px" }}>
-        La personne verra l'invitation dès sa prochaine connexion (ou après avoir créé son compte Gozly si
-        elle n'en a pas encore).
+        {t("La personne verra l'invitation dès sa prochaine connexion (ou après avoir créé son compte Gozly si elle n'en a pas encore).")}
       </p>
     </div>
   );

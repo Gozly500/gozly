@@ -3,11 +3,13 @@
 import { useRef, useState } from "react";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Menu déroulant "maison" générique ({id, label}[]) - un <select> natif ne
 // peut pas être stylé proprement (le menu ouvert reste blanc). Mêmes
 // classes que PersonnalisationSection/EmplacementSelect (.forfait-select-*).
 export default function SimpleSelect({ options, value, onChange, placeholder = "Choisir..." }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useFermerAuClicExterieur(ref, open, () => setOpen(false));
@@ -16,7 +18,7 @@ export default function SimpleSelect({ options, value, onChange, placeholder = "
   return (
     <div className="forfait-select-wrap" ref={ref}>
       <div className={`forfait-select-trigger${open ? " open" : ""}`} onClick={() => setOpen((v) => !v)}>
-        <div className="fs-label">{current ? current.label : placeholder}</div>
+        <div className="fs-label">{current ? t(current.label) : placeholder}</div>
         <span className="fs-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
       </div>
       {open && (
@@ -30,7 +32,7 @@ export default function SimpleSelect({ options, value, onChange, placeholder = "
                 setOpen(false);
               }}
             >
-              <div className="fo-label">{o.label}</div>
+              <div className="fo-label">{t(o.label)}</div>
             </div>
           ))}
         </div>

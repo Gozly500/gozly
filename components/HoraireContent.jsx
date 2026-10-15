@@ -10,6 +10,7 @@ import DemandesSection from "@/components/entreprise/DemandesSection";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconHoraire, IconFeuilleTemps, IconDemande } from "@/components/icons/GozlyIcons";
+import { useT } from "@/components/LangProvider";
 
 const PERMISSIONS_FEUILLE = ["voir_feuille_temps", "corriger_feuille_temps", "approuver_feuille_temps", "exporter_feuille_temps"];
 
@@ -20,6 +21,7 @@ const TABS = [
 ];
 
 export default function HoraireContent() {
+  const { t: tr } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [user, setUser] = useState(null);
@@ -106,7 +108,7 @@ export default function HoraireContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>
       </div>
     );
   }
@@ -131,13 +133,13 @@ export default function HoraireContent() {
             style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", flexWrap: "wrap" }}
           >
             <div>
-              <h1>Horaire & Pointage</h1>
-              <p>Planifie qui travaille quand, et suis les heures réelles.</p>
+              <h1>{tr("Horaire & Pointage")}</h1>
+              <p>{tr("Planifie qui travaille quand, et suis les heures réelles.")}</p>
             </div>
           </header>
 
           {!entrepriseId ? (
-            <p style={{ color: "var(--text-dim)" }}>Aucune entreprise associée à ce compte.</p>
+            <p style={{ color: "var(--text-dim)" }}>{tr("Aucune entreprise associée à ce compte.")}</p>
           ) : (
             <>
               <div className="settings-nav horaire-tabs-sticky" style={{ flexDirection: "row", width: "fit-content" }}>
@@ -148,7 +150,7 @@ export default function HoraireContent() {
                     className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
                     onClick={() => setActiveTab(tab.id)}
                   >
-                    <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
+                    <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tr(tab.label)}
                   </button>
                 ))}
               </div>

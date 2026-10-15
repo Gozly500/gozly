@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { xmlVersLignes } from "@/lib/apercuBon";
 import { IconCrochet, IconOeil } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 async function appelerImpression(entrepriseId, action) {
   const { data } = await supabase.auth.getSession();
@@ -21,6 +22,7 @@ async function appelerImpression(entrepriseId, action) {
 // l'imprimante et permet d'envoyer un bon de test.
 // selecteur : le menu « Impression des commandes manuelles », affiché à côté des boutons.
 export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
+  const { t } = useT();
   const [etat, setEtat] = useState(null); // { actif, url }
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -33,7 +35,7 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
     setMsg(null);
     const r = await appelerImpression(entrepriseId, "apercu");
     if (!r.ok || !r.exemple) {
-      setMsg({ type: "err", text: r.error || "Impossible d'afficher l'aperçu." });
+      setMsg({ type: "err", text: r.error || t("Impossible d'afficher l'aperçu.") });
       return;
     }
     setApercu({ exemple: r.exemple, derniere: r.derniere || null });
@@ -52,11 +54,11 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
     const r = await appelerImpression(entrepriseId, action);
     setBusy(false);
     if (!r.ok) {
-      setMsg({ type: "err", text: `${r.error || "L'action a échoué."}${r.detail ? ` [${r.detail}]` : ""}` });
+      setMsg({ type: "err", text: `${r.error || t("L'action a échoué.")}${r.detail ? ` [${r.detail}]` : ""}` });
       return;
     }
     if (action === "tester") {
-      setMsg({ type: "ok", text: "Bon de test envoyé. Il devrait sortir de l'imprimante dans quelques secondes." });
+      setMsg({ type: "ok", text: t("Bon de test envoyé. Il devrait sortir de l'imprimante dans quelques secondes.") });
       return;
     }
     setEtat({ actif: !!r.actif, url: r.url || null });
@@ -70,42 +72,42 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
     } catch {}
   }
 
-  if (!etat) return <p className="section-hint">Chargement...</p>;
+  if (!etat) return <p className="section-hint">{t("Chargement...")}</p>;
 
   return (
     <div className="param-subgroup">
-      <div className="param-subgroup-label">Impression des bons de commande (Epson)</div>
+      <div className="param-subgroup-label">{t("Impression des bons de commande (Epson)")}</div>
 
       <div className="impression-ligne">
         {selecteur && <div className="impression-selecteur">{selecteur}</div>}
         <div className="impression-boutons">
           <button className="admin-icon-btn" disabled={busy} onClick={voirApercu}>
-            <IconOeil className="gozly-icon" /> Aperçu du bon
+            <IconOeil className="gozly-icon" />{" "}{t("Aperçu du bon")}
           </button>
           {!etat.actif ? (
             <button className="submit-btn" disabled={busy} onClick={() => lancer("activer")}>
-              Activer l&apos;impression
+              {t("Activer l'impression")}
             </button>
           ) : (
             <>
               <button className="submit-btn" disabled={busy} onClick={() => lancer("tester")}>
-                Imprimer un bon de test
+                {t("Imprimer un bon de test")}
               </button>
               <button
                 className="admin-icon-btn"
                 disabled={busy}
                 onClick={() =>
-                  lancer("regenerer", "Générer une nouvelle adresse? L'ancienne cessera de fonctionner : tu devras la remplacer dans l'imprimante.")
+                  lancer("regenerer", t("Générer une nouvelle adresse? L'ancienne cessera de fonctionner : tu devras la remplacer dans l'imprimante."))
                 }
               >
-                Nouvelle adresse
+                {t("Nouvelle adresse")}
               </button>
               <button
                 className="admin-icon-btn danger"
                 disabled={busy}
-                onClick={() => lancer("desactiver", "Désactiver l'impression? Les bons en attente seront annulés.")}
+                onClick={() => lancer("desactiver", t("Désactiver l'impression? Les bons en attente seront annulés."))}
               >
-                Désactiver
+                {t("Désactiver")}
               </button>
             </>
           )}
@@ -115,17 +117,15 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
       {etat.actif && (
         <>
           <p className="section-hint">
-            Impression activée. Dans la configuration de l&apos;imprimante (Epson Web Config : tape l&apos;adresse IP de l&apos;imprimante dans un
-            navigateur), va dans <strong>Server Direct Print</strong>, active-le, et entre cette adresse comme URL du serveur 1. Mets l&apos;intervalle
-            à 5 secondes. Laisse l&apos;ID et le mot de passe vides.
+            {t("Impression activée. Dans la configuration de l'imprimante (Epson Web Config : tape l'adresse IP de l'imprimante dans un navigateur), va dans")}{" "}<strong>{t("Server Direct Print")}</strong>{t(", active-le, et entre cette adresse comme URL du serveur 1. Mets l'intervalle à 5 secondes. Laisse l'ID et le mot de passe vides.")}
           </p>
           <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "12px" }}>
             <input type="text" readOnly value={etat.url || ""} onFocus={(e) => e.target.select()} style={{ flex: 1, minWidth: "260px" }} />
             <button className="admin-icon-btn" onClick={copier}>
-              {copie ? <>Copié <IconCrochet className="gozly-icon" /></> : "Copier"}
+              {copie ? <>{t("Copié")}{" "}<IconCrochet className="gozly-icon" /></> : t("Copier")}
             </button>
           </div>
-          <p className="section-hint">Garde cette adresse privée : quiconque la connaît peut interroger ton imprimante.</p>
+          <p className="section-hint">{t("Garde cette adresse privée : quiconque la connaît peut interroger ton imprimante.")}</p>
         </>
       )}
 
@@ -135,9 +135,9 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
         <div className="modal-overlay" onClick={() => setApercuOuvert(false)}>
           <div className="modal-card" style={{ maxWidth: "460px" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>Aperçu du bon de commande</h3>
+              <h3>{t("Aperçu du bon de commande")}</h3>
               <button className="admin-icon-btn" onClick={() => setApercuOuvert(false)}>
-                Fermer
+                {t("Fermer")}
               </button>
             </div>
             <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
@@ -146,7 +146,7 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
                 style={apercuSource === "exemple" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
                 onClick={() => setApercuSource("exemple")}
               >
-                Exemple
+                {t("Exemple")}
               </button>
               {apercu.derniere && (
                 <button
@@ -154,7 +154,7 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
                   style={apercuSource === "derniere" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
                   onClick={() => setApercuSource("derniere")}
                 >
-                  Ma dernière commande
+                  {t("Ma dernière commande")}
                 </button>
               )}
             </div>
@@ -175,7 +175,7 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
               )}
             </div>
             <p className="section-hint" style={{ marginTop: "10px" }}>
-              C&apos;est le contenu exact envoyé à l&apos;imprimante. Les accents sont retirés à l&apos;impression (l&apos;imprimante les afficherait mal).
+              {t("C'est le contenu exact envoyé à l'imprimante. Les accents sont retirés à l'impression (l'imprimante les afficherait mal).")}
             </p>
           </div>
         </div>

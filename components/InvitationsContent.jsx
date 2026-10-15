@@ -7,8 +7,10 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import { supabase } from "@/lib/supabaseClient";
 import { setEntrepriseSelectionnee } from "@/lib/entreprise";
+import { useT } from "@/components/LangProvider";
 
 export default function InvitationsContent() {
+  const { t } = useT();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [invitations, setInvitations] = useState([]);
@@ -49,7 +51,7 @@ export default function InvitationsContent() {
     const { error } = await supabase.rpc("accepter_invitation", { p_invitation_id: invitation.id });
 
     if (error) {
-      setError("Impossible d'accepter cette invitation : " + error.message);
+      setError(t("Impossible d'accepter cette invitation : ") + error.message);
       setBusyId(null);
       return;
     }
@@ -65,7 +67,7 @@ export default function InvitationsContent() {
     const { error } = await supabase.from("invitations").update({ statut: "refusee" }).eq("id", invitation.id);
 
     if (error) {
-      setError("L'opération a échoué : " + error.message);
+      setError(t("L'opération a échoué : ") + error.message);
       setBusyId(null);
       return;
     }
@@ -82,7 +84,7 @@ export default function InvitationsContent() {
   if (checking) {
     return (
       <div className="wrap" style={{ padding: "160px 0", textAlign: "center" }}>
-        <p style={{ color: "var(--text-dim)" }}>Chargement...</p>
+        <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       </div>
     );
   }
@@ -94,8 +96,8 @@ export default function InvitationsContent() {
 
       <header className="page-hero">
         <div className="wrap">
-          <h1>Tu as été invité·e !</h1>
-          <p>Réponds avant de continuer vers ton tableau de bord.</p>
+          <h1>{t("Tu as été invité·e !")}</h1>
+          <p>{t("Réponds avant de continuer vers ton tableau de bord.")}</p>
         </div>
       </header>
 
@@ -106,15 +108,15 @@ export default function InvitationsContent() {
             {invitations.map((inv) => (
               <div className="admin-row" key={inv.id}>
                 <div className="admin-row-main">
-                  <div className="admin-row-title">{inv.entreprises?.nom || "Entreprise"}</div>
-                  <div className="admin-row-sub">t'invite à rejoindre son dashboard</div>
+                  <div className="admin-row-title">{inv.entreprises?.nom || t("Entreprise")}</div>
+                  <div className="admin-row-sub">{t("t'invite à rejoindre son dashboard")}</div>
                 </div>
                 <div className="admin-row-controls">
                   <button className="submit-btn" disabled={busyId === inv.id} onClick={() => handleAccepter(inv)}>
-                    Accepter
+                    {t("Accepter")}
                   </button>
                   <button className="admin-icon-btn" disabled={busyId === inv.id} onClick={() => handleRefuser(inv)}>
-                    Refuser
+                    {t("Refuser")}
                   </button>
                 </div>
               </div>

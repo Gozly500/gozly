@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { appliquerEchangeQuart, plageEchange } from "@/lib/echangeQuart";
 import { IconCrochet, IconFlecheDroite, IconX } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 function heure(t) {
   return t ? t.slice(0, 5) : "";
 }
 
 export default function DemandesSection({ entrepriseId }) {
+  const { t: tr } = useT();
   const [conges, setConges] = useState([]);
   const [echanges, setEchanges] = useState([]);
   const [employes, setEmployes] = useState([]);
@@ -113,7 +115,7 @@ export default function DemandesSection({ entrepriseId }) {
   }
 
   if (loading) {
-    return <p style={{ color: "var(--text-dim)" }}>Chargement...</p>;
+    return <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>;
   }
 
   const congesEnAttente = conges.filter((c) => c.statut === "en_attente");
@@ -123,13 +125,13 @@ export default function DemandesSection({ entrepriseId }) {
 
   return (
     <div>
-      <h2>Demandes</h2>
-      <p className="panel-hint">Congés et échanges de quarts proposés par tes employés.</p>
+      <h2>{tr("Demandes")}</h2>
+      <p className="panel-hint">{tr("Congés et échanges de quarts proposés par tes employés.")}</p>
 
       <div className="settings-section">
-        <h3>Congés</h3>
+        <h3>{tr("Congés")}</h3>
         {congesEnAttente.length === 0 ? (
-          <p className="section-hint">Aucune demande en attente.</p>
+          <p className="section-hint">{tr("Aucune demande en attente.")}</p>
         ) : (
           <div className="admin-list" style={{ maxWidth: "640px", marginBottom: "18px" }}>
             {congesEnAttente.map((c) => (
@@ -137,17 +139,17 @@ export default function DemandesSection({ entrepriseId }) {
                 <div className="admin-row-main">
                   <div className="admin-row-title">{nomEmploye(c.employe_id)}</div>
                   <div className="admin-row-sub">
-                    Du {new Date(c.date_debut).toLocaleDateString("fr-CA")} au {new Date(c.date_fin).toLocaleDateString("fr-CA")}
+                    {tr("Du")}{" "}{new Date(c.date_debut).toLocaleDateString("fr-CA")}{" "}{tr("au")}{" "}{new Date(c.date_fin).toLocaleDateString("fr-CA")}
                     {c.raison && ` · ${c.raison}`}
                   </div>
                 </div>
                 {peutApprouver && (
                   <div className="admin-row-controls">
                     <button className="admin-icon-btn" onClick={() => traiterConge(c.id, "approuve")} disabled={busyId === c.id}>
-                      Approuver
+                      {tr("Approuver")}
                     </button>
                     <button className="admin-icon-btn danger" onClick={() => traiterConge(c.id, "refuse")} disabled={busyId === c.id}>
-                      Refuser
+                      {tr("Refuser")}
                     </button>
                   </div>
                 )}
@@ -163,8 +165,8 @@ export default function DemandesSection({ entrepriseId }) {
                 <div className="admin-row-main">
                   <div className="admin-row-title">{nomEmploye(c.employe_id)}</div>
                   <div className="admin-row-sub">
-                    Du {new Date(c.date_debut).toLocaleDateString("fr-CA")} au {new Date(c.date_fin).toLocaleDateString("fr-CA")} ·{" "}
-                    {c.statut === "approuve" ? <><IconCrochet className="gozly-icon" /> Approuvé</> : <><IconX className="gozly-icon" /> Refusé</>}
+                    {tr("Du")}{" "}{new Date(c.date_debut).toLocaleDateString("fr-CA")}{" "}{tr("au")}{" "}{new Date(c.date_fin).toLocaleDateString("fr-CA")} ·{" "}
+                    {c.statut === "approuve" ? <><IconCrochet className="gozly-icon" />{" "}{tr("Approuvé")}</> : <><IconX className="gozly-icon" />{" "}{tr("Refusé")}</>}
                   </div>
                 </div>
               </div>
@@ -174,9 +176,9 @@ export default function DemandesSection({ entrepriseId }) {
       </div>
 
       <div className="settings-section">
-        <h3>Échanges de quart</h3>
+        <h3>{tr("Échanges de quart")}</h3>
         {echangesActionnables.length === 0 ? (
-          <p className="section-hint">Aucun échange en attente de ton approbation.</p>
+          <p className="section-hint">{tr("Aucun échange en attente de ton approbation.")}</p>
         ) : (
           <div className="admin-list" style={{ maxWidth: "640px", marginBottom: "18px" }}>
             {echangesActionnables.map((e) => (
@@ -187,16 +189,16 @@ export default function DemandesSection({ entrepriseId }) {
                   </div>
                   <div className="admin-row-sub">
                     {e.planning_quarts && <>{new Date(e.planning_quarts.date).toLocaleDateString("fr-CA")} · {heuresEchange(e)}</>}
-                    {" · les deux employés sont d'accord, en attente de ton approbation"}
+                    {tr(" · les deux employés sont d'accord, en attente de ton approbation")}
                   </div>
                 </div>
                 {peutApprouver && (
                   <div className="admin-row-controls">
                     <button className="admin-icon-btn" onClick={() => traiterEchange(e, true)} disabled={busyId === e.id}>
-                      Approuver
+                      {tr("Approuver")}
                     </button>
                     <button className="admin-icon-btn danger" onClick={() => traiterEchange(e, false)} disabled={busyId === e.id}>
-                      Refuser
+                      {tr("Refuser")}
                     </button>
                   </div>
                 )}
@@ -219,11 +221,11 @@ export default function DemandesSection({ entrepriseId }) {
                         {new Date(e.planning_quarts.date).toLocaleDateString("fr-CA")} · {heuresEchange(e)} ·{" "}
                       </>
                     )}
-                    {e.statut_employe === "en_attente" && "En attente de réponse de l'employé"}
-                    {e.statut_employe === "refuse" && <><IconX className="gozly-icon" /> Refusé par l'employé</>}
-                    {e.statut_admin === "approuve" && <><IconCrochet className="gozly-icon" /> Approuvé</>}
-                    {e.statut_admin === "refuse" && <><IconX className="gozly-icon" /> Refusé</>}
-                    {e.statut_admin === "non_requis" && <><IconCrochet className="gozly-icon" /> Approuvé automatiquement</>}
+                    {e.statut_employe === "en_attente" && tr("En attente de réponse de l'employé")}
+                    {e.statut_employe === "refuse" && <><IconX className="gozly-icon" />{" "}{tr("Refusé par l'employé")}</>}
+                    {e.statut_admin === "approuve" && <><IconCrochet className="gozly-icon" />{" "}{tr("Approuvé")}</>}
+                    {e.statut_admin === "refuse" && <><IconX className="gozly-icon" />{" "}{tr("Refusé")}</>}
+                    {e.statut_admin === "non_requis" && <><IconCrochet className="gozly-icon" />{" "}{tr("Approuvé automatiquement")}</>}
                   </div>
                 </div>
               </div>

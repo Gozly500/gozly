@@ -3,18 +3,20 @@
 import { useRef, useState } from "react";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { IconFlecheBas, IconLocalisation } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 // Menu déroulant "maison" pour choisir l'emplacement actif - un <select>
 // natif ne peut pas être stylé proprement (le menu ouvert reste blanc,
 // dessiné par le navigateur), donc on reconstruit l'UI nous-mêmes.
 export default function EmplacementSelect({ emplacements, value, onChange, includeToutes }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useFermerAuClicExterieur(ref, open, () => setOpen(false));
 
   if (emplacements.length <= 1) return null;
 
-  const options = includeToutes ? [{ id: null, nom: "Toutes les succursales" }, ...emplacements] : emplacements;
+  const options = includeToutes ? [{ id: null, nom: t("Toutes les succursales") }, ...emplacements] : emplacements;
   const current = options.find((o) => o.id === value) || options[0];
 
   return (

@@ -1,8 +1,9 @@
+import { getT } from "@/lib/i18n/siteServer";
 import CategoriesInventaireContent from "@/components/CategoriesInventaireContent";
 
-export const metadata = {
-  title: "Gozly - Catégories d'inventaire",
-};
+export function generateMetadata() {
+  return { title: getT().t("Gozly - Catégories d'inventaire") };
+}
 
 export default function CategoriesInventairePage() {
   return (

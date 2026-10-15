@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { creneauActuel } from "@/lib/temperature";
 import { IconAttention, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
+import { loc } from "@/lib/i18n/locale";
 
 // Une alerte disparaît du widget après ce nombre de jours (le registre complet
 // reste dans Températures > Historique).
@@ -27,7 +28,7 @@ function quand(r, aujourdhui) {
   let jour;
   if (r.date_relevee === aujourdhui) jour = "Aujourd'hui";
   else if (r.date_relevee === hierStr) jour = "Hier";
-  else jour = new Date(r.date_relevee + "T00:00:00").toLocaleDateString("fr-CA", { day: "numeric", month: "short" });
+  else jour = new Date(r.date_relevee + "T00:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short" });
   return `${jour} ${periode}`.trim();
 }
 

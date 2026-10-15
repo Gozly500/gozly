@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useLangue } from "@/components/moi/LangueContext";
 import { IconCrochet } from "@/components/icons/Pictogrammes";
+import { useT } from "@/components/LangProvider";
 
 export default function KioskReapproSection({ entrepriseId }) {
+  const { t: tr } = useT();
   const { t } = useLangue();
   const [liste, setListe] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export default function KioskReapproSection({ entrepriseId }) {
             >
               <span className="kiosk-reappro-check"><IconCrochet className="gozly-icon" /></span>
               <span className="kiosk-reappro-nom">{item.nom}</span>
-              <span className="kiosk-reappro-qte">× {item.quantite}</span>
+              <span className="kiosk-reappro-qte">{tr("×")}{" "}{item.quantite}</span>
             </button>
           ))}
         </div>
