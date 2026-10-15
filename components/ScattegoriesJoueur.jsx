@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/components/LangProvider";
-import { genererId, normaliserCode, ouvrirSalle } from "@/lib/scategoriesRoom";
-import { formatTemps } from "@/lib/scategories";
+import { genererId, normaliserCode, ouvrirSalle } from "@/lib/scattegoriesRoom";
+import { formatTemps } from "@/lib/scattegories";
 
 // Écran d'un joueur (téléphone) : il entre le code de la partie et son nom, puis répond aux catégories.
-export default function ScategoriesJoueur({ codeInitial = "", onQuitter }) {
+export default function ScattegoriesJoueur({ codeInitial = "", onQuitter }) {
   const { t } = useT();
   const [code, setCode] = useState(normaliserCode(codeInitial));
   const [nom, setNom] = useState("");

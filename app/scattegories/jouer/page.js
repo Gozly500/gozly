@@ -1,7 +1,7 @@
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import ScategoriesChoix from "@/components/ScategoriesChoix";
+import ScattegoriesJoueurPage from "@/components/ScattegoriesJoueurPage";
 import { getT } from "@/lib/i18n/siteServer";
 
 export function generateMetadata() {
@@ -9,7 +9,7 @@ export function generateMetadata() {
   return { title: t("scat.meta"), description: t("scat.sous") };
 }
 
-export default function ScategoriesPage() {
+export default function ScattegoriesJouerPage() {
   const { t } = getT();
   return (
     <div className="page page-default scat-page">
@@ -19,13 +19,13 @@ export default function ScategoriesPage() {
       <header className="page-hero scat-hero">
         <div className="wrap">
           <h1>{t("scat.titre")}</h1>
-          <p>{t("scat.sous")}</p>
+          <p>{t("scat.rejoindre")}</p>
         </div>
       </header>
 
-      <section id="scategories">
+      <section id="scattegories">
         <div className="wrap scat-wrap">
-          <ScategoriesChoix />
+          <ScattegoriesJoueurPage />
         </div>
       </section>
 

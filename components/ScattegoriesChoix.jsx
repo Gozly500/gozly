@@ -4,29 +4,29 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/LangProvider";
-import { normaliserCode } from "@/lib/scategoriesRoom";
+import { normaliserCode } from "@/lib/scattegoriesRoom";
 
-// Page d'entrée de Scategories : on choisit d'animer la partie (maître du jeu) ou de rejoindre avec un code.
-export default function ScategoriesChoix() {
+// Page d'entrée de Scattegories : on choisit d'animer la partie (maître du jeu) ou de rejoindre avec un code.
+export default function ScattegoriesChoix() {
   const { t } = useT();
   const router = useRouter();
   const [code, setCode] = useState("");
 
-  // Ancien lien /scategories?code=XXXX : on envoie directement vers l'écran joueur.
+  // Ancien lien /scattegories?code=XXXX : on envoie directement vers l'écran joueur.
   useEffect(() => {
     const c = normaliserCode(new URLSearchParams(window.location.search).get("code"));
-    if (c) router.replace(`/scategories/jouer?code=${c}`);
+    if (c) router.replace(`/scattegories/jouer?code=${c}`);
   }, [router]);
 
   function rejoindre(e) {
     e.preventDefault();
     const c = normaliserCode(code);
-    router.push(c ? `/scategories/jouer?code=${c}` : "/scategories/jouer");
+    router.push(c ? `/scattegories/jouer?code=${c}` : "/scattegories/jouer");
   }
 
   return (
     <div className="scat-choix">
-      <Link href="/scategories/maitre" className="scat-choix-carte scat-choix-maitre">
+      <Link href="/scattegories/maitre" className="scat-choix-carte scat-choix-maitre">
         <span className="scat-choix-icone" aria-hidden="true">
           🎲
         </span>

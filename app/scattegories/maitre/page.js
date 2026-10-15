@@ -1,7 +1,7 @@
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import ScategoriesGame from "@/components/ScategoriesGame";
+import ScattegoriesGame from "@/components/ScattegoriesGame";
 import { getT } from "@/lib/i18n/siteServer";
 
 export function generateMetadata() {
@@ -9,7 +9,7 @@ export function generateMetadata() {
   return { title: t("scat.meta"), description: t("scat.sous") };
 }
 
-export default function ScategoriesMaitrePage() {
+export default function ScattegoriesMaitrePage() {
   const { t } = getT();
   return (
     <div className="page page-default scat-page">
@@ -23,9 +23,9 @@ export default function ScategoriesMaitrePage() {
         </div>
       </header>
 
-      <section id="scategories">
+      <section id="scattegories">
         <div className="wrap scat-wrap">
-          <ScategoriesGame />
+          <ScattegoriesGame />
 
           <div className="scat-regles">
             <h2>{t("scat.regles")}</h2>

@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/components/LangProvider";
-import { ALPHABET, LETTRES_DIFFICILES, DUREES, CLE_STOCKAGE, PRESETS, presetCategories, formatTemps } from "@/lib/scategories";
+import { ALPHABET, LETTRES_DIFFICILES, DUREES, CLE_STOCKAGE, PRESETS, presetCategories, formatTemps } from "@/lib/scattegories";
 import { useSalleHote } from "@/lib/useSalleHote";
 
-// Jeu Scategories (refait pour gozly.net) : une lettre, des catégories, un compte à rebours.
+// Jeu Scattegories (refait pour gozly.net) : une lettre, des catégories, un compte à rebours.
 // Mode solo par défaut ; "Multijoueur" ouvre une salle (code) où les joueurs répondent depuis leur téléphone.
 // Les réglages s'enregistrent sur l'appareil (localStorage) : pas besoin de compte.
-export default function ScategoriesGame() {
+export default function ScattegoriesGame() {
   const { t, lang } = useT();
   const zoneRef = useRef(null);
   const audioRef = useRef(null);
@@ -94,7 +94,7 @@ export default function ScategoriesGame() {
     // Le fichier doit être "débloqué" pendant un clic (Démarrer) pour pouvoir jouer à la fin du temps.
     try {
       if (!sonFinRef.current) {
-        const a = new Audio("/scategories/fin-chrono.mp3");
+        const a = new Audio("/scattegories/fin-chrono.mp3");
         a.preload = "auto";
         sonFinRef.current = a;
         a.muted = true;
@@ -294,7 +294,7 @@ export default function ScategoriesGame() {
   const circ = 2 * Math.PI * R;
   const res = salle.resultat;
   const popupOuvert = popup && (etat === "running" || etat === "paused" || (etat === "ended" && (!salle.actif || !res)));
-  const lien = typeof window !== "undefined" && salle.code ? `${window.location.origin}/scategories/jouer?code=${salle.code}` : "";
+  const lien = typeof window !== "undefined" && salle.code ? `${window.location.origin}/scattegories/jouer?code=${salle.code}` : "";
 
   return (
     <div ref={zoneRef} className={`scat-zone${pleinEcran ? " scat-plein" : ""}`}>
@@ -474,7 +474,7 @@ export default function ScategoriesGame() {
             <button type="button" className="scat-btn" onClick={charger}>
               {t("scat.charger")}
             </button>
-            <a className="scat-btn scat-lien-btn" href="/scategories/carte-de-jeu.pdf" target="_blank" rel="noopener">
+            <a className="scat-btn scat-lien-btn" href="/scattegories/carte-de-jeu.pdf" target="_blank" rel="noopener">
               {t("scat.carteLien")}
             </a>
           </div>

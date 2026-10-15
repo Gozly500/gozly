@@ -2455,7 +2455,7 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) .integration-item{backg
 .footer-lang{background:none;border:none;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer;}
 @media (max-width:760px){.lang-bubble{height:40px;padding:0 11px;}}
 
-/* ===== Scategories (jeu public) ===== */
+/* ===== Scattegories (jeu public) ===== */
 .scat-hero{padding-bottom:30px;}
 .scat-wrap{max-width:1100px;}
 .scat-zone{border-radius:28px;}
@@ -2534,7 +2534,7 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) .integration-item{backg
   .scat-print th{background:#eee;}
 }
 
-/* ===== Scategories multijoueur ===== */
+/* ===== Scattegories multijoueur ===== */
 .scat-rejoindre-bandeau{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding:12px 18px;border-radius:20px;background:rgba(var(--w),0.08);border:1px solid rgba(var(--w),0.14);color:var(--text-dim);font-size:14.5px;}
 .scat-tete-actions{display:flex;gap:8px;flex-wrap:wrap;}
 .scat-sous{color:var(--text-dim);font-size:14px;line-height:1.5;}
@@ -2581,7 +2581,7 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) .integration-item{backg
 .scat-j-res li.ko{background:rgba(248,113,113,0.15);}
 .scat-j-total{font-size:18px;text-align:center;margin-top:6px;}
 
-/* ===== Scategories : page de choix, fenêtre de partie, champs ===== */
+/* ===== Scattegories : page de choix, fenêtre de partie, champs ===== */
 .scat-choix{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:900px;margin:0 auto;}
 .scat-choix-carte{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:34px 28px;border-radius:34px;color:var(--text);text-decoration:none;
   background:rgba(var(--w),0.10);border:1px solid rgba(var(--w),0.16);box-shadow:0 24px 60px -26px rgba(0,0,0,0.7);backdrop-filter:blur(14px);transition:transform .2s ease,border-color .2s ease;}

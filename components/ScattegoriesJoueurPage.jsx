@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import ScategoriesJoueur from "@/components/ScategoriesJoueur";
-import { normaliserCode } from "@/lib/scategoriesRoom";
+import ScattegoriesJoueur from "@/components/ScattegoriesJoueur";
+import { normaliserCode } from "@/lib/scattegoriesRoom";
 
 // Écran joueur : lit ?code=ABCD dans l'adresse (prérempli), "Retour" ramène au choix.
-export default function ScategoriesJoueurPage() {
+export default function ScattegoriesJoueurPage() {
   const router = useRouter();
   const [code, setCode] = useState(null);
 
@@ -15,5 +15,5 @@ export default function ScategoriesJoueurPage() {
   }, []);
 
   if (code === null) return null;
-  return <ScategoriesJoueur codeInitial={code} onQuitter={() => router.push("/scategories")} />;
+  return <ScattegoriesJoueur codeInitial={code} onQuitter={() => router.push("/scattegories")} />;
 }
