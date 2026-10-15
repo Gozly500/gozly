@@ -2358,10 +2358,10 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 
 /* Trois carrés arrondis qui pivotent l'un après l'autre (sous le sous-titre de la page). */
 .statut-carres{display:flex;justify-content:center;gap:12px;margin-top:22px;}
-.statut-carres span{width:14px;height:14px;border-radius:4px;background:var(--fg);animation:statut-pivote 1.8s ease-in-out infinite;}
-.statut-carres span:nth-child(2){animation-delay:.2s;}
-.statut-carres span:nth-child(3){animation-delay:.4s;}
-@keyframes statut-pivote{0%,45%,100%{transform:rotate(0deg);}25%{transform:rotate(90deg);}}
+.statut-carres span{width:14px;height:14px;border-radius:4px;background:var(--fg);animation:statut-pivote 2.4s ease-in-out infinite;}
+.statut-carres span:nth-child(2){animation-delay:.6s;}
+.statut-carres span:nth-child(3){animation-delay:1.2s;}
+@keyframes statut-pivote{0%{transform:rotate(0deg);}25%,100%{transform:rotate(360deg);}}
 @media (prefers-reduced-motion:reduce){.statut-carres span{animation:none;}}
 .statut-message{margin:6px 0 0 20px;font-size:13px;color:var(--text-dim);}
 .statut-modifier{font-family:inherit;font-size:12px;padding:4px 10px;border-radius:10px;cursor:pointer;
