@@ -2339,6 +2339,9 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 .statut-carte{padding:24px;border-radius:24px;background:rgba(var(--w),0.08);border:1px solid var(--glass-border);backdrop-filter:blur(14px);}
 .statut-carte h2{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:14px;}
 .statut-carte-modules{grid-row:span 2;}
+.statut-carte-externe{grid-column:1 / -1;}
+.statut-carte-externe ul{display:grid;grid-template-columns:repeat(3,1fr);gap:0 28px;}
+.statut-carte-externe .statut-ligne{border-top:none;}
 .statut-carte ul{list-style:none;}
 .statut-ligne{padding:12px 0;border-top:1px solid rgba(var(--w),0.1);}
 .statut-ligne:first-child{border-top:none;}
@@ -2357,10 +2360,10 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 @media (prefers-reduced-motion:reduce){.statut-icone-panne{animation:none;}}
 
 /* Trois carrés arrondis qui pivotent l'un après l'autre (sous le sous-titre de la page). */
-.statut-carres{display:flex;justify-content:center;gap:12px;margin-top:22px;}
-.statut-carres span{width:14px;height:14px;border-radius:4px;background:var(--fg);animation:statut-pivote 2.4s ease-in-out infinite;}
-.statut-carres span:nth-child(2){animation-delay:.6s;}
-.statut-carres span:nth-child(3){animation-delay:1.2s;}
+.statut-carres{display:flex;justify-content:center;gap:16px;margin-top:22px;}
+.statut-carres span{width:20px;height:20px;border-radius:6px;background:var(--fg);animation:statut-pivote 3.6s cubic-bezier(.9,0,.1,1) infinite;}
+.statut-carres span:nth-child(2){animation-delay:.9s;}
+.statut-carres span:nth-child(3){animation-delay:1.8s;}
 @keyframes statut-pivote{0%{transform:rotate(0deg);}25%,100%{transform:rotate(360deg);}}
 @media (prefers-reduced-motion:reduce){.statut-carres span{animation:none;}}
 .statut-message{margin:6px 0 0 20px;font-size:13px;color:var(--text-dim);}
@@ -2377,5 +2380,6 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 @media (max-width:760px){
   .statut-bento{grid-template-columns:1fr;}
   .statut-carte-modules{grid-row:auto;}
+  .statut-carte-externe ul{grid-template-columns:1fr;}
 }
 .statut-erreur{font-size:13px;color:#f87171;}
