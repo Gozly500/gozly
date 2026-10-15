@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { LANG_COOKIE, isValidLang } from "@/lib/i18n/site";
 import { DEFAULT_THEME, THEME_STORAGE_KEY, THEME_ACCENT_STORAGE_KEY, isValidTheme, isValidAccent, appliquerAccent } from "@/lib/themes";
 
 export default function DashboardLayout({ children }) {
+  const router = useRouter();
   const [theme, setTheme] = useState(DEFAULT_THEME);
   // ?apercu=clair : teste le thème Clair (en construction) sans l'enregistrer ni l'exposer aux autres.
   const apercuClair = useRef(false);
@@ -51,6 +54,22 @@ export default function DashboardLayout({ children }) {
           try {
             window.localStorage.setItem(THEME_ACCENT_STORAGE_KEY, id);
           } catch {}
+        });
+
+      // Langue du compte : requête à part (colonne ajoutée par profil_langue.sql, peut ne pas exister
+      // encore). Le profil est la source de vérité : si le cookie diffère, on l'aligne et on rafraîchit.
+      supabase
+        .from("profils")
+        .select("langue")
+        .eq("id", session.user.id)
+        .maybeSingle()
+        .then(({ data: lg, error: lgErr }) => {
+          if (ignore || lgErr || !isValidLang(lg?.langue)) return;
+          const actuel = document.cookie.match(new RegExp("(?:^|; )" + LANG_COOKIE + "=([^;]*)"))?.[1];
+          if (actuel !== lg.langue) {
+            document.cookie = LANG_COOKIE + "=" + lg.langue + "; path=/; max-age=31536000; samesite=lax";
+            router.refresh();
+          }
         });
 
       if (ignore || apercuClair.current || !isValidTheme(data?.theme)) return;

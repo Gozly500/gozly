@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import ThemeGrids from "@/components/ThemeGrids";
+import LangueSection from "@/components/settings/LangueSection";
 import { THEME_SOBRE, DEFAULT_THEME, THEME_STORAGE_KEY, THEME_COULEUR_STORAGE_KEY, isValidTheme, estSobre, DEFAULT_ACCENT, THEME_ACCENT_STORAGE_KEY, isValidAccent } from "@/lib/themes";
 
 export default function AppearanceSection({ profil, setProfil }) {
@@ -104,6 +105,8 @@ export default function AppearanceSection({ profil, setProfil }) {
       <ThemeGrids theme={theme} onSelect={handleSelect} disabled={saving} accent={accent} onSelectAccent={handleSelectAccent} />
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
+
+      <LangueSection profil={profil} setProfil={setProfil} />
     </div>
   );
 }

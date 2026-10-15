@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useT } from "@/components/LangProvider";
 import { LANG_COOKIE } from "@/lib/i18n/site";
 import { IconGlobe } from "@/components/icons/Pictogrammes";
+import { supabase } from "@/lib/supabaseClient";
 
 // Bascule FR <-> EN : on écrit le cookie puis on redemande les composants serveur.
 export function useChangerLangue() {
@@ -12,6 +13,13 @@ export function useChangerLangue() {
   const autre = lang === "fr" ? "en" : "fr";
   return function changer() {
     document.cookie = `${LANG_COOKIE}=${autre}; path=/; max-age=31536000; samesite=lax`;
+    // Connecté : la langue du compte suit (sinon le dashboard la remettrait à l'ancienne valeur).
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (session) return supabase.from("profils").update({ langue: autre }).eq("id", session.user.id);
+      })
+      .catch(() => {});
     router.refresh();
   };
 }
