@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminServer";
 import { discord, estFerme } from "@/lib/discordTickets";
+import { db } from "@/lib/discordVotes";
+import { LABELS_FORFAIT } from "@/lib/modules";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -20,6 +22,39 @@ async function nomUtilisateur(guildId, id) {
       return id;
     }
   }
+}
+
+// Compte Gozly lié à chaque identifiant Discord (nom, courriel, forfait, entreprises). Réservé au panneau admin :
+// ces informations ne sont jamais écrites dans Discord. Si la liaison n'est pas disponible (SQL pas exécuté, personne
+// non liée), la personne n'a simplement pas de compte affiché.
+async function comptesLies(discordIds) {
+  const comptes = new Map();
+  const service = db();
+  if (!service || discordIds.length === 0) return comptes;
+  try {
+    const { data: profils, error } = await service.from("profils").select("id, full_name, forfait, discord_id").in("discord_id", discordIds);
+    if (error || !profils?.length) return comptes;
+    const userIds = profils.map((p) => p.id);
+    const { data: membres } = await service.from("membres").select("entreprise_id, user_id, role").in("user_id", userIds);
+    const entrepriseIds = [...new Set((membres || []).map((m) => m.entreprise_id))];
+    const { data: entreprises } = entrepriseIds.length ? await service.from("entreprises").select("id, nom").in("id", entrepriseIds) : { data: [] };
+    const nomEntreprise = new Map((entreprises || []).map((e) => [e.id, e.nom]));
+    for (const p of profils) {
+      let courriel = null;
+      try {
+        courriel = (await service.auth.admin.getUserById(p.id)).data?.user?.email || null;
+      } catch {}
+      comptes.set(p.discord_id, {
+        nom: p.full_name || "",
+        courriel,
+        forfait: LABELS_FORFAIT[p.forfait] || null,
+        entreprises: (membres || [])
+          .filter((m) => m.user_id === p.id && nomEntreprise.has(m.entreprise_id))
+          .map((m) => ({ nom: nomEntreprise.get(m.entreprise_id), role: m.role })),
+      });
+    }
+  } catch {}
+  return comptes;
 }
 
 // GET            : liste des tickets Discord (ouverts et fermés).
@@ -80,6 +115,8 @@ export async function GET(request) {
         })
     );
     tickets.sort((a, b) => (a.ouvertLe < b.ouvertLe ? 1 : -1));
+    const comptes = await comptesLies([...new Set(tickets.map((t) => t.proprietaireId))]);
+    for (const t of tickets) t.compte = comptes.get(t.proprietaireId) || null;
     // Diagnostic : ce que le bot voit sur le serveur (aide à comprendre une liste vide).
     const textes = salons.filter((c) => c.type === 0);
     const diagnostic = {

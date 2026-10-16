@@ -149,6 +149,18 @@ export default function TicketsSection() {
                   <div className="admin-row-main">
                     <div className="admin-row-title">{t.proprietaire}</div>
                     <div className="admin-row-sub">Ouvert le {formatDate(t.ouvertLe)} · Discord</div>
+                    {t.compte ? (
+                      <div className="ticket-compte">
+                        <div>
+                          <strong>{t.compte.nom || "Compte Gozly"}</strong>
+                          {t.compte.courriel && <> · {t.compte.courriel}</>}
+                          {t.compte.forfait && <> · forfait {t.compte.forfait}</>}
+                        </div>
+                        {t.compte.entreprises.length > 0 && <div>Entreprise{t.compte.entreprises.length > 1 ? "s" : ""} : {t.compte.entreprises.map((e) => e.nom).join(", ")}</div>}
+                      </div>
+                    ) : (
+                      <div className="admin-row-sub" style={{ fontStyle: "italic" }}>Compte Gozly non lié</div>
+                    )}
                   </div>
                   <div className="admin-row-controls">
                     <span className={`admin-status-pill ${t.ferme ? "inactive" : "active"}`}>{t.ferme ? "Fermé" : "Ouvert"}</span>
