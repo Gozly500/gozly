@@ -22,6 +22,7 @@ const sections = [
       "Selon les modules que votre entreprise utilise, Gozly peut contenir :",
       [
         "Compte : nom, courriel, mot de passe (stocké de façon sécurisée), nom de l'entreprise, forfait.",
+        "Compte Discord lié (facultatif) : si vous liez votre compte Gozly au serveur Discord de Gozly, nous conservons votre identifiant Discord (un numéro) afin de vous attribuer le rôle « Compte lié ». Vous pouvez délier votre compte en tout temps.",
         "Employés : nom, courriel ou téléphone, numéro d'employé, NIP de connexion à l'application mobile, succursale(s) assignée(s), horaire, quarts de travail, demandes de congé et d'échange de quart.",
         "Pointage : heures d'arrivée et de départ. Si l'entreprise active le pointage mobile, la position GPS de l'appareil est vérifiée au moment du pointage pour confirmer que la personne est à la succursale; nous ne suivons pas vos déplacements en continu.",
         "Registre de températures : relevés de température, équipement, date, créneau (AM/PM) et nom de la personne ayant fait le relevé.",
