@@ -6,14 +6,14 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import ClientsSection from "@/components/admin/ClientsSection";
 import AdminsSection from "@/components/admin/AdminsSection";
-import DemandesContactSection from "@/components/admin/DemandesContactSection";
 import DiscordSection from "@/components/admin/DiscordSection";
-import { IconBouclier, IconEnveloppe, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
+import SupportSection from "@/components/admin/SupportSection";
+import { IconBouclier, IconDiscord, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
 
 const TABS = [
   { id: "clients", label: "Clients", Icone: IconProfils },
-  { id: "demandes", label: "Demandes", Icone: IconEnveloppe },
-  { id: "discord", label: "Discord", Icone: IconMessage },
+  { id: "support", label: "Support", Icone: IconMessage },
+  { id: "discord", label: "Discord", Icone: IconDiscord },
   { id: "admins", label: "Équipe admin", Icone: IconBouclier },
 ];
 
@@ -109,15 +109,15 @@ export default function AdminContent() {
             onClick={() => setActiveTab(tab.id)}
           >
             <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
-            {tab.id === "discord" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
+            {tab.id === "support" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
           </button>
         ))}
       </nav>
 
       <div className="settings-panel">
         {activeTab === "clients" && <ClientsSection />}
-        {activeTab === "demandes" && <DemandesContactSection />}
-        {activeTab === "discord" && <DiscordSection ticketsOuverts={ticketsOuverts} />}
+        {activeTab === "support" && <SupportSection ticketsOuverts={ticketsOuverts} />}
+        {activeTab === "discord" && <DiscordSection />}
         {activeTab === "admins" && <AdminsSection currentEmail={email} />}
       </div>
     </div>

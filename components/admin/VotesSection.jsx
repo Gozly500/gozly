@@ -93,7 +93,7 @@ export default function VotesSection() {
 
   return (
     <div>
-      <h2>Votes</h2>
+      <h2>Référendums</h2>
       <p className="panel-hint">
         Publie un référendum dans le salon « référendums » de Discord : Gozlyx affiche les boutons Pour / Contre et met les résultats à jour en direct.
       </p>

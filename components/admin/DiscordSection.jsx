@@ -1,29 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import TicketsSection from "@/components/admin/TicketsSection";
 import VotesSection from "@/components/admin/VotesSection";
+import BotSection from "@/components/admin/BotSection";
 
 const SOUS = [
-  { id: "tickets", label: "Tickets" },
-  { id: "votes", label: "Votes" },
+  { id: "votes", label: "Référendums" },
+  { id: "bot", label: "Bot" },
 ];
 
-// Onglet "Discord" du panneau admin : tout ce que Gozlyx fait sur le serveur Discord de Gozly.
-export default function DiscordSection({ ticketsOuverts = 0 }) {
-  const [sous, setSous] = useState("tickets");
+// Onglet "Discord" du panneau admin : tout ce que Gozlyx fait sur le serveur Discord de Gozly
+// (sauf les tickets, qui sont dans l'onglet Support). Les prochains systèmes Discord s'ajoutent ici.
+export default function DiscordSection() {
+  const [sous, setSous] = useState("votes");
   return (
     <div>
-      <div className="settings-nav" style={{ flexDirection: "row", width: "fit-content", marginBottom: "26px" }}>
+      <div className="settings-nav" style={{ flexDirection: "row", width: "fit-content", marginBottom: "26px", flexWrap: "wrap" }}>
         {SOUS.map((s) => (
-          <button key={s.id} type="button" className={`settings-nav-item${sous === s.id ? " active" : ""}`} onClick={() => setSous(s.id)}>
+          <button
+            key={s.id}
+            type="button"
+            className={`settings-nav-item${sous === s.id ? " active" : ""}`}
+            style={{ whiteSpace: "nowrap" }}
+            onClick={() => setSous(s.id)}
+          >
             {s.label}
-            {s.id === "tickets" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
           </button>
         ))}
       </div>
-      {sous === "tickets" && <TicketsSection />}
       {sous === "votes" && <VotesSection />}
+      {sous === "bot" && <BotSection />}
     </div>
   );
 }

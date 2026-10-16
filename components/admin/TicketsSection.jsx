@@ -29,7 +29,6 @@ export default function TicketsSection() {
   const [filtre, setFiltre] = useState("ouverts");
   const [ouvert, setOuvert] = useState(null); // id du ticket affiché
   const [conv, setConv] = useState({ chargement: false, messages: [], erreur: "" });
-  const [cmd, setCmd] = useState({ occupe: false, message: "" });
 
   const charger = useCallback(async () => {
     const token = await jeton(tokenRef);
@@ -49,19 +48,6 @@ export default function TicketsSection() {
     const id = setInterval(charger, 30000);
     return () => clearInterval(id);
   }, [charger]);
-
-  async function majCommandes() {
-    setCmd({ occupe: true, message: "" });
-    const token = await jeton(tokenRef);
-    try {
-      const res = await fetch("/api/admin/discord-commandes", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
-      setCmd({ occupe: false, message: `${json.commandes.length} commandes enregistrées : ${json.commandes.map((c) => "/" + c).join(", ")}` });
-    } catch (e) {
-      setCmd({ occupe: false, message: `Erreur : ${e.message}` });
-    }
-  }
 
   async function voir(ticket) {
     if (ouvert === ticket.id) return setOuvert(null);
@@ -110,12 +96,7 @@ export default function TicketsSection() {
             <button type="button" className="admin-icon-btn" onClick={charger}>
               Actualiser
             </button>
-            <button type="button" className="admin-icon-btn" onClick={majCommandes} disabled={cmd.occupe} title="Envoie la liste des commandes du bot (/statut, /aide, etc.) à Discord">
-              {cmd.occupe ? "Mise à jour..." : "Mettre à jour les commandes du bot"}
-            </button>
           </div>
-
-          {cmd.message && <p className="panel-hint" style={{ marginBottom: "14px" }}>{cmd.message}</p>}
 
           <div className="admin-list" style={{ maxWidth: "820px" }}>
             {liste.map((t) => (
