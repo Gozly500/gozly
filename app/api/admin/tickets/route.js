@@ -95,8 +95,8 @@ export async function GET(request) {
   }
 }
 
-// POST { id, texte, mentionner } : Gozlyx envoie la réponse dans le salon du ticket (la personne n'a rien à faire,
-// elle voit un message de Gozlyx dans son ticket). "mentionner" notifie la personne qui a ouvert le ticket.
+// POST { id, texte, mentionner } : Gozyx envoie la réponse dans le salon du ticket (la personne n'a rien à faire,
+// elle voit un message de Gozyx dans son ticket). "mentionner" notifie la personne qui a ouvert le ticket.
 export async function POST(request) {
   const { errorStatus, errorMessage } = await requireAdmin(request);
   if (errorStatus) return NextResponse.json({ error: errorMessage }, { status: errorStatus });

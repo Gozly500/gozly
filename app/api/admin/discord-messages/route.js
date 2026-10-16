@@ -102,7 +102,7 @@ export async function POST(request) {
               description: texte,
               color: COULEURS[c.couleur] ?? COULEURS.bleu,
               image: image ? { url: image } : undefined,
-              footer: { text: "Gozlyx • Gozly" },
+              footer: { text: "Gozyx • Gozly" },
             },
           ],
         }

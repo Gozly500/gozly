@@ -22,7 +22,7 @@ async function jeton(ref) {
   return token;
 }
 
-// Envoyer un message de Gozlyx dans un salon du serveur Discord (annonce, rappel, nouveauté...).
+// Envoyer un message de Gozyx dans un salon du serveur Discord (annonce, rappel, nouveauté...).
 export default function AnnoncesSection() {
   const tokenRef = useRef(null);
   const [donnees, setDonnees] = useState({ chargement: true, configure: true, salons: [], roles: [], erreur: "" });
@@ -122,7 +122,7 @@ export default function AnnoncesSection() {
   return (
     <div>
       <h2>Annonces</h2>
-      <p className="panel-hint">Envoie un message de Gozlyx dans le salon de ton choix : annonce, nouveauté, rappel...</p>
+      <p className="panel-hint">Envoie un message de Gozyx dans le salon de ton choix : annonce, nouveauté, rappel...</p>
 
       {!donnees.configure && (
         <div className="admin-empty">
@@ -218,7 +218,7 @@ export default function AnnoncesSection() {
                 {titre && <div className="annonce-apercu-titre">{titre}</div>}
                 <div className="annonce-apercu-texte">{texte}</div>
                 {(fichierUrl || (mode === "embed" && /^https:\/\/\S+$/.test(image))) && <img className="annonce-apercu-image" src={fichierUrl || image} alt="" />}
-                {mode === "embed" && <div className="annonce-apercu-pied">Gozlyx • Gozly</div>}
+                {mode === "embed" && <div className="annonce-apercu-pied">Gozyx • Gozly</div>}
               </div>
             </div>
           )}

@@ -117,7 +117,7 @@ export default function TicketsSection() {
     <div>
       <h2>Tickets</h2>
       <p className="panel-hint">
-        Les tickets ouverts dans le Discord de Gozly ({nbOuverts} ouvert{nbOuverts > 1 ? "s" : ""}). Tu peux répondre ici : c'est Gozlyx qui envoie ton message dans le salon du ticket.
+        Les tickets ouverts dans le Discord de Gozly ({nbOuverts} ouvert{nbOuverts > 1 ? "s" : ""}). Tu peux répondre ici : c'est Gozyx qui envoie ton message dans le salon du ticket.
       </p>
 
       {!etat.configure && (
@@ -196,7 +196,7 @@ export default function TicketsSection() {
                           rows={3}
                           maxLength={1800}
                           onChange={(e) => setReponse(e.target.value)}
-                          placeholder="Écris ta réponse (envoyée par Gozlyx dans le ticket)..."
+                          placeholder="Écris ta réponse (envoyée par Gozyx dans le ticket)..."
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) repondre(e, t);
                           }}

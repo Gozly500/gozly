@@ -95,7 +95,7 @@ export default function VotesSection() {
     <div>
       <h2>Référendums</h2>
       <p className="panel-hint">
-        Publie un référendum dans le salon « référendums » de Discord : Gozlyx affiche les boutons Pour / Contre et met les résultats à jour en direct.
+        Publie un référendum dans le salon « référendums » de Discord : Gozyx affiche les boutons Pour / Contre et met les résultats à jour en direct.
       </p>
 
       <form onSubmit={publier} style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "620px", marginBottom: "34px" }}>

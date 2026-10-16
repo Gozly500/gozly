@@ -1,6 +1,6 @@
 -- ============================================================
 -- Votes (référendums) du serveur Discord de Gozly.
--- Un vote = un message de Gozlyx dans le salon "référendums" avec les boutons Pour / Contre.
+-- Un vote = un message de Gozyx dans le salon "référendums" avec les boutons Pour / Contre.
 -- Les bulletins sont anonymes pour les membres (seul le décompte s'affiche), mais on garde
 -- "qui a voté quoi" ici pour empêcher le double vote et permettre de changer d'avis.
 --

@@ -13,7 +13,7 @@ async function jeton(ref) {
   return token;
 }
 
-// Réglages du bot Gozlyx : envoyer la liste des commandes à Discord (à faire après l'ajout d'une commande).
+// Réglages du bot Gozyx : envoyer la liste des commandes à Discord (à faire après l'ajout d'une commande).
 export default function BotSection() {
   const tokenRef = useRef(null);
   const [cmd, setCmd] = useState({ occupe: false, message: "", ok: false });
@@ -33,7 +33,7 @@ export default function BotSection() {
 
   return (
     <div>
-      <h2>Bot Gozlyx</h2>
+      <h2>Bot Gozyx</h2>
       <p className="panel-hint">
         Quand une commande est ajoutée ou modifiée dans le bot, clique ici pour l'envoyer à Discord. Les nouvelles commandes apparaissent ensuite dans le serveur (recharge Discord avec Ctrl+R si besoin).
       </p>
