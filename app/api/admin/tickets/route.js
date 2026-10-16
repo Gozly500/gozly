@@ -94,3 +94,35 @@ export async function GET(request) {
     return NextResponse.json({ error: detail }, { status: 502 });
   }
 }
+
+// POST { id, texte, mentionner } : Gozlyx envoie la réponse dans le salon du ticket (la personne n'a rien à faire,
+// elle voit un message de Gozlyx dans son ticket). "mentionner" notifie la personne qui a ouvert le ticket.
+export async function POST(request) {
+  const { errorStatus, errorMessage } = await requireAdmin(request);
+  if (errorStatus) return NextResponse.json({ error: errorMessage }, { status: errorStatus });
+  const guildId = (process.env.DISCORD_GUILD_ID || "").trim();
+  if (!guildId || !process.env.DISCORD_BOT_TOKEN) return NextResponse.json({ error: "Discord n'est pas configuré." }, { status: 500 });
+
+  const c = await request.json().catch(() => ({}));
+  const texte = String(c.texte || "").trim();
+  if (!/^\d+$/.test(String(c.id || ""))) return NextResponse.json({ error: "Identifiant invalide." }, { status: 400 });
+  if (!texte) return NextResponse.json({ error: "Écris ta réponse." }, { status: 400 });
+  if (texte.length > 1800) return NextResponse.json({ error: "Réponse trop longue (maximum 1800 caractères)." }, { status: 400 });
+
+  try {
+    const canal = await discord("GET", `/channels/${c.id}`);
+    const m = /^ticket:(\d+)$/.exec(canal.topic || "");
+    if (canal.guild_id !== guildId || !m) return NextResponse.json({ error: "Ce salon n'est pas un ticket." }, { status: 404 });
+    if (estFerme(canal, m[1])) return NextResponse.json({ error: "Ce ticket est fermé : rouvre-le dans Discord pour continuer la conversation." }, { status: 409 });
+
+    const mentionner = c.mentionner !== false;
+    await discord("POST", `/channels/${canal.id}/messages`, {
+      content: mentionner ? `<@${m[1]}> ${texte}` : texte,
+      // Seule la personne du ticket peut être mentionnée (jamais @everyone, jamais un rôle).
+      allowed_mentions: mentionner ? { users: [m[1]] } : { parse: [] },
+    });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json({ error: String(e.message).replace(process.env.DISCORD_BOT_TOKEN, "***").slice(0, 300) }, { status: 502 });
+  }
+}

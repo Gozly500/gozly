@@ -8,7 +8,7 @@ import ClientsSection from "@/components/admin/ClientsSection";
 import AdminsSection from "@/components/admin/AdminsSection";
 import DiscordSection from "@/components/admin/DiscordSection";
 import SupportSection from "@/components/admin/SupportSection";
-import { IconBouclier, IconDiscord, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
+import { IconBouclier, IconDiscord, IconFlecheGauche, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
 
 const TABS = [
   { id: "clients", label: "Clients", Icone: IconProfils },
@@ -17,12 +17,28 @@ const TABS = [
   { id: "admins", label: "Équipe admin", Icone: IconBouclier },
 ];
 
+// Onglets qui ouvrent un sous-menu : la barre latérale glisse vers un second niveau (avec « Retour »).
+const SOUS_MENUS = {
+  support: [
+    { id: "tickets", label: "Tickets" },
+    { id: "contact", label: "Formulaire de contact" },
+  ],
+  discord: [
+    { id: "annonces", label: "Annonces" },
+    { id: "votes", label: "Référendums" },
+    { id: "bot", label: "Bot" },
+  ],
+};
+
 export default function AdminContent() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState(null);
   const [activeTab, setActiveTab] = useState("clients");
+  const [vue, setVue] = useState("principal"); // "principal" ou le nom d'un onglet à sous-menu
+  const [sous, setSous] = useState(null);
+  const [sens, setSens] = useState("avant"); // sens de l'animation de la barre latérale
   const [ticketsOuverts, setTicketsOuverts] = useState(0);
 
   useEffect(() => {
@@ -101,23 +117,58 @@ export default function AdminContent() {
   return (
     <div className="wrap settings-wrap admin-wrap">
       <nav className="settings-nav">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
-            {tab.id === "support" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
-          </button>
-        ))}
+        <div key={vue} className={`admin-nav-niveau ${sens}`}>
+          {vue === "principal" ? (
+            TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`settings-nav-item${activeTab === tab.id ? " active" : ""}`}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (SOUS_MENUS[tab.id]) {
+                    setSens("avant");
+                    setVue(tab.id);
+                    setSous(SOUS_MENUS[tab.id][0].id);
+                  }
+                }}
+              >
+                <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
+                {tab.id === "support" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
+              </button>
+            ))
+          ) : (
+            <>
+              <button
+                type="button"
+                className="settings-nav-item admin-nav-retour"
+                onClick={() => {
+                  setSens("retour");
+                  setVue("principal");
+                  setActiveTab("clients");
+                }}
+              >
+                <span className="icon">
+                  <IconFlecheGauche className="gozly-icon" />
+                </span>{" "}
+                Retour
+              </button>
+              <div className="admin-nav-titre">{TABS.find((t) => t.id === vue)?.label}</div>
+              {SOUS_MENUS[vue].map((item) => (
+                <button key={item.id} type="button" className={`settings-nav-item${sous === item.id ? " active" : ""}`} onClick={() => setSous(item.id)}>
+                  {item.label}
+                  {vue === "support" && item.id === "tickets" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
       </nav>
 
       <div className="settings-panel">
         {activeTab === "clients" && <ClientsSection />}
-        {activeTab === "support" && <SupportSection ticketsOuverts={ticketsOuverts} />}
-        {activeTab === "discord" && <DiscordSection />}
+        {activeTab === "support" && <SupportSection sous={sous} />}
+        {activeTab === "discord" && <DiscordSection sous={sous} />}
         {activeTab === "admins" && <AdminsSection currentEmail={email} />}
       </div>
     </div>

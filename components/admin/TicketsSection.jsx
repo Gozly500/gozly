@@ -29,6 +29,10 @@ export default function TicketsSection() {
   const [filtre, setFiltre] = useState("ouverts");
   const [ouvert, setOuvert] = useState(null); // id du ticket affiché
   const [conv, setConv] = useState({ chargement: false, messages: [], erreur: "" });
+  const [reponse, setReponse] = useState("");
+  const [mentionner, setMentionner] = useState(true);
+  const [envoiRep, setEnvoiRep] = useState({ occupe: false, message: "" });
+  const finConv = useRef(null);
 
   const charger = useCallback(async () => {
     const token = await jeton(tokenRef);
@@ -49,18 +53,58 @@ export default function TicketsSection() {
     return () => clearInterval(id);
   }, [charger]);
 
-  async function voir(ticket) {
-    if (ouvert === ticket.id) return setOuvert(null);
-    setOuvert(ticket.id);
-    setConv({ chargement: true, messages: [], erreur: "" });
+  // silencieux = rafraîchissement automatique (on garde l'affichage actuel en cas d'échec).
+  const chargerConv = useCallback(async (id, silencieux) => {
+    if (!silencieux) setConv({ chargement: true, messages: [], erreur: "" });
     const token = await jeton(tokenRef);
     try {
-      const res = await fetch(`/api/admin/tickets?id=${ticket.id}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+      const res = await fetch(`/api/admin/tickets?id=${id}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
       setConv({ chargement: false, messages: json.messages || [], erreur: "" });
     } catch (e) {
-      setConv({ chargement: false, messages: [], erreur: e.message });
+      if (!silencieux) setConv({ chargement: false, messages: [], erreur: e.message });
+    }
+  }, []);
+
+  function voir(ticket) {
+    if (ouvert === ticket.id) return setOuvert(null);
+    setOuvert(ticket.id);
+    setReponse("");
+    setEnvoiRep({ occupe: false, message: "" });
+    chargerConv(ticket.id, false);
+  }
+
+  // Pendant qu'une conversation est ouverte, on la rafraîchit pour voir les réponses de la personne.
+  useEffect(() => {
+    if (!ouvert) return;
+    const id = setInterval(() => chargerConv(ouvert, true), 8000);
+    return () => clearInterval(id);
+  }, [ouvert, chargerConv]);
+
+  // Descend en bas de la conversation quand de nouveaux messages arrivent.
+  useEffect(() => {
+    if (finConv.current) finConv.current.scrollIntoView({ block: "nearest" });
+  }, [conv.messages.length, ouvert]);
+
+  async function repondre(e, ticket) {
+    e.preventDefault();
+    if (!reponse.trim()) return;
+    setEnvoiRep({ occupe: true, message: "" });
+    try {
+      const token = await jeton(tokenRef);
+      const res = await fetch("/api/admin/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: ticket.id, texte: reponse, mentionner }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
+      setReponse("");
+      setEnvoiRep({ occupe: false, message: "" });
+      chargerConv(ticket.id, true);
+    } catch (err) {
+      setEnvoiRep({ occupe: false, message: err.message });
     }
   }
 
@@ -73,7 +117,7 @@ export default function TicketsSection() {
     <div>
       <h2>Tickets</h2>
       <p className="panel-hint">
-        Les tickets ouverts dans le Discord de Gozly ({nbOuverts} ouvert{nbOuverts > 1 ? "s" : ""}). Lecture seule : pour répondre, ouvre le salon dans Discord.
+        Les tickets ouverts dans le Discord de Gozly ({nbOuverts} ouvert{nbOuverts > 1 ? "s" : ""}). Tu peux répondre ici : c'est Gozlyx qui envoie ton message dans le salon du ticket.
       </p>
 
       {!etat.configure && (
@@ -141,6 +185,38 @@ export default function TicketsSection() {
                         ))}
                       </div>
                     ))}
+                    <div ref={finConv} />
+
+                    {t.ferme ? (
+                      <p className="ticket-conv-vide">Ticket fermé : la personne ne peut plus écrire. Rouvre-le dans Discord pour continuer la conversation.</p>
+                    ) : (
+                      <form className="ticket-reponse" onSubmit={(e) => repondre(e, t)}>
+                        <textarea
+                          value={reponse}
+                          rows={3}
+                          maxLength={1800}
+                          onChange={(e) => setReponse(e.target.value)}
+                          placeholder="Écris ta réponse (envoyée par Gozlyx dans le ticket)..."
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) repondre(e, t);
+                          }}
+                        />
+                        <div className="ticket-reponse-pied">
+                          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "13px", color: "var(--text-dim)" }}>
+                            <span className="switch">
+                              <input type="checkbox" checked={mentionner} onChange={(e) => setMentionner(e.target.checked)} />
+                              <span className="switch-track"></span>
+                              <span className="switch-thumb"></span>
+                            </span>
+                            Notifier {t.proprietaire}
+                          </label>
+                          <button type="submit" className="btn-small" disabled={envoiRep.occupe || !reponse.trim()}>
+                            {envoiRep.occupe ? "Envoi..." : "Répondre"}
+                          </button>
+                        </div>
+                        {envoiRep.message && <p className="settings-msg err" style={{ margin: 0 }}>{envoiRep.message}</p>}
+                      </form>
+                    )}
                   </div>
                 )}
               </div>
