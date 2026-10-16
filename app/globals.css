@@ -2680,3 +2680,8 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .ticket-msg p{font-size:14px;color:var(--fg);white-space:pre-wrap;word-break:break-word;}
 .ticket-embed{color:var(--text-dim)!important;font-style:italic;}
 .ticket-fichier{display:inline-block;margin-top:6px;font-size:13px;color:var(--fg);text-decoration:underline;}
+
+/* Votes Discord (panneau admin) */
+.vote-barre{display:flex;height:8px;border-radius:999px;overflow:hidden;background:rgba(var(--w),0.12);margin:8px 0 6px;max-width:360px;}
+.vote-pour{background:#3c8000;}
+.vote-contre{background:#e5232e;}

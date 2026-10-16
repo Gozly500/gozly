@@ -7,13 +7,13 @@ import { supabase } from "@/lib/supabaseClient";
 import ClientsSection from "@/components/admin/ClientsSection";
 import AdminsSection from "@/components/admin/AdminsSection";
 import DemandesContactSection from "@/components/admin/DemandesContactSection";
-import TicketsSection from "@/components/admin/TicketsSection";
+import DiscordSection from "@/components/admin/DiscordSection";
 import { IconBouclier, IconEnveloppe, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
 
 const TABS = [
   { id: "clients", label: "Clients", Icone: IconProfils },
   { id: "demandes", label: "Demandes", Icone: IconEnveloppe },
-  { id: "tickets", label: "Tickets", Icone: IconMessage },
+  { id: "discord", label: "Discord", Icone: IconMessage },
   { id: "admins", label: "Équipe admin", Icone: IconBouclier },
 ];
 
@@ -109,7 +109,7 @@ export default function AdminContent() {
             onClick={() => setActiveTab(tab.id)}
           >
             <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
-            {tab.id === "tickets" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
+            {tab.id === "discord" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
           </button>
         ))}
       </nav>
@@ -117,7 +117,7 @@ export default function AdminContent() {
       <div className="settings-panel">
         {activeTab === "clients" && <ClientsSection />}
         {activeTab === "demandes" && <DemandesContactSection />}
-        {activeTab === "tickets" && <TicketsSection />}
+        {activeTab === "discord" && <DiscordSection ticketsOuverts={ticketsOuverts} />}
         {activeTab === "admins" && <AdminsSection currentEmail={email} />}
       </div>
     </div>
