@@ -32,6 +32,9 @@ export default function AnnoncesSection() {
   const [texte, setTexte] = useState("");
   const [couleur, setCouleur] = useState("bleu");
   const [image, setImage] = useState("");
+  const [fichier, setFichier] = useState(null);
+  const [fichierUrl, setFichierUrl] = useState("");
+  const entreeFichier = useRef(null);
   const [mention, setMention] = useState("aucune");
   const [envoi, setEnvoi] = useState({ occupe: false, ok: false, message: "", url: "" });
 
@@ -60,6 +63,24 @@ export default function AnnoncesSection() {
   const nomMention = mention === "everyone" ? "@everyone" : mention === "here" ? "@here" : optionsMention.find((o) => o.id === mention)?.nom;
   const hex = COULEURS.find((c) => c.id === couleur)?.hex;
 
+  function choisirFichier(e) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (!["image/png", "image/jpeg", "image/gif", "image/webp"].includes(f.type)) return setEnvoi({ occupe: false, ok: false, message: "Format non accepté (PNG, JPG, GIF ou WebP).", url: "" });
+    if (f.size > 4 * 1024 * 1024) return setEnvoi({ occupe: false, ok: false, message: "Image trop lourde (maximum 4 Mo).", url: "" });
+    if (fichierUrl) URL.revokeObjectURL(fichierUrl);
+    setFichier(f);
+    setFichierUrl(URL.createObjectURL(f));
+    setEnvoi({ occupe: false, ok: false, message: "", url: "" });
+  }
+
+  function retirerFichier() {
+    if (fichierUrl) URL.revokeObjectURL(fichierUrl);
+    setFichier(null);
+    setFichierUrl("");
+  }
+
   async function envoyer(e) {
     e.preventDefault();
     if (!canalId) return setEnvoi({ occupe: false, ok: false, message: "Choisis un salon.", url: "" });
@@ -69,17 +90,27 @@ export default function AnnoncesSection() {
     setEnvoi({ occupe: true, ok: false, message: "", url: "" });
     try {
       const token = await jeton(tokenRef);
-      const res = await fetch("/api/admin/discord-messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ canalId, mode, titre, texte, couleur, image, mention }),
-      });
+      const donnees = { canalId, mode, titre, texte, couleur, image: fichier ? "" : image, mention };
+      let res;
+      if (fichier) {
+        const form = new FormData();
+        form.append("donnees", JSON.stringify(donnees));
+        form.append("image", fichier);
+        res = await fetch("/api/admin/discord-messages", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+      } else {
+        res = await fetch("/api/admin/discord-messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(donnees),
+        });
+      }
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
       setEnvoi({ occupe: false, ok: true, message: `Message envoyé dans #${json.salon}.`, url: json.url });
       setTitre("");
       setTexte("");
       setImage("");
+      retirerFichier();
       setMention("aucune");
     } catch (err) {
       setEnvoi({ occupe: false, ok: false, message: err.message, url: "" });
@@ -144,9 +175,31 @@ export default function AnnoncesSection() {
                   ))}
                 </div>
               </div>
-              <input type="text" value={image} onChange={(e) => setImage(e.target.value)} placeholder="Image (lien https://..., facultatif)" />
             </>
           )}
+
+          <div>
+            <div className="admin-row-sub" style={{ marginBottom: "6px" }}>
+              Image (facultatif)
+            </div>
+            <input ref={entreeFichier} type="file" accept="image/png,image/jpeg,image/gif,image/webp" onChange={choisirFichier} style={{ display: "none" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+              <button type="button" className="btn-small" onClick={() => entreeFichier.current?.click()}>
+                {fichier ? "Changer l'image" : "Choisir une image"}
+              </button>
+              {fichier && (
+                <>
+                  <span className="admin-row-sub">{fichier.name}</span>
+                  <button type="button" className="admin-icon-btn danger" onClick={retirerFichier}>
+                    Retirer
+                  </button>
+                </>
+              )}
+            </div>
+            {!fichier && mode === "embed" && (
+              <input type="text" value={image} onChange={(e) => setImage(e.target.value)} placeholder="ou un lien d'image (https://...)" style={{ marginTop: "10px", width: "100%" }} />
+            )}
+          </div>
 
           <div>
             <div className="admin-row-sub" style={{ marginBottom: "6px" }}>
@@ -164,7 +217,7 @@ export default function AnnoncesSection() {
                 {mention !== "aucune" && <div className="annonce-apercu-mention">{nomMention}</div>}
                 {titre && <div className="annonce-apercu-titre">{titre}</div>}
                 <div className="annonce-apercu-texte">{texte}</div>
-                {mode === "embed" && image && /^https:\/\/\S+$/.test(image) && <img className="annonce-apercu-image" src={image} alt="" />}
+                {(fichierUrl || (mode === "embed" && /^https:\/\/\S+$/.test(image))) && <img className="annonce-apercu-image" src={fichierUrl || image} alt="" />}
                 {mode === "embed" && <div className="annonce-apercu-pied">Gozlyx • Gozly</div>}
               </div>
             </div>
