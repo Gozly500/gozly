@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
-import DiscordCompteSection from "@/components/settings/DiscordCompteSection";
 
 // Informations PERSONNELLES du compte uniquement - le logo, le nom, le
 // secteur d'activité et les coordonnées de l'entreprise se gèrent
@@ -212,7 +211,6 @@ export default function InformationsSection({ user, profil, setProfil }) {
         {pwdMsg && <p className={`settings-msg ${pwdMsg.type}`}>{pwdMsg.text}</p>}
       </div>
 
-      <DiscordCompteSection profil={profil} setProfil={setProfil} />
     </div>
   );
 }

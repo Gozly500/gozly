@@ -57,6 +57,10 @@ export async function POST(request) {
       const manque = /discord_id/.test(error.message);
       return NextResponse.json({ error: manque ? "La base n'est pas prête (SQL profil_discord.sql à exécuter)." : error.message }, { status: 500 });
     }
+    const { data: verif } = await service.from("profils").select("discord_id").eq("id", user.id).maybeSingle();
+    if (verif?.discord_id !== jeton.discordId) {
+      return NextResponse.json({ error: "Ton profil n'a pas été trouvé : la liaison n'a pas pu être enregistrée. Écris-nous pour qu'on règle ça." }, { status: 500 });
+    }
     const role = await changerRole(jeton.discordId, true).catch(() => "erreur");
     return NextResponse.json({ ok: true, role });
   } catch (e) {

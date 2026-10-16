@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
+import DiscordCompteSection from "@/components/settings/DiscordCompteSection";
 
-export default function GestionSection({ user, profil, router }) {
+export default function GestionSection({ user, profil, setProfil, router }) {
   const { t } = useT();
   const [desactive, setDesactive] = useState(profil?.desactive || false);
   const [toggling, setToggling] = useState(false);
@@ -92,6 +93,8 @@ export default function GestionSection({ user, profil, router }) {
         </div>
         {toggleMsg && <p className={`settings-msg ${toggleMsg.type}`}>{toggleMsg.text}</p>}
       </div>
+
+      <DiscordCompteSection profil={profil} setProfil={setProfil} />
 
       <div className="settings-divider">{t("Zone dangereuse")}</div>
 
