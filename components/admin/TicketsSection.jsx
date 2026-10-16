@@ -25,7 +25,7 @@ function formatDate(iso) {
 
 export default function TicketsSection() {
   const tokenRef = useRef(null);
-  const [etat, setEtat] = useState({ chargement: true, configure: true, tickets: [], erreur: "" });
+  const [etat, setEtat] = useState({ chargement: true, configure: true, tickets: [], erreur: "", diagnostic: null });
   const [filtre, setFiltre] = useState("ouverts");
   const [ouvert, setOuvert] = useState(null); // id du ticket affiché
   const [conv, setConv] = useState({ chargement: false, messages: [], erreur: "" });
@@ -37,7 +37,7 @@ export default function TicketsSection() {
       const res = await fetch("/api/admin/tickets", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
-      setEtat({ chargement: false, configure: json.configure !== false, tickets: json.tickets || [], erreur: "" });
+      setEtat({ chargement: false, configure: json.configure !== false, tickets: json.tickets || [], erreur: "", diagnostic: json.diagnostic || null });
     } catch (e) {
       setEtat((s) => ({ ...s, chargement: false, erreur: e.message }));
     }
@@ -145,7 +145,17 @@ export default function TicketsSection() {
                 )}
               </div>
             ))}
-            {liste.length === 0 && !etat.erreur && <div className="admin-empty">Aucun ticket.</div>}
+            {liste.length === 0 && !etat.erreur && (
+              <div className="admin-empty">
+                Aucun ticket{filtre !== "tous" && etat.tickets.length > 0 ? " dans ce filtre : essaie « Tous »" : ""}.
+                {etat.diagnostic && etat.tickets.length === 0 && (
+                  <p style={{ marginTop: "10px", fontSize: "12.5px" }}>
+                    Le bot voit {etat.diagnostic.salons} salon(s) sur le serveur, dont {etat.diagnostic.salonsTexte} textuel(s) et {etat.diagnostic.avecSujetTicket} reconnu(s) comme ticket.
+                    {etat.diagnostic.nomsTicket.length > 0 && <> Salons nommés ticket-/ferme- : {etat.diagnostic.nomsTicket.join(", ")}.</>}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}

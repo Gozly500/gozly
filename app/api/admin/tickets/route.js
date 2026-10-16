@@ -80,7 +80,15 @@ export async function GET(request) {
         })
     );
     tickets.sort((a, b) => (a.ouvertLe < b.ouvertLe ? 1 : -1));
-    return NextResponse.json({ configure: true, tickets });
+    // Diagnostic : ce que le bot voit sur le serveur (aide à comprendre une liste vide).
+    const textes = salons.filter((c) => c.type === 0);
+    const diagnostic = {
+      salons: salons.length,
+      salonsTexte: textes.length,
+      avecSujetTicket: textes.filter((c) => /^ticket:\d+$/.test(c.topic || "")).length,
+      nomsTicket: textes.filter((c) => /^(ticket|ferme)-/.test(c.name)).map((c) => `${c.name} (sujet: ${c.topic ? "présent" : "vide"})`),
+    };
+    return NextResponse.json({ configure: true, tickets, diagnostic });
   } catch (e) {
     const detail = String(e.message).replace(process.env.DISCORD_BOT_TOKEN, "***").slice(0, 300);
     return NextResponse.json({ error: detail }, { status: 502 });
