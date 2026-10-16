@@ -4,9 +4,9 @@
 -- 1) Table qui garde le dernier état annoncé de chaque système (pour détecter les changements).
 -- 2) Planification toutes les 5 minutes (pg_cron + pg_net, comme les rappels : voir cron_rappels.sql).
 --
--- AVANT D'EXÉCUTER : remplace VOTRE_CRON_SECRET (une seule fois, plus bas) par la valeur de la variable
--- CRON_SECRET de Vercel (la même que pour les rappels). Si ton site n'est pas https://gozly.net, remplace
--- aussi l'adresse.
+-- AVANT D'EXÉCUTER : remplace VOTRE_CLE_STATUT (une seule fois, plus bas) par la valeur de la variable
+-- STATUT_CRON_SECRET que tu crées dans Vercel (une longue suite de lettres et de chiffres au hasard,
+-- 16 caractères ou plus). Si ton site n'est pas https://gozly.net, remplace aussi l'adresse.
 --
 -- Sans danger de l'exécuter plusieurs fois (l'ancienne planification « gozly-statut-discord » est remplacée).
 -- À exécuter dans Supabase > SQL Editor > New query > Run
@@ -33,6 +33,6 @@ select cron.schedule(
   '*/5 * * * *',
   $$ select net.http_get(
        url := 'https://gozly.net/api/cron/statut-discord',
-       headers := jsonb_build_object('Authorization', 'Bearer VOTRE_CRON_SECRET')
+       headers := jsonb_build_object('Authorization', 'Bearer VOTRE_CLE_STATUT')
      ); $$
 );
