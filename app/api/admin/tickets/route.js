@@ -27,13 +27,17 @@ async function nomUtilisateur(guildId, id) {
 // Compte Gozly lié à chaque identifiant Discord (nom, courriel, forfait, entreprises). Réservé au panneau admin :
 // ces informations ne sont jamais écrites dans Discord. Si la liaison n'est pas disponible (SQL pas exécuté, personne
 // non liée), la personne n'a simplement pas de compte affiché.
+// Retourne { comptes, diagnostic } : "diagnostic" explique pourquoi aucun compte n'a été trouvé (aide au dépannage).
 async function comptesLies(discordIds) {
   const comptes = new Map();
   const service = db();
-  if (!service || discordIds.length === 0) return comptes;
+  if (!service) return { comptes, diagnostic: "Clé serveur Supabase absente (SUPABASE_SERVICE_ROLE_KEY)." };
+  if (discordIds.length === 0) return { comptes, diagnostic: null };
+  let diagnostic = null;
   try {
     const { data: profils, error } = await service.from("profils").select("id, full_name, forfait, discord_id").in("discord_id", discordIds);
-    if (error || !profils?.length) return comptes;
+    if (error) return { comptes, diagnostic: `Lecture des comptes impossible : ${error.message}` };
+    if (!profils?.length) return { comptes, diagnostic: `Aucun compte Gozly n'a l'identifiant Discord de ces personnes (${discordIds.join(", ")}).` };
     const userIds = profils.map((p) => p.id);
     const { data: membres } = await service.from("membres").select("entreprise_id, user_id, role").in("user_id", userIds);
     const entrepriseIds = [...new Set((membres || []).map((m) => m.entreprise_id))];
@@ -53,8 +57,10 @@ async function comptesLies(discordIds) {
           .map((m) => ({ nom: nomEntreprise.get(m.entreprise_id), role: m.role })),
       });
     }
-  } catch {}
-  return comptes;
+  } catch (e) {
+    diagnostic = `Erreur en cherchant les comptes : ${e.message}`;
+  }
+  return { comptes, diagnostic };
 }
 
 // GET            : liste des tickets Discord (ouverts et fermés).
@@ -115,7 +121,7 @@ export async function GET(request) {
         })
     );
     tickets.sort((a, b) => (a.ouvertLe < b.ouvertLe ? 1 : -1));
-    const comptes = await comptesLies([...new Set(tickets.map((t) => t.proprietaireId))]);
+    const { comptes, diagnostic: diagnosticComptes } = await comptesLies([...new Set(tickets.map((t) => t.proprietaireId))]);
     for (const t of tickets) t.compte = comptes.get(t.proprietaireId) || null;
     // Diagnostic : ce que le bot voit sur le serveur (aide à comprendre une liste vide).
     const textes = salons.filter((c) => c.type === 0);
@@ -125,7 +131,7 @@ export async function GET(request) {
       avecSujetTicket: textes.filter((c) => /^ticket:\d+$/.test(c.topic || "")).length,
       nomsTicket: textes.filter((c) => /^(ticket|ferme)-/.test(c.name)).map((c) => `${c.name} (sujet: ${c.topic ? "présent" : "vide"})`),
     };
-    return NextResponse.json({ configure: true, tickets, diagnostic });
+    return NextResponse.json({ configure: true, tickets, diagnostic, diagnosticComptes });
   } catch (e) {
     const detail = String(e.message).replace(process.env.DISCORD_BOT_TOKEN, "***").slice(0, 300);
     return NextResponse.json({ error: detail }, { status: 502 });
