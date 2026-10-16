@@ -1,0 +1,94 @@
+import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/adminServer";
+import { discord } from "@/lib/discordTickets";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+
+const COULEURS = { bleu: 0x2a38ea, vert: 0x3c8000, jaune: 0xf5b800, rouge: 0xe5232e, gris: 0x6b7280 };
+
+function config() {
+  const guildId = (process.env.DISCORD_GUILD_ID || "").trim();
+  return guildId && process.env.DISCORD_BOT_TOKEN ? guildId : null;
+}
+
+// GET : salons textuels (groupés par catégorie) et rôles du serveur, pour remplir le formulaire.
+export async function GET(request) {
+  const { errorStatus, errorMessage } = await requireAdmin(request);
+  if (errorStatus) return NextResponse.json({ error: errorMessage }, { status: errorStatus });
+  const guildId = config();
+  if (!guildId) return NextResponse.json({ configure: false, salons: [], roles: [] });
+  try {
+    const [canaux, roles] = await Promise.all([discord("GET", `/guilds/${guildId}/channels`), discord("GET", `/guilds/${guildId}/roles`)]);
+    const categories = Object.fromEntries(canaux.filter((c) => c.type === 4).map((c) => [c.id, c]));
+    const salons = canaux
+      .filter((c) => c.type === 0 || c.type === 5)
+      .sort((a, b) => (categories[a.parent_id]?.position ?? -1) - (categories[b.parent_id]?.position ?? -1) || a.position - b.position)
+      .map((c) => ({ id: c.id, nom: c.name, categorie: categories[c.parent_id]?.name || "" }));
+    return NextResponse.json({
+      configure: true,
+      salons,
+      roles: roles.filter((r) => r.id !== guildId && !r.managed).sort((a, b) => b.position - a.position).map((r) => ({ id: r.id, nom: r.name })),
+    });
+  } catch (e) {
+    return NextResponse.json({ error: String(e.message).replace(process.env.DISCORD_BOT_TOKEN, "***").slice(0, 300) }, { status: 502 });
+  }
+}
+
+// POST { canalId, mode: "embed" | "texte", titre, texte, couleur, image, mention } : envoie le message dans Discord.
+// mention : "aucune" | "everyone" | "here" | <identifiant d'un rôle>
+export async function POST(request) {
+  const { errorStatus, errorMessage } = await requireAdmin(request);
+  if (errorStatus) return NextResponse.json({ error: errorMessage }, { status: errorStatus });
+  const guildId = config();
+  if (!guildId) return NextResponse.json({ error: "Discord n'est pas configuré." }, { status: 500 });
+
+  const c = await request.json().catch(() => ({}));
+  const texte = String(c.texte || "").trim();
+  const titre = String(c.titre || "").trim().slice(0, 256);
+  const embed = c.mode !== "texte";
+  if (!texte) return NextResponse.json({ error: "Écris le message." }, { status: 400 });
+  if (texte.length > (embed ? 4000 : 1900)) return NextResponse.json({ error: `Message trop long (maximum ${embed ? 4000 : 1900} caractères).` }, { status: 400 });
+  if (!/^\d+$/.test(String(c.canalId || ""))) return NextResponse.json({ error: "Choisis un salon." }, { status: 400 });
+  const image = String(c.image || "").trim();
+  if (image && !/^https:\/\/\S+$/.test(image)) return NextResponse.json({ error: "L'image doit être un lien https://." }, { status: 400 });
+
+  try {
+    // On n'écrit que dans les salons textuels de NOTRE serveur.
+    const canal = await discord("GET", `/channels/${c.canalId}`);
+    if (canal.guild_id !== guildId || ![0, 5].includes(canal.type)) return NextResponse.json({ error: "Salon invalide." }, { status: 400 });
+
+    let mentionTexte = "";
+    let allowed = { parse: [] };
+    if (c.mention === "everyone" || c.mention === "here") {
+      mentionTexte = `@${c.mention}`;
+      allowed = { parse: ["everyone"] };
+    } else if (/^\d+$/.test(String(c.mention || ""))) {
+      const roles = await discord("GET", `/guilds/${guildId}/roles`);
+      if (!roles.some((r) => r.id === c.mention)) return NextResponse.json({ error: "Rôle invalide." }, { status: 400 });
+      mentionTexte = `<@&${c.mention}>`;
+      allowed = { roles: [c.mention] };
+    }
+
+    const corps = embed
+      ? {
+          content: mentionTexte || undefined,
+          allowed_mentions: allowed,
+          embeds: [
+            {
+              title: titre || undefined,
+              description: texte,
+              color: COULEURS[c.couleur] ?? COULEURS.bleu,
+              image: image ? { url: image } : undefined,
+              footer: { text: "Gozlyx • Gozly" },
+            },
+          ],
+        }
+      : { content: [mentionTexte, titre ? `**${titre}**` : "", texte].filter(Boolean).join("\n"), allowed_mentions: allowed };
+
+    const msg = await discord("POST", `/channels/${canal.id}/messages`, corps);
+    return NextResponse.json({ ok: true, url: `https://discord.com/channels/${guildId}/${canal.id}/${msg.id}`, salon: canal.name });
+  } catch (e) {
+    return NextResponse.json({ error: String(e.message).replace(process.env.DISCORD_BOT_TOKEN, "***").slice(0, 300) }, { status: 502 });
+  }
+}

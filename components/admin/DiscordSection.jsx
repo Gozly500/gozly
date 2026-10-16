@@ -3,8 +3,10 @@
 import { useState } from "react";
 import VotesSection from "@/components/admin/VotesSection";
 import BotSection from "@/components/admin/BotSection";
+import AnnoncesSection from "@/components/admin/AnnoncesSection";
 
 const SOUS = [
+  { id: "annonces", label: "Annonces" },
   { id: "votes", label: "Référendums" },
   { id: "bot", label: "Bot" },
 ];
@@ -12,7 +14,7 @@ const SOUS = [
 // Onglet "Discord" du panneau admin : tout ce que Gozlyx fait sur le serveur Discord de Gozly
 // (sauf les tickets, qui sont dans l'onglet Support). Les prochains systèmes Discord s'ajoutent ici.
 export default function DiscordSection() {
-  const [sous, setSous] = useState("votes");
+  const [sous, setSous] = useState("annonces");
   return (
     <div>
       <div className="settings-nav" style={{ flexDirection: "row", width: "fit-content", marginBottom: "26px", flexWrap: "wrap" }}>
@@ -28,6 +30,7 @@ export default function DiscordSection() {
           </button>
         ))}
       </div>
+      {sous === "annonces" && <AnnoncesSection />}
       {sous === "votes" && <VotesSection />}
       {sous === "bot" && <BotSection />}
     </div>
