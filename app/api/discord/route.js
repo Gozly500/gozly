@@ -16,7 +16,12 @@ export async function POST(request) {
     request.headers.get("x-signature-timestamp"),
     process.env.DISCORD_PUBLIC_KEY
   );
-  if (!ok) return new NextResponse("Signature invalide", { status: 401 });
+  if (!ok) {
+    // Diagnostic sans rien révéler de la clé : absente, mauvaise longueur, ou simplement signature fausse.
+    const cle = process.env.DISCORD_PUBLIC_KEY;
+    const etat = !cle ? "cle-absente" : !/^[0-9a-f]{64}$/i.test(cle) ? "cle-format-invalide" : "signature-fausse";
+    return new NextResponse(`Signature invalide (${etat})`, { status: 401 });
+  }
 
   let interaction;
   try {
