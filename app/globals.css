@@ -2637,3 +2637,28 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) .integration-item{backg
 .scat-popup-resultats{width:100%;max-width:1000px;max-height:92vh;overflow:auto;}
 .scat-popup-res-actions{margin-top:22px;}
 .scat-popup-resultats .scat-carte-tete h2{font-size:24px;}
+
+/* ===== Centre d'aide (/aide) ===== */
+.aide-wrap{max-width:820px;margin:0 auto;padding-bottom:30px;}
+.aide-recherche input{width:100%;padding:16px 22px;border-radius:999px;border:1px solid var(--glass-border);background:rgba(var(--w),0.2);color:var(--fg);font:inherit;font-size:16px;outline:none;backdrop-filter:blur(14px);}
+.aide-recherche input::placeholder{color:var(--text-dim);}
+.aide-recherche input:focus{border-color:rgba(var(--w),0.6);}
+.aide-chips{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 26px;}
+.aide-chips button{padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border);background:rgba(var(--w),0.12);color:var(--text-dim);font:inherit;font-size:14px;cursor:pointer;transition:background .2s,color .2s;}
+.aide-chips button:hover{background:rgba(var(--w),0.25);color:var(--fg);}
+.aide-chips button.actif{background:rgba(var(--w),0.9);color:var(--navy);border-color:transparent;font-weight:600;}
+.aide-carte{padding:22px 24px;border-radius:24px;background:rgba(var(--w),0.2);border:1px solid var(--glass-border);backdrop-filter:blur(14px);margin-bottom:18px;}
+.aide-carte h2{font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;}
+.aide-q{border-top:1px solid rgba(var(--w),0.12);}
+.aide-q:first-of-type{border-top:none;}
+.aide-q summary{list-style:none;cursor:pointer;padding:15px 30px 15px 0;position:relative;color:var(--fg);font-weight:500;}
+.aide-q summary::-webkit-details-marker{display:none;}
+.aide-q summary::after{content:"+";position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:22px;line-height:1;color:var(--text-dim);transition:transform .2s;}
+.aide-q[open] summary::after{content:"\2212";}
+.aide-r{padding:0 0 16px;color:var(--text-dim);line-height:1.65;font-size:15px;}
+.aide-r p{margin-bottom:10px;}
+.aide-vide{text-align:center;padding:40px 0;color:var(--text-dim);}
+.aide-vide strong{display:block;color:var(--fg);margin-bottom:6px;}
+.aide-contact{margin-top:30px;text-align:center;color:var(--text-dim);line-height:1.8;}
+.aide-contact strong{display:block;color:var(--fg);font-size:17px;margin-top:14px;}
+.aide-contact a{color:var(--fg);text-decoration:underline;}
