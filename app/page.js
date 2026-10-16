@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
 import ModuleVitrine from "@/components/ModuleVitrine";
 import HeroParallax from "@/components/HeroParallax";
+import SmoothScroll from "@/components/SmoothScroll";
 import { Rich } from "@/components/LangProvider";
 import { getT } from "@/lib/i18n/siteServer";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
@@ -13,6 +14,7 @@ export default function HomePage() {
   const { t } = getT();
   return (
     <div className="page page-default">
+      <SmoothScroll />
       <Loader />
       <Nav />
 

@@ -2662,3 +2662,7 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) .integration-item{backg
 .aide-contact{margin-top:30px;text-align:center;color:var(--text-dim);line-height:1.8;}
 .aide-contact strong{display:block;color:var(--fg);font-size:17px;margin-top:14px;}
 .aide-contact a{color:var(--fg);text-decoration:underline;}
+
+/* Lenis (défilement doux, accueil) : il prend le relais du scroll-behavior natif. */
+html.lenis,html.lenis body{height:auto;}
+html.lenis{scroll-behavior:auto;}
