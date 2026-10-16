@@ -7,11 +7,13 @@ import { supabase } from "@/lib/supabaseClient";
 import ClientsSection from "@/components/admin/ClientsSection";
 import AdminsSection from "@/components/admin/AdminsSection";
 import DemandesContactSection from "@/components/admin/DemandesContactSection";
-import { IconBouclier, IconEnveloppe, IconProfils } from "@/components/icons/Pictogrammes";
+import TicketsSection from "@/components/admin/TicketsSection";
+import { IconBouclier, IconEnveloppe, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
 
 const TABS = [
   { id: "clients", label: "Clients", Icone: IconProfils },
   { id: "demandes", label: "Demandes", Icone: IconEnveloppe },
+  { id: "tickets", label: "Tickets", Icone: IconMessage },
   { id: "admins", label: "Équipe admin", Icone: IconBouclier },
 ];
 
@@ -21,6 +23,7 @@ export default function AdminContent() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState(null);
   const [activeTab, setActiveTab] = useState("clients");
+  const [ticketsOuverts, setTicketsOuverts] = useState(0);
 
   useEffect(() => {
     let ignore = false;
@@ -48,6 +51,30 @@ export default function AdminContent() {
       ignore = true;
     };
   }, [router]);
+
+  // Pastille : nombre de tickets Discord ouverts (rafraîchie chaque minute).
+  useEffect(() => {
+    if (!isAdmin) return;
+    let ignore = false;
+    async function compter() {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch("/api/admin/tickets", { headers: { Authorization: `Bearer ${session.access_token}` }, cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!ignore) setTicketsOuverts((json.tickets || []).filter((t) => !t.ferme).length);
+      } catch {}
+    }
+    compter();
+    const id = setInterval(compter, 60000);
+    return () => {
+      ignore = true;
+      clearInterval(id);
+    };
+  }, [isAdmin]);
 
   if (checking) {
     return (
@@ -82,6 +109,7 @@ export default function AdminContent() {
             onClick={() => setActiveTab(tab.id)}
           >
             <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
+            {tab.id === "tickets" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
           </button>
         ))}
       </nav>
@@ -89,6 +117,7 @@ export default function AdminContent() {
       <div className="settings-panel">
         {activeTab === "clients" && <ClientsSection />}
         {activeTab === "demandes" && <DemandesContactSection />}
+        {activeTab === "tickets" && <TicketsSection />}
         {activeTab === "admins" && <AdminsSection currentEmail={email} />}
       </div>
     </div>

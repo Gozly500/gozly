@@ -2666,3 +2666,17 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) .integration-item{backg
 /* Lenis (défilement doux, accueil) : il prend le relais du scroll-behavior natif. */
 html.lenis,html.lenis body{height:auto;}
 html.lenis{scroll-behavior:auto;}
+
+/* Panneau admin : tickets Discord */
+.admin-badge{margin-left:8px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#e5232e;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;}
+a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
+.ticket-conv{padding:14px 18px 18px;background:rgba(var(--w),0.05);border-top:1px solid rgba(var(--w),0.1);max-height:460px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+.ticket-conv-vide{color:var(--text-dim);font-size:14px;}
+.ticket-msg{padding:10px 14px;border-radius:14px;background:rgba(var(--w),0.1);}
+.ticket-msg.bot{background:rgba(var(--w),0.04);}
+.ticket-msg-tete{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);margin-bottom:4px;}
+.ticket-msg-tete strong{color:var(--fg);font-size:13.5px;}
+.ticket-bot{padding:1px 6px;border-radius:6px;background:#5865f2;color:#fff;font-size:10px;font-weight:700;}
+.ticket-msg p{font-size:14px;color:var(--fg);white-space:pre-wrap;word-break:break-word;}
+.ticket-embed{color:var(--text-dim)!important;font-style:italic;}
+.ticket-fichier{display:inline-block;margin-top:6px;font-size:13px;color:var(--fg);text-decoration:underline;}
