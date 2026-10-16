@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, getServiceClient } from "@/lib/adminServer";
+import { waitUntil } from "@vercel/functions";
 import { CLES_STATUT } from "@/lib/statutServer";
+import { verifierEtAnnoncer } from "@/lib/statutDiscord";
 
 // GET : l'appelant est-il admin ? (sert à afficher les boutons de modification sur /statut)
 export async function GET(request) {
@@ -22,6 +24,7 @@ export async function POST(request) {
   if (!etat) {
     const { error } = await service.from("statut_overrides").delete().eq("cle", cle);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    waitUntil(verifierEtAnnoncer().catch(() => {}));
     return NextResponse.json({ ok: true });
   }
   if (!["ok", "probleme", "panne"].includes(etat)) return NextResponse.json({ error: "État invalide." }, { status: 400 });
@@ -31,5 +34,7 @@ export async function POST(request) {
     .upsert({ cle, etat, message: (message || "").trim().slice(0, 300) || null, updated_at: new Date().toISOString() })
     .select("cle, etat, message");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Un changement manuel d'un admin est annoncé tout de suite dans Discord (salon des statuts).
+  waitUntil(verifierEtAnnoncer().catch(() => {}));
   return NextResponse.json({ ok: true, enregistre: data });
 }
