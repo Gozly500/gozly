@@ -25,7 +25,7 @@ function formatDate(iso) {
 
 export default function TicketsSection() {
   const tokenRef = useRef(null);
-  const [etat, setEtat] = useState({ chargement: true, configure: true, tickets: [], erreur: "", diagnostic: null, diagnosticComptes: null });
+  const [etat, setEtat] = useState({ chargement: true, configure: true, tickets: [], erreur: "", diagnostic: null, diagnosticComptes: null, diagnosticSite: null });
   const [filtre, setFiltre] = useState("ouverts");
   const [ouvert, setOuvert] = useState(null); // id du ticket affiché
   const [conv, setConv] = useState({ chargement: false, messages: [], erreur: "" });
@@ -41,7 +41,7 @@ export default function TicketsSection() {
       const res = await fetch("/api/admin/tickets", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
-      setEtat({ chargement: false, configure: json.configure !== false, tickets: json.tickets || [], erreur: "", diagnostic: json.diagnostic || null, diagnosticComptes: json.diagnosticComptes || null });
+      setEtat({ chargement: false, configure: json.configure !== false, tickets: json.tickets || [], erreur: "", diagnostic: json.diagnostic || null, diagnosticComptes: json.diagnosticComptes || null, diagnosticSite: json.diagnosticSite || null });
     } catch (e) {
       setEtat((s) => ({ ...s, chargement: false, erreur: e.message }));
     }
@@ -87,6 +87,22 @@ export default function TicketsSection() {
     if (finConv.current) finConv.current.scrollIntoView({ block: "nearest" });
   }, [conv.messages.length, ouvert]);
 
+  async function changerStatut(ticket, ferme) {
+    try {
+      const token = await jeton(tokenRef);
+      const res = await fetch("/api/admin/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: "statut", id: ticket.id, ferme }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
+      await charger();
+    } catch (err) {
+      setEnvoiRep({ occupe: false, message: err.message });
+    }
+  }
+
   async function repondre(e, ticket) {
     e.preventDefault();
     if (!reponse.trim()) return;
@@ -117,9 +133,10 @@ export default function TicketsSection() {
     <div>
       <h2>Tickets</h2>
       <p className="panel-hint">
-        Les tickets ouverts dans le Discord de Gozly ({nbOuverts} ouvert{nbOuverts > 1 ? "s" : ""}). Tu peux répondre ici : c'est Gozyx qui envoie ton message dans le salon du ticket.
+        Les tickets ouverts dans le Discord de Gozly et sur le site ({nbOuverts} ouvert{nbOuverts > 1 ? "s" : ""}). Tu peux répondre ici : pour Discord, c'est Gozyx qui envoie ton message dans le salon ; pour le site, la réponse apparaît dans la page « Mes tickets » de la personne.
       </p>
 
+      {etat.diagnosticSite && <div className="admin-empty">{etat.diagnosticSite}</div>}
       {!etat.configure && (
         <div className="admin-empty">
           Discord n'est pas encore relié : ajoute la variable <code>DISCORD_GUILD_ID</code> (identifiant du serveur) dans Vercel, puis redéploie.
@@ -127,7 +144,7 @@ export default function TicketsSection() {
       )}
       {etat.erreur && <div className="admin-empty">Erreur : {etat.erreur}</div>}
 
-      {etat.configure && (
+      {(etat.configure || etat.tickets.length > 0) && (
         <>
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", marginBottom: "20px" }}>
             <div className="settings-nav" style={{ flexDirection: "row", width: "fit-content" }}>
@@ -153,8 +170,14 @@ export default function TicketsSection() {
               <div key={t.id}>
                 <div className="admin-row" style={{ alignItems: "center" }}>
                   <div className="admin-row-main">
-                    <div className="admin-row-title">{t.proprietaire}</div>
-                    <div className="admin-row-sub">Ouvert le {formatDate(t.ouvertLe)} · Discord</div>
+                    <div className="admin-row-title">
+                      {t.proprietaire}
+                      {t.source === "site" && <span style={{ fontWeight: 400, color: "var(--text-dim)" }}> · {t.sujet}</span>}
+                    </div>
+                    <div className="admin-row-sub">
+                      Ouvert le {formatDate(t.ouvertLe)} · {t.source === "site" ? "Site" : "Discord"}
+                      {t.source === "site" && !t.ferme && t.dernierAuteur === "client" && <span className="ticket-attente">En attente de réponse</span>}
+                    </div>
                     {t.compte ? (
                       <div className="ticket-compte">
                         <div>
@@ -173,9 +196,16 @@ export default function TicketsSection() {
                     <button type="button" className="admin-icon-btn" onClick={() => voir(t)}>
                       {ouvert === t.id ? "Masquer" : "Voir la conversation"}
                     </button>
-                    <a className="admin-icon-btn" href={t.url} target="_blank" rel="noopener noreferrer">
-                      Ouvrir dans Discord
-                    </a>
+                    {t.url && (
+                      <a className="admin-icon-btn" href={t.url} target="_blank" rel="noopener noreferrer">
+                        Ouvrir dans Discord
+                      </a>
+                    )}
+                    {t.source === "site" && (
+                      <button type="button" className={`admin-icon-btn${t.ferme ? "" : " danger"}`} onClick={() => changerStatut(t, !t.ferme)}>
+                        {t.ferme ? "Rouvrir" : "Fermer"}
+                      </button>
+                    )}
                   </div>
                 </div>
                 {ouvert === t.id && (
@@ -206,7 +236,7 @@ export default function TicketsSection() {
                     <div ref={finConv} />
 
                     {t.ferme ? (
-                      <p className="ticket-conv-vide">Ticket fermé : la personne ne peut plus écrire. Rouvre-le dans Discord pour continuer la conversation.</p>
+                      <p className="ticket-conv-vide">{t.source === "site" ? "Ticket fermé : utilise « Rouvrir » pour continuer la conversation." : "Ticket fermé : la personne ne peut plus écrire. Rouvre-le dans Discord pour continuer la conversation."}</p>
                     ) : (
                       <form className="ticket-reponse" onSubmit={(e) => repondre(e, t)}>
                         <textarea
@@ -214,12 +244,13 @@ export default function TicketsSection() {
                           rows={3}
                           maxLength={1800}
                           onChange={(e) => setReponse(e.target.value)}
-                          placeholder="Écris ta réponse (envoyée par Gozyx dans le ticket)..."
+                          placeholder={t.source === "site" ? "Écris ta réponse (visible par la personne sur le site, sous « Équipe Gozly »)..." : "Écris ta réponse (envoyée par Gozyx dans le ticket)..."}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) repondre(e, t);
                           }}
                         />
                         <div className="ticket-reponse-pied">
+                          {t.source === "site" ? <span /> : (
                           <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "13px", color: "var(--text-dim)" }}>
                             <span className="switch">
                               <input type="checkbox" checked={mentionner} onChange={(e) => setMentionner(e.target.checked)} />
@@ -228,6 +259,7 @@ export default function TicketsSection() {
                             </span>
                             Notifier {t.proprietaire}
                           </label>
+                          )}
                           <button type="submit" className="btn-small" disabled={envoiRep.occupe || !reponse.trim()}>
                             {envoiRep.occupe ? "Envoi..." : "Répondre"}
                           </button>

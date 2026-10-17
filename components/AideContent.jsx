@@ -91,6 +91,11 @@ export default function AideContent() {
           <br />
           <Link href="/contact">{ui.contact}</Link>
         </p>
+        <p style={{ marginTop: "10px" }}>
+          <Link href="/aide/tickets" className="aide-ticket-lien">
+            {ui.ticket}
+          </Link>
+        </p>
       </div>
     </div>
   );
