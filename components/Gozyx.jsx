@@ -6,7 +6,7 @@ import { useId } from "react";
 // Les parties (tête, yeux, pupilles, bouche) sont des groupes séparés pour pouvoir les animer en CSS
 // (voir les règles .gx-* dans globals.css). Les animations s'arrêtent si la personne a demandé moins de mouvement.
 //
-// humeur : "normal" (cligne, regarde autour) | "probleme" (inquiet) | "panne" (affolé) | "perplexe" (bouche en ligne) | "dort" | "content"
+// humeur : "normal" (cligne, regarde autour) | "probleme" (inquiet) | "panne" (affolé) | "perplexe" (bouche en ligne) | "regarde" (pupilles dirigées par la propriété regard) | "ferme" (yeux fermés, pour le mot de passe) | "dort" | "content"
 // taille : largeur en pixels (ou toute valeur CSS)
 
 const OEIL = "M160.215,167.181C201.224,167.181 234.518,200.475 234.518,241.484L234.518,490.707C234.518,531.716 201.224,565.01 160.215,565.01C119.206,565.01 85.912,531.716 85.912,490.707L85.912,241.484C85.912,200.475 119.206,167.181 160.215,167.181Z";
@@ -14,13 +14,20 @@ const PUPILLE = "M160.215,167.181C201.224,167.181 234.518,205.746 234.518,253.24
 const BOUCHE =
   "M747.008,979.764C762.099,979.764 776.071,985.992 783.771,996.15C791.472,1006.308 791.759,1018.892 784.528,1029.259C745.153,1086.083 660.477,1124.537 564.021,1124.537C467.565,1124.537 382.889,1086.083 343.526,1029.254C336.298,1018.89 336.585,1006.31 344.283,996.156C351.981,986.001 365.948,979.775 381.033,979.775C474.025,979.764 654.017,979.764 747.008,979.764Z";
 
-export default function Gozyx({ humeur = "normal", taille = 120, className = "", titre = "Gozyx" }) {
+export default function Gozyx({ humeur = "normal", taille = 120, className = "", titre = "Gozyx", regard = null }) {
   const gid = useId().replace(/:/g, "");
   return (
     <svg
       className={`gozyx gozyx-${humeur} ${className}`}
       viewBox="0 0 877 877"
-      style={{ width: typeof taille === "number" ? `${taille}px` : taille, height: "auto", overflow: "visible" }}
+      style={{
+        width: typeof taille === "number" ? `${taille}px` : taille,
+        height: "auto",
+        overflow: "visible",
+        // Direction du regard (unités du dessin) pour l'humeur "regarde" : voir .gozyx-regarde dans globals.css
+        "--gx-px": regard ? `${regard.x}px` : "0px",
+        "--gx-py": regard ? `${regard.y}px` : "0px",
+      }}
       role="img"
       aria-label={titre}
       xmlns="http://www.w3.org/2000/svg"

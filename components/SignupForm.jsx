@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
+import Gozyx from "@/components/Gozyx";
+import { useGozyxFormulaire } from "@/lib/useGozyxFormulaire";
 
 // Forfaits qu'on peut présélectionner via /inscription?forfait=... (depuis la page
 // des forfaits). Le forfait n'est JAMAIS activé à l'inscription : il ne l'est
@@ -17,6 +19,7 @@ const FORFAITS_ACHETABLES = {
 
 export default function SignupForm() {
   const { t } = useT();
+  const gozyx = useGozyxFormulaire();
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -105,7 +108,10 @@ export default function SignupForm() {
 
   return (
     <div className="contact-card">
-      <form onSubmit={handleSubmit}>
+      <div className="form-gozyx">
+        <Gozyx humeur={gozyx.humeur} regard={gozyx.regard} taille={110} />
+      </div>
+      <form onSubmit={handleSubmit} {...gozyx.handlers}>
         <div className="field">
           <label htmlFor="fullName">{t("signup.nom")}</label>
           <input

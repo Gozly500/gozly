@@ -2742,7 +2742,7 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .gozyx{display:block;margin:0 auto;}
 .gozyx .gx-tete{transform-box:fill-box;transform-origin:50% 60%;animation:gx-flotte 5s ease-in-out infinite;}
 .gozyx .gx-oeil,.gozyx .gx-bouche{transform-box:fill-box;transform-origin:center;}
-.gozyx .gx-oeil{animation:gx-cligne 6s infinite;}
+.gozyx .gx-oeil{clip-path:inset(0 0 0 0);transition:clip-path .22s ease;animation:gx-cligne 6s infinite;}
 .gozyx .gx-pupille{animation:gx-regarde 11s ease-in-out infinite;}
 .gozyx .gx-goutte,.gozyx .gx-zzz,.gozyx .gx-bouche-o,.gozyx .gx-bouche-ligne{opacity:0;}
 .gozyx .gx-bouche-o{transform-box:fill-box;transform-origin:center;}
@@ -2782,6 +2782,12 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .gozyx-perplexe .gx-bouche-ligne{opacity:1;}
 .gozyx-perplexe .gx-tete{animation:gx-penche 4.5s ease-in-out infinite;}
 @keyframes gx-penche{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-8px) rotate(4deg);}}
+
+/* Formulaires : il regarde vers le champ en suivant le texte (--gx-px / --gx-py), puis ferme les yeux pour le mot de passe */
+.gozyx-regarde .gx-pupille{animation:none;transform:translate(var(--gx-px,0px),var(--gx-py,0px));transition:transform .18s ease-out;}
+.gozyx-ferme .gx-oeil{clip-path:inset(94% 0 0 0);animation:none;}
+.gozyx-ferme .gx-pupille{animation:none;}
+.form-gozyx{margin:-6px auto 14px;}
 
 /* Endormi : yeux fermés, petite bouche, « z » qui montent */
 .gozyx-dort .gx-oeil{clip-path:inset(94% 0 0 0);animation:none;}

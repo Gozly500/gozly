@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
+import Gozyx from "@/components/Gozyx";
+import { useGozyxFormulaire } from "@/lib/useGozyxFormulaire";
 
 export default function LoginForm() {
   const { t } = useT();
+  const gozyx = useGozyxFormulaire();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -123,7 +126,10 @@ export default function LoginForm() {
 
   return (
     <div className="contact-card login-card">
-      <form onSubmit={handleSubmit}>
+      <div className="form-gozyx">
+        <Gozyx humeur={gozyx.humeur} regard={gozyx.regard} taille={110} />
+      </div>
+      <form onSubmit={handleSubmit} {...gozyx.handlers}>
         <div className="field">
           <label htmlFor="email">{t("login.courriel")}</label>
           <input
