@@ -1,12 +1,15 @@
 "use client";
 
+import Gozyx from "@/components/Gozyx";
+
 // Écran affiché quand une page plante côté navigateur : au lieu du message
 // anglais générique, un texte clair + le détail technique pour le support.
 export default function ErreurPage({ error, reset }) {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", textAlign: "center" }}>
       <div style={{ maxWidth: "420px" }}>
-        <h2 style={{ marginBottom: "10px" }}>Oups, quelque chose a planté</h2>
+        <Gozyx humeur="panne" taille={120} />
+        <h2 style={{ marginTop: "16px", marginBottom: "10px" }}>Oups, quelque chose a planté</h2>
         <p style={{ color: "var(--text-dim)", marginBottom: "18px" }}>
           Réessaie. Si ça continue, envoie-nous une capture d'écran de ce message.
         </p>

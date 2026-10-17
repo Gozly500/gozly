@@ -73,8 +73,8 @@ export default function Gozyx({ humeur = "normal", taille = 120, className = "",
       </g>
 
       {/* Détails selon l'humeur (visibles seulement dans certaines humeurs, voir le CSS) */}
-      <path className="gx-goutte" d="M790 110 C790 110 735 185 735 225 C735 257 759 280 790 280 C821 280 845 257 845 225 C845 185 790 110 790 110 Z" fill="#7dd3fc" />
-      <g className="gx-zzz" fill="#c9cdfb" fontFamily="inherit" fontWeight="700">
+      <path className="gx-goutte" aria-hidden="true" d="M790 110 C790 110 735 185 735 225 C735 257 759 280 790 280 C821 280 845 257 845 225 C845 185 790 110 790 110 Z" fill="#7dd3fc" />
+      <g className="gx-zzz" aria-hidden="true" fill="#c9cdfb" fontFamily="inherit" fontWeight="700">
         <text x="700" y="140" fontSize="120" className="gx-z1">z</text>
         <text x="780" y="70" fontSize="90" className="gx-z2">z</text>
         <text x="840" y="10" fontSize="64" className="gx-z3">z</text>

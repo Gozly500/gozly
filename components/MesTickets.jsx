@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
+import Gozyx from "@/components/Gozyx";
 
 const TXT = {
   fr: {
@@ -232,7 +233,12 @@ export default function MesTickets() {
             {T.aideLien} <Link href="/aide">→</Link>
           </p>
           {erreur && <p className="settings-msg err">{erreur}</p>}
-          {tickets.length === 0 && !erreur && <p style={{ color: "var(--text-dim)", padding: "10px 0" }}>{T.aucun}</p>}
+          {tickets.length === 0 && !erreur && (
+            <div style={{ textAlign: "center", padding: "18px 0 8px" }}>
+              <Gozyx humeur="dort" taille={100} />
+              <p style={{ color: "var(--text-dim)", marginTop: "14px" }}>{T.aucun}</p>
+            </div>
+          )}
           {tickets.map((t) => (
             <button key={t.id} type="button" className="mes-ticket" onClick={() => ouvrirTicket(t)}>
               <span className="mes-ticket-sujet">{t.sujet}</span>

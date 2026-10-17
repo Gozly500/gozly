@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
+import Gozyx from "@/components/Gozyx";
 
 const TXT = {
   fr: {
@@ -140,7 +141,12 @@ export default function DiscordLierContent() {
           </>
         )}
 
-        {etape === "invalide" && <p>{T.invalide}</p>}
+        {etape === "invalide" && (
+          <>
+            <Gozyx humeur="probleme" taille={96} />
+            <p style={{ marginTop: "14px" }}>{T.invalide}</p>
+          </>
+        )}
 
         {etape === "confirmer" && (
           <>
@@ -154,7 +160,8 @@ export default function DiscordLierContent() {
 
         {etape === "fini" && (
           <>
-            <strong style={{ color: "var(--fg)" }}>{T.ok}</strong>
+            <Gozyx humeur="content" taille={110} />
+            <strong style={{ color: "var(--fg)", display: "block", marginTop: "14px" }}>{T.ok}</strong>
             <p style={{ marginTop: "10px" }}>{roleOk ? T.okRole : T.sansRole}</p>
           </>
         )}

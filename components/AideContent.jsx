@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useT } from "@/components/LangProvider";
 import { AIDE, AIDE_UI } from "@/lib/aide";
 import { LEGAL } from "@/lib/legal";
+import Gozyx from "@/components/Gozyx";
 
 function normaliser(s) {
   return s
@@ -57,6 +58,12 @@ export default function AideContent() {
       </aside>
 
       <div className="aide-main">
+      {/* Gozyx accueille et réagit à la recherche : content quand il trouve, inquiet quand il ne trouve rien. */}
+      <div className="aide-gozyx">
+        <Gozyx humeur={recherche.trim() ? (groupes.length ? "content" : "probleme") : "normal"} taille={84} />
+        <div className="aide-bulle">{recherche.trim() ? (groupes.length ? ui.gozyxTrouve : ui.gozyxRien) : ui.gozyx}</div>
+      </div>
+
       <div className="aide-recherche">
         <input
           type="search"

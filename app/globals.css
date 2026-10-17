@@ -2796,3 +2796,11 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
   .gozyx .gx-tete,.gozyx .gx-oeil,.gozyx .gx-pupille,.gozyx .gx-goutte,.gozyx .gx-z1,.gozyx .gx-z2,.gozyx .gx-z3{animation:none !important;}
 }
 .statut-gozyx{margin:0 auto 22px;padding-top:6px;}
+
+/* Gozyx dans le centre d'aide : bulle de dialogue */
+.aide-gozyx{display:flex;align-items:center;gap:16px;margin-bottom:22px;}
+.aide-gozyx .gozyx{margin:0;flex-shrink:0;}
+.aide-bulle{position:relative;padding:14px 18px;border-radius:20px;background:rgba(var(--w),0.9);color:var(--navy);font-size:15px;font-weight:500;line-height:1.45;}
+.aide-bulle::before{content:"";position:absolute;left:-9px;top:50%;margin-top:-9px;border:9px solid transparent;border-left:0;border-right-color:rgba(var(--w),0.9);}
+.loader-text .gozyx{margin:0;}
+@media (max-width:520px){.aide-gozyx{flex-direction:column;text-align:center;}.aide-bulle::before{left:50%;top:-9px;margin:0 0 0 -9px;border:9px solid transparent;border-top:0;border-bottom-color:rgba(var(--w),0.9);}}
