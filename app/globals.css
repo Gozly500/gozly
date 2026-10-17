@@ -2743,12 +2743,11 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .gozyx .gx-tete{transform-box:fill-box;transform-origin:50% 60%;animation:gx-flotte 5s ease-in-out infinite;}
 .gozyx .gx-oeil,.gozyx .gx-bouche{transform-box:fill-box;transform-origin:center;}
 .gozyx .gx-oeil{animation:gx-cligne 6s infinite;}
-.gozyx .gx-oeil-d{animation-delay:.04s;}
 .gozyx .gx-pupille{animation:gx-regarde 11s ease-in-out infinite;}
 .gozyx .gx-goutte,.gozyx .gx-zzz{opacity:0;}
 @keyframes gx-flotte{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-14px) rotate(-1.2deg);}}
 /* un clignement rapide de temps en temps, plus un double clignement */
-@keyframes gx-cligne{0%,40%,42.5%,44%,46.5%,100%{transform:scaleY(1);}41.2%,45.2%{transform:scaleY(.08);}}
+@keyframes gx-cligne{0%,40%,42.5%,44%,46.5%,100%{clip-path:inset(0 0 0 0);}41.2%,45.2%{clip-path:inset(96% 0 0 0);}}
 /* regarde à gauche, à droite, un peu en haut, puis revient au centre */
 @keyframes gx-regarde{
   0%,22%{transform:translate(0,0);}
@@ -2778,7 +2777,7 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 @keyframes gx-affole{0%,100%{transform:translate(-22px,-14px);}50%{transform:translate(22px,-14px);}}
 
 /* Endormi : yeux fermés, petite bouche, « z » qui montent */
-.gozyx-dort .gx-oeil{transform:scaleY(.08);animation:none;}
+.gozyx-dort .gx-oeil{clip-path:inset(94% 0 0 0);animation:none;}
 .gozyx-dort .gx-pupille{animation:none;}
 .gozyx-dort .gx-bouche{transform:scale(.55);animation:none;}
 .gozyx-dort .gx-tete{animation-duration:7s;}
