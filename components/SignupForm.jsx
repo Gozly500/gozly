@@ -103,6 +103,9 @@ export default function SignupForm() {
       return;
     }
 
+    // Petit saut de joie de Gozyx avant de continuer.
+    gozyx.succes();
+    await new Promise((r) => setTimeout(r, 1300));
     router.push(forfaitVoulu ? `/bienvenue?forfait=${forfaitVoulu}` : "/bienvenue");
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 
 // Gozyx, la mascotte de Gozly, en SVG animé (forme exacte du fichier « Gozyx pupille détacher.svg »).
 // Les parties (tête, yeux, pupilles, bouche) sont des groupes séparés pour pouvoir les animer en CSS
@@ -16,9 +16,15 @@ const BOUCHE =
 
 export default function Gozyx({ humeur = "normal", taille = 120, className = "", titre = "Gozyx", regard = null }) {
   const gid = useId().replace(/:/g, "");
+  // Quand on sort de l'humeur "ferme", les yeux se rouvrent doucement (classe gx-reouvre) au lieu de sauter.
+  const precedente = useRef(humeur);
+  const reouvre = precedente.current === "ferme" && humeur !== "ferme";
+  useEffect(() => {
+    precedente.current = humeur;
+  }, [humeur]);
   return (
     <svg
-      className={`gozyx gozyx-${humeur} ${className}`}
+      className={`gozyx gozyx-${humeur}${reouvre ? " gx-reouvre" : ""} ${className}`}
       viewBox="0 0 877 877"
       style={{
         width: typeof taille === "number" ? `${taille}px` : taille,

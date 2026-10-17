@@ -2014,7 +2014,8 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .chat-action-emoji:nth-child(6){animation-delay:.16s;}
 @keyframes chat-actions-in{from{opacity:0;transform:translateY(-6px) scale(.9);}to{opacity:1;transform:none;}}
 @keyframes chat-emoji-pop{from{opacity:0;transform:scale(.3);}to{opacity:1;transform:scale(1);}}
-@media (prefers-reduced-motion:reduce){.chat-actions,.chat-action-emoji{animation:none;}}
+@media (prefers-reduced-motion:reduce){
+  .gozyx-ferme .gx-oeil{clip-path:inset(94% 0 0 0);}.chat-actions,.chat-action-emoji{animation:none;}}
 .chat-citation{display:flex;flex-direction:column;gap:1px;font-size:11.5px;border-left:3px solid rgba(var(--w),0.45);background:rgba(var(--w),0.08);border-radius:6px;padding:4px 8px;margin-bottom:6px;opacity:.85;}
 .chat-citation strong{font-size:11px;}
 .chat-citation span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
@@ -2785,7 +2786,12 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 
 /* Formulaires : il regarde vers le champ en suivant le texte (--gx-px / --gx-py), puis ferme les yeux pour le mot de passe */
 .gozyx-regarde .gx-pupille{animation:none;transform:translate(var(--gx-px,0px),var(--gx-py,0px));transition:transform .18s ease-out;}
-.gozyx-ferme .gx-oeil{clip-path:inset(94% 0 0 0);animation:none;}
+/* les paupières descendent doucement (0,8 s), puis restent fermées tant qu'on est dans le champ */
+.gozyx-ferme .gx-oeil{animation:gx-ferme .8s ease-in-out forwards;}
+/* au retour, elles se rouvrent doucement puis le clignement habituel reprend */
+.gozyx.gx-reouvre .gx-oeil{animation:gx-ouvre .45s ease-out, gx-cligne 6s .45s infinite;}
+@keyframes gx-ferme{from{clip-path:inset(0 0 0 0);}to{clip-path:inset(94% 0 0 0);}}
+@keyframes gx-ouvre{from{clip-path:inset(94% 0 0 0);}to{clip-path:inset(0 0 0 0);}}
 .gozyx-ferme .gx-pupille{animation:none;}
 .form-gozyx{margin:-6px auto 14px;}
 

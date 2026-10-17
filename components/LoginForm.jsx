@@ -56,6 +56,9 @@ export default function LoginForm() {
 
     // ?retour=/gestion : revient là où on voulait aller (chemins internes seulement).
     const retour = new URLSearchParams(window.location.search).get("retour");
+    // Petit saut de joie de Gozyx avant de continuer.
+    gozyx.succes();
+    await new Promise((r) => setTimeout(r, 1100));
     router.push(retour && retour.startsWith("/") && !retour.startsWith("//") ? retour : "/dashboard");
   }
 
