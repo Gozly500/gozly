@@ -2737,3 +2737,63 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .aide-ticket-lien{display:inline-block;padding:10px 20px;border-radius:999px;background:rgba(var(--w),0.9);color:var(--navy) !important;text-decoration:none !important;font-weight:600;}
 
 .ticket-attente{margin-left:10px;padding:2px 8px;border-radius:999px;background:rgba(245,184,0,0.2);color:#f5b800;font-size:11.5px;font-weight:600;}
+
+/* ===== Gozyx (mascotte animée) : composant components/Gozyx.jsx ===== */
+.gozyx{display:block;margin:0 auto;}
+.gozyx .gx-tete{transform-box:fill-box;transform-origin:50% 60%;animation:gx-flotte 5s ease-in-out infinite;}
+.gozyx .gx-oeil,.gozyx .gx-bouche{transform-box:fill-box;transform-origin:center;}
+.gozyx .gx-oeil{animation:gx-cligne 6s infinite;}
+.gozyx .gx-oeil-d{animation-delay:.04s;}
+.gozyx .gx-pupille{animation:gx-regarde 11s ease-in-out infinite;}
+.gozyx .gx-goutte,.gozyx .gx-zzz{opacity:0;}
+@keyframes gx-flotte{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-14px) rotate(-1.2deg);}}
+/* un clignement rapide de temps en temps, plus un double clignement */
+@keyframes gx-cligne{0%,40%,42.5%,44%,46.5%,100%{transform:scaleY(1);}41.2%,45.2%{transform:scaleY(.08);}}
+/* regarde à gauche, à droite, un peu en haut, puis revient au centre */
+@keyframes gx-regarde{
+  0%,22%{transform:translate(0,0);}
+  28%,44%{transform:translate(-26px,-8px);}
+  50%,64%{transform:translate(26px,6px);}
+  70%,80%{transform:translate(0,-16px);}
+  88%,100%{transform:translate(0,0);}
+}
+
+/* Inquiet : yeux un peu plus grands, regard nerveux, bouche en moue, goutte de sueur */
+.gozyx-probleme .gx-tete{animation-duration:3.2s;}
+.gozyx-probleme .gx-oeil{animation:gx-cligne 4s infinite;}
+.gozyx-probleme .gx-pupille{animation:gx-nerveux 2.6s ease-in-out infinite;}
+.gozyx-probleme .gx-bouche{transform:scaleY(-.75);animation:none;}
+.gozyx-probleme .gx-goutte{opacity:.95;animation:gx-goutte 2.8s ease-in infinite;}
+@keyframes gx-nerveux{0%,100%{transform:translate(-18px,-6px);}25%{transform:translate(20px,-6px);}50%{transform:translate(-8px,8px);}75%{transform:translate(18px,4px);}}
+@keyframes gx-goutte{0%{transform:translateY(-30px) scale(.4);opacity:0;}20%{opacity:.95;}100%{transform:translateY(60px) scale(1);opacity:0;}}
+
+/* Affolé : petites secousses, pupilles minuscules, bouche tremblante */
+.gozyx-panne .gx-tete{animation:gx-secoue .35s linear infinite;}
+.gozyx-panne .gx-oeil{transform:scale(1.12);animation:none;}
+.gozyx-panne .gx-pupille{animation:gx-affole 1.2s ease-in-out infinite;}
+.gozyx-panne .gx-pupille>g{transform-box:fill-box;}
+.gozyx-panne .gx-bouche{transform:scaleY(-1.1) scaleX(.8);animation:none;}
+.gozyx-panne .gx-goutte{opacity:.95;animation:gx-goutte 1.6s ease-in infinite;}
+@keyframes gx-secoue{0%,100%{transform:translate(0,0) rotate(0);}25%{transform:translate(-6px,2px) rotate(-1deg);}75%{transform:translate(6px,-2px) rotate(1deg);}}
+@keyframes gx-affole{0%,100%{transform:translate(-22px,-14px);}50%{transform:translate(22px,-14px);}}
+
+/* Endormi : yeux fermés, petite bouche, « z » qui montent */
+.gozyx-dort .gx-oeil{transform:scaleY(.08);animation:none;}
+.gozyx-dort .gx-pupille{animation:none;}
+.gozyx-dort .gx-bouche{transform:scale(.55);animation:none;}
+.gozyx-dort .gx-tete{animation-duration:7s;}
+.gozyx-dort .gx-zzz{opacity:1;}
+.gozyx-dort .gx-z1,.gozyx-dort .gx-z2,.gozyx-dort .gx-z3{animation:gx-z 3.6s ease-in-out infinite;}
+.gozyx-dort .gx-z2{animation-delay:.9s;}
+.gozyx-dort .gx-z3{animation-delay:1.8s;}
+@keyframes gx-z{0%{opacity:0;transform:translate(0,30px);}30%{opacity:1;}100%{opacity:0;transform:translate(26px,-40px);}}
+
+/* Content : petit saut et grand sourire */
+.gozyx-content .gx-tete{animation:gx-saute 1.4s ease-in-out infinite;}
+.gozyx-content .gx-bouche{transform:scaleY(1.25);}
+@keyframes gx-saute{0%,100%{transform:translateY(0);}40%{transform:translateY(-34px);}60%{transform:translateY(-34px);}}
+
+@media (prefers-reduced-motion:reduce){
+  .gozyx .gx-tete,.gozyx .gx-oeil,.gozyx .gx-pupille,.gozyx .gx-goutte,.gozyx .gx-z1,.gozyx .gx-z2,.gozyx .gx-z3{animation:none !important;}
+}
+.statut-gozyx{margin:0 auto 22px;padding-top:6px;}
