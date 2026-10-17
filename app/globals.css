@@ -2744,7 +2744,7 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .gozyx .gx-oeil,.gozyx .gx-bouche{transform-box:fill-box;transform-origin:center;}
 .gozyx .gx-oeil{animation:gx-cligne 6s infinite;}
 .gozyx .gx-pupille{animation:gx-regarde 11s ease-in-out infinite;}
-.gozyx .gx-goutte,.gozyx .gx-zzz,.gozyx .gx-bouche-o{opacity:0;}
+.gozyx .gx-goutte,.gozyx .gx-zzz,.gozyx .gx-bouche-o,.gozyx .gx-bouche-ligne{opacity:0;}
 .gozyx .gx-bouche-o{transform-box:fill-box;transform-origin:center;}
 @keyframes gx-flotte{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-14px) rotate(-1.2deg);}}
 /* un clignement rapide de temps en temps, plus un double clignement */
@@ -2776,6 +2776,12 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .gozyx-panne .gx-goutte{opacity:.95;animation:gx-goutte 1.6s ease-in infinite;}
 @keyframes gx-secoue{0%,100%{transform:translate(0,0) rotate(0);}25%{transform:translate(-6px,2px) rotate(-1deg);}75%{transform:translate(6px,-2px) rotate(1deg);}}
 @keyframes gx-affole{0%,100%{transform:translate(-22px,-14px);}50%{transform:translate(22px,-14px);}}
+
+/* Perplexe : bouche en simple ligne, la tête se penche d'un côté puis de l'autre, il cherche du regard */
+.gozyx-perplexe .gx-bouche{opacity:0;animation:none;}
+.gozyx-perplexe .gx-bouche-ligne{opacity:1;}
+.gozyx-perplexe .gx-tete{animation:gx-penche 4.5s ease-in-out infinite;}
+@keyframes gx-penche{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-8px) rotate(4deg);}}
 
 /* Endormi : yeux fermés, petite bouche, « z » qui montent */
 .gozyx-dort .gx-oeil{clip-path:inset(94% 0 0 0);animation:none;}

@@ -6,7 +6,7 @@ import { useId } from "react";
 // Les parties (tête, yeux, pupilles, bouche) sont des groupes séparés pour pouvoir les animer en CSS
 // (voir les règles .gx-* dans globals.css). Les animations s'arrêtent si la personne a demandé moins de mouvement.
 //
-// humeur : "normal" (cligne, regarde autour) | "probleme" (inquiet) | "panne" (affolé) | "dort" | "content"
+// humeur : "normal" (cligne, regarde autour) | "probleme" (inquiet) | "panne" (affolé) | "perplexe" (bouche en ligne) | "dort" | "content"
 // taille : largeur en pixels (ou toute valeur CSS)
 
 const OEIL = "M160.215,167.181C201.224,167.181 234.518,200.475 234.518,241.484L234.518,490.707C234.518,531.716 201.224,565.01 160.215,565.01C119.206,565.01 85.912,531.716 85.912,490.707L85.912,241.484C85.912,200.475 119.206,167.181 160.215,167.181Z";
@@ -72,6 +72,9 @@ export default function Gozyx({ humeur = "normal", taille = 120, className = "",
 
           {/* Bouche ouverte (simple rond), visible seulement quand Gozyx dort */}
           <ellipse className="gx-bouche-o" cx="593" cy="852" rx="46" ry="54" fill="white" />
+
+          {/* Bouche en simple ligne droite, visible seulement quand Gozyx est perplexe (il cherche sans trouver) */}
+          <rect className="gx-bouche-ligne" x="483" y="838" width="220" height="30" rx="15" fill="white" />
         </g>
       </g>
 

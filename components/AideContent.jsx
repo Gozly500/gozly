@@ -60,7 +60,7 @@ export default function AideContent() {
       <div className="aide-main">
       {/* Gozyx accueille et réagit à la recherche : content quand il trouve, inquiet quand il ne trouve rien. */}
       <div className="aide-gozyx">
-        <Gozyx humeur={recherche.trim() ? (groupes.length ? "content" : "probleme") : "normal"} taille={84} />
+        <Gozyx humeur={recherche.trim() ? (groupes.length ? "content" : "perplexe") : "normal"} taille={84} />
         <div className="aide-bulle">{recherche.trim() ? (groupes.length ? ui.gozyxTrouve : ui.gozyxRien) : ui.gozyx}</div>
       </div>
 
