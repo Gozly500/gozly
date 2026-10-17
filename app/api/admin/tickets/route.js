@@ -151,6 +151,7 @@ export async function GET(request) {
 //   - ticket Discord : Gozyx envoie la réponse dans le salon ("mentionner" notifie la personne du ticket).
 //   - ticket du site (id "site:<uuid>") : la réponse apparaît dans la conversation, sous « Équipe Gozly ».
 // POST { action: "statut", id: "site:<uuid>", ferme: true|false } : ferme ou rouvre un ticket du site.
+// POST { action: "supprimer", id } : supprime définitivement un ticket FERMÉ (site : lignes en base ; Discord : le salon).
 export async function POST(request) {
   const { errorStatus, errorMessage } = await requireAdmin(request);
   if (errorStatus) return NextResponse.json({ error: errorMessage }, { status: errorStatus });
@@ -166,6 +167,12 @@ export async function POST(request) {
     const { data: ticket } = await service.from("tickets_site").select("*").eq("id", ticketId).maybeSingle();
     if (!ticket) return NextResponse.json({ error: "Ticket introuvable." }, { status: 404 });
 
+    if (c.action === "supprimer") {
+      if (ticket.statut !== "ferme") return NextResponse.json({ error: "Ferme le ticket avant de le supprimer." }, { status: 409 });
+      const { error } = await service.from("tickets_site").delete().eq("id", ticketId); // les messages partent avec (cascade)
+      if (error) return NextResponse.json({ error: messageTable(error) }, { status: 500 });
+      return NextResponse.json({ ok: true });
+    }
     if (c.action === "statut") {
       await service.from("tickets_site").update({ statut: c.ferme ? "ferme" : "ouvert", maj: new Date().toISOString() }).eq("id", ticketId);
       return NextResponse.json({ ok: true });
@@ -183,6 +190,20 @@ export async function POST(request) {
   const guildId = (process.env.DISCORD_GUILD_ID || "").trim();
   if (!guildId || !process.env.DISCORD_BOT_TOKEN) return NextResponse.json({ error: "Discord n'est pas configuré." }, { status: 500 });
   if (!/^\d+$/.test(String(c.id || ""))) return NextResponse.json({ error: "Identifiant invalide." }, { status: 400 });
+
+  if (c.action === "supprimer") {
+    try {
+      const canal = await discord("GET", `/channels/${c.id}`);
+      const m = /^ticket:(\d+)$/.exec(canal.topic || "");
+      if (canal.guild_id !== guildId || !m) return NextResponse.json({ error: "Ce salon n'est pas un ticket." }, { status: 404 });
+      if (!estFerme(canal, m[1])) return NextResponse.json({ error: "Ferme le ticket avant de le supprimer." }, { status: 409 });
+      await discord("DELETE", `/channels/${canal.id}`);
+      return NextResponse.json({ ok: true });
+    } catch (e) {
+      return NextResponse.json({ error: String(e.message).replace(process.env.DISCORD_BOT_TOKEN, "***").slice(0, 300) }, { status: 502 });
+    }
+  }
+
   if (!texte) return NextResponse.json({ error: "Écris ta réponse." }, { status: 400 });
   if (texte.length > 1800) return NextResponse.json({ error: "Réponse trop longue (maximum 1800 caractères)." }, { status: 400 });
 

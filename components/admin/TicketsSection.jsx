@@ -33,6 +33,7 @@ export default function TicketsSection() {
   const [mentionner, setMentionner] = useState(true);
   const [envoiRep, setEnvoiRep] = useState({ occupe: false, message: "" });
   const finConv = useRef(null);
+  const [suppression, setSuppression] = useState({ occupe: false, message: "" });
 
   const charger = useCallback(async () => {
     const token = await jeton(tokenRef);
@@ -103,6 +104,50 @@ export default function TicketsSection() {
     }
   }
 
+  async function supprimerTicket(ticket) {
+    const token = await jeton(tokenRef);
+    const res = await fetch("/api/admin/tickets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: "supprimer", id: ticket.id }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
+  }
+
+  async function supprimer(ticket) {
+    if (!window.confirm(`Supprimer définitivement le ticket de ${ticket.proprietaire} ? Cette action est irréversible${ticket.source === "discord" ? " (le salon Discord sera supprimé)" : ""}.`)) return;
+    try {
+      await supprimerTicket(ticket);
+      if (ouvert === ticket.id) setOuvert(null);
+      await charger();
+    } catch (err) {
+      setEnvoiRep({ occupe: false, message: err.message });
+    }
+  }
+
+  // Supprime tous les tickets fermés (un par un : Discord limite le rythme des suppressions de salons).
+  async function supprimerFermes() {
+    const fermes = etat.tickets.filter((t) => t.ferme);
+    if (fermes.length === 0) return;
+    if (!window.confirm(`Supprimer définitivement les ${fermes.length} ticket${fermes.length > 1 ? "s" : ""} fermé${fermes.length > 1 ? "s" : ""} ? Cette action est irréversible (les salons Discord seront supprimés).`)) return;
+    setSuppression({ occupe: true, message: "" });
+    let ok = 0;
+    let echecs = 0;
+    for (const t of fermes) {
+      try {
+        await supprimerTicket(t);
+        ok++;
+      } catch {
+        echecs++;
+      }
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    setOuvert(null);
+    setSuppression({ occupe: false, message: `${ok} ticket${ok > 1 ? "s" : ""} supprimé${ok > 1 ? "s" : ""}${echecs ? `, ${echecs} échec${echecs > 1 ? "s" : ""}` : ""}.` });
+    await charger();
+  }
+
   async function repondre(e, ticket) {
     e.preventDefault();
     if (!reponse.trim()) return;
@@ -157,8 +202,14 @@ export default function TicketsSection() {
             <button type="button" className="admin-icon-btn" onClick={charger}>
               Actualiser
             </button>
+            {filtre === "fermes" && liste.length > 0 && (
+              <button type="button" className="admin-icon-btn danger" onClick={supprimerFermes} disabled={suppression.occupe}>
+                {suppression.occupe ? "Suppression..." : `Supprimer les ${liste.length} ticket${liste.length > 1 ? "s" : ""} fermé${liste.length > 1 ? "s" : ""}`}
+              </button>
+            )}
           </div>
 
+          {suppression.message && <p className="panel-hint" style={{ marginBottom: "14px" }}>{suppression.message}</p>}
           {etat.diagnosticComptes && etat.tickets.some((t) => !t.compte) && (
             <p className="panel-hint" style={{ marginBottom: "14px", color: "#ffb4b4" }}>
               Infos du compte indisponibles : {etat.diagnosticComptes}
@@ -204,6 +255,11 @@ export default function TicketsSection() {
                     {t.source === "site" && (
                       <button type="button" className={`admin-icon-btn${t.ferme ? "" : " danger"}`} onClick={() => changerStatut(t, !t.ferme)}>
                         {t.ferme ? "Rouvrir" : "Fermer"}
+                      </button>
+                    )}
+                    {t.ferme && (
+                      <button type="button" className="admin-icon-btn danger" onClick={() => supprimer(t)}>
+                        Supprimer
                       </button>
                     )}
                   </div>
