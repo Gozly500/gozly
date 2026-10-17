@@ -69,6 +69,9 @@ export default function Gozyx({ humeur = "normal", taille = 120, className = "",
               <path d={BOUCHE} fill="white" />
             </g>
           </g>
+
+          {/* Bouche ouverte (simple rond), visible seulement quand Gozyx dort */}
+          <ellipse className="gx-bouche-o" cx="593" cy="852" rx="46" ry="54" fill="white" />
         </g>
       </g>
 
