@@ -36,7 +36,27 @@ export default function AideContent() {
   }, [categories, recherche, cat]);
 
   return (
-    <div className="aide-wrap">
+    <div className="aide-layout">
+      {/* Colonne fixe (à gauche) : aide complémentaire, toujours visible pendant qu'on parcourt les questions. */}
+      <aside className="aide-aside">
+        <div className="aide-contact">
+          <strong>{ui.pasTrouve}</strong>
+          <Link href="/aide/tickets" className="aide-ticket-lien">
+            {ui.ticket}
+          </Link>
+          <p>
+            {ui.ecrire} <a href={`mailto:${LEGAL.courrielContact}`}>{LEGAL.courrielContact}</a>
+            <br />
+            <Link href="/contact">{ui.contact}</Link>
+          </p>
+          <hr />
+          <p>
+            <Link href="/statut">{ui.statut}</Link>
+          </p>
+        </div>
+      </aside>
+
+      <div className="aide-main">
       <div className="aide-recherche">
         <input
           type="search"
@@ -81,21 +101,6 @@ export default function AideContent() {
         ))
       )}
 
-      <div className="aide-contact">
-        <p>
-          <Link href="/statut">{ui.statut}</Link>
-        </p>
-        <strong>{ui.pasTrouve}</strong>
-        <p>
-          {ui.ecrire} <a href={`mailto:${LEGAL.courrielContact}`}>{LEGAL.courrielContact}</a>
-          <br />
-          <Link href="/contact">{ui.contact}</Link>
-        </p>
-        <p style={{ marginTop: "10px" }}>
-          <Link href="/aide/tickets" className="aide-ticket-lien">
-            {ui.ticket}
-          </Link>
-        </p>
       </div>
     </div>
   );
