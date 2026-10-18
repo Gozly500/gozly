@@ -89,7 +89,8 @@
    thème foncé, donc tout ce qu'elles contiennent (textes, survols, menus) reste
    lisible sans autre règle. */
 [data-theme="clair"] .dash-sidebar,
-[data-theme="clair"] .moi-tabbar{
+[data-theme="clair"] .moi-tabbar,
+[data-theme="clair"] .moi-header{
     --w: 255,255,255;
     --fg: #fff;
     --text: #f2f0ff;
@@ -2100,7 +2101,7 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
     width:100%;box-sizing:border-box;z-index:5;
     padding:16px;font-size:15px;font-weight:700;text-align:center;border-radius:0;
     background:linear-gradient(160deg,#2a2a8f,#191960);
-    border:none;border-top:1px solid rgba(var(--w),0.15);color:var(--fg);
+    border:none;border-top:1px solid rgba(var(--w),0.15);color:#fff;
   }
 
 .moi-notifications-bar{padding:0 0 10px;}

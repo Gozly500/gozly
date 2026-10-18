@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import ChargementAnimation from "@/components/moi/ChargementAnimation";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
-import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconPlanning, IconParametres, IconCommandes } from "@/components/icons/GozlyIcons";
+import { IconHoraire, IconDiscussion, IconDemande, IconMenu, IconTemperature, IconPlanning, IconCommandes } from "@/components/icons/GozlyIcons";
+import { IconEngrenage } from "@/components/icons/Pictogrammes";
 import MoiChargement from "@/components/moi/MoiChargement";
 import { repareAbonnementPush } from "@/components/moi/NotificationsPush";
 import AnnoncesBandeau from "@/components/moi/AnnoncesBandeau";
@@ -113,7 +114,7 @@ export default function MoiShell({ children }) {
             onClick={() => router.push("/moi/parametres")}
             aria-label={t("nav.parametres")}
           >
-            <IconParametres className="gozly-icon" />
+            <IconEngrenage className="gozly-icon" />
           </button>
           <ClocheAnnonces />
         </div>
