@@ -42,7 +42,17 @@ async function contexte(request, conversationId) {
   // Groupe créé avant les rôles (aucun administrateur) : le membre le plus ancien l'est, et on le mémorise.
   // S'il y a des gens du tableau de bord dans le groupe, ils gèrent le groupe de leur côté : personne à élire.
   if (!membres.some((p) => p.est_admin || p.user_id)) {
-    const elu = [...membres].sort((a, b) => String(a.ajoute_le).localeCompare(String(b.ajoute_le)) || String(a.id).localeCompare(String(b.id)))[0];
+    // Le créateur n'est pas enregistré pour ces anciens groupes : on choisit l'auteur du premier message (souvent lui),
+    // sinon le membre le plus ancien.
+    const { data: premier } = await service
+      .from("messages")
+      .select("employe_id")
+      .eq("conversation_id", conversationId)
+      .not("employe_id", "is", null)
+      .order("created_at", { ascending: true })
+      .limit(1);
+    const auteur = membres.find((p) => p.employe_id && p.employe_id === premier?.[0]?.employe_id);
+    const elu = auteur || [...membres].sort((a, b) => String(a.ajoute_le).localeCompare(String(b.ajoute_le)) || String(a.id).localeCompare(String(b.id)))[0];
     if (elu) {
       elu.est_admin = true;
       await service.from("conversation_participants").update({ est_admin: true }).eq("id", elu.id);
