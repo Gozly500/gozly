@@ -45,6 +45,7 @@ export default function Footer() {
           <Link href="/conditions">{t("footer.conditions")}</Link>
           <Link href="/confidentialite">{t("footer.confidentialite")}</Link>
           <Link href="/scattegories">{t("footer.scat")}</Link>
+          <Link href="/annonces">{t("footer.annonces")}</Link>
           <Link href="/aide">{t("footer.aide")}</Link>
           <Link href="/statut">{t("footer.statut")}</Link>
           <LangFooterLink />

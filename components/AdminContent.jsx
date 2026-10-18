@@ -8,11 +8,13 @@ import ClientsSection from "@/components/admin/ClientsSection";
 import AdminsSection from "@/components/admin/AdminsSection";
 import DiscordSection from "@/components/admin/DiscordSection";
 import SupportSection from "@/components/admin/SupportSection";
-import { IconBouclier, IconDiscord, IconFlecheGauche, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
+import AnnoncesSiteSection from "@/components/admin/AnnoncesSiteSection";
+import { IconBouclier, IconDiscord, IconFlecheGauche, IconMegaphone, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
 
 const TABS = [
   { id: "clients", label: "Clients", Icone: IconProfils },
   { id: "support", label: "Support", Icone: IconMessage },
+  { id: "annonces", label: "Annonces", Icone: IconMegaphone },
   { id: "discord", label: "Discord", Icone: IconDiscord },
   { id: "admins", label: "Équipe admin", Icone: IconBouclier },
 ];
@@ -24,7 +26,7 @@ const SOUS_MENUS = {
     { id: "contact", label: "Formulaire de contact" },
   ],
   discord: [
-    { id: "annonces", label: "Annonces" },
+    { id: "annonces", label: "Messages" },
     { id: "votes", label: "Référendums" },
     { id: "bot", label: "Bot" },
   ],
@@ -168,6 +170,7 @@ export default function AdminContent() {
       <div className="settings-panel">
         {activeTab === "clients" && <ClientsSection />}
         {activeTab === "support" && <SupportSection sous={sous} />}
+        {activeTab === "annonces" && <AnnoncesSiteSection />}
         {activeTab === "discord" && <DiscordSection sous={sous} />}
         {activeTab === "admins" && <AdminsSection currentEmail={email} />}
       </div>

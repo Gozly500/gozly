@@ -20,6 +20,7 @@ import { WIDGETS, fusionnerConfigWidgets } from "@/lib/dashboardWidgets";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconEcran, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
+import BandeauAnnonce from "@/components/BandeauAnnonce";
 
 export default function DashboardContent() {
   const { t } = useT();
@@ -281,6 +282,8 @@ export default function DashboardContent() {
               </Link>
             </div>
           )}
+
+          <BandeauAnnonce />
 
           <header
             className="dash-hero-inline"

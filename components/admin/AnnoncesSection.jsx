@@ -121,7 +121,7 @@ export default function AnnoncesSection() {
 
   return (
     <div>
-      <h2>Annonces</h2>
+      <h2>Messages Discord</h2>
       <p className="panel-hint">Envoie un message de Gozyx dans le salon de ton choix : annonce, nouveauté, rappel...</p>
 
       {!donnees.configure && (
