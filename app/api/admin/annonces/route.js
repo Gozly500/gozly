@@ -33,7 +33,7 @@ export async function GET(request) {
 
 // POST (JSON ou formulaire avec une image jointe : { donnees: "<json>", image: <fichier> })
 //   donnees : { action: "creer" | "modifier" | "supprimer" | "discord", id?, titre, contenu, publie, retirerImage,
-//               discord: { envoyer: boolean, canalId } }
+//               discord: { envoyer: boolean, canalId, roleIds: [rôles à notifier] } }
 export async function POST(request) {
   const { errorStatus, errorMessage, user } = await requireAdmin(request);
   if (errorStatus) return NextResponse.json({ error: errorMessage }, { status: errorStatus });
@@ -79,7 +79,7 @@ export async function POST(request) {
       const a = await charger(c.id);
       if (!a) return NextResponse.json({ error: "Annonce introuvable." }, { status: 404 });
       if (!a.publie) return NextResponse.json({ error: "Publie l'annonce avant de l'envoyer dans Discord (le lien mènerait à une page vide)." }, { status: 409 });
-      const r = await publierSurDiscord(service, a, c.canalId);
+      const r = await publierSurDiscord(service, a, c.canalId, c.roleIds);
       return NextResponse.json({ ok: true, ...r });
     }
 
@@ -126,7 +126,7 @@ export async function POST(request) {
       if (!annonce.publie) discordInfo = { erreur: "Brouillon : non envoyé dans Discord." };
       else {
         try {
-          discordInfo = await publierSurDiscord(service, annonce, c.discord.canalId);
+          discordInfo = await publierSurDiscord(service, annonce, c.discord.canalId, c.discord.roleIds);
         } catch (e) {
           discordInfo = { erreur: String(e.message).replace(process.env.DISCORD_BOT_TOKEN || "\0", "***").slice(0, 200) };
         }

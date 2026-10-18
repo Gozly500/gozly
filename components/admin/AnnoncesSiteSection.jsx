@@ -23,6 +23,8 @@ export default function AnnoncesSiteSection() {
   const entreeFichier = useRef(null);
   const [etat, setEtat] = useState({ chargement: true, annonces: [], discordConfigure: false, canalParDefaut: null, erreur: "" });
   const [salons, setSalons] = useState([]);
+  const [rolesNotif, setRolesNotif] = useState([]); // rôles dont le nom contient « Notif » (proposés à la mention)
+  const [rolesChoisis, setRolesChoisis] = useState([]);
   const [form, setForm] = useState(VIDE);
   const [fichier, setFichier] = useState(null);
   const [apercu, setApercu] = useState("");
@@ -43,7 +45,11 @@ export default function AnnoncesSiteSection() {
       if (json.discordConfigure) {
         const r2 = await fetch("/api/admin/discord-messages", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
         const j2 = await r2.json().catch(() => ({}));
-        if (r2.ok) setSalons(j2.salons || []);
+        if (r2.ok) {
+          setSalons(j2.salons || []);
+          const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          setRolesNotif((j2.roles || []).filter((r) => norm(r.nom).includes("notif")));
+        }
       }
     } catch (e) {
       setEtat((s) => ({ ...s, chargement: false, erreur: e.message }));
@@ -81,6 +87,7 @@ export default function AnnoncesSiteSection() {
     setApercu("");
     setRetirerImage(false);
     setVersDiscord(false);
+    setRolesChoisis([]);
   }
 
   function modifier(a) {
@@ -124,12 +131,12 @@ export default function AnnoncesSiteSection() {
           contenu: form.contenu,
           publie: form.publie,
           retirerImage,
-          discord: versDiscord ? { envoyer: true, canalId: canal } : null,
+          discord: versDiscord ? { envoyer: true, canalId: canal, roleIds: rolesChoisis } : null,
         },
         fichier
       );
       let message = form.id ? "Annonce enregistrée." : form.publie ? "Annonce publiée sur le site." : "Brouillon enregistré.";
-      if (json.discord) message += json.discord.erreur ? ` Discord : ${json.discord.erreur}` : json.discord.misAJour ? " Message Discord mis à jour." : " Envoyée aussi dans Discord.";
+      if (json.discord) message += json.discord.erreur ? ` Discord : ${json.discord.erreur}` : json.discord.misAJour ? " Message Discord mis à jour." : json.discord.notifies ? ` Envoyée aussi dans Discord (${json.discord.notifies} rôle${json.discord.notifies > 1 ? "s" : ""} notifié${json.discord.notifies > 1 ? "s" : ""}).` : " Envoyée aussi dans Discord (sans notification).";
       setEnvoi({ occupe: false, ok: !json.discord?.erreur, message });
       reinitialiser();
       charger();
@@ -225,6 +232,33 @@ export default function AnnoncesSiteSection() {
                 <span>Envoyer aussi dans Discord (message de Gozyx avec un lien vers l'annonce)</span>
               </label>
               {versDiscord && <MenuAdmin options={optionsSalons} value={canal} onChange={setCanal} placeholder="Choisir un salon Discord..." />}
+              {versDiscord && (
+                <div>
+                  <div className="admin-row-sub" style={{ marginBottom: "6px" }}>
+                    Notifier (facultatif)
+                  </div>
+                  {rolesNotif.length === 0 ? (
+                    <p className="aide-note">Aucun rôle « Notif… » trouvé sur le serveur. Crée des rôles dont le nom contient « Notif » (par exemple « Notif Annonce ») : ils apparaîtront ici.</p>
+                  ) : (
+                    <div className="annonce-roles">
+                      {rolesNotif.map((r) => {
+                        const actif = rolesChoisis.includes(r.id);
+                        return (
+                          <button
+                            key={r.id}
+                            type="button"
+                            className={actif ? "actif" : ""}
+                            aria-pressed={actif}
+                            onClick={() => setRolesChoisis((l) => (actif ? l.filter((x) => x !== r.id) : [...l, r.id]))}
+                          >
+                            @{r.nom}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
 
@@ -268,7 +302,15 @@ export default function AnnoncesSiteSection() {
                 Modifier
               </button>
               {etat.discordConfigure && a.publie && (
-                <button type="button" className="admin-icon-btn" onClick={() => envoyerDiscord(a)}>
+                <button
+                  type="button"
+                  className="admin-icon-btn"
+                  onClick={() => {
+                    if (a.discord_message_id) return envoyerDiscord(a);
+                    modifier(a); // pas encore dans Discord : on ouvre le formulaire pour choisir le salon et les rôles à notifier
+                    setVersDiscord(true);
+                  }}
+                >
                   {a.discord_message_id ? "Mettre à jour Discord" : "Envoyer dans Discord"}
                 </button>
               )}
