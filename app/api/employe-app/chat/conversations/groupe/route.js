@@ -49,9 +49,12 @@ export async function POST(request) {
     return NextResponse.json({ error: "Impossible de créer le groupe." }, { status: 500 });
   }
 
-  const { error: erreurParticipants } = await service
+  // Le créateur est administrateur du groupe (colonne de supabase/chat_groupes_gestion.sql : sans elle, on crée sans rôle).
+  const lignes = [employe.id, ...ids].map((employeId) => ({ conversation_id: conversationId, employe_id: employeId }));
+  let { error: erreurParticipants } = await service
     .from("conversation_participants")
-    .insert([employe.id, ...ids].map((employeId) => ({ conversation_id: conversationId, employe_id: employeId })));
+    .insert(lignes.map((l) => (l.employe_id === employe.id ? { ...l, est_admin: true } : l)));
+  if (erreurParticipants) ({ error: erreurParticipants } = await service.from("conversation_participants").insert(lignes));
   if (erreurParticipants) {
     console.error("Erreur participants du groupe:", erreurParticipants.message);
     await service.from("conversations").delete().eq("id", conversationId);

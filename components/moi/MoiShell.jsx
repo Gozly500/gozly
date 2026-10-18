@@ -11,6 +11,7 @@ import AnnoncesBandeau from "@/components/moi/AnnoncesBandeau";
 import ClocheAnnonces from "@/components/moi/ClocheAnnonces";
 import { AnnoncesProvider } from "@/components/moi/AnnoncesContext";
 import { useLangue } from "@/components/moi/LangueContext";
+import PastilleMessages from "@/components/moi/PastilleMessages";
 
 // L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
 // en haut à gauche (voir le <header> plus bas).
@@ -130,7 +131,10 @@ export default function MoiShell({ children }) {
             className={`moi-tab${pathname === o.href ? " active" : ""}`}
             onClick={() => allerA(o.href)}
           >
-            <span className="moi-tab-icon">{o.Icone ? <o.Icone className="gozly-icon" /> : o.icon}</span>
+            <span className="moi-tab-icon">
+              {o.Icone ? <o.Icone className="gozly-icon" /> : o.icon}
+              {o.id === "discussion" && <PastilleMessages />}
+            </span>
             <span>{t(o.cle)}</span>
           </button>
         ))}

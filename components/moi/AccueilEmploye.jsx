@@ -13,6 +13,7 @@ import {
 } from "@/components/icons/GozlyIcons";
 import PointageMobileBloc from "@/components/moi/PointageMobileBloc";
 import { useLangue } from "@/components/moi/LangueContext";
+import PastilleMessages from "@/components/moi/PastilleMessages";
 
 // Les 3 pages de base, en petites cases sur une seule ligne.
 const PRINCIPAUX = [
@@ -57,6 +58,7 @@ export default function AccueilEmploye() {
           <button key={r.id} type="button" className="moi-accueil-card petite" onClick={() => router.push(r.href)}>
             <span className="moi-accueil-card-icon">
               <r.Icone className="gozly-icon" />
+              {r.id === "discussion" && <PastilleMessages />}
             </span>
             <span>{t(r.cle)}</span>
           </button>

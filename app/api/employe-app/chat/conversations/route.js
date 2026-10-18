@@ -32,14 +32,24 @@ export async function GET(request) {
 
   const conversationIds = [equipeId, ...privesIds];
 
-  const { data: dernierMessages } = await service
+  // Les messages « système » (quitté, ajouté…) ne comptent ni comme aperçu ni comme non lus. La colonne vient de
+  // supabase/chat_groupes_gestion.sql : tant qu'elle n'existe pas, on relit sans elle.
+  let { data: dernierMessages, error: erreurSysteme } = await service
     .from("messages")
-    .select("conversation_id, contenu, created_at, employe_id")
+    .select("conversation_id, contenu, created_at, employe_id, systeme")
     .in("conversation_id", conversationIds)
     .order("created_at", { ascending: false });
+  if (erreurSysteme) {
+    ({ data: dernierMessages } = await service
+      .from("messages")
+      .select("conversation_id, contenu, created_at, employe_id")
+      .in("conversation_id", conversationIds)
+      .order("created_at", { ascending: false }));
+  }
 
   const dernierParConversation = {};
   for (const m of dernierMessages || []) {
+    if (m.systeme) continue;
     if (!dernierParConversation[m.conversation_id]) dernierParConversation[m.conversation_id] = m;
   }
 

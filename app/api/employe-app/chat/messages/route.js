@@ -80,6 +80,7 @@ async function resoudreNoms(service, messages, employeIdCourant) {
       expediteurNom: expediteurNom(m),
       deMoi: m.employe_id === employeIdCourant,
       demandeEchangeId: m.demande_echange_id || null,
+      systeme: m.systeme || null, // message d'information d'un groupe (quitté, ajouté…)
       reponse: parent
         ? { auteur: expediteurNom(parent), deMoi: parent.employe_id === employeIdCourant, contenu: String(parent.contenu).slice(0, 140) }
         : null,

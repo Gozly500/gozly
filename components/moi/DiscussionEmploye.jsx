@@ -67,6 +67,14 @@ export default function DiscussionEmploye() {
   const [echFin, setEchFin] = useState("");
   const [echangeBusy, setEchangeBusy] = useState(false);
   const [echangeErreur, setEchangeErreur] = useState("");
+  // Gestion d'un groupe : membres, rôle, ajout / retrait.
+  const [membres, setMembres] = useState(null); // null = pas chargés
+  const [suisAdmin, setSuisAdmin] = useState(false);
+  const [membresOuvert, setMembresOuvert] = useState(false);
+  const [ajoutIds, setAjoutIds] = useState(() => new Set());
+  const [gestionBusy, setGestionBusy] = useState(false);
+  const [gestionErreur, setGestionErreur] = useState("");
+  const [retraitConfirmeId, setRetraitConfirmeId] = useState(null);
   const presence = useChatPresence(vue === "thread" ? activeId : null, async (corps) => {
     const res = await employeFetch("/api/employe-app/chat/presence", { method: "POST", body: JSON.stringify(corps) });
     return res.ok ? res.json() : null;
@@ -97,6 +105,82 @@ export default function DiscussionEmploye() {
   }, []);
 
   vueRef.current = vue;
+
+  const estGroupeActif = conversationActive?.type === "groupe";
+  const nbSysteme = messages.filter((m) => m.systeme).length;
+  useEffect(() => {
+    setMembres(null);
+    setMembresOuvert(false);
+  }, [activeId]);
+  // Les membres se rechargent à l'ouverture du groupe et chaque fois qu'un message d'information arrive (quelqu'un part, est ajouté…).
+  useEffect(() => {
+    if (!activeId || !estGroupeActif) return;
+    let ignore = false;
+    employeFetch(`/api/employe-app/chat/conversations/groupe/gerer?conversationId=${activeId}`)
+      .then(async (res) => {
+        if (!res.ok || ignore) return;
+        const data = await res.json();
+        setMembres(data.membres || []);
+        setSuisAdmin(!!data.suisAdmin);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, [activeId, estGroupeActif, nbSysteme]);
+
+  async function gererGroupe(corps) {
+    if (gestionBusy || !activeId) return false;
+    setGestionBusy(true);
+    setGestionErreur("");
+    try {
+      const res = await employeFetch("/api/employe-app/chat/conversations/groupe/gerer", { method: "POST", body: JSON.stringify({ conversationId: activeId, ...corps }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setGestionErreur(data.error || t("chat.gestionErreur"));
+        setGestionBusy(false);
+        return false;
+      }
+      const rafraichi = await employeFetch(`/api/employe-app/chat/conversations/groupe/gerer?conversationId=${activeId}`);
+      if (rafraichi.ok) {
+        const d = await rafraichi.json();
+        setMembres(d.membres || []);
+        setSuisAdmin(!!d.suisAdmin);
+      }
+      chargerMessages(activeId);
+    } catch {
+      setGestionErreur(t("chat.gestionErreur"));
+      setGestionBusy(false);
+      return false;
+    }
+    setGestionBusy(false);
+    return true;
+  }
+
+  async function ajouterAuGroupe() {
+    if (ajoutIds.size === 0) return;
+    if (await gererGroupe({ action: "ajouter", employeIds: [...ajoutIds] })) setAjoutIds(new Set());
+  }
+
+  function texteSysteme(s) {
+    const noms = Array.isArray(s.noms) ? s.noms.join(", ") : "";
+    switch (s.type) {
+      case "quitte":
+        return t("chat.sysQuitte", { nom: s.nom });
+      case "ajoute":
+        return t("chat.sysAjoute", { acteur: s.acteur, noms });
+      case "retire":
+        return t("chat.sysRetire", { acteur: s.acteur, nom: s.nom });
+      case "admin":
+        return t("chat.sysAdmin", { acteur: s.acteur, nom: s.nom });
+      case "adminRetire":
+        return t("chat.sysAdminRetire", { acteur: s.acteur, nom: s.nom });
+      case "adminAuto":
+        return t("chat.sysAdminAuto", { nom: s.nom });
+      default:
+        return "";
+    }
+  }
 
   function marquerLu(conversationId, dateIso) {
     if (!dateIso) return;
@@ -418,10 +502,13 @@ export default function DiscussionEmploye() {
     setSuppressionBusy(true);
     setSuppressionErreur("");
     try {
-      const res = await employeFetch("/api/employe-app/chat/conversations/masquer", { method: "POST", body: JSON.stringify({ conversationId: activeId }) });
+      // Un groupe se quitte pour de vrai (les autres le voient) ; une discussion directe se supprime seulement de mon côté.
+      const res = estGroupeActif
+        ? await employeFetch("/api/employe-app/chat/conversations/groupe/gerer", { method: "POST", body: JSON.stringify({ conversationId: activeId, action: "quitter" }) })
+        : await employeFetch("/api/employe-app/chat/conversations/masquer", { method: "POST", body: JSON.stringify({ conversationId: activeId }) });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setSuppressionErreur(data.error || t("chat.supprimerErreur"));
+        setSuppressionErreur(data.error || t(estGroupeActif ? "chat.quitterErreur" : "chat.supprimerErreur"));
       } else {
         setSuppressionOuverte(false);
         setActiveId(null);
@@ -430,7 +517,7 @@ export default function DiscussionEmploye() {
         chargerConversations();
       }
     } catch {
-      setSuppressionErreur(t("chat.supprimerErreur"));
+      setSuppressionErreur(t(estGroupeActif ? "chat.quitterErreur" : "chat.supprimerErreur"));
     }
     setSuppressionBusy(false);
   }
@@ -564,7 +651,14 @@ export default function DiscussionEmploye() {
               <button type="button" className="admin-icon-btn" onClick={() => setVue("liste")}>
                 <IconFlecheGauche className="gozly-icon" />
               </button>
-              <strong style={{ fontSize: "14px" }}>{activeTitre}</strong>
+              {estGroupeActif ? (
+                <button type="button" className="chat-titre-groupe" onClick={() => { setGestionErreur(""); setRetraitConfirmeId(null); setMembresOuvert(true); }}>
+                  <strong>{activeTitre}</strong>
+                  {membres && <small>{t("chat.nbMembres", { n: membres.length })}</small>}
+                </button>
+              ) : (
+                <strong style={{ fontSize: "14px" }}>{activeTitre}</strong>
+              )}
               {conversationActive && (
                 <button type="button" className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={basculerSourdine}>
                   {conversationActive.sourdine ? (
@@ -585,7 +679,7 @@ export default function DiscussionEmploye() {
                     setSuppressionOuverte(true);
                   }}
                 >
-                  {t("chat.supprimer")}
+                  {t(estGroupeActif ? "chat.quitter" : "chat.supprimer")}
                 </button>
               )}
             </div>
@@ -604,7 +698,12 @@ export default function DiscussionEmploye() {
                 const directe = conversations.find((c) => c.id === activeId)?.type === "directe";
                 return (
                   <>
-                    {messages.map((m) => (
+                    {messages.map((m) =>
+                      m.systeme ? (
+                        <div key={m.id} className="chat-systeme">
+                          {texteSysteme(m.systeme)}
+                        </div>
+                      ) : (
                       <div key={m.id} style={{ display: "flex", flexDirection: "column" }}>
                         <BulleMessage
                           m={{
@@ -630,12 +729,14 @@ export default function DiscussionEmploye() {
                           <LigneVu vu={libelleVu({ vus: presence.vus, dernierMessageIso: m.createdAt, directe, textes: textesChat })} />
                         )}
                       </div>
-                    ))}
+                      )
+                    )}
                     <IndicateurEcriture ecrivent={presence.ecrivent} textes={textesChat} />
                   </>
                 );
               })()}
             </div>
+            {estGroupeActif && membres && membres.length === 1 && <p className="chat-empty" style={{ padding: "6px 14px" }}>{t("chat.seulDansGroupe")}</p>}
             {repondreA && (
               <div className="chat-reponse-banniere">
                 <span>
@@ -906,20 +1007,111 @@ export default function DiscussionEmploye() {
         </div>
       )}
 
+      {membresOuvert && estGroupeActif && (
+        <div className="modal-overlay" onClick={() => setMembresOuvert(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("chat.membresTitre")}</h3>
+              <button className="admin-icon-btn" onClick={() => setMembresOuvert(false)}>
+                {t("nav.fermer")}
+              </button>
+            </div>
+            {gestionErreur && <p className="settings-msg err">{gestionErreur}</p>}
+            {membres === null ? (
+              <ChargementAnimation />
+            ) : (
+              <>
+                <div>
+                  {membres.map((mb) => (
+                    <div className="chat-membre-row" key={mb.type + mb.id}>
+                      <span className="chat-membre-nom">
+                        {mb.nom}
+                        {mb.moi ? ` (${String(t("chat.toi")).toLowerCase()})` : ""}
+                      </span>
+                      {mb.estAdmin && <span className="chat-membre-badge">{t("chat.admin")}</span>}
+                      {suisAdmin && !mb.moi && mb.type === "employe" && (
+                        <span className="chat-membre-actions">
+                          <button type="button" className="admin-icon-btn" disabled={gestionBusy} onClick={() => gererGroupe({ action: "admin", employeId: mb.id, admin: !mb.estAdmin })}>
+                            {t(mb.estAdmin ? "chat.retirerAdmin" : "chat.nommerAdmin")}
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-icon-btn danger"
+                            disabled={gestionBusy}
+                            onClick={() => {
+                              if (retraitConfirmeId === mb.id) {
+                                setRetraitConfirmeId(null);
+                                gererGroupe({ action: "retirer", employeId: mb.id });
+                              } else setRetraitConfirmeId(mb.id);
+                            }}
+                          >
+                            {t(retraitConfirmeId === mb.id ? "chat.confirmerRetrait" : "chat.retirer")}
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="section-hint" style={{ margin: "14px 0 6px" }}>
+                  {t("chat.ajouterMembres")}
+                </p>
+                {(() => {
+                  const dedans = new Set(membres.filter((x) => x.type === "employe").map((x) => x.id));
+                  const aAjouter = tous.filter((c) => !dedans.has(c.id));
+                  if (aAjouter.length === 0) return <p className="chat-empty">{t("chat.tousDansGroupe")}</p>;
+                  return (
+                    <>
+                      <div className="moi-picker-list">
+                        {aAjouter.map((c) => (
+                          <label className="moi-picker-row" key={c.id} style={{ cursor: "pointer" }}>
+                            <span>{c.nom}</span>
+                            <input
+                              type="checkbox"
+                              checked={ajoutIds.has(c.id)}
+                              onChange={() =>
+                                setAjoutIds((prev) => {
+                                  const suivant = new Set(prev);
+                                  if (suivant.has(c.id)) suivant.delete(c.id);
+                                  else suivant.add(c.id);
+                                  return suivant;
+                                })
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <button type="button" className="submit-btn" style={{ width: "100%", marginTop: "10px" }} disabled={gestionBusy || ajoutIds.size === 0} onClick={ajouterAuGroupe}>
+                        {t("chat.ajouterConfirmer")}
+                      </button>
+                    </>
+                  );
+                })()}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {suppressionOuverte && (
         <div className="modal-overlay" onClick={() => !suppressionBusy && setSuppressionOuverte(false)}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <h3>{t("chat.supprimerTitre")}</h3>
+              <h3>{t(estGroupeActif ? "chat.quitterTitre" : "chat.supprimerTitre")}</h3>
             </div>
-            <p className="panel-hint">{t("chat.supprimerTexte")}</p>
+            <p className="panel-hint">
+              {estGroupeActif
+                ? membres && membres.length === 1
+                  ? t("chat.quitterTexteDernier")
+                  : t("chat.quitterTexte") + (suisAdmin ? " " + t("chat.quitterTexteAdmin") : "")
+                : t("chat.supprimerTexte")}
+            </p>
             {suppressionErreur && <p className="settings-msg err">{suppressionErreur}</p>}
             <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
               <button type="button" className="admin-icon-btn" style={{ flex: 1 }} disabled={suppressionBusy} onClick={() => setSuppressionOuverte(false)}>
                 {t("nav.fermer")}
               </button>
               <button type="button" className="submit-btn" style={{ flex: 1 }} disabled={suppressionBusy} onClick={supprimerConversation}>
-                {t("chat.supprimerOui")}
+                {t(estGroupeActif ? "chat.quitterOui" : "chat.supprimerOui")}
               </button>
             </div>
           </div>
