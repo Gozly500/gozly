@@ -6,6 +6,7 @@ import DashSidebar from "@/components/DashSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { sonosApi, ETATS_LECTURE } from "@/lib/sonosClient";
+import { CONTENU_DEMO, appliquerDemo, etatDemo } from "@/lib/sonosDemo";
 import SimpleSelect from "@/components/SimpleSelect";
 import { useT } from "@/components/LangProvider";
 
@@ -80,6 +81,7 @@ export default function MusiqueContent() {
   const [occupe, setOccupe] = useState(false);
   const [deliageConfirme, setDeliageConfirme] = useState(false);
   const contenuCharge = useRef(false);
+  const [demo, setDemo] = useState(false); // ?demo=1 : faux haut-parleurs pour voir la page sans compte Sonos
 
   useEffect(() => {
     let ignore = false;
@@ -115,6 +117,14 @@ export default function MusiqueContent() {
     };
   }, [router]);
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("demo") === "1") {
+      setDemo(true);
+      setEtat(etatDemo());
+      setContenu(CONTENU_DEMO);
+    }
+  }, []);
+
   // Retour de la page de connexion Sonos (?sonos=ok | refuse | erreur).
   useEffect(() => {
     const resultat = new URLSearchParams(window.location.search).get("sonos");
@@ -128,7 +138,7 @@ export default function MusiqueContent() {
   }, []);
 
   async function chargerEtat() {
-    if (!entrepriseId) return;
+    if (!entrepriseId || demo) return;
     const r = await sonosApi(`/api/sonos/etat?entrepriseId=${entrepriseId}`);
     if (r.ok) {
       setEtat(r.data);
@@ -144,15 +154,19 @@ export default function MusiqueContent() {
   }
 
   useEffect(() => {
-    if (!entrepriseId) return;
+    if (!entrepriseId || demo) return;
     chargerEtat();
     const id = setInterval(() => {
       if (document.visibilityState === "visible") chargerEtat();
     }, 8000);
     return () => clearInterval(id);
-  }, [entrepriseId]);
+  }, [entrepriseId, demo]);
 
   async function agir(corps) {
+    if (demo) {
+      setEtat((e) => appliquerDemo(e, corps));
+      return;
+    }
     setOccupe(true);
     setMessage(null);
     const r = await sonosApi("/api/sonos/commande", { method: "POST", body: { entrepriseId, ...corps } });
@@ -219,6 +233,7 @@ export default function MusiqueContent() {
             </div>
           </header>
 
+          {demo && <p className="settings-msg ok">{t("Mode démonstration : de faux haut-parleurs, rien n'est envoyé à Sonos.")}</p>}
           {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
 
           {!entrepriseId ? (
