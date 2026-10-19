@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { estConforme, creneauActuel } from "@/lib/temperature";
+import { chargerEquipements } from "@/lib/equipementsTemperature";
 
 export async function GET(request) {
   const employe = await verifierSession(getBearerToken(request));
@@ -17,11 +18,7 @@ export async function GET(request) {
     .eq("employe_id", employe.id);
   const mesEmplacementIds = (associations || []).map((a) => a.emplacement_id);
 
-  const { data: equipements } = await service
-    .from("equipements_temperature")
-    .select("*")
-    .eq("entreprise_id", employe.entreprise_id)
-    .order("nom", { ascending: true });
+  const equipements = await chargerEquipements(service, employe.entreprise_id);
 
   // Un équipement sans succursale (emplacement_id null) est partagé/visible
   // par tous - sinon, seulement les employés associés à cette succursale.

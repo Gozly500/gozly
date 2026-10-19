@@ -11,6 +11,7 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 import TemperatureInput from "@/components/TemperatureInput";
 import { telechargerPdfTemperatures } from "@/lib/exportPdf";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
+import { chargerEquipements } from "@/lib/equipementsTemperature";
 import { IconAttention, IconCrochet, IconEngrenage, IconFlecheBas, IconFlecheHaut, IconPoint, IconTelecharger } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
@@ -90,11 +91,7 @@ export default function TemperatureContent() {
     setLoadingDonnees(true);
     const [{ data: emps }, { data: eqs }, { data: relevesJour }, hist] = await Promise.all([
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
-      supabase
-        .from("equipements_temperature")
-        .select("*")
-        .eq("entreprise_id", entrepriseId)
-        .order("nom", { ascending: true }),
+      chargerEquipements(supabase, entrepriseId).then((data) => ({ data })),
       supabase.from("releves_temperature").select("*").eq("entreprise_id", entrepriseId).eq("date_relevee", creneau.date),
       chargerTousLesReleves(),
     ]);

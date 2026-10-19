@@ -6,6 +6,8 @@ import DashSidebar from "@/components/DashSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { TYPES_EQUIPEMENT, UNITES } from "@/lib/temperature";
+import { chargerEquipements } from "@/lib/equipementsTemperature";
+import { IconFlecheBas, IconFlecheHaut } from "@/components/icons/Pictogrammes";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import SimpleSelect from "@/components/SimpleSelect";
 import { useT } from "@/components/LangProvider";
@@ -79,7 +81,7 @@ export default function TemperatureEquipementsContent() {
     setLoadingDonnees(true);
     const [{ data: emps }, { data: eqs }] = await Promise.all([
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
-      supabase.from("equipements_temperature").select("*").eq("entreprise_id", entrepriseId).order("nom", { ascending: true }),
+      chargerEquipements(supabase, entrepriseId).then((data) => ({ data })),
     ]);
     setEmplacements(emps || []);
     setEquipements(eqs || []);
@@ -94,8 +96,11 @@ export default function TemperatureEquipementsContent() {
   async function handleAddEquipement(e) {
     e.preventDefault();
     if (!nomEquipement.trim()) return;
+    // Un nouvel équipement se place à la fin de la liste.
+    const dernierOrdre = equipements.reduce((max, x) => Math.max(max, x.ordre || 0), 0);
     await supabase.from("equipements_temperature").insert({
       entreprise_id: entrepriseId,
+      ordre: Math.max(dernierOrdre, equipements.length) + 1,
       nom: nomEquipement.trim(),
       type: typeEquipement,
       unite: uniteEquipement,
@@ -111,6 +116,22 @@ export default function TemperatureEquipementsContent() {
   async function handleDeleteEquipement(id) {
     await supabase.from("equipements_temperature").delete().eq("id", id);
     load();
+  }
+
+  // Monte (-1) ou descend (+1) un équipement : on renumérote toute la liste (1, 2, 3...) pour ne jamais
+  // dépendre d'anciens numéros en double (comme les catégories de tâches).
+  async function deplacer(index, sens) {
+    const cible = index + sens;
+    if (cible < 0 || cible >= equipements.length) return;
+    const nouvelle = [...equipements];
+    [nouvelle[index], nouvelle[cible]] = [nouvelle[cible], nouvelle[index]];
+    const avecOrdre = nouvelle.map((x, i) => ({ ...x, ordre: i + 1 }));
+    setEquipements(avecOrdre); // affichage immédiat
+    await Promise.all(
+      avecOrdre
+        .filter((x, i) => x.id !== equipements[i]?.id || x.ordre !== equipements[i]?.ordre)
+        .map((x) => supabase.from("equipements_temperature").update({ ordre: x.ordre }).eq("id", x.id))
+    );
   }
 
   function startEdit(eq) {
@@ -164,7 +185,7 @@ export default function TemperatureEquipementsContent() {
               <div className="settings-section">
                 <h3>{tr("Équipements")}</h3>
                 <div className="admin-list" style={{ marginTop: "14px", maxWidth: "560px" }}>
-                  {equipements.map((eq) => (
+                  {equipements.map((eq, index) => (
                     <div className="admin-row" style={{ flexDirection: "column", alignItems: "stretch" }} key={eq.id}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
                         <div className="admin-row-main">
@@ -186,6 +207,18 @@ export default function TemperatureEquipementsContent() {
                             </>
                           ) : (
                             <>
+                              <button className="admin-icon-btn" onClick={() => deplacer(index, -1)} disabled={index === 0} title={tr("Monter")} aria-label={tr("Monter l'équipement")}>
+                                <IconFlecheHaut className="gozly-icon" />
+                              </button>
+                              <button
+                                className="admin-icon-btn"
+                                onClick={() => deplacer(index, 1)}
+                                disabled={index === equipements.length - 1}
+                                title={tr("Descendre")}
+                                aria-label={tr("Descendre l'équipement")}
+                              >
+                                <IconFlecheBas className="gozly-icon" />
+                              </button>
                               <button className="admin-icon-btn" onClick={() => startEdit(eq)}>
                                 {tr("Modifier")}
                               </button>
