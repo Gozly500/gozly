@@ -266,3 +266,12 @@ export function IconEtatProbleme(props) {
     </svg>
   );
 }
+
+// Module Musique (note de musique).
+export function IconMusique(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <path d="M9 3v10.55A4 4 0 1 0 11 17V7h6V3H9z" />
+    </svg>
+  );
+}

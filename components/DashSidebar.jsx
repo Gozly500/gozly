@@ -18,6 +18,7 @@ import {
   IconVentes,
   IconTemperature,
   IconCommandes,
+  IconMusique,
 } from "@/components/icons/GozlyIcons";
 import { IconBouclier, IconCategorie, IconEchange, IconEngrenage, IconFlecheDroite, IconFlecheGauche, IconMaison } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
@@ -29,6 +30,7 @@ const ICONES_MODULES = {
   ventes: IconVentes,
   temperature: IconTemperature,
   commandes: IconCommandes,
+  musique: IconMusique,
 };
 
 export default function DashSidebar({ active, displayName, userEmail, isAdmin, onLogout, entrepriseId }) {

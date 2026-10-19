@@ -1,4 +1,4 @@
-import { IconPlanning, IconHoraire, IconInventaire, IconVentes, IconTemperature, IconCommandes } from "@/components/icons/GozlyIcons";
+import { IconPlanning, IconHoraire, IconInventaire, IconVentes, IconTemperature, IconCommandes, IconMusique } from "@/components/icons/GozlyIcons";
 
 // Icône « maison » de chaque module (par id), pour les listes de modules : remplace les anciens émojis.
 export const ICONES_MODULES = {
@@ -8,6 +8,7 @@ export const ICONES_MODULES = {
   ventes: IconVentes,
   temperature: IconTemperature,
   commandes: IconCommandes,
+  musique: IconMusique,
 };
 
 export function IconeModule({ id, ...props }) {
