@@ -344,6 +344,15 @@ export default function MusiqueContent() {
             </div>
           ) : (
             <>
+              {groupes.length === 0 && !demo && (
+                <div className="settings-section">
+                  <h3>{t("Ton compte Sonos est lié, mais aucun haut-parleur n'a été trouvé")}</h3>
+                  <p className="panel-hint">{t("Les haut-parleurs Sonos du compte apparaîtront ici dès qu'il y en aura. En attendant, tu peux voir à quoi ressemble la page avec de faux haut-parleurs.")}</p>
+                  <a href="/dashboard/musique?demo=1" className="submit-btn" style={{ display: "inline-block" }}>
+                    {t("Voir la démo")}
+                  </a>
+                </div>
+              )}
               <div className="musique-colonnes">
                 {/* ---------- Colonne de gauche : la musique ---------- */}
                 <div className="musique-col musique-col-gauche">
