@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Avatar from "@/components/Avatar";
 
 const TEXTES_FR = {
   vu: "Vu",
@@ -42,7 +43,8 @@ export function LigneVu({ vu }) {
   );
 }
 
-export function IndicateurEcriture({ ecrivent, textes = TEXTES_FR }) {
+// avatars : (facultatif) avatar de chaque personne qui écrit, dans le même ordre que `ecrivent`. Sans lui, rien d'autre qu'avant.
+export function IndicateurEcriture({ ecrivent, avatars, textes = TEXTES_FR }) {
   if (!ecrivent || ecrivent.length === 0) return null;
   const texte =
     ecrivent.length === 1
@@ -52,6 +54,13 @@ export function IndicateurEcriture({ ecrivent, textes = TEXTES_FR }) {
         : textes.ecritPlusieurs;
   return (
     <div className="chat-ecrit">
+      {avatars && (
+        <span className="chat-ecrit-avatars">
+          {ecrivent.slice(0, 3).map((nom, i) => (
+            <Avatar key={nom + i} valeur={avatars[i]} nom={nom} taille={22} />
+          ))}
+        </span>
+      )}
       <span>{texte}</span>
       <span className="chat-ecrit-points">
         <i />

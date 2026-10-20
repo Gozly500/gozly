@@ -734,7 +734,7 @@ export default function DiscussionEmploye() {
                       </div>
                       )
                     )}
-                    <IndicateurEcriture ecrivent={presence.ecrivent} textes={textesChat} />
+                    <IndicateurEcriture ecrivent={presence.ecrivent} avatars={presence.ecriventAvatars} textes={textesChat} />
                   </>
                 );
               })()}

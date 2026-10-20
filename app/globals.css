@@ -3067,3 +3067,8 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .module-beta{position:absolute;top:8px;left:8px;z-index:2;display:flex;align-items:center;padding:3px 6px;border-radius:8px;background:rgba(10,10,40,0.78);color:#fff;pointer-events:none;}
 .module-beta .beta-badge{margin:0;color:#fff;}
 .dash-nav-item .beta-badge{margin-left:8px;}
+
+/* Avatars à côté de « écrit... » (se chevauchent un peu s'ils sont plusieurs) */
+.chat-ecrit-avatars{display:inline-flex;}
+.chat-ecrit-avatars .avatar{width:22px;height:22px;}
+.chat-ecrit-avatars .avatar + .avatar{margin-left:-8px;}
