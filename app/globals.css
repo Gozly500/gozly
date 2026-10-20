@@ -3017,3 +3017,13 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .dash-main-inner.musique-large{max-width:none;}
 .musique-colonnes{grid-template-columns:minmax(0,1.7fr) minmax(340px,1fr);}
 @media (max-width:1099px){.musique-colonnes{grid-template-columns:minmax(0,1fr);}}
+
+/* Logos des plateformes musicales */
+.musique-logo{width:42px;height:42px;border-radius:12px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.musique-logo img{width:100%;height:100%;display:block;}
+.musique-logo.blanc{background:#fff;padding:5px;box-sizing:border-box;}
+.musique-logo.blanc img{object-fit:contain;}
+.musique-logo.plein img{object-fit:cover;}
+.musique-logo.petit,.musique-plateforme-lettre.petit{width:32px;height:32px;border-radius:9px;}
+.musique-logo.blanc.petit{padding:4px;}
+.musique-plateforme-lettre.petit{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;background:linear-gradient(135deg,var(--indigo),var(--violet));flex-shrink:0;}

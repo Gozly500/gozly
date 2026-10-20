@@ -10,6 +10,7 @@ import { ACTIONS_IMMEDIATES, CONTENU_DEMO, appliquerDemo, etatDemo } from "@/lib
 import SimpleSelect from "@/components/SimpleSelect";
 import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconFlecheHaut, IconPlus } from "@/components/icons/Pictogrammes";
 import { IconMusique } from "@/components/icons/GozlyIcons";
+import { logoPlateforme } from "@/lib/plateformesMusique";
 import { useT } from "@/components/LangProvider";
 
 const Svg = ({ children, ...p }) => (
@@ -33,6 +34,17 @@ const HautParleur = (p) => <Trait {...p}><path d="M4 9v6h4l5 4V5L8 9H4z" /><path
 const Muet = (p) => <Trait {...p}><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M17 9l5 6M22 9l-5 6" /></Trait>;
 
 const PAS_VOLUME = 5;
+
+// Logo d'une plateforme (ou sa première lettre si on ne la connaît pas).
+function LogoPlateforme({ nom, petit = false }) {
+  const logo = logoPlateforme(nom);
+  if (!logo) return <span className={`musique-plateforme-lettre${petit ? " petit" : ""}`}>{String(nom || "?").slice(0, 1).toUpperCase()}</span>;
+  return (
+    <span className={`musique-logo ${logo.plein ? "plein" : "blanc"}${petit ? " petit" : ""}`}>
+      <img src={logo.src} alt="" style={logo.zoom !== 1 ? { transform: `scale(${logo.zoom})` } : undefined} />
+    </span>
+  );
+}
 
 // Curseur au style Gozly : suit le doigt en local, n'envoie la valeur qu'au relâchement.
 function Curseur({ valeur, onValider, muet, label }) {
@@ -442,10 +454,10 @@ export default function MusiqueContent() {
                           <div className="musique-plateformes">
                             {plateformes.map((p) => (
                               <button type="button" key={p} className="musique-plateforme" onClick={() => choisirPlateforme(p)}>
-                                <span className="musique-plateforme-lettre">{p.slice(0, 1).toUpperCase()}</span>
+                                <LogoPlateforme nom={p} />
                                 <span className="musique-plateforme-textes">
                                   <span className="musique-plateforme-nom">{p}</span>
-                                  <span className="musique-plateforme-sous">{nbParPlateforme(p)} {t("favoris")}</span>
+                                  <span className="musique-plateforme-sous">{nbParPlateforme(p)} {t(nbParPlateforme(p) > 1 ? "favoris" : "favori")}</span>
                                 </span>
                                 <IconFlecheDroite className="gozly-icon-inline" />
                               </button>
@@ -469,6 +481,7 @@ export default function MusiqueContent() {
                           <button type="button" className="admin-icon-btn" onClick={() => choisirPlateforme(null)} aria-label={t("Retour aux plateformes")}>
                             <IconFlecheGauche className="gozly-icon" />
                           </button>
+                          {plateforme !== "__listes" && <LogoPlateforme nom={plateforme} petit />}
                           <h3 style={{ margin: 0 }}>{nomPlateforme}</h3>
                           {cible && <span className="musique-retour-cible">{t("Jouer sur")} {cible.nom}</span>}
                         </div>
