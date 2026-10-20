@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { MODULES } from "@/lib/modules";
 import { IconeModule } from "@/components/icons/iconesModules";
+import BetaBadge from "@/components/BetaBadge";
 import { useT } from "@/components/LangProvider";
 
 // L'activation/désactivation des modules eux-mêmes se fait uniquement
@@ -31,6 +32,7 @@ export default function RaccourcisWidget({ actifs, editMode, modulesCaches, onTo
         return (
           <div key={mod.id} className={`dash-module-tile${editMode && cache ? " edit-hidden" : ""}`}>
             <Link href={mod.href} className={`dash-module-card active${mod.image ? "" : " fallback"}`} title={t(mod.nom)}>
+              {mod.beta && <span className="module-beta"><BetaBadge hauteur={13} /></span>}
               {mod.image ? (
                 <img src={mod.image} alt={t(mod.nom)} className="dash-module-image" />
               ) : (

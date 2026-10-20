@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES, limiteModules } from "@/lib/modules";
 import ModulesModal from "@/components/ModulesModal";
+import BetaBadge from "@/components/BetaBadge";
 import ForfaitBloqueModal from "@/components/ForfaitBloqueModal";
 import { getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -166,7 +167,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
             return (
             <div key={mod.id}>
               <Link href={mod.href} className={`dash-nav-item${active === mod.id ? " active" : ""}`}>
-                {IconeModule ? <IconeModule className="gozly-icon" /> : null} {t(mod.nom)}
+                {IconeModule ? <IconeModule className="gozly-icon" /> : null} {t(mod.nom)}{mod.beta && <BetaBadge hauteur={13} />}
               </Link>
               {mod.id === "planning" && (active === "planning" || active === "categories") && (
                 <Link

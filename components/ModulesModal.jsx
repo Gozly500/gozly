@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { MODULES, limiteModules } from "@/lib/modules";
 import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { IconCrochet } from "@/components/icons/Pictogrammes";
+import BetaBadge from "@/components/BetaBadge";
 import { IconeModule } from "@/components/icons/iconesModules";
 import { useT } from "@/components/LangProvider";
 
@@ -127,6 +128,7 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
                         <small>{t(mod.nom)}</small>
                       </div>
                     )}
+                    {mod.beta && <span className="module-beta"><BetaBadge hauteur={13} /></span>}
                     {estActif && <span className="modules-picker-check"><IconCrochet className="gozly-icon" /></span>}
                   </button>
                 );

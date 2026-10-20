@@ -3061,3 +3061,9 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 
 /* Badge BETA (à côté des fonctions nouvelles) */
 .beta-badge{display:inline-block;vertical-align:middle;margin-left:10px;color:var(--fg);flex-shrink:0;}
+
+/* Badge BETA sur la vignette d'un module */
+.modules-picker-tile,.dash-module-card{position:relative;}
+.module-beta{position:absolute;top:8px;left:8px;z-index:2;display:flex;align-items:center;padding:3px 6px;border-radius:8px;background:rgba(10,10,40,0.78);color:#fff;pointer-events:none;}
+.module-beta .beta-badge{margin:0;color:#fff;}
+.dash-nav-item .beta-badge{margin-left:8px;}
