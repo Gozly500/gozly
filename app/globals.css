@@ -2996,3 +2996,19 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .musique-grille.liste{grid-template-columns:minmax(0,1fr);gap:8px;}
 .musique-carte-lire{width:18px;height:18px;margin-left:auto;flex-shrink:0;opacity:.6;}
 .musique-carte:hover:not(:disabled) .musique-carte-lire{opacity:1;color:#c8b0ff;}
+
+/* Musique : animations (liste des plateformes qui glisse, lignes qui s'ouvrent en douceur) */
+@keyframes musique-entre-droite{from{opacity:0;transform:translateX(34px);}to{opacity:1;transform:none;}}
+@keyframes musique-entre-gauche{from{opacity:0;transform:translateX(-34px);}to{opacity:1;transform:none;}}
+.musique-vue.avant{animation:musique-entre-droite .32s cubic-bezier(.2,.8,.2,1);}
+.musique-vue.arriere{animation:musique-entre-gauche .32s cubic-bezier(.2,.8,.2,1);}
+.musique-acc-enveloppe{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s cubic-bezier(.2,.8,.2,1);}
+.musique-acc.ouvert .musique-acc-enveloppe{grid-template-rows:1fr;}
+.musique-acc-enveloppe > .musique-acc-corps{min-height:0;overflow:hidden;padding-top:0;padding-bottom:0;border-top:0;opacity:0;transition:opacity .25s ease,padding .32s cubic-bezier(.2,.8,.2,1);}
+.musique-acc.ouvert .musique-acc-enveloppe > .musique-acc-corps{opacity:1;padding-top:2px;padding-bottom:14px;border-top:1px solid rgba(var(--w),0.1);}
+.musique-acc-fleche{transition:transform .3s cubic-bezier(.2,.8,.2,1);}
+.musique-acc.ouvert .musique-acc-fleche{transform:rotate(180deg);}
+@media (prefers-reduced-motion:reduce){
+  .musique-vue.avant,.musique-vue.arriere{animation:none;}
+  .musique-acc-enveloppe,.musique-acc-enveloppe > .musique-acc-corps,.musique-acc-fleche{transition:none;}
+}

@@ -101,11 +101,13 @@ function Accordeon({ titre, sous, ouvert, onToggle, actions, distinct, icone, ch
             <span className="musique-acc-titre">{titre}</span>
             {sous && <span className="musique-acc-sous">{sous}</span>}
           </span>
-          {ouvert ? <IconFlecheHaut className="gozly-icon-inline" /> : <IconFlecheBas className="gozly-icon-inline" />}
+          <IconFlecheBas className="gozly-icon-inline musique-acc-fleche" />
         </button>
         {actions && <div className="musique-acc-actions">{actions}</div>}
       </div>
-      {ouvert && <div className="musique-acc-corps">{children}</div>}
+      <div className="musique-acc-enveloppe" inert={ouvert ? undefined : ""}>
+        <div className="musique-acc-corps">{children}</div>
+      </div>
     </div>
   );
 }
@@ -127,7 +129,12 @@ export default function MusiqueContent() {
   const [demo, setDemo] = useState(false); // ?demo=1 : faux haut-parleurs pour voir la page sans compte Sonos
 
   const [cibleId, setCibleId] = useState(null); // groupe sur lequel on joue la musique choisie
-  const [plateforme, setPlateforme] = useState(null); // null = liste des plateformes ; sinon le nom d'une plateforme ou "__listes"
+  const [sens, setSens] = useState("avant"); // sens de l'animation de la liste des plateformes
+  const [plateforme, setPlateformeBrut] = useState(null); // null = liste des plateformes ; sinon le nom d'une plateforme ou "__listes"
+  const choisirPlateforme = (p) => {
+    setSens(p === null ? "arriere" : "avant");
+    setPlateformeBrut(p);
+  };
   const [ouverts, setOuverts] = useState(() => new Set()); // lignes dépliées ("j:id" ou "g:id")
   const [ajoutGroupeId, setAjoutGroupeId] = useState(null); // groupe dont on choisit un haut-parleur à ajouter
   const [nouveauGroupe, setNouveauGroupe] = useState(false);
@@ -279,7 +286,26 @@ export default function MusiqueContent() {
   const groupes = etat?.groupes || [];
   const joueurs = groupes.flatMap((g) => g.joueurs.map((j) => ({ ...j, groupeId: g.id, groupeNom: g.nom, groupeTaille: g.joueurs.length })));
   const groupesMultiples = groupes.filter((g) => g.joueurs.length > 1);
-  const cible = groupes.find((g) => g.id === cibleId) || groupes.find((g) => g.etat === "PLAYING") || groupes[0] || null;
+  // « Partout » : cible virtuelle qui envoie la même commande à tous les groupes, sans les regrouper.
+  const jouee = groupes.find((g) => g.etat === "PLAYING");
+  const volumesTous = groupes.map((g) => g.volume).filter((v) => v != null);
+  const partout =
+    groupes.length > 1
+      ? {
+          id: "__partout",
+          nom: t("Partout"),
+          etat: jouee ? "PLAYING" : groupes.every((g) => g.etat === "IDLE") ? "IDLE" : "PAUSED",
+          volume: volumesTous.length ? Math.round(volumesTous.reduce((a, b) => a + b, 0) / volumesTous.length) : null,
+          muet: groupes.every((g) => g.muet),
+          titre: jouee?.titre || null,
+          artiste: jouee?.artiste || null,
+          image: jouee?.image || null,
+          joueurs: joueurs,
+        }
+      : null;
+  const cible = (cibleId === "__partout" && partout) || groupes.find((g) => g.id === cibleId) || groupes.find((g) => g.etat === "PLAYING") || groupes[0] || null;
+  // Identifie la cible dans une commande : un groupe, ou tous les groupes.
+  const versCible = (c) => (c.id === "__partout" ? { partout: true } : { groupeId: c.id });
 
   // Musique : les favoris Sonos (classés par plateforme) et les listes de lecture Sonos.
   const plateformes = [...new Set(contenu.favoris.map((f) => f.service || t("Autres")))];
@@ -292,7 +318,7 @@ export default function MusiqueContent() {
 
   function lancer(e) {
     if (!cible) return;
-    agir(e.type === "favori" ? { action: "favori", groupeId: cible.id, favoriId: e.id } : { action: "playlist", groupeId: cible.id, playlistId: e.id });
+    agir(e.type === "favori" ? { action: "favori", ...versCible(cible), favoriId: e.id } : { action: "playlist", ...versCible(cible), playlistId: e.id });
   }
 
   const ligneJoueur = (j, { dansGroupe }) => (
@@ -364,7 +390,7 @@ export default function MusiqueContent() {
                       {groupes.length > 0 && (
                         <div className="musique-cible">
                           <span>{t("Jouer sur")}</span>
-                          <SimpleSelect options={groupes.map((g) => ({ id: g.id, label: g.nom }))} value={cible?.id} onChange={setCibleId} />
+                          <SimpleSelect options={[...(partout ? [{ id: "__partout", label: t("Partout") }] : []), ...groupes.map((g) => ({ id: g.id, label: g.nom }))]} value={cible?.id} onChange={setCibleId} />
                         </div>
                       )}
                     </div>
@@ -384,27 +410,28 @@ export default function MusiqueContent() {
                           </div>
                         </div>
                         <div className="musique-transport">
-                          <button type="button" className="musique-rond" disabled={occupe} onClick={() => agir({ action: "precedent", groupeId: cible.id })} aria-label={t("Précédent")}>
+                          <button type="button" className="musique-rond" disabled={occupe} onClick={() => agir({ action: "precedent", ...versCible(cible) })} aria-label={t("Précédent")}>
                             <Precedent />
                           </button>
                           <button
                             type="button"
                             className="musique-rond principal"
-                            onClick={() => agir({ action: cible.etat === "PLAYING" ? "pause" : "lecture", groupeId: cible.id })}
+                            onClick={() => agir({ action: cible.etat === "PLAYING" ? "pause" : "lecture", ...versCible(cible) })}
                             aria-label={cible.etat === "PLAYING" ? t("Pause") : t("Lecture")}
                           >
                             {cible.etat === "PLAYING" ? <Pause /> : <Lecture />}
                           </button>
-                          <button type="button" className="musique-rond" disabled={occupe} onClick={() => agir({ action: "suivant", groupeId: cible.id })} aria-label={t("Suivant")}>
+                          <button type="button" className="musique-rond" disabled={occupe} onClick={() => agir({ action: "suivant", ...versCible(cible) })} aria-label={t("Suivant")}>
                             <Suivant />
                           </button>
                         </div>
-                        <ReglageVolume t={t} volume={cible.volume} muet={cible.muet} onVolume={(v) => agir({ action: "volumeGroupe", groupeId: cible.id, volume: v })} onMuet={(m) => agir({ action: "muetGroupe", groupeId: cible.id, muet: m })} />
+                        <ReglageVolume t={t} volume={cible.volume} muet={cible.muet} onVolume={(v) => agir({ action: "volumeGroupe", ...versCible(cible), volume: v })} onMuet={(m) => agir({ action: "muetGroupe", ...versCible(cible), muet: m })} />
                       </>
                     )}
                   </section>
 
                   <section className="settings-section">
+                    <div key={plateforme ?? "liste"} className={`musique-vue ${sens}`}>
                     {plateforme === null ? (
                       <>
                         <h3>{t("Musique de ton Sonos")}</h3>
@@ -414,7 +441,7 @@ export default function MusiqueContent() {
                         ) : (
                           <div className="musique-plateformes">
                             {plateformes.map((p) => (
-                              <button type="button" key={p} className="musique-plateforme" onClick={() => setPlateforme(p)}>
+                              <button type="button" key={p} className="musique-plateforme" onClick={() => choisirPlateforme(p)}>
                                 <span className="musique-plateforme-lettre">{p.slice(0, 1).toUpperCase()}</span>
                                 <span className="musique-plateforme-textes">
                                   <span className="musique-plateforme-nom">{p}</span>
@@ -424,7 +451,7 @@ export default function MusiqueContent() {
                               </button>
                             ))}
                             {contenu.playlists.length > 0 && (
-                              <button type="button" className="musique-plateforme" onClick={() => setPlateforme("__listes")}>
+                              <button type="button" className="musique-plateforme" onClick={() => choisirPlateforme("__listes")}>
                                 <span className="musique-plateforme-lettre"><IconMusique className="gozly-icon" /></span>
                                 <span className="musique-plateforme-textes">
                                   <span className="musique-plateforme-nom">{t("Listes Sonos")}</span>
@@ -439,7 +466,7 @@ export default function MusiqueContent() {
                     ) : (
                       <>
                         <div className="musique-retour">
-                          <button type="button" className="admin-icon-btn" onClick={() => setPlateforme(null)} aria-label={t("Retour aux plateformes")}>
+                          <button type="button" className="admin-icon-btn" onClick={() => choisirPlateforme(null)} aria-label={t("Retour aux plateformes")}>
                             <IconFlecheGauche className="gozly-icon" />
                           </button>
                           <h3 style={{ margin: 0 }}>{nomPlateforme}</h3>
@@ -463,6 +490,7 @@ export default function MusiqueContent() {
                         )}
                       </>
                     )}
+                    </div>
                     <p className="panel-hint" style={{ marginTop: "14px" }}>
                       {t("Gozly affiche les favoris et les listes de lecture de ton Sonos. Pour en ajouter ou en créer, utilise l'application Sonos ou ta plateforme musicale : elles apparaîtront ici.")}
                     </p>
