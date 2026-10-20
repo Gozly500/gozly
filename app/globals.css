@@ -3012,3 +3012,8 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
   .musique-vue.avant,.musique-vue.arriere{animation:none;}
   .musique-acc-enveloppe,.musique-acc-enveloppe > .musique-acc-corps,.musique-acc-fleche{transition:none;}
 }
+
+/* Page Musique : prend toute la largeur disponible */
+.dash-main-inner.musique-large{max-width:none;}
+.musique-colonnes{grid-template-columns:minmax(0,1.7fr) minmax(340px,1fr);}
+@media (max-width:1099px){.musique-colonnes{grid-template-columns:minmax(0,1fr);}}

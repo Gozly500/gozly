@@ -340,7 +340,7 @@ export default function MusiqueContent() {
       <DashSidebar active="musique" displayName={displayName} userEmail={user?.email} isAdmin={isAdmin} onLogout={handleLogout} entrepriseId={entrepriseId} />
 
       <main className="dash-main">
-        <div className="dash-main-inner">
+        <div className="dash-main-inner musique-large">
           <header className="dash-hero-inline">
             <div>
               <h1>{t("Musique")}</h1>
