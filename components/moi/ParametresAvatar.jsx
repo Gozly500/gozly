@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import AvatarEditeur from "@/components/AvatarEditeur";
 import MoiRetour from "@/components/moi/MoiRetour";
+import BetaBadge from "@/components/BetaBadge";
 import { useLangue } from "@/components/moi/LangueContext";
 import { employeFetch } from "@/lib/employeAuth";
 import { avatarParDefaut } from "@/lib/avatar";
@@ -51,7 +52,10 @@ export default function ParametresAvatar() {
   return (
     <div>
       <MoiRetour />
-      <h2>{t("parametres.avatarTitre")}</h2>
+      <h2>
+        {t("parametres.avatarTitre")}
+        <BetaBadge hauteur={22} />
+      </h2>
       <p className="panel-hint">{t("avatar.hint")}</p>
       {avatar && <AvatarEditeur valeur={avatar} onChange={setAvatar} nom={nom} langue={langue} />}
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}

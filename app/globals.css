@@ -3058,3 +3058,6 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .moi-header-identite-textes{display:block;min-width:0;}
 .chat-bubble-auteur{display:flex;align-items:center;gap:6px;}
 .chat-bubble-avatar{width:22px;height:22px;}
+
+/* Badge BETA (à côté des fonctions nouvelles) */
+.beta-badge{display:inline-block;vertical-align:middle;margin-left:10px;color:var(--fg);flex-shrink:0;}
