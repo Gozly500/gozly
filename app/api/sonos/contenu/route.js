@@ -18,7 +18,7 @@ export async function GET(request) {
 
   const itemsFav = fav.data?.items || fav.data?.favoriteList?.items || [];
   return NextResponse.json({
-    favoris: itemsFav.map((x) => ({ id: x.id, nom: x.name, description: x.description || "", image: x.imageUrl || null })),
+    favoris: itemsFav.map((x) => ({ id: x.id, nom: x.name, description: x.description || "", image: x.imageUrl || null, service: x.service?.name || null })),
     playlists: (pl.data?.playlists || []).map((x) => ({ id: x.id, nom: x.name, pistes: x.trackCount ?? null })),
   });
 }

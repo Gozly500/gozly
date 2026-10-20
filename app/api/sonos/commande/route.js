@@ -40,6 +40,24 @@ export async function POST(request) {
       if (!volumeValide(c.volume)) return NextResponse.json({ error: "Volume invalide." }, { status: 400 });
       r = await appel("POST", `/players/${c.joueurId}/playerVolume`, { volume: c.volume });
       break;
+    case "muetGroupe":
+      r = await appel("POST", `/groups/${g}/groupVolume/mute`, { muted: !!c.muet });
+      break;
+    case "muetJoueur":
+      r = await appel("POST", `/players/${c.joueurId}/playerVolume/mute`, { muted: !!c.muet });
+      break;
+    case "retirerDuGroupe":
+      // Le haut-parleur quitte le groupe (il devient un groupe à lui seul).
+      r = await appel("POST", `/groups/${g}/groups/modifyGroupMembers`, { playerIdsToRemove: [c.joueurId] });
+      break;
+    case "creerGroupe": {
+      const ids = Array.isArray(c.joueurIds) ? c.joueurIds.map(String) : [];
+      if (ids.length < 2 || ids.length > 32 || !ids.every((x) => ID.test(x))) return NextResponse.json({ error: "Choisis au moins deux haut-parleurs." }, { status: 400 });
+      const f = await foyer(service, eid);
+      if (f.erreur) return reponseErreurSonos({ erreur: f.erreur, status: f.status });
+      r = await appel("POST", `/households/${f.id}/groups/createGroup`, { playerIds: ids });
+      break;
+    }
     case "favori":
       if (!ID.test(String(c.favoriId || ""))) return NextResponse.json({ error: "Favori invalide." }, { status: 400 });
       r = await appel("POST", `/groups/${g}/favorites`, { favoriteId: c.favoriId, action: "REPLACE", playOnCompletion: true });
