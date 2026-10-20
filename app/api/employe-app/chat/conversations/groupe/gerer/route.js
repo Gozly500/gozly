@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { chargerRestrictions, auMoinsUnePaireBloquee } from "@/lib/chatRestrictions";
+import { employesAvecAvatar, profilsAvecAvatar } from "@/lib/avatarServeur";
 
 // Gestion d'un groupe de discussion par ses membres (supabase/chat_groupes_gestion.sql) :
 //   GET  ?conversationId=…  -> membres (tout membre peut voir qui est dans le groupe)
@@ -74,16 +75,13 @@ export async function GET(request) {
 
   const employeIds = membres.filter((p) => p.employe_id).map((p) => p.employe_id);
   const userIds = membres.filter((p) => p.user_id).map((p) => p.user_id);
-  const [{ data: employes }, { data: profils }] = await Promise.all([
-    employeIds.length ? service.from("employes").select("id, nom").in("id", employeIds) : Promise.resolve({ data: [] }),
-    userIds.length ? service.from("profils").select("id, full_name").in("id", userIds) : Promise.resolve({ data: [] }),
-  ]);
+  const [employes, profils] = await Promise.all([employesAvecAvatar(service, employeIds), profilsAvecAvatar(service, userIds)]);
 
   const liste = membres
     .map((p) =>
       p.employe_id
-        ? { id: p.employe_id, type: "employe", nom: employes?.find((e) => e.id === p.employe_id)?.nom || "Employé", estAdmin: !!p.est_admin, moi: p.employe_id === employe.id }
-        : { id: p.user_id, type: "admin", nom: profils?.find((x) => x.id === p.user_id)?.full_name || "Administration", estAdmin: true, moi: false }
+        ? { id: p.employe_id, type: "employe", nom: employes?.find((e) => e.id === p.employe_id)?.nom || "Employé", avatar: employes?.find((e) => e.id === p.employe_id)?.avatar || null, estAdmin: !!p.est_admin, moi: p.employe_id === employe.id }
+        : { id: p.user_id, type: "admin", nom: profils?.find((x) => x.id === p.user_id)?.full_name || "Administration", avatar: profils?.find((x) => x.id === p.user_id)?.avatar || null, estAdmin: true, moi: false }
     )
     .sort((a, b) => Number(b.estAdmin) - Number(a.estAdmin) || a.nom.localeCompare(b.nom));
 

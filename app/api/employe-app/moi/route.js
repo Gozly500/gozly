@@ -19,7 +19,7 @@ export async function GET(request) {
   ]);
 
   return NextResponse.json({
-    employe: { id: employe.id, nom: employe.nom },
+    employe: { id: employe.id, nom: employe.nom, avatar: employe.avatar || null },
     entreprise: {
       nom: entreprise?.nom || "",
       premierJourSemaine: entreprise?.premier_jour_semaine || "lundi",

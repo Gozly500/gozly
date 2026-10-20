@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { EMOJIS_REACTION_CLIENT } from "@/components/chat/emojisChat";
 import { IconRepondre } from "@/components/icons/Pictogrammes";
+import Avatar from "@/components/Avatar";
 
 const SEUIL_REPONSE = 56; // px de glissement vers la droite pour déclencher "Répondre"
 const GLISSEMENT_MAX = 84;
@@ -106,7 +107,10 @@ export default function BulleMessage({ m, ouvert, onToggle, onReagir, onRepondre
       <span className="chat-swipe-icone" style={{ opacity: progres, transform: `translateY(-50%) scale(${0.6 + 0.4 * progres})` }}>
         <IconRepondre className="gozly-icon" />
       </span>
-      <div className="chat-bubble-auteur">{m.auteur}</div>
+      <div className="chat-bubble-auteur">
+        {!m.mine && m.nomAvatar && <Avatar valeur={m.avatar} nom={m.nomAvatar} taille={22} className="chat-bubble-avatar" />}
+        {m.auteur}
+      </div>
       <div
         className="chat-bubble chat-bubble-cliquable"
         onClick={() => {

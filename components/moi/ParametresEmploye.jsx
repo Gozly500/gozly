@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLangue } from "@/components/moi/LangueContext";
 import { LANGUES } from "@/lib/i18n/moi";
 import { employeFetch, clearEmployeToken } from "@/lib/employeAuth";
+import Avatar from "@/components/Avatar";
 
 // Cas rencontré en test : un employé a refusé l'accès à la localisation par
 // accident au tout premier pointage mobile, et ne pouvait plus jamais
@@ -92,6 +93,13 @@ const SECTIONS = [
 export default function ParametresEmploye() {
   const router = useRouter();
   const { t, langue, setLangue } = useLangue();
+  const [monAvatar, setMonAvatar] = useState({ nom: "", avatar: null });
+
+  useEffect(() => {
+    employeFetch("/api/employe-app/avatar")
+      .then(async (res) => res.ok && setMonAvatar(await res.json()))
+      .catch(() => {});
+  }, []);
 
   async function handleLogout() {
     try {
@@ -106,6 +114,16 @@ export default function ParametresEmploye() {
       <h2>{t("parametres.titre")}</h2>
 
       <div className="moi-settings-list">
+        <button type="button" className="moi-settings-item" onClick={() => router.push("/moi/parametres/avatar")}>
+          <span className="moi-settings-item-emoji" style={{ display: "flex" }}>
+            <Avatar valeur={monAvatar.avatar} nom={monAvatar.nom} taille={34} />
+          </span>
+          <span className="moi-settings-item-text">
+            <strong>{t("parametres.avatarTitre")}</strong>
+            <span>{t("parametres.avatarDesc")}</span>
+          </span>
+          <span className="moi-settings-item-chevron">›</span>
+        </button>
         {SECTIONS.map((s) => (
           <button key={s.id} type="button" className="moi-settings-item" onClick={() => router.push(s.href)}>
             <span className="moi-settings-item-emoji">{s.emoji}</span>

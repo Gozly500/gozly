@@ -13,6 +13,7 @@ import ClocheAnnonces from "@/components/moi/ClocheAnnonces";
 import { AnnoncesProvider } from "@/components/moi/AnnoncesContext";
 import { useLangue } from "@/components/moi/LangueContext";
 import PastilleMessages from "@/components/moi/PastilleMessages";
+import Avatar from "@/components/Avatar";
 
 // L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
 // en haut à gauche (voir le <header> plus bas).
@@ -104,8 +105,11 @@ export default function MoiShell({ children }) {
     <div className={`moi-shell${estDiscussion ? " moi-shell-chat" : ""}`}>
       <header className="moi-header">
         <button type="button" className="moi-header-identite" onClick={() => router.push("/moi/accueil")}>
-          <div className="moi-header-nom">{moi?.employe?.nom}</div>
-          <div className="moi-header-entreprise">{moi?.entreprise?.nom}</div>
+          <Avatar valeur={moi?.employe?.avatar} nom={moi?.employe?.nom} taille={40} />
+          <span className="moi-header-identite-textes">
+            <div className="moi-header-nom">{moi?.employe?.nom}</div>
+            <div className="moi-header-entreprise">{moi?.entreprise?.nom}</div>
+          </span>
         </button>
         <div className="moi-header-actions">
           <button

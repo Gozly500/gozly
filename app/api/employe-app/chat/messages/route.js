@@ -4,6 +4,7 @@ import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { notifierNouveauMessage } from "@/lib/pushServer";
 import { reactionsDe } from "@/lib/chatReactions";
 import { chargerRestrictions, conversationDirecteBloquee } from "@/lib/chatRestrictions";
+import { employesAvecAvatar, profilsAvecAvatar } from "@/lib/avatarServeur";
 
 async function aAcces(service, employe, conversationId) {
   const { data: conversation } = await service
@@ -59,15 +60,18 @@ async function resoudreNoms(service, messages, employeIdCourant) {
   const employeIds = [...new Set(messages.filter((m) => m.employe_id).map((m) => m.employe_id))];
   const userIds = [...new Set(messages.filter((m) => m.user_id).map((m) => m.user_id))];
 
-  const [{ data: employes }, { data: profils }] = await Promise.all([
-    employeIds.length > 0 ? service.from("employes").select("id, nom").in("id", employeIds) : Promise.resolve({ data: [] }),
-    userIds.length > 0 ? service.from("profils").select("id, full_name").in("id", userIds) : Promise.resolve({ data: [] }),
-  ]);
+  const [employes, profils] = await Promise.all([employesAvecAvatar(service, employeIds), profilsAvecAvatar(service, userIds)]);
 
   function expediteurNom(m) {
     if (m.employe_id) return employes?.find((e) => e.id === m.employe_id)?.nom || "Employé";
     if (m.user_id) return profils?.find((p) => p.id === m.user_id)?.full_name || "Administration";
     return "Compte supprimé";
+  }
+
+  function expediteurAvatar(m) {
+    if (m.employe_id) return employes?.find((e) => e.id === m.employe_id)?.avatar || null;
+    if (m.user_id) return profils?.find((p) => p.id === m.user_id)?.avatar || null;
+    return null;
   }
 
   const parId = new Map(messages.map((m) => [m.id, m]));
@@ -78,6 +82,7 @@ async function resoudreNoms(service, messages, employeIdCourant) {
       contenu: m.contenu,
       createdAt: m.created_at,
       expediteurNom: expediteurNom(m),
+      expediteurAvatar: expediteurAvatar(m),
       deMoi: m.employe_id === employeIdCourant,
       demandeEchangeId: m.demande_echange_id || null,
       systeme: m.systeme || null, // message d'information d'un groupe (quitté, ajouté…)

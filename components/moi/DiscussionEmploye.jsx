@@ -16,6 +16,7 @@ import { useLangue } from "@/components/moi/LangueContext";
 import { CLE_LUS, ecrireLus } from "@/lib/chatLus";
 
 import { useChatPresence } from "@/lib/useChatPresence";
+import Avatar from "@/components/Avatar";
 import { libelleVu, LigneVu, IndicateurEcriture } from "@/components/chat/IndicateursChat";
 import BulleMessage, { appliquerReactionLocale } from "@/components/chat/BulleMessage";
 import { IconCloche, IconClocheBarree, IconEnvoyer, IconFlecheGauche, IconPlus, IconProfil, IconProfils, IconX } from "@/components/icons/Pictogrammes";
@@ -709,6 +710,8 @@ export default function DiscussionEmploye() {
                           m={{
                             id: m.id,
                             auteur: m.deMoi ? t("chat.toi") : m.expediteurNom,
+                            avatar: m.deMoi ? null : m.expediteurAvatar,
+                            nomAvatar: m.expediteurNom,
                             mine: m.deMoi,
                             contenu: m.contenu,
                             reponse: m.reponse ? { auteur: m.reponse.deMoi ? t("chat.toi") : m.reponse.auteur, contenu: m.reponse.contenu } : null,
@@ -1024,6 +1027,7 @@ export default function DiscussionEmploye() {
                 <div>
                   {membres.map((mb) => (
                     <div className="chat-membre-row" key={mb.type + mb.id}>
+                      <Avatar valeur={mb.avatar} nom={mb.nom} taille={34} />
                       <span className="chat-membre-nom">
                         {mb.nom}
                         {mb.moi ? ` (${String(t("chat.toi")).toLowerCase()})` : ""}
