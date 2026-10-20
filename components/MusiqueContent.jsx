@@ -8,7 +8,7 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { sonosApi, ETATS_LECTURE } from "@/lib/sonosClient";
 import { ACTIONS_IMMEDIATES, CONTENU_DEMO, appliquerDemo, etatDemo } from "@/lib/sonosDemo";
 import SimpleSelect from "@/components/SimpleSelect";
-import { IconFlecheBas, IconFlecheHaut, IconPlus } from "@/components/icons/Pictogrammes";
+import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconFlecheHaut, IconPlus } from "@/components/icons/Pictogrammes";
 import { IconMusique } from "@/components/icons/GozlyIcons";
 import { useT } from "@/components/LangProvider";
 
@@ -127,7 +127,7 @@ export default function MusiqueContent() {
   const [demo, setDemo] = useState(false); // ?demo=1 : faux haut-parleurs pour voir la page sans compte Sonos
 
   const [cibleId, setCibleId] = useState(null); // groupe sur lequel on joue la musique choisie
-  const [plateforme, setPlateforme] = useState("tous"); // "tous" | nom d'une plateforme | "__listes"
+  const [plateforme, setPlateforme] = useState(null); // null = liste des plateformes ; sinon le nom d'une plateforme ou "__listes"
   const [ouverts, setOuverts] = useState(() => new Set()); // lignes dépliées ("j:id" ou "g:id")
   const [ajoutGroupeId, setAjoutGroupeId] = useState(null); // groupe dont on choisit un haut-parleur à ajouter
   const [nouveauGroupe, setNouveauGroupe] = useState(false);
@@ -286,7 +286,9 @@ export default function MusiqueContent() {
   const elements = [
     ...contenu.favoris.map((f) => ({ cle: "f" + f.id, type: "favori", id: f.id, nom: f.nom, image: f.image, sous: f.service || t("Favori"), service: f.service || t("Autres") })),
     ...contenu.playlists.map((p) => ({ cle: "l" + p.id, type: "playlist", id: p.id, nom: p.nom, image: null, sous: t("Liste de lecture") + (p.pistes ? ` · ${p.pistes}` : ""), service: "__listes" })),
-  ].filter((e) => plateforme === "tous" || e.service === plateforme);
+  ].filter((e) => e.service === plateforme);
+  const nbParPlateforme = (p) => contenu.favoris.filter((f) => (f.service || t("Autres")) === p).length;
+  const nomPlateforme = plateforme === "__listes" ? t("Listes Sonos") : plateforme;
 
   function lancer(e) {
     if (!cible) return;
@@ -403,37 +405,63 @@ export default function MusiqueContent() {
                   </section>
 
                   <section className="settings-section">
-                    <h3>{t("Musique de ton Sonos")}</h3>
-                    <div className="musique-chips">
-                      <button type="button" className={`musique-chip${plateforme === "tous" ? " actif" : ""}`} onClick={() => setPlateforme("tous")}>
-                        {t("Tout")}
-                      </button>
-                      {plateformes.map((p) => (
-                        <button type="button" key={p} className={`musique-chip${plateforme === p ? " actif" : ""}`} onClick={() => setPlateforme(p)}>
-                          {p}
-                        </button>
-                      ))}
-                      {contenu.playlists.length > 0 && (
-                        <button type="button" className={`musique-chip${plateforme === "__listes" ? " actif" : ""}`} onClick={() => setPlateforme("__listes")}>
-                          {t("Listes Sonos")}
-                        </button>
-                      )}
-                    </div>
-
-                    {elements.length === 0 ? (
-                      <p className="chat-empty">{t("Aucun favori Sonos pour l'instant. Ajoute des favoris dans l'application Sonos et ils apparaîtront ici.")}</p>
+                    {plateforme === null ? (
+                      <>
+                        <h3>{t("Musique de ton Sonos")}</h3>
+                        <p className="panel-hint" style={{ marginTop: 0 }}>{t("Choisis une plateforme pour voir ses favoris et ses listes de lecture.")}</p>
+                        {plateformes.length === 0 && contenu.playlists.length === 0 ? (
+                          <p className="chat-empty">{t("Aucun favori Sonos pour l'instant. Ajoute des favoris dans l'application Sonos et ils apparaîtront ici.")}</p>
+                        ) : (
+                          <div className="musique-plateformes">
+                            {plateformes.map((p) => (
+                              <button type="button" key={p} className="musique-plateforme" onClick={() => setPlateforme(p)}>
+                                <span className="musique-plateforme-lettre">{p.slice(0, 1).toUpperCase()}</span>
+                                <span className="musique-plateforme-textes">
+                                  <span className="musique-plateforme-nom">{p}</span>
+                                  <span className="musique-plateforme-sous">{nbParPlateforme(p)} {t("favoris")}</span>
+                                </span>
+                                <IconFlecheDroite className="gozly-icon-inline" />
+                              </button>
+                            ))}
+                            {contenu.playlists.length > 0 && (
+                              <button type="button" className="musique-plateforme" onClick={() => setPlateforme("__listes")}>
+                                <span className="musique-plateforme-lettre"><IconMusique className="gozly-icon" /></span>
+                                <span className="musique-plateforme-textes">
+                                  <span className="musique-plateforme-nom">{t("Listes Sonos")}</span>
+                                  <span className="musique-plateforme-sous">{contenu.playlists.length} {t("listes de lecture")}</span>
+                                </span>
+                                <IconFlecheDroite className="gozly-icon-inline" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </>
                     ) : (
-                      <div className="musique-grille">
-                        {elements.map((e) => (
-                          <button type="button" key={e.cle} className="musique-carte" disabled={!cible || occupe} onClick={() => lancer(e)} title={cible ? `${t("Jouer sur")} ${cible.nom}` : ""}>
-                            <span className="musique-carte-image">{e.image ? <img src={e.image} alt="" /> : <IconMusique className="gozly-icon" />}</span>
-                            <span className="musique-carte-textes">
-                              <span className="musique-carte-nom">{e.nom}</span>
-                              <span className="musique-carte-sous">{e.sous}</span>
-                            </span>
+                      <>
+                        <div className="musique-retour">
+                          <button type="button" className="admin-icon-btn" onClick={() => setPlateforme(null)} aria-label={t("Retour aux plateformes")}>
+                            <IconFlecheGauche className="gozly-icon" />
                           </button>
-                        ))}
-                      </div>
+                          <h3 style={{ margin: 0 }}>{nomPlateforme}</h3>
+                          {cible && <span className="musique-retour-cible">{t("Jouer sur")} {cible.nom}</span>}
+                        </div>
+                        {elements.length === 0 ? (
+                          <p className="chat-empty">{t("Rien dans cette plateforme pour l'instant.")}</p>
+                        ) : (
+                          <div className="musique-grille liste">
+                            {elements.map((e) => (
+                              <button type="button" key={e.cle} className="musique-carte" disabled={!cible || occupe} onClick={() => lancer(e)} title={cible ? `${t("Jouer sur")} ${cible.nom}` : ""}>
+                                <span className="musique-carte-image">{e.image ? <img src={e.image} alt="" /> : <IconMusique className="gozly-icon" />}</span>
+                                <span className="musique-carte-textes">
+                                  <span className="musique-carte-nom">{e.nom}</span>
+                                  <span className="musique-carte-sous">{e.sous}</span>
+                                </span>
+                                <Lecture className="musique-carte-lire" />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
                     )}
                     <p className="panel-hint" style={{ marginTop: "14px" }}>
                       {t("Gozly affiche les favoris et les listes de lecture de ton Sonos. Pour en ajouter ou en créer, utilise l'application Sonos ou ta plateforme musicale : elles apparaîtront ici.")}
