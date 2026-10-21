@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseForToken } from "@/lib/stripeServer";
-import { forfaitPermetTexte } from "@/lib/logiciels";
-import { lienTemporaire, trouverInstallateur } from "@/lib/logicielsServer";
+import { lienTemporaire, trouverInstallateur, verifierAccesTexte } from "@/lib/logicielsServer";
 
 export const dynamic = "force-dynamic";
 
@@ -20,19 +18,8 @@ export async function GET(request) {
     return NextResponse.json({ disponible: true, version: installateur.version, taille: installateur.asset.taille });
   }
 
-  const token = (request.headers.get("authorization") || "").replace("Bearer ", "");
-  if (!token) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-
-  const supabase = getSupabaseForToken(token);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser(token);
-  if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
-
-  const { data: profil } = await supabase.from("profils").select("forfait").eq("id", user.id).maybeSingle();
-  if (!forfaitPermetTexte(profil?.forfait)) {
-    return NextResponse.json({ error: "Ton forfait ne comprend pas Gozly Texte." }, { status: 403 });
-  }
+  const acces = await verifierAccesTexte(request);
+  if (acces.reponse) return acces.reponse;
 
   let lien;
   try {
