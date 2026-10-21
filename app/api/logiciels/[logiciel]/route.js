@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { lienTemporaire, trouverInstallateur, verifierAccesTexte } from "@/lib/logicielsServer";
+import { logicielExiste, lienTemporaire, trouverInstallateur, verifierAcces } from "@/lib/logicielsServer";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/logiciels/texte            -> infos publiques (version, taille), sans lien de téléchargement
-// GET /api/logiciels/texte?telecharger=1 + "Authorization: Bearer <session>" -> lien temporaire,
-//     seulement si le forfait du compte inclut Go-Page.
-export async function GET(request) {
-  const installateur = await trouverInstallateur("texte");
+// GET /api/logiciels/<logiciel>            -> infos publiques (version, taille), sans lien de téléchargement
+// GET /api/logiciels/<logiciel>?telecharger=1 + "Authorization: Bearer <session>" -> lien temporaire,
+//     seulement si le forfait du compte inclut ce logiciel. <logiciel> = texte (Go-Page), calky...
+export async function GET(request, { params }) {
+  const logiciel = params.logiciel;
+  if (!logicielExiste(logiciel)) return NextResponse.json({ error: "Logiciel inconnu." }, { status: 404 });
+
+  const installateur = await trouverInstallateur(logiciel);
   if (installateur.erreur) {
     // 200 même si rien n'est prêt: la page affiche simplement « Bientôt disponible »
     return NextResponse.json({ disponible: false, raison: installateur.erreur });
@@ -18,7 +21,7 @@ export async function GET(request) {
     return NextResponse.json({ disponible: true, version: installateur.version, taille: installateur.asset.taille });
   }
 
-  const acces = await verifierAccesTexte(request);
+  const acces = await verifierAcces(request, logiciel);
   if (acces.reponse) return acces.reponse;
 
   let lien;

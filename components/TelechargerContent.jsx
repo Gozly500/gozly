@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
-import { forfaitPermetTexte } from "@/lib/logiciels";
+import { LOGICIELS, forfaitPermetLogiciel } from "@/lib/logiciels";
 
-// Carte de téléchargement de Go-Page : l'état du bouton dépend de la connexion et du forfait.
-export default function TelechargerContent() {
+// Carte de téléchargement d'un logiciel (logiciel = texte, calky...) : l'état du bouton dépend de la connexion et du forfait.
+export default function TelechargerContent({ logiciel }) {
   const { t } = useT();
   const [info, setInfo] = useState(null); // { disponible, version, taille }
   const [session, setSession] = useState(undefined); // undefined = en cours de lecture
@@ -16,7 +16,7 @@ export default function TelechargerContent() {
   const [erreur, setErreur] = useState(null); // null, ou le code d'erreur renvoyé par le serveur
 
   useEffect(() => {
-    fetch("/api/logiciels/texte")
+    fetch(`/api/logiciels/${logiciel}`)
       .then((r) => r.json())
       .then(setInfo)
       .catch(() => setInfo({ disponible: false }));
@@ -28,13 +28,13 @@ export default function TelechargerContent() {
         setForfait(profil?.forfait || null);
       }
     });
-  }, []);
+  }, [logiciel]);
 
   async function telecharger() {
     setEnCours(true);
     setErreur(null);
     try {
-      const r = await fetch("/api/logiciels/texte?telecharger=1", { headers: { Authorization: `Bearer ${session.access_token}` } });
+      const r = await fetch(`/api/logiciels/${logiciel}?telecharger=1`, { headers: { Authorization: `Bearer ${session.access_token}` } });
       const json = await r.json().catch(() => ({}));
       if (!r.ok || !json.url) {
         setErreur(json.code || `http_${r.status}`);
@@ -60,10 +60,10 @@ export default function TelechargerContent() {
         {t("tele.connexion")}
       </Link>
     );
-  } else if (!forfaitPermetTexte(forfait)) {
+  } else if (!forfaitPermetLogiciel(forfait, logiciel)) {
     action = (
       <>
-        <p className="tele-statut">{t("tele.pasForfait")}</p>
+        <p className="tele-statut">{t("tele.pasForfait", { nom: LOGICIELS[logiciel].nom })}</p>
         <Link href="/parametres?tab=abonnement" className="submit-btn">
           {t("tele.voirForfaits")}
         </Link>
