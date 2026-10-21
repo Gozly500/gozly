@@ -34,8 +34,16 @@ export async function GET(request) {
     return NextResponse.json({ error: "Ton forfait ne comprend pas Gozly Texte." }, { status: 403 });
   }
 
-  const url = await lienTemporaire(installateur.asset.url);
-  if (!url) return NextResponse.json({ error: "Le fichier n'est pas disponible pour le moment." }, { status: 502 });
+  let lien;
+  try {
+    lien = await lienTemporaire(installateur.asset.url);
+  } catch (err) {
+    console.error("[logiciels] Échec de la demande à GitHub:", err);
+    return NextResponse.json({ error: "Le fichier n'est pas disponible pour le moment.", code: "reseau" }, { status: 502 });
+  }
+  if (!lien.url) {
+    return NextResponse.json({ error: "Le fichier n'est pas disponible pour le moment.", code: `github_${lien.statut}` }, { status: 502 });
+  }
 
-  return NextResponse.json({ url, version: installateur.version, nom: installateur.asset.nom });
+  return NextResponse.json({ url: lien.url, version: installateur.version, nom: installateur.asset.nom });
 }

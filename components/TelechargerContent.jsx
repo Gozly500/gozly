@@ -13,7 +13,7 @@ export default function TelechargerContent() {
   const [session, setSession] = useState(undefined); // undefined = en cours de lecture
   const [forfait, setForfait] = useState(null);
   const [enCours, setEnCours] = useState(false);
-  const [erreur, setErreur] = useState(false);
+  const [erreur, setErreur] = useState(null); // null, ou le code d'erreur renvoyé par le serveur
 
   useEffect(() => {
     fetch("/api/logiciels/texte")
@@ -32,14 +32,17 @@ export default function TelechargerContent() {
 
   async function telecharger() {
     setEnCours(true);
-    setErreur(false);
+    setErreur(null);
     try {
       const r = await fetch("/api/logiciels/texte?telecharger=1", { headers: { Authorization: `Bearer ${session.access_token}` } });
-      const json = await r.json();
-      if (!r.ok || !json.url) throw new Error(json.error || "erreur");
-      window.location.href = json.url;
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok || !json.url) {
+        setErreur(json.code || `http_${r.status}`);
+      } else {
+        window.location.href = json.url;
+      }
     } catch {
-      setErreur(true);
+      setErreur("reseau");
     }
     setEnCours(false);
   }
@@ -81,7 +84,11 @@ export default function TelechargerContent() {
         <p className="tele-version">{t("tele.version", { v: info.version, mo: mo ?? "?" })}</p>
       )}
       <div className="tele-action">{action}</div>
-      {erreur && <p className="tele-erreur">{t("tele.erreur")}</p>}
+      {erreur && (
+        <p className="tele-erreur">
+          {t("tele.erreur")} <span style={{ opacity: 0.7 }}>({erreur})</span>
+        </p>
+      )}
     </div>
   );
 }
