@@ -90,6 +90,9 @@ export default function Nav() {
           <Link href="/s-abonner" className={pathname === "/s-abonner" ? "active" : ""}>
             {t("nav.abonner")}
           </Link>
+          <Link href="/telecharger" className={pathname === "/telecharger" ? "active" : ""}>
+            {t("nav.logiciels")}
+          </Link>
           <Link href="/contact" className={pathname === "/contact" ? "active" : ""}>
             {t("nav.contact")}
           </Link>
@@ -146,6 +149,9 @@ export default function Nav() {
         </Link>
         <Link href="/s-abonner" onClick={() => setMobileOpen(false)}>
           {t("nav.abonner")}
+        </Link>
+        <Link href="/telecharger" onClick={() => setMobileOpen(false)}>
+          {t("nav.logiciels")}
         </Link>
         <Link href="/contact" onClick={() => setMobileOpen(false)}>
           {t("nav.contact")}

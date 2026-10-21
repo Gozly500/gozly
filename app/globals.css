@@ -3072,3 +3072,20 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .chat-ecrit-avatars{display:inline-flex;}
 .chat-ecrit-avatars .avatar{width:22px;height:22px;}
 .chat-ecrit-avatars .avatar + .avatar{margin-left:-8px;}
+
+/* Page /telecharger (logiciels de bureau) */
+.tele-section{padding:10px 0 30px;}
+.tele-carte{max-width:520px;margin:0 auto;padding:28px;text-align:center;background:var(--glass);border:1px solid var(--glass-border);border-radius:18px;}
+.tele-carte h2{font-size:22px;margin-bottom:6px;}
+.tele-version{color:var(--text-dim);font-size:14px;margin-bottom:18px;}
+.tele-action{display:flex;flex-direction:column;align-items:center;gap:14px;}
+.tele-statut{color:var(--text-dim);font-size:14px;max-width:380px;margin:0;}
+.tele-erreur{color:#f87171;font-size:13px;margin-top:12px;}
+.tele-dispo{text-align:center;color:var(--text-dim);font-size:14px;margin-top:14px;}
+.tele-fonctions{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:20px;}
+.tele-fonction{padding:20px;background:var(--glass);border:1px solid var(--glass-border);border-radius:14px;}
+.tele-fonction h3{font-size:16px;margin-bottom:6px;}
+.tele-fonction p{color:var(--text-dim);font-size:14px;line-height:1.5;margin:0;}
+.tele-etapes{max-width:640px;margin:10px auto 0;}
+.tele-etapes h2{font-size:20px;margin-bottom:12px;}
+.tele-etapes ol{padding-left:22px;color:var(--text-dim);font-size:14px;line-height:1.7;}
