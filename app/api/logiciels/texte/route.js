@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 // GET /api/logiciels/texte            -> infos publiques (version, taille), sans lien de téléchargement
 // GET /api/logiciels/texte?telecharger=1 + "Authorization: Bearer <session>" -> lien temporaire,
-//     seulement si le forfait du compte inclut Gozly Texte.
+//     seulement si le forfait du compte inclut Go-Page.
 export async function GET(request) {
   const installateur = await trouverInstallateur("texte");
   if (installateur.erreur) {

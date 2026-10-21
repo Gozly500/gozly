@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
 import { forfaitPermetTexte } from "@/lib/logiciels";
 
-// Carte de téléchargement de Gozly Texte : l'état du bouton dépend de la connexion et du forfait.
+// Carte de téléchargement de Go-Page : l'état du bouton dépend de la connexion et du forfait.
 export default function TelechargerContent() {
   const { t } = useT();
   const [info, setInfo] = useState(null); // { disponible, version, taille }

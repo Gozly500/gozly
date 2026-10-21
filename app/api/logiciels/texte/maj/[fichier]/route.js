@@ -3,11 +3,11 @@ import { lienTemporaire, trouverInstallateur, verifierAccesTexte } from "@/lib/l
 
 export const dynamic = "force-dynamic";
 
-// Source des mises à jour automatiques de Gozly Texte (le logiciel installé interroge cette adresse).
+// Source des mises à jour automatiques de Go-Page (le logiciel installé interroge cette adresse).
 //   GET /api/logiciels/texte/maj/latest.yml                   -> décrit la dernière version
-//   GET /api/logiciels/texte/maj/Gozly-Texte-Setup-X.Y.Z.exe  -> l'installateur de cette version
+//   GET /api/logiciels/texte/maj/Go-Page-Setup-X.Y.Z.exe  -> l'installateur de cette version
 // Chaque requête exige la session du compte (en-tête Authorization: Bearer ...) ET un forfait qui inclut
-// Gozly Texte. Seuls les fichiers de la dernière publication sont servis, via un lien temporaire GitHub.
+// Go-Page. Seuls les fichiers de la dernière publication sont servis, via un lien temporaire GitHub.
 export async function GET(request, { params }) {
   const acces = await verifierAccesTexte(request);
   if (acces.reponse) return acces.reponse;
