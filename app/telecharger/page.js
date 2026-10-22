@@ -28,24 +28,21 @@ export default function TelechargerPage() {
         </div>
       </header>
 
-      {LOGICIELS_PAGE.map((l) => (
+      {LOGICIELS_PAGE.map((l, i) => (
         <section className="tele-section tele-logiciel" key={l.logiciel} id={l.logiciel}>
-          <div className="wrap">
-            <div className="tele-entete">
-              <img className="tele-icone" src={`/logiciels/${l.logiciel}.svg`} alt="" width="84" height="84" />
+          <div className={`wrap tele-rangee${i % 2 ? " inverse" : ""}`}>
+            <div className="tele-texte">
               <h2 className="tele-nom">{t(l.titre)}</h2>
               <p className="tele-slogan">{t(l.sous)}</p>
+              <ul className="tele-puces">
+                {l.fonctions.map((f) => (
+                  <li key={f}>{t(`tele.${f}t`)}</li>
+                ))}
+              </ul>
+              <TelechargerContent logiciel={l.logiciel} />
+              <p className="tele-dispo">{t("tele.dispo")}</p>
             </div>
-            <TelechargerContent logiciel={l.logiciel} />
-            <p className="tele-dispo">{t("tele.dispo")}</p>
-            <div className="tele-fonctions">
-              {l.fonctions.map((f) => (
-                <div className="tele-fonction" key={f}>
-                  <h3>{t(`tele.${f}t`)}</h3>
-                  <p>{t(`tele.${f}d`)}</p>
-                </div>
-              ))}
-            </div>
+            <img className="tele-icone" src={`/logiciels/${l.logiciel}.svg`} alt="" width="280" height="280" />
           </div>
         </section>
       ))}

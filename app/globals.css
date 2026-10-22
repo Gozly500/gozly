@@ -3092,15 +3092,26 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 
 /* Page /telecharger : un bloc par logiciel */
 .tele-logiciel{padding:30px 0 46px;border-top:1px solid var(--glass-border);}
-.tele-nom{text-align:center;font-size:clamp(28px,4.4vw,40px);margin-bottom:6px;}
-.tele-slogan{text-align:center;color:var(--text-dim);font-size:16px;margin:0 auto 22px;}
-.tele-entete{display:flex;flex-direction:column;align-items:center;}
-.tele-icone{width:84px;height:84px;margin-bottom:14px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.35));}
-.tele-logiciel .tele-nom{margin-bottom:4px;}
-.tele-logiciel .tele-carte{max-width:560px;padding:30px 28px;}
-.tele-logiciel .tele-fonctions{grid-template-columns:repeat(3,1fr);max-width:980px;margin:28px auto 0;}
-.tele-logiciel .tele-fonction{padding:22px;transition:transform .2s,border-color .2s;}
-.tele-logiciel .tele-fonction:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.28);}
+.tele-nom{font-size:clamp(34px,5vw,52px);margin-bottom:8px;}
+.tele-slogan{color:var(--text-dim);font-size:18px;margin:0 0 18px;}
+.tele-rangee{display:flex;align-items:center;justify-content:space-between;gap:56px;max-width:1000px;}
+.tele-rangee.inverse{flex-direction:row-reverse;}
+.tele-texte{flex:1;min-width:0;}
+.tele-icone{width:280px;height:280px;flex-shrink:0;filter:drop-shadow(0 18px 36px rgba(0,0,0,.4));animation:floatLogo 4.5s ease-in-out infinite;}
+.tele-rangee.inverse .tele-icone{animation-delay:-2s;}
+.tele-puces{list-style:none;padding:0;margin:0 0 22px;display:flex;flex-wrap:wrap;gap:8px;}
+.tele-puces li{padding:6px 12px;font-size:13px;color:var(--text-dim);background:var(--glass);border:1px solid var(--glass-border);border-radius:999px;}
+.tele-logiciel .tele-carte{max-width:none;margin:0;padding:22px 24px;text-align:left;}
+.tele-logiciel .tele-carte h2{font-size:18px;}
+.tele-logiciel .tele-action{align-items:flex-start;}
+.tele-logiciel .tele-dispo{text-align:left;}
 .tele-etapes{padding:26px 30px;background:var(--glass);border:1px solid var(--glass-border);border-radius:18px;}
-@media (max-width:900px){.tele-logiciel .tele-fonctions{grid-template-columns:repeat(2,1fr);}}
-@media (max-width:560px){.tele-logiciel .tele-fonctions{grid-template-columns:1fr;}.tele-etapes{padding:20px;}}
+@media (max-width:760px){
+  .tele-rangee,.tele-rangee.inverse{flex-direction:column-reverse;gap:24px;text-align:center;}
+  .tele-icone{width:180px;height:180px;}
+  .tele-puces{justify-content:center;}
+  .tele-logiciel .tele-carte{text-align:center;}
+  .tele-logiciel .tele-action{align-items:center;}
+  .tele-logiciel .tele-dispo{text-align:center;}
+  .tele-etapes{padding:20px;}
+}
