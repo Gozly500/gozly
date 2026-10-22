@@ -3094,3 +3094,13 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .tele-logiciel{padding:30px 0 46px;border-top:1px solid var(--glass-border);}
 .tele-nom{text-align:center;font-size:clamp(28px,4.4vw,40px);margin-bottom:6px;}
 .tele-slogan{text-align:center;color:var(--text-dim);font-size:16px;margin:0 auto 22px;}
+.tele-entete{display:flex;flex-direction:column;align-items:center;}
+.tele-icone{width:84px;height:84px;margin-bottom:14px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.35));}
+.tele-logiciel .tele-nom{margin-bottom:4px;}
+.tele-logiciel .tele-carte{max-width:560px;padding:30px 28px;}
+.tele-logiciel .tele-fonctions{grid-template-columns:repeat(3,1fr);max-width:980px;margin:28px auto 0;}
+.tele-logiciel .tele-fonction{padding:22px;transition:transform .2s,border-color .2s;}
+.tele-logiciel .tele-fonction:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.28);}
+.tele-etapes{padding:26px 30px;background:var(--glass);border:1px solid var(--glass-border);border-radius:18px;}
+@media (max-width:900px){.tele-logiciel .tele-fonctions{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:560px){.tele-logiciel .tele-fonctions{grid-template-columns:1fr;}.tele-etapes{padding:20px;}}

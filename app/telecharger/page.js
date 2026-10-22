@@ -31,8 +31,11 @@ export default function TelechargerPage() {
       {LOGICIELS_PAGE.map((l) => (
         <section className="tele-section tele-logiciel" key={l.logiciel} id={l.logiciel}>
           <div className="wrap">
-            <h2 className="tele-nom">{t(l.titre)}</h2>
-            <p className="tele-slogan">{t(l.sous)}</p>
+            <div className="tele-entete">
+              <img className="tele-icone" src={`/logiciels/${l.logiciel}.svg`} alt="" width="84" height="84" />
+              <h2 className="tele-nom">{t(l.titre)}</h2>
+              <p className="tele-slogan">{t(l.sous)}</p>
+            </div>
             <TelechargerContent logiciel={l.logiciel} />
             <p className="tele-dispo">{t("tele.dispo")}</p>
             <div className="tele-fonctions">
