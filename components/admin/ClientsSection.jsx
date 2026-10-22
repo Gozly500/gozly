@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { demarrerImpersonation } from "@/lib/entreprise";
 import SimpleSelect from "@/components/SimpleSelect";
+import FactureCompte from "@/components/admin/FactureCompte";
 import InfoTooltip from "@/components/InfoTooltip";
 import { geocoderAdresse } from "@/lib/geocode";
 import { limiteEntreprises } from "@/lib/modules";
@@ -263,6 +264,7 @@ export default function ClientsSection() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [rechercheClient, setRechercheClient] = useState("");
+  const [factureCompteId, setFactureCompteId] = useState(null); // userId dont le panneau « Créer une facture » est ouvert
 
   useEffect(() => {
     load();
@@ -483,11 +485,21 @@ export default function ClientsSection() {
                 >
                   {editingCompteId === compte.userId ? "Fermer" : "Modifier"}
                 </button>
+                {compte.profil && (
+                  <button
+                    className="admin-icon-btn"
+                    onClick={() => setFactureCompteId(factureCompteId === compte.userId ? null : compte.userId)}
+                  >
+                    {factureCompteId === compte.userId ? "Fermer la facture" : "Créer une facture"}
+                  </button>
+                )}
                 <button className="submit-btn" style={{ padding: "8px 18px" }} onClick={() => setCompteOuvertId(compte.userId)}>
                   Voir les entreprises <IconFlecheDroite className="gozly-icon-inline" />
                 </button>
               </div>
             </div>
+
+            {factureCompteId === compte.userId && <FactureCompte compte={compte} />}
 
             {editingCompteId === compte.userId && (
               <div className="admin-edit-panel">
