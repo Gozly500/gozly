@@ -23,6 +23,18 @@ export default function AbonnementSection({ profil }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [checkoutMsg, setCheckoutMsg] = useState(null);
+  const [factures, setFactures] = useState([]); // factures sur mesure envoyées par Gozly
+
+  useEffect(() => {
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) return;
+      const res = await fetch("/api/factures", { headers: { Authorization: `Bearer ${token}` } }).catch(() => null);
+      const data = await res?.json().catch(() => null);
+      if (res?.ok) setFactures(data?.factures || []);
+    })();
+  }, []);
 
   // "pilote" = forfait interne gratuit (assigné par un admin), absent de la liste
   // publique FORFAITS : sans ça il s'afficherait "Aucun forfait actif".
@@ -161,6 +173,36 @@ export default function AbonnementSection({ profil }) {
           </div>
         </div>
       </div>
+
+      {factures.length > 0 && (
+        <>
+          <div className="settings-divider">{t("Mes factures")}</div>
+          <div className="settings-section">
+            {factures.map((f) => (
+              <div className="admin-row" key={f.id}>
+                <div className="admin-row-main">
+                  <div className="admin-row-title">
+                    {f.numero || t("Facture")} · {(f.total / 100).toLocaleString("fr-CA", { style: "currency", currency: "CAD" })}
+                  </div>
+                  <div className="admin-row-sub">
+                    {new Date(f.creee * 1000).toLocaleDateString("fr-CA")} ·{" "}
+                    {f.statut === "paid"
+                      ? t("Payée")
+                      : f.echeance
+                        ? `${t("À payer avant le")} ${new Date(f.echeance * 1000).toLocaleDateString("fr-CA")}`
+                        : t("À payer")}
+                  </div>
+                </div>
+                {f.url && (
+                  <a className={f.statut === "paid" ? "admin-icon-btn" : "submit-btn"} style={{ padding: "8px 18px" }} href={f.url} target="_blank" rel="noreferrer">
+                    {f.statut === "paid" ? t("Voir") : t("Payer")}
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="settings-divider">{t("Paiement et facturation")}</div>
 
