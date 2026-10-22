@@ -86,6 +86,7 @@ export async function POST(request) {
   }
   const jours = Math.min(120, Math.max(1, Math.round(Number(joursEcheance)) || 30));
 
+  let brouillonId = null;
   try {
     const { customerId, courriel, erreur } = await trouverOuCreerClientStripe(stripe, service, profilId);
     if (erreur) return NextResponse.json({ error: erreur }, { status: 400 });
@@ -103,13 +104,14 @@ export async function POST(request) {
       metadata: { source: "admin" },
     });
 
+    brouillonId = brouillon.id;
     for (const l of lignesValides) {
       await stripe.invoiceItems.create({
         customer: customerId,
         invoice: brouillon.id,
         description: l.description,
         quantity: l.quantite,
-        unit_amount: l.prixCents,
+        unit_amount_decimal: String(l.prixCents),
         currency: "cad",
       });
     }
@@ -119,6 +121,8 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, courriel, url: envoyee.hosted_invoice_url, numero: envoyee.number, taxes: taxes.length > 0 });
   } catch (e) {
+    // Ne laisse pas un brouillon à moitié rempli chez Stripe (impossible une fois la facture finalisée).
+    if (brouillonId) await stripe.invoices.del(brouillonId).catch(() => {});
     return NextResponse.json({ error: "Stripe a refusé la facture : " + (e?.message || "erreur inconnue") }, { status: 500 });
   }
 }
