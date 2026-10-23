@@ -5,13 +5,19 @@ const ID = /^[A-Za-z0-9_.:\-]{1,80}$/;
 const volumeValide = (v) => Number.isInteger(v) && v >= 0 && v <= 100;
 
 // Commandes d'un groupe, qu'on peut aussi envoyer à tous les groupes d'un coup (« Partout »).
-const ACTIONS_GROUPE = new Set(["lecture", "pause", "suivant", "precedent", "volumeGroupe", "muetGroupe", "favori", "playlist"]);
+const ACTIONS_GROUPE = new Set(["lecture", "pause", "suivant", "precedent", "volumeGroupe", "muetGroupe", "favori", "playlist", "seek"]);
 
 // Valide les paramètres d'une action de groupe ; retourne un message d'erreur ou null.
 function erreurAction(c) {
   if ((c.action === "volumeGroupe") && !volumeValide(c.volume)) return "Volume invalide.";
   if (c.action === "favori" && !ID.test(String(c.favoriId || ""))) return "Favori invalide.";
   if (c.action === "playlist" && !ID.test(String(c.playlistId || ""))) return "Liste de lecture invalide.";
+  // Se déplacer dans la chanson : position en millisecondes (au plus 24 h) ; itemId (facultatif) = la chanson en cours,
+  // pour que Sonos refuse si la chanson vient de changer.
+  if (c.action === "seek") {
+    if (!Number.isInteger(c.positionMillis) || c.positionMillis < 0 || c.positionMillis > 86400000) return "Position invalide.";
+    if (c.itemId !== undefined && c.itemId !== null && (typeof c.itemId !== "string" || c.itemId.length > 200)) return "Élément invalide.";
+  }
   return null;
 }
 
@@ -25,6 +31,8 @@ function commandeGroupe(appel, c, g) {
       return appel("POST", `/groups/${g}/playback/skipToNextTrack`);
     case "precedent":
       return appel("POST", `/groups/${g}/playback/skipToPreviousTrack`);
+    case "seek":
+      return appel("POST", `/groups/${g}/playback/seek`, { positionMillis: c.positionMillis, ...(c.itemId ? { itemId: c.itemId } : {}) });
     case "volumeGroupe":
       return appel("POST", `/groups/${g}/groupVolume`, { volume: c.volume });
     case "muetGroupe":

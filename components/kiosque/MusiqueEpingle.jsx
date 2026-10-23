@@ -45,7 +45,9 @@ function useSonos({ entrepriseId, demo }) {
   async function charger() {
     if (!entrepriseId || demo) return;
     const r = await sonosApi(`/api/sonos/etat?entrepriseId=${entrepriseId}`);
-    setEtat(r.ok ? r.data : (e) => e || { erreur: true });
+    // positionLe : l'instant où la position a été lue, pour que la barre de progression avance toute seule entre deux lectures.
+    const maintenant = Date.now();
+    setEtat(r.ok ? { ...r.data, groupes: (r.data.groupes || []).map((g) => ({ ...g, positionLe: maintenant })) } : (e) => e || { erreur: true });
   }
 
   useEffect(() => {
@@ -68,8 +70,63 @@ function useSonos({ entrepriseId, demo }) {
     await charger();
   }
 
-  return { etat, agir };
+  return { etat, agir, rafraichir: charger };
 }
+
+const minutesSecondes = (ms) => {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+
+// Position dans la chanson : la dernière lue + le temps écoulé depuis (tant que ça joue). null = pas de durée (radio...).
+// Quand la chanson arrive à sa fin, on redemande l'état à Sonos pour passer à la suivante sans attendre.
+function usePosition(g, rafraichir) {
+  const [, tic] = useState(0);
+  const joue = g?.etat === "PLAYING";
+  useEffect(() => {
+    if (!joue) return;
+    const id = setInterval(() => tic((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [joue, g?.id]);
+
+  const duree = g?.dureeMs || 0;
+  const pos = duree ? Math.max(0, Math.min(duree, (g.positionMs ?? 0) + (joue && g.positionLe ? Date.now() - g.positionLe : 0))) : 0;
+  const fini = joue && duree > 0 && pos >= duree;
+  useEffect(() => {
+    if (!fini || !rafraichir) return;
+    const id = setTimeout(rafraichir, 1500);
+    return () => clearTimeout(id);
+  }, [fini, g?.id]);
+
+  return duree ? { pos, duree } : null;
+}
+
+// Barre de progression de la chanson : durée et position, au dégradé coloré qui défile ; on peut la déplacer (sauf si Sonos
+// l'interdit). mince : version fine du lecteur compact replié (sans temps ni poignée, violette) ; quand le lecteur se déploie,
+// c'est la MÊME barre qui grossit, descend avec la carte et prend peu à peu ses couleurs.
+function BarreProgression({ g, agir, rafraichir, t, mince = false }) {
+  const p = usePosition(g, rafraichir);
+  if (!p) return null;
+  return (
+    <div className={`mkp-progression${mince ? " mince" : ""}`} inert={mince ? "" : undefined}>
+      <Curseur
+        couleur
+        mince={mince}
+        valeur={Math.round(p.pos)}
+        max={p.duree}
+        direct={false}
+        lectureSeule={!g.peutChercher}
+        label={t("kq.mus.progression")}
+        onValider={(ms) => agir({ action: "seek", groupeId: g.id, positionMillis: Math.round(ms), ...(g.itemId ? { itemId: g.itemId } : {}) })}
+      />
+      <div className="mkp-temps">
+        <span>{minutesSecondes(p.pos)}</span>
+        <span>{minutesSecondes(p.duree)}</span>
+      </div>
+    </div>
+  );
+}
+
 
 // Place à laisser à l'écran kiosque pour que le lecteur ne cache rien : à droite (grand) ou en bas (compact).
 export const reservePourMode = (mode) => ({
@@ -85,7 +142,7 @@ const pochette = (g) => (g?.image ? <img src={g.image} alt="" /> : <IconMusique 
 // Le mode se choisit seulement en épinglant (voir BoutonEpingler) ; ici on ne peut que retirer le lecteur (onMode("off")).
 export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = false, onMode }) {
   const { t } = useLangue();
-  const { etat, agir } = useSonos({ entrepriseId, demo });
+  const { etat, agir, rafraichir } = useSonos({ entrepriseId, demo });
   const [cibleId, setCibleId] = useState(null);
   const [deploye, setDeploye] = useState(false); // lecteur compact déployé (volume général + groupes)
   const racine = useRef(null);
@@ -140,9 +197,6 @@ export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = 
   const bascule = () => agir({ action: joue ? "pause" : "lecture", groupeId: cible.id });
   const titre = cible?.titre || t("kq.mus.rien");
   const sous = cible?.artiste || t(cible?.etat === "PLAYING" ? "kq.mus.enLecture" : cible?.etat === "PAUSED" ? "kq.mus.enPause" : "kq.mus.arrete");
-
-  const volumes = groupes.map((g) => g.volume).filter((v) => v != null);
-  const volumeGeneral = volumes.length ? Math.round(volumes.reduce((a, b) => a + b, 0) / volumes.length) : null;
 
   const transport = (
     <div className="mkp-transport">
@@ -219,7 +273,7 @@ export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = 
   }
 
   const panneauMusique = (
-    <div className="mkp-musique">
+    <div className="mkp-musique mkp-feuillette">
       <div className="mkp-chips">
         <span className="mkp-etiquette">{t("kq.mus.jouerSur")}</span>
         {groupes.map((g) => (
@@ -305,16 +359,13 @@ export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = 
             <Fermer />
           </button>
         </div>
+        {/* Une seule barre : fine, sous le titre, quand le lecteur est replié ; une fois déployé elle descend, s'élargit sur toute la
+            carte, grossit et prend ses couleurs. Elle est positionnée en absolu (voir .mkp-compact .mkp-progression) ; le
+            « .mkp-barre-place » réserve sa place dans la carte déployée. */}
+        <div className="mkp-barre-place" aria-hidden="true" />
+        <BarreProgression g={cible} agir={agir} rafraichir={rafraichir} t={t} mince={!deploye} />
         <div className="mkp-deploiement" inert={deploye ? undefined : ""}>
           <div className="mkp-deploiement-interne">
-            <div className="mkp-general">
-              <span className="mkp-etiquette">{t("kq.mus.volumeGeneral")}</span>
-              <div className="mkp-volume">
-                <HautParleur className="mkp-picto" />
-                <Curseur valeur={volumeGeneral} label={t("kq.mus.volumeGeneral")} onValider={(v) => agir({ action: "toutVolume", volume: v })} />
-                <strong>{volumeGeneral ?? "–"}</strong>
-              </div>
-            </div>
             <span className="mkp-etiquette">{t("kq.mus.groupes")}</span>
             <div className="mkp-tuiles">
               {groupes.map((g) => (
@@ -365,27 +416,32 @@ export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = 
               <div className="mkp-sous">{sous}</div>
             </div>
             {transport}
-            <div className="mkp-general">
-              <span className="mkp-etiquette">{t("kq.mus.volumeGeneral")}</span>
-              <div className="mkp-volume">
-                <HautParleur className="mkp-picto" />
-                <Curseur valeur={volumeGeneral} label={t("kq.mus.volumeGeneral")} onValider={(v) => agir({ action: "toutVolume", volume: v })} />
-                <strong>{volumeGeneral ?? "–"}</strong>
-              </div>
-            </div>
+            <BarreProgression g={cible} agir={agir} rafraichir={rafraichir} t={t} />
           </div>
 
           {plein ? (
             <div className="mkp-colonne mkp-droite">
-              <div className="mkp-onglets" role="tablist">
-                <button type="button" role="tab" aria-selected={onglet === "hp"} className={`mkp-onglet${onglet === "hp" ? " actif" : ""}`} onClick={() => setOnglet("hp")}>
-                  {t("kq.mus.ongletHp")}
-                </button>
-                <button type="button" role="tab" aria-selected={onglet === "musique"} className={`mkp-onglet${onglet === "musique" ? " actif" : ""}`} onClick={() => setOnglet("musique")}>
-                  {t("kq.mus.ongletMusique")}
-                </button>
+              <div className="mkp-droite-interne">
+                {/* La pastille violette glisse d'un onglet à l'autre ; le contenu des deux sections reste monté et
+                    glisse à gauche / à droite, élément par élément (voir .mkp-panneaux dans globals.css). */}
+                <div className={`mkp-onglets ${onglet}`} role="tablist">
+                  <span className="mkp-onglets-pastille" aria-hidden="true" />
+                  <button type="button" role="tab" aria-selected={onglet === "hp"} className={`mkp-onglet${onglet === "hp" ? " actif" : ""}`} onClick={() => setOnglet("hp")}>
+                    {t("kq.mus.ongletHp")}
+                  </button>
+                  <button type="button" role="tab" aria-selected={onglet === "musique"} className={`mkp-onglet${onglet === "musique" ? " actif" : ""}`} onClick={() => setOnglet("musique")}>
+                    {t("kq.mus.ongletMusique")}
+                  </button>
+                </div>
+                <div className={`mkp-panneaux ${onglet}`}>
+                  <div className="mkp-panneau-onglet hp" inert={onglet === "hp" ? undefined : ""}>
+                    <div className="mkp-groupes-liste mkp-feuillette">{groupes.map(ligneGroupe)}</div>
+                  </div>
+                  <div className="mkp-panneau-onglet musique" inert={onglet === "musique" ? undefined : ""}>
+                    {panneauMusique}
+                  </div>
+                </div>
               </div>
-              {onglet === "hp" ? <div className="mkp-groupes">{groupes.map(ligneGroupe)}</div> : panneauMusique}
             </div>
           ) : (
             <div className="mkp-colonne mkp-groupes">

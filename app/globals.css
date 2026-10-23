@@ -2904,6 +2904,10 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .gx-curseur::-moz-range-progress{height:8px;background:linear-gradient(90deg,var(--violet),#a07bff);border-radius:999px;}
 .gx-curseur::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--violet);box-shadow:0 2px 8px rgba(0,0,0,0.35);}
 .gx-curseur:disabled{opacity:.4;cursor:not-allowed;}
+/* Barre de progression qu'on ne peut pas déplacer (flux sans permission de chercher) : pas de poignée. */
+.gx-curseur.lecture{pointer-events:none;cursor:default;}
+.gx-curseur.lecture::-webkit-slider-thumb{width:0;height:0;border:0;box-shadow:none;}
+.gx-curseur.lecture::-moz-range-thumb{width:0;height:0;border:0;box-shadow:none;}
 /* Tablette : pas de défilement de la page qui vole le geste, et une poignée plus grosse pour le doigt. */
 .gx-curseur{touch-action:none;}
 @media (pointer:coarse){.gx-curseur::-webkit-slider-thumb{width:32px;height:32px;margin-top:-12px;}}
@@ -3226,11 +3230,57 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .mkp-pastille{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:color-mix(in srgb,var(--fg,#fff) 30%,var(--navy,#0d0d3f));}
 .mkp-pastille.joue{background:#3ddc97;box-shadow:0 0 8px #3ddc97;}
 .mkp-vide{color:var(--text-dim);font-size:14px;margin:0;}
+/* Barre de progression de la chanson (remplace le volume général) : dégradé coloré qui défile */
+.mkp-progression{display:block;margin-top:2px;}
+.mkp-temps{display:flex;justify-content:space-between;margin-top:2px;max-height:22px;overflow:hidden;font-size:12.5px;color:var(--text-dim);font-variant-numeric:tabular-nums;transition:max-height .5s ease,opacity .4s ease,margin-top .5s ease;}
+.gx-prog{position:relative;height:28px;transition:height .55s cubic-bezier(.22,.8,.3,1);}
+.gx-prog-fond{position:absolute;left:0;right:0;top:50%;height:8px;transform:translateY(-50%);border-radius:999px;background:rgba(var(--w),0.2);overflow:hidden;transition:height .55s cubic-bezier(.22,.8,.3,1);}
+.gx-prog-rempli{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--violet);overflow:hidden;transition:width .9s linear;}
+.gx-prog.touche .gx-prog-rempli{transition:none;}
+.gx-prog-rempli::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#8a56fe,#c25cf5,#ff5fa2,#ff9e5e,#c25cf5,#8a56fe);background-size:200% 100%;animation:gxDefile 5s linear infinite;opacity:1;transition:opacity .8s ease;}
+@keyframes gxDefile{from{background-position:0% 0;}to{background-position:200% 0;}}
+@media (prefers-reduced-motion:reduce){.gx-prog-rempli::after{animation:none;}}
+/* La poignée est posée sur un champ transparent qui couvre toute la barre */
+.gx-curseur.gx-curseur-nu{position:absolute;inset:0;width:100%;height:100%;background:transparent;}
+.gx-curseur-nu::-webkit-slider-runnable-track{height:28px;background:transparent;}
+.gx-curseur-nu::-webkit-slider-thumb{margin-top:4px;transition:width .55s ease,height .55s ease,margin-top .55s ease,border-width .55s ease,transform .15s,box-shadow .15s;}
+.gx-curseur-nu::-moz-range-track{background:transparent;}
+@media (pointer:coarse){.gx-curseur-nu::-webkit-slider-thumb{margin-top:-2px;}}
+/* Version fine (lecteur compact replié) : violette, sans poignée ni temps ; en se dépliant, la barre grossit et prend ses couleurs. */
+.gx-prog.mince{height:3px;}
+.gx-prog.mince .gx-prog-fond{height:3px;}
+.gx-prog.mince .gx-prog-rempli::after{opacity:0;}
+.gx-prog.mince .gx-curseur-nu::-webkit-slider-thumb{width:0;height:0;border-width:0;margin-top:14px;box-shadow:none;}
+.mkp-progression.mince .mkp-temps{max-height:0;opacity:0;margin-top:0;}
+/* Lecteur compact : replié, la barre est sous le titre (à droite de la pochette, avant les boutons) ; déployée, elle occupe toute
+   la largeur sous l'en-tête. Les positions sont celles de la carte : pochette 64 px (92 déployée), marges 8 / 10 px, boutons de
+   droite 232 px. Un seul élément qui se déplace : left / right / top s'animent avec le déploiement. */
+.mkp-compact .mkp-progression{position:absolute;left:84px;right:232px;top:62px;margin-top:0;transition:left .55s cubic-bezier(.22,.8,.3,1),right .55s cubic-bezier(.22,.8,.3,1),top .55s cubic-bezier(.22,.8,.3,1);}
+.mkp-compact.deploye .mkp-progression{left:8px;right:10px;top:112px;}
+.mkp-barre-place{height:0;transition:height .55s cubic-bezier(.22,.8,.3,1);}
+.mkp-compact.deploye .mkp-barre-place{height:62px;}
+.mkp-compact.deploye .mkp-deploiement-interne{padding-top:4px;}
+@media (max-width:620px){.mkp-compact:not(.deploye) .mkp-progression{right:auto;width:80px;}}
 /* Écran Musique : onglets Haut-parleurs / Musique, plateformes et listes de lecture, appareils individuels */
 .mkp-droite{flex:1;min-width:0;gap:12px;}
-.mkp-onglets{display:flex;gap:6px;padding:4px;border-radius:14px;background:rgba(var(--w),0.08);flex-shrink:0;}
-.mkp .mkp-onglet{flex:1;height:46px;border-radius:11px;border:0;background:transparent;color:var(--text-dim);font:inherit;font-weight:600;font-size:15px;cursor:pointer;box-shadow:none;transform:none;}
-.mkp .mkp-onglet.actif{background:var(--violet);color:#fff;}
+.mkp-onglets{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:rgba(var(--w),0.08);flex-shrink:0;}
+.mkp-onglets-pastille{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px) / 2);border-radius:11px;background:var(--violet);box-shadow:0 4px 14px rgba(138,86,254,0.4);transition:transform .45s cubic-bezier(.22,.8,.3,1);}
+.mkp-onglets.musique .mkp-onglets-pastille{transform:translateX(100%);}
+.mkp .mkp-onglet{position:relative;z-index:1;height:46px;border-radius:11px;border:0;background:transparent;color:var(--text-dim);font:inherit;font-weight:600;font-size:15px;cursor:pointer;box-shadow:none;transform:none;transition:color .3s ease;}
+.mkp .mkp-onglet.actif{background:transparent;color:#fff;}
+/* Les deux sections restent montées, l'une sur l'autre : celle qu'on quitte s'efface en glissant d'un côté, l'autre arrive
+   de l'autre côté, ses éléments l'un après l'autre (effet de feuilletage). */
+.mkp-panneaux{display:grid;flex:1;min-height:0;margin-top:12px;overflow-y:auto;overflow-x:clip;scrollbar-width:none;}
+.mkp-panneaux::-webkit-scrollbar{display:none;}
+.mkp-panneau-onglet{grid-area:1 / 1;min-width:0;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s ease,visibility 0s linear .45s;}
+.mkp-panneaux.hp .mkp-panneau-onglet.hp,.mkp-panneaux.musique .mkp-panneau-onglet.musique{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .3s ease .05s,visibility 0s;}
+.mkp-panneau-onglet.hp{--dx:-46px;}
+.mkp-panneau-onglet.musique{--dx:46px;}
+.mkp-groupes-liste{display:flex;flex-direction:column;gap:6px;}
+.mkp-feuillette>*{transform:translateX(var(--dx,0));opacity:0;transition:transform .35s ease,opacity .25s ease;}
+.mkp-panneaux.hp .mkp-panneau-onglet.hp .mkp-feuillette>*,.mkp-panneaux.musique .mkp-panneau-onglet.musique .mkp-feuillette>*{transform:none;opacity:1;transition:transform .5s cubic-bezier(.22,.8,.3,1) calc(var(--i,0) * 60ms + 80ms),opacity .4s ease calc(var(--i,0) * 60ms + 80ms);}
+.mkp-feuillette>:nth-child(2){--i:1;}.mkp-feuillette>:nth-child(3){--i:2;}.mkp-feuillette>:nth-child(4){--i:3;}
+.mkp-feuillette>:nth-child(5){--i:4;}.mkp-feuillette>:nth-child(6){--i:5;}.mkp-feuillette>:nth-child(7){--i:6;}.mkp-feuillette>:nth-child(n+8){--i:7;}
 .mkp-musique{display:flex;flex-direction:column;gap:12px;min-height:0;}
 .mkp-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
 .mkp-lancee{margin:0;padding:10px 14px;border-radius:12px;font-size:14px;background:rgba(61,220,151,0.15);border:1px solid rgba(61,220,151,0.4);}
@@ -3250,9 +3300,15 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .mkp-large.plein{position:static;width:auto;max-width:1040px;min-height:100vh;margin:0 auto;border:0;box-shadow:none;background:transparent;padding:24px 28px;}
 .mkp-large.plein .mkp-corps{flex-direction:row;gap:36px;align-items:stretch;}
 .mkp-large.plein .mkp-colonne{flex:1;}
+/* Écran Musique centré verticalement ; la colonne de droite prend la hauteur de celle de gauche (et défile si besoin), pour que
+   l'écran ne saute pas quand on change d'onglet. */
+.mkp-large.plein{justify-content:center;}
+.mkp-large.plein .mkp-corps{flex:0 0 auto;}
+.mkp-large.plein .mkp-droite{position:relative;}
+.mkp-droite-interne{position:absolute;inset:0;display:flex;flex-direction:column;min-height:0;}
 .mkp-large.plein .mkp-pochette{width:min(100%,38vh);}
 @media (max-height:700px){.mkp-large:not(.plein) .mkp-pochette{width:min(100%,15vh);}.mkp-large:not(.plein){gap:8px;padding:10px 14px;}.mkp-large .mkp-corps,.mkp-large .mkp-colonne{gap:8px;}}
-@media (max-width:700px){.mkp-large.plein .mkp-corps{flex-direction:column;}}
+@media (max-width:700px){.mkp-large.plein .mkp-corps{flex-direction:column;}.mkp-large.plein .mkp-droite{position:static;}.mkp-droite-interne{position:static;}}
 
 /* Saisie Gozly (tablette) : la fenêtre glisse à gauche, un clavier / calendrier / choix d'heure apparaît à droite */
 .sg-duo{display:flex;align-items:center;justify-content:center;width:100%;max-height:100%;}
