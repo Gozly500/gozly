@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
-import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu } from "@/components/icons/GozlyIcons";
+import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu, IconMusique } from "@/components/icons/GozlyIcons";
 import { useT } from "@/components/LangProvider";
 
 const GestionContexte = createContext(null);
@@ -108,12 +108,14 @@ export default function GestionShell({ actif, children }) {
   const horaireActif = modulesActifs.includes("horaire");
   const commandesActif = modulesActifs.includes("commandes");
   const tachesActif = modulesActifs.includes("planning");
+  const musiqueActif = modulesActifs.includes("musique");
 
   const onglets = [
     { id: "accueil", href: "/gestion", label: "Accueil", Icone: IconTableauDeBord, visible: true },
     { id: "taches", href: "/gestion/taches", label: "Tâches", Icone: IconPlanning, visible: tachesActif },
     { id: "horaire", href: "/gestion/horaire", label: "Horaire", Icone: IconHoraire, visible: horaireActif },
     { id: "commandes", href: "/gestion/commandes", label: "Commandes", Icone: IconCommandes, visible: commandesActif },
+    { id: "musique", href: "/gestion/musique", label: "Musique", Icone: IconMusique, visible: musiqueActif },
     { id: "demandes", href: "/gestion/demandes", label: "Demandes", Icone: IconDemande, visible: horaireActif },
     { id: "discussion", href: "/gestion/discussion", label: "Discussion", Icone: IconDiscussion, visible: true },
   ].filter((o) => o.visible);
