@@ -104,9 +104,18 @@ function usePosition(g, rafraichir) {
 // Barre de progression de la chanson : durée et position, au dégradé coloré qui défile ; on peut la déplacer (sauf si Sonos
 // l'interdit). mince : version fine du lecteur compact replié (sans temps ni poignée, violette) ; quand le lecteur se déploie,
 // c'est la MÊME barre qui grossit, descend avec la carte et prend peu à peu ses couleurs.
-function BarreProgression({ g, agir, rafraichir, t, mince = false }) {
+function BarreProgression({ g, agir, rafraichir, t, mince = false, enDirect = false }) {
   const p = usePosition(g, rafraichir);
-  if (!p) return null;
+  if (!p) {
+    // Radio, ligne d'entrée... : Sonos ne donne aucune durée, donc pas de barre. On l'explique par « En direct ».
+    if (!enDirect || g?.etat !== "PLAYING" || !g?.titre) return null;
+    return (
+      <div className="mkp-direct">
+        <span className="mkp-direct-point" aria-hidden="true" />
+        {t("kq.mus.enDirect")}
+      </div>
+    );
+  }
   return (
     <div className={`mkp-progression${mince ? " mince" : ""}`} inert={mince ? "" : undefined}>
       <Curseur
@@ -345,7 +354,7 @@ export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = 
   if (mode === "compact") {
     // Toucher la pochette déploie le lecteur vers le haut (volume général et volume de chaque groupe), en douceur.
     return (
-      <div ref={racine} className={`mkp mkp-compact${deploye ? " deploye" : ""}`}>
+      <div ref={racine} className={`mkp mkp-compact${deploye ? " deploye" : ""}${cible?.dureeMs ? " avec-barre" : ""}`}>
         <div className="mkp-compact-tete">
           <button type="button" className="mkp-ouvre" onClick={() => setDeploye((d) => !d)} aria-expanded={deploye} aria-label={t("kq.mus.deployer")}>
             <span className="mkp-pochette petite">{pochette(cible)}</span>
@@ -416,7 +425,7 @@ export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = 
               <div className="mkp-sous">{sous}</div>
             </div>
             {transport}
-            <BarreProgression g={cible} agir={agir} rafraichir={rafraichir} t={t} />
+            <BarreProgression g={cible} agir={agir} rafraichir={rafraichir} t={t} enDirect />
           </div>
 
           {plein ? (

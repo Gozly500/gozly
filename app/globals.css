@@ -3231,6 +3231,9 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .mkp-pastille.joue{background:#3ddc97;box-shadow:0 0 8px #3ddc97;}
 .mkp-vide{color:var(--text-dim);font-size:14px;margin:0;}
 /* Barre de progression de la chanson (remplace le volume général) : dégradé coloré qui défile */
+.mkp-direct{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;font-size:13px;font-weight:600;color:var(--text-dim);}
+.mkp-direct-point{width:9px;height:9px;border-radius:50%;background:#ff4d6d;box-shadow:0 0 8px #ff4d6d;animation:mkpDirect 1.6s ease-in-out infinite;}
+@keyframes mkpDirect{0%,100%{opacity:1;}50%{opacity:.35;}}
 .mkp-progression{display:block;margin-top:2px;}
 .mkp-temps{display:flex;justify-content:space-between;margin-top:2px;max-height:22px;overflow:hidden;font-size:12.5px;color:var(--text-dim);font-variant-numeric:tabular-nums;transition:max-height .5s ease,opacity .4s ease,margin-top .5s ease;}
 .gx-prog{position:relative;height:28px;transition:height .55s cubic-bezier(.22,.8,.3,1);}
@@ -3258,8 +3261,9 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .mkp-compact .mkp-progression{position:absolute;left:84px;right:232px;top:62px;margin-top:0;transition:left .55s cubic-bezier(.22,.8,.3,1),right .55s cubic-bezier(.22,.8,.3,1),top .55s cubic-bezier(.22,.8,.3,1);}
 .mkp-compact.deploye .mkp-progression{left:8px;right:10px;top:112px;}
 .mkp-barre-place{height:0;transition:height .55s cubic-bezier(.22,.8,.3,1);}
-.mkp-compact.deploye .mkp-barre-place{height:62px;}
-.mkp-compact.deploye .mkp-deploiement-interne{padding-top:4px;}
+/* La place de la barre n'est réservée que s'il y a une barre (pas pour une radio : Sonos ne donne alors aucune durée). */
+.mkp-compact.deploye.avec-barre .mkp-barre-place{height:62px;}
+.mkp-compact.deploye.avec-barre .mkp-deploiement-interne{padding-top:4px;}
 @media (max-width:620px){.mkp-compact:not(.deploye) .mkp-progression{right:auto;width:80px;}}
 /* Écran Musique : onglets Haut-parleurs / Musique, plateformes et listes de lecture, appareils individuels */
 .mkp-droite{flex:1;min-width:0;gap:12px;}
