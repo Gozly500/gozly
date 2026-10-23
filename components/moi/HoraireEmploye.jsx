@@ -11,7 +11,9 @@ import { localeDate } from "@/lib/i18n/moi";
 import RemplacantModal from "@/components/moi/RemplacantModal";
 import { dateAujourdhui } from "@/lib/commandes";
 import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
-import CartePaie, { Montant, montantDe } from "@/components/moi/CartePaie";
+import CartePaie, { Montant, montantDe, formatHeures } from "@/components/moi/CartePaie";
+import CarteHeures from "@/components/moi/CarteHeures";
+import { heureCommande } from "@/lib/commandes";
 
 function heure(t) {
   return t.slice(0, 5);
@@ -39,6 +41,27 @@ export default function HoraireEmploye() {
   const [pointageOuvert, setPointageOuvert] = useState(false);
   const [paie, setPaie] = useState(null); // calculateur de paie (Paramètres > Paie) : null tant qu'il est désactivé
   const [cache, setCache] = useState(true); // montants cachés par défaut (points)
+  const [heures, setHeures] = useState(null); // heures pointées de la semaine : { minutesTotal, jours, aDesPointages }
+
+  // Heures réellement travaillées (pointages) ; se rafraîchit chaque minute pour suivre un pointage en cours.
+  useEffect(() => {
+    const semaine = weekStart.toISOString().slice(0, 10);
+    let ignore = false;
+    async function charger() {
+      try {
+        const res = await employeFetch(`/api/employe-app/heures?semaine=${semaine}`);
+        const data = res.ok ? await res.json() : null;
+        if (!ignore) setHeures(data);
+      } catch {}
+    }
+    setHeures(null);
+    charger();
+    const id = setInterval(() => document.visibilityState === "visible" && charger(), 60000);
+    return () => {
+      ignore = true;
+      clearInterval(id);
+    };
+  }, [weekStart]);
 
   // Paie de la semaine affichée ; se rafraîchit chaque minute pour suivre un pointage en cours.
   useEffect(() => {
@@ -145,6 +168,7 @@ export default function HoraireEmploye() {
         </button>
       </div>
 
+      <CarteHeures heures={heures} />
       <CartePaie paie={paie} cache={cache} onBascule={() => setCache((c) => !c)} />
 
       {loading ? (
@@ -180,6 +204,21 @@ export default function HoraireEmploye() {
                     </button>
                   )}
                 </div>
+                {/* Heures réellement travaillées ce jour-là (arrivée et départ pointés), même si le quart prévu était plus long. */}
+                {heures?.jours?.[dateISO] && (
+                  <div className="moi-jour-travaille">
+                    <span>{t("heures.travaille")}</span>
+                    <strong>
+                      {formatHeures(heures.jours[dateISO].minutes)}
+                      {heures.jours[dateISO].enCours && <em> · {t("heures.enCours")}</em>}
+                    </strong>
+                    <small>
+                      {heures.jours[dateISO].plages
+                        .map((p) => `${heureCommande(p.entree, localeDate(langue))} – ${p.sortie ? heureCommande(p.sortie, localeDate(langue)) : "…"}`)
+                        .join(" · ")}
+                    </small>
+                  </div>
+                )}
                 {quartsDuJour.length === 0 ? (
                   <p className="moi-jour-repos">{t("horaire.repos")}</p>
                 ) : (
