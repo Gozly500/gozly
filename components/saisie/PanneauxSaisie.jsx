@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLangue } from "@/components/moi/LangueContext";
 
-const ACCENTS = ["é", "è", "ê", "à", "â", "ç", "î", "ô", "û", "ù"];
-const LIGNES = [["a", "z", "e", "r", "t", "y", "u", "i", "o", "p"], ["q", "s", "d", "f", "g", "h", "j", "k", "l", "m"], ["w", "x", "c", "v", "b", "n"]];
+// Appui long sur une lettre : ses variantes accentuées (comme sur un vrai clavier). La première sert d'indice sur la touche.
+const VARIANTES = { a: ["à", "â", "ä", "æ"], e: ["é", "è", "ê", "ë"], i: ["î", "ï"], o: ["ô", "ö", "œ"], u: ["ù", "û", "ü"], c: ["ç"], y: ["ÿ"], n: ["ñ"] };
+// QWERTY (clavier canadien) : 10 + 9 + 7 lettres.
+const LIGNES = [["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"], ["a", "s", "d", "f", "g", "h", "j", "k", "l"], ["z", "x", "c", "v", "b", "n", "m"]];
 const CHIFFRES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
 const SYMBOLES_1 = ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""];
 const SYMBOLES_2 = [".", ",", "?", "!", "'", "#", "%", "+", "*"];
@@ -14,10 +16,49 @@ const enleverDernier = (s) => Array.from(s).slice(0, -1).join("");
 // Les boutons ne volent jamais le focus : le champ touché reste le champ actif.
 const sansFocus = (e) => e.preventDefault();
 
-function Touche({ c, large = 2, onClick, classe = "", children, label }) {
+// debut : colonne de départ (sur 20), pour centrer une rangée.
+function Touche({ c, large = 2, debut, onClick, classe = "", children, label }) {
   return (
-    <button type="button" className={`sg-touche ${classe}`} style={{ gridColumn: `span ${large}` }} onPointerDown={sansFocus} onClick={onClick} aria-label={label}>
+    <button type="button" className={`sg-touche ${classe}`} style={{ gridColumn: debut ? `${debut} / span ${large}` : `span ${large}` }} onPointerDown={sansFocus} onClick={onClick} aria-label={label}>
       {children ?? c}
+    </button>
+  );
+}
+
+// Touche de lettre : un appui court écrit la lettre, un appui long (0,4 s) ouvre ses variantes accentuées.
+function ToucheLettre({ lettre, variantes, onChar, onVariantes }) {
+  const minuteur = useRef(null);
+  const long = useRef(false);
+  const annuler = () => clearTimeout(minuteur.current);
+  return (
+    <button
+      type="button"
+      className="sg-touche"
+      style={{ gridColumn: "span 2" }}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        long.current = false;
+        if (!variantes) return;
+        const el = e.currentTarget;
+        minuteur.current = setTimeout(() => {
+          long.current = true;
+          onVariantes(el);
+        }, 400);
+      }}
+      onPointerUp={annuler}
+      onPointerLeave={annuler}
+      onPointerCancel={annuler}
+      onContextMenu={(e) => e.preventDefault()}
+      onClick={() => {
+        if (long.current) {
+          long.current = false; // l'appui long a déjà ouvert les variantes : pas de lettre en plus
+          return;
+        }
+        onChar();
+      }}
+    >
+      {lettre}
+      {variantes && <i className="sg-indice">{variantes[0]}</i>}
     </button>
   );
 }
@@ -42,10 +83,31 @@ export function Clavier({ champ, onFermer }) {
   const [symboles, setSymboles] = useState(false);
   const { type, value, onChange, maxLength } = champ;
 
+  const [pop, setPop] = useState(null); // variantes ouvertes : { liste, left, top }
+  const racine = useRef(null);
+
   useEffect(() => {
     setSymboles(false);
     setMaj(false);
+    setPop(null);
   }, [champ.id]);
+
+  // Variantes ouvertes : toucher ailleurs que sur elles les ferme.
+  useEffect(() => {
+    if (!pop) return;
+    const dehors = (e) => {
+      if (!e.target.closest?.(".sg-variantes")) setPop(null);
+    };
+    document.addEventListener("pointerdown", dehors);
+    return () => document.removeEventListener("pointerdown", dehors);
+  }, [pop]);
+
+  function ouvrirVariantes(el, liste) {
+    const largeur = liste.length * 54 + (liste.length - 1) * 6 + 16;
+    const total = racine.current?.clientWidth || 0;
+    const centre = el.offsetLeft + el.offsetWidth / 2;
+    setPop({ liste, left: Math.max(largeur / 2 + 2, Math.min(total - largeur / 2 - 2, centre)), top: el.offsetTop });
+  }
 
   const ajouter = (s) => {
     const suivant = value + s;
@@ -81,8 +143,22 @@ export function Clavier({ champ, onFermer }) {
     );
   }
 
+  const rendreLettre = (c) => {
+    const variantes = VARIANTES[c];
+    return (
+      <ToucheLettre
+        key={c}
+        lettre={lettre(c)}
+        variantes={variantes && variantes.map(lettre)}
+        onChar={() => ajouter(lettre(c))}
+        onVariantes={(el) => ouvrirVariantes(el, variantes.map(lettre))}
+      />
+    );
+  };
+  const vide = (n = 1) => <span style={{ gridColumn: `span ${n}` }} />;
+
   return (
-    <div className="sg-clavier">
+    <div className="sg-clavier" ref={racine}>
       <Miroir champ={champ} />
       <div className="sg-grille">
         {symboles ? (
@@ -91,29 +167,40 @@ export function Clavier({ champ, onFermer }) {
             {SYMBOLES_1.map((c) => <Touche key={c} c={c} onClick={() => ajouter(c)} />)}
             {SYMBOLES_2.map((c) => <Touche key={c} c={c} onClick={() => ajouter(c)} />)}
             <Touche large={2} classe="special" onClick={effacer} label={t("sg.effacer")}>⌫</Touche>
-            <Touche large={4} classe="special" onClick={() => setSymboles(false)}>ABC</Touche>
+            {/* Dernière rangée centrée : ABC + espace */}
+            <Touche large={4} debut={5} classe="special" onClick={() => setSymboles(false)}>ABC</Touche>
+            <Touche large={8} classe="espace" onClick={() => ajouter(" ")} label={t("sg.espace")}>{t("sg.espace")}</Touche>
           </>
         ) : (
           <>
-            {ACCENTS.map((c) => <Touche key={c} c={lettre(c)} classe="accent" onClick={() => ajouter(lettre(c))} />)}
-            {LIGNES[0].map((c) => <Touche key={c} c={lettre(c)} onClick={() => ajouter(lettre(c))} />)}
-            {LIGNES[1].map((c) => <Touche key={c} c={lettre(c)} onClick={() => ajouter(lettre(c))} />)}
+            {LIGNES[0].map(rendreLettre)}
+            {/* Rangée du milieu : 9 lettres, centrées */}
+            {vide()}
+            {LIGNES[1].map(rendreLettre)}
+            {vide()}
+            {/* Rangée du bas : ⇧ et ⌫ aux extrémités, les 7 lettres entre les deux */}
             <Touche large={3} classe={`special${maj ? " actif" : ""}`} onClick={() => setMaj((m) => !m)} label={t("sg.majuscule")}>⇧</Touche>
-            {LIGNES[2].map((c) => <Touche key={c} c={lettre(c)} onClick={() => ajouter(lettre(c))} />)}
+            {LIGNES[2].map(rendreLettre)}
             <Touche large={3} classe="special" onClick={effacer} label={t("sg.effacer")}>⌫</Touche>
-          </>
-        )}
-        {!symboles && (
-          <>
-            <Touche large={3} classe="special" onClick={() => setSymboles(true)}>123</Touche>
+            {/* Dernière rangée centrée (18 colonnes sur 20) */}
+            <Touche large={4} debut={2} classe="special" onClick={() => setSymboles(true)}>123</Touche>
             <Touche c="'" large={2} onClick={() => ajouter("'")} />
             <Touche large={6} classe="espace" onClick={() => ajouter(" ")} label={t("sg.espace")}>{t("sg.espace")}</Touche>
             <Touche c="." large={2} onClick={() => ajouter(".")} />
-            <Touche c="-" large={2} onClick={() => ajouter("-")} />
-            {type === "textarea" && <Touche large={3} classe="special" onClick={() => ajouter("\n")}>↵</Touche>}
+            <Touche c="," large={2} onClick={() => ajouter(",")} />
+            {type === "textarea" ? <Touche large={2} classe="special" onClick={() => ajouter("\n")}>↵</Touche> : <Touche c="-" large={2} onClick={() => ajouter("-")} />}
           </>
         )}
       </div>
+      {pop && (
+        <div className="sg-variantes" style={{ left: pop.left, top: pop.top }}>
+          {pop.liste.map((v) => (
+            <button key={v} type="button" className="sg-variante" onPointerDown={sansFocus} onClick={() => { ajouter(v); setPop(null); }}>
+              {v}
+            </button>
+          ))}
+        </div>
+      )}
       <button type="button" className="sg-ok" onPointerDown={sansFocus} onClick={onFermer}>{t("sg.ok")}</button>
     </div>
   );
@@ -184,11 +271,78 @@ export function Calendrier({ champ, onFermer, langue }) {
 
 const deuxChiffres = (n) => String(n).padStart(2, "0");
 
-// Choix d'heure : les heures d'un côté, les minutes (par 5) de l'autre, tout visible d'un coup.
+const Chevron = ({ bas }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: 30, height: 30, transform: bas ? "rotate(180deg)" : undefined }}>
+    <path d="M6 15l6-6 6 6" />
+  </svg>
+);
+
+// Une colonne « flèche haut / chiffre / flèche bas ». Garder le doigt sur une flèche fait défiler.
+function Rouleau({ titre, valeur, onPas, labelHaut, labelBas }) {
+  const delai = useRef(null);
+  const boucle = useRef(null);
+  const arreter = () => {
+    clearTimeout(delai.current);
+    clearInterval(boucle.current);
+  };
+  useEffect(() => arreter, []);
+
+  const fleche = (sens, label) => (
+    <button
+      type="button"
+      className="sg-fleche-spin"
+      aria-label={label}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        arreter();
+        onPas(sens);
+        delai.current = setTimeout(() => {
+          boucle.current = setInterval(() => onPas(sens), 120);
+        }, 450);
+      }}
+      onPointerUp={arreter}
+      onPointerLeave={arreter}
+      onPointerCancel={arreter}
+      onContextMenu={(e) => e.preventDefault()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPas(sens);
+        }
+      }}
+    >
+      <Chevron bas={sens < 0} />
+    </button>
+  );
+
+  return (
+    <div className="sg-rouleau">
+      <span className="sg-sous-titre">{titre}</span>
+      {fleche(1, labelHaut)}
+      <div className="sg-rouleau-valeur">{deuxChiffres(valeur)}</div>
+      {fleche(-1, labelBas)}
+    </div>
+  );
+}
+
+// Choix d'heure : heures et minutes, chacune avec une flèche vers le haut, le chiffre, et une flèche vers le bas.
+// Les minutes avancent par 5 ; les heures bouclent (23 -> 00).
 export function ChoixHeure({ champ, onFermer }) {
   const { t } = useLangue();
-  const [h, m] = (champ.value || "12:00").split(":").map(Number);
-  const maj = (nh, nm) => champ.onChange(`${deuxChiffres(nh)}:${deuxChiffres(nm)}`);
+  const [h0, m0] = (champ.value || "12:00").split(":").map(Number);
+  const h = Number.isFinite(h0) ? h0 : 12;
+  const m = Number.isFinite(m0) ? m0 : 0;
+  // Les flèches qui défilent (gardées enfoncées) lisent toujours la valeur et le champ à jour.
+  const courant = useRef({ h, m, champ });
+  courant.current = { h, m, champ };
+  const ecrire = (nh, nm) => courant.current.champ.onChange(`${deuxChiffres(nh)}:${deuxChiffres(nm)}`);
+
+  const pasHeure = (s) => ecrire((courant.current.h + s + 24) % 24, courant.current.m);
+  const pasMinute = (s) => {
+    const { m: cm, h: ch } = courant.current;
+    const nm = s > 0 ? (Math.floor(cm / 5) + 1) * 5 : (Math.ceil(cm / 5) - 1) * 5; // se cale sur un multiple de 5
+    ecrire(ch, (nm + 60) % 60);
+  };
 
   return (
     <div className="sg-heure">
@@ -196,21 +350,10 @@ export function ChoixHeure({ champ, onFermer }) {
         <span className="sg-miroir-label">{champ.label}</span>
         <div className="sg-miroir-texte grand">{champ.value || "--:--"}</div>
       </div>
-      <span className="sg-sous-titre">{t("sg.heures")}</span>
-      <div className="sg-heure-grille h">
-        {Array.from({ length: 24 }, (_, i) => (
-          <button key={i} type="button" className={`sg-heure-case${i === h ? " choisi" : ""}`} onClick={() => maj(i, m || 0)}>
-            {deuxChiffres(i)}
-          </button>
-        ))}
-      </div>
-      <span className="sg-sous-titre">{t("sg.minutes")}</span>
-      <div className="sg-heure-grille m">
-        {Array.from({ length: 12 }, (_, i) => i * 5).map((n) => (
-          <button key={n} type="button" className={`sg-heure-case${n === m ? " choisi" : ""}`} onClick={() => maj(Number.isFinite(h) ? h : 12, n)}>
-            {deuxChiffres(n)}
-          </button>
-        ))}
+      <div className="sg-rouleaux">
+        <Rouleau titre={t("sg.heures")} valeur={h} onPas={pasHeure} labelHaut={t("sg.heurePlus")} labelBas={t("sg.heureMoins")} />
+        <span className="sg-deux-points">:</span>
+        <Rouleau titre={t("sg.minutes")} valeur={m} onPas={pasMinute} labelHaut={t("sg.minutePlus")} labelBas={t("sg.minuteMoins")} />
       </div>
       <button type="button" className="sg-ok" onClick={onFermer}>{t("sg.ok")}</button>
     </div>

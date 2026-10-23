@@ -20,8 +20,6 @@ const Lecture = (p) => <Svg {...p}><path d="M8 5v14l11-7z" /></Svg>;
 const Pause = (p) => <Svg {...p}><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></Svg>;
 const Precedent = (p) => <Svg {...p}><path d="M6 5h2v14H6zM20 5v14L9 12z" /></Svg>;
 const Suivant = (p) => <Svg {...p}><path d="M16 5h2v14h-2zM4 5l11 7-11 7z" /></Svg>;
-const Agrandir = (p) => <Trait {...p}><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" /></Trait>;
-const Reduire = (p) => <Trait {...p}><path d="M20 10h-6V4M4 14h6v6M14 10l7-7M10 14l-7 7" /></Trait>;
 const Fermer = (p) => <Trait {...p}><path d="M6 6l12 12M18 6L6 18" /></Trait>;
 const HautParleur = (p) => <Trait {...p}><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16.5 8.5a5 5 0 010 7" /></Trait>;
 
@@ -95,19 +93,32 @@ function useSonos({ entrepriseId, demo }) {
 
 // Place à laisser à l'écran kiosque pour que le lecteur ne cache rien : à droite (grand) ou en bas (compact).
 export const reservePourMode = (mode) => ({
-  paddingRight: mode === "large" ? 340 : 0,
-  paddingBottom: mode === "compact" ? 84 : 0,
+  paddingRight: mode === "large" ? 340 + 28 : 0, // largeur du panneau + une marge, pour que le contenu ne le touche pas
+  paddingBottom: mode === "compact" ? 100 : 0,
   transition: "padding .3s ease",
 });
 
 const pochette = (g) => (g?.image ? <img src={g.image} alt="" /> : <IconMusique className="gozly-icon" />);
 
-// Lecteur Musique des kiosques. mode : "compact" (petite barre au centre en bas), "large" (panneau à droite)
-// ou "plein" (l'écran kiosque Musique lui-même). Tout tient à l'écran, sans défilement.
+// Lecteur Musique des kiosques. mode : "compact" (petite barre au centre en bas, qui se déploie au toucher),
+// "large" (panneau à droite) ou "plein" (l'écran kiosque Musique lui-même). Le mode se choisit seulement en
+// épinglant (voir BoutonEpingler) ; ici on ne peut que retirer le lecteur (onMode("off")). Sans défilement.
 export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = false, onMode }) {
   const { t } = useLangue();
   const { etat, agir } = useSonos({ entrepriseId, demo });
   const [cibleId, setCibleId] = useState(null);
+  const [deploye, setDeploye] = useState(false); // lecteur compact déployé (volume général + groupes)
+  const racine = useRef(null);
+
+  // Déployé : toucher ailleurs le replie.
+  useEffect(() => {
+    if (!deploye) return;
+    const dehors = (e) => {
+      if (racine.current && !racine.current.contains(e.target)) setDeploye(false);
+    };
+    document.addEventListener("pointerdown", dehors);
+    return () => document.removeEventListener("pointerdown", dehors);
+  }, [deploye]);
 
   if (!etat) return null;
   const groupes = etat.groupes || [];
@@ -138,20 +149,51 @@ export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = 
   );
 
   if (mode === "compact") {
+    // Toucher la pochette déploie le lecteur vers le haut (volume général et volume de chaque groupe), en douceur.
     return (
-      <div className="mkp mkp-compact">
-        <div className="mkp-pochette petite">{pochette(cible)}</div>
-        <div className="mkp-textes">
-          <div className="mkp-titre">{titre}</div>
-          <div className="mkp-sous">{sous}</div>
+      <div ref={racine} className={`mkp mkp-compact${deploye ? " deploye" : ""}`}>
+        <div className="mkp-compact-tete">
+          <button type="button" className="mkp-ouvre" onClick={() => setDeploye((d) => !d)} aria-expanded={deploye} aria-label={t("kq.mus.deployer")}>
+            <span className="mkp-pochette petite">{pochette(cible)}</span>
+            <span className="mkp-textes">
+              <span className="mkp-titre">{titre}</span>
+              <span className="mkp-sous">{sous}</span>
+            </span>
+          </button>
+          {transport}
+          <button type="button" className="mkp-mini" onClick={() => onMode?.("off")} aria-label={t("kq.mus.fermer")}>
+            <Fermer />
+          </button>
         </div>
-        {transport}
-        <button type="button" className="mkp-mini" onClick={() => onMode?.("large")} aria-label={t("kq.mus.agrandir")}>
-          <Agrandir />
-        </button>
-        <button type="button" className="mkp-mini" onClick={() => onMode?.("off")} aria-label={t("kq.mus.fermer")}>
-          <Fermer />
-        </button>
+        <div className="mkp-deploiement" inert={deploye ? undefined : ""}>
+          <div className="mkp-deploiement-interne">
+            <div className="mkp-general">
+              <span className="mkp-etiquette">{t("kq.mus.volumeGeneral")}</span>
+              <div className="mkp-volume">
+                <HautParleur className="mkp-picto" />
+                <Curseur valeur={volumeGeneral} label={t("kq.mus.volumeGeneral")} onValider={(v) => agir({ action: "toutVolume", volume: v })} />
+                <strong>{volumeGeneral ?? "–"}</strong>
+              </div>
+            </div>
+            <span className="mkp-etiquette">{t("kq.mus.groupes")}</span>
+            <div className="mkp-tuiles">
+              {groupes.map((g) => (
+                <div className={`mkp-groupe${g.id === cible?.id ? " actif" : ""}`} key={g.id}>
+                  <button type="button" className="mkp-groupe-nom" onClick={() => setCibleId(g.id)}>
+                    <span className={`mkp-pastille ${g.etat === "PLAYING" ? "joue" : ""}`} />
+                    <span>{g.nom}</span>
+                  </button>
+                  <button type="button" className="mkp-mini" onClick={() => agir({ action: g.etat === "PLAYING" ? "pause" : "lecture", groupeId: g.id })} aria-label={t(g.etat === "PLAYING" ? "kq.mus.pause" : "kq.mus.lecture")}>
+                    {g.etat === "PLAYING" ? <Pause /> : <Lecture />}
+                  </button>
+                  <div className="mkp-groupe-volume">
+                    <Curseur valeur={g.volume} label={`${t("kq.mus.volume")} ${g.nom}`} onValider={(v) => agir({ action: "volumeGroupe", groupeId: g.id, volume: v })} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -164,9 +206,6 @@ export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = 
         </span>
         {mode !== "plein" && (
           <span className="mkp-tete-boutons">
-            <button type="button" className="mkp-mini" onClick={() => onMode?.("compact")} aria-label={t("kq.mus.reduire")}>
-              <Reduire />
-            </button>
             <button type="button" className="mkp-mini" onClick={() => onMode?.("off")} aria-label={t("kq.mus.fermer")}>
               <Fermer />
             </button>

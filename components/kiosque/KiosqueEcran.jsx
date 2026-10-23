@@ -5,7 +5,7 @@ import Link from "next/link";
 import MusiqueKiosk from "@/components/kiosque/MusiqueKiosk";
 import MusiqueEpingle, { reservePourMode } from "@/components/kiosque/MusiqueEpingle";
 import { useEntrepriseKiosque } from "@/components/kiosque/useEntrepriseKiosque";
-import { IconMusique } from "@/components/icons/GozlyIcons";
+import BoutonEpingler from "@/components/kiosque/BoutonEpingler";
 import PointageKioskContent from "@/components/PointageKioskContent";
 import PlanningKioskContent from "@/components/PlanningKioskContent";
 import InventaireKioskContent from "@/components/InventaireKioskContent";
@@ -63,9 +63,10 @@ export default function KiosqueEcran({ id }) {
     } catch {}
   }
 
-  // Le lecteur épinglé se superpose aux autres kiosques quand le module Musique est actif.
-  const peutEpingler = id !== "musique" && modules.includes("musique");
-  const mode = peutEpingler ? epingle : "off";
+  // On épingle seulement depuis le kiosque Musique (bouton « Épingler »). Une fois épinglé (et le module Musique
+  // actif), le lecteur se superpose aux autres kiosques, qui n'ont pas de bouton d'épinglage.
+  const estMusique = id === "musique";
+  const mode = !estMusique && modules.includes("musique") ? epingle : "off";
 
   useEffect(() => {
     let verrou = null;
@@ -103,11 +104,7 @@ export default function KiosqueEcran({ id }) {
       <Link href="/kiosque" aria-label={t("kq.retourListe")} style={{ ...BOUTON_COIN, left: "4px" }}>
         <IconFlecheGauche className="gozly-icon" />
       </Link>
-      {peutEpingler && mode === "off" && (
-        <button type="button" aria-label={t("kq.mus.epingler")} onClick={() => changerEpingle("compact")} style={{ ...BOUTON_COIN, left: "54px", border: 0, cursor: "pointer" }}>
-          <IconMusique className="gozly-icon" />
-        </button>
-      )}
+      {estMusique && <BoutonEpingler mode={epingle} onChoix={changerEpingle} />}
       {/* Montre la langue vers laquelle on bascule : « EN » quand l'écran est en français. */}
       <button
         type="button"
