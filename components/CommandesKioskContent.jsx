@@ -55,6 +55,39 @@ function correspondRecherche(c, recherche) {
   return false;
 }
 
+// Bouton rond « ⋯ » à droite du bouton Terminer : un toucher le déplie en pastille avec Modifier / Retirer (un toucher ailleurs le replie).
+export function MenuCommande({ onModifier, onRetirer, t }) {
+  const [ouvert, setOuvert] = useState(false);
+  const racine = useRef(null);
+  useEffect(() => {
+    if (!ouvert) return;
+    const dehors = (e) => {
+      if (racine.current && !racine.current.contains(e.target)) setOuvert(false);
+    };
+    document.addEventListener("pointerdown", dehors);
+    return () => document.removeEventListener("pointerdown", dehors);
+  }, [ouvert]);
+  return (
+    <div className="cmd-menu-place" ref={racine}>
+      <div className={`cmd-menu${ouvert ? " ouvert" : ""}`}>
+        <button type="button" className="cmd-menu-option" tabIndex={ouvert ? 0 : -1} onClick={() => { setOuvert(false); onModifier(); }}>
+          {t("kq.c.modifier")}
+        </button>
+        <button type="button" className="cmd-menu-option danger" tabIndex={ouvert ? 0 : -1} onClick={() => { setOuvert(false); onRetirer(); }}>
+          {t("kq.c.retirer")}
+        </button>
+        <button type="button" className="cmd-menu-points" aria-expanded={ouvert} aria-label={t("kq.c.plus")} onClick={() => setOuvert((o) => !o)}>
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="12" r="2.2" />
+            <circle cx="12" cy="12" r="2.2" />
+            <circle cx="19" cy="12" r="2.2" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const SON_NOUVELLE_COMMANDE = "/sons/nouvelle-commande.mp3";
 const PAUSE_ENTRE_SONS_MS = 5000;
 
@@ -307,6 +340,8 @@ export default function CommandesKioskContent() {
       </>
     );
 
+  const menuManuelle = (c) => c.source === "manuel" && <MenuCommande t={t} onModifier={() => setAModifier(c)} onRetirer={() => setARetirer(c)} />;
+
   async function passer(commande, etape) {
     setEnCours(commande.id);
     // Mise à jour immédiate à l'écran, puis confirmation du serveur.
@@ -421,7 +456,6 @@ export default function CommandesKioskContent() {
               <IconImprimante className="gozly-icon" /> {t("kq.c.imprimer")}
             </button>
           )}
-          {boutonsManuelle(c)}
           {liste ? (
             etapeCommande(c) !== "terminee" && (
               <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "terminee")}>
@@ -446,6 +480,7 @@ export default function CommandesKioskContent() {
               )}
             </>
           )}
+          {menuManuelle(c)}
         </div>
       </article>
     );

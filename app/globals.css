@@ -2189,6 +2189,15 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 .cmd-kiosk-total{font-weight:700;font-size:16px;}
 .cmd-kiosk-actions{display:flex;gap:8px;margin-top:4px;}
 .cmd-kiosk-actions .submit-btn{flex:1;padding:14px;font-size:16px;}
+/* Bouton rond « ⋯ » (même hauteur que Terminer) : il se déplie vers la gauche, par-dessus, en pastille Modifier / Retirer. */
+.cmd-menu-place{position:relative;flex:0 0 52px;align-self:stretch;min-height:52px;margin-left:auto;}
+.cmd-menu{position:absolute;right:0;top:0;bottom:0;display:flex;align-items:stretch;width:52px;overflow:hidden;border-radius:999px;z-index:2;background:color-mix(in srgb,var(--navy,#0d0d3f) 80%,#fff 20%);border:1px solid rgba(var(--w),0.25);transition:width .32s cubic-bezier(.22,.8,.3,1);}
+.cmd-menu.ouvert{width:min(250px,calc(100vw - 80px));box-shadow:0 8px 24px rgba(0,0,0,.45);}
+button.cmd-menu-points{order:3;flex:0 0 50px;width:50px;padding:0;border:0;border-radius:999px;background:transparent;color:var(--fg);box-shadow:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transform:none;}
+button.cmd-menu-option{flex:1 1 0;min-width:0;padding:0;overflow:hidden;border:0;border-radius:0;background:transparent;color:var(--fg);font-size:15px;font-weight:600;box-shadow:none;cursor:pointer;transform:none;opacity:0;transition:opacity .2s ease;white-space:nowrap;}
+.cmd-menu.ouvert button.cmd-menu-option{opacity:1;transition-delay:.12s;}
+button.cmd-menu-option.danger{color:#ff9494;}
+button.cmd-menu-option:active{background:rgba(var(--w),0.14);}
 /* Chaque colonne (En attente / Traitées / Terminées) défile toute seule : la page, elle, ne bouge pas. */
 .cmd-kiosk-col-liste{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;overscroll-behavior:contain;padding-right:2px;}
 @media (max-width:900px){
