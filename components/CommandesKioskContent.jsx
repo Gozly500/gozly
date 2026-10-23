@@ -7,7 +7,7 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
 import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
-import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle } from "@/lib/commandesNouvelle";
+import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle, modifierCommandeManuelle, retirerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
 import {
   formatMontant,
@@ -67,6 +67,8 @@ export default function CommandesKioskContent() {
   const [entrepriseNom, setEntrepriseNom] = useState("");
   const [commandes, setCommandes] = useState([]);
   const [modal, setModal] = useState(false);
+  const [aModifier, setAModifier] = useState(null); // commande saisie à la main en cours de modification
+  const [aRetirer, setARetirer] = useState(null); // commande à retirer (confirmation)
   const [enCours, setEnCours] = useState(null);
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const [message, setMessage] = useState(null);
@@ -279,6 +281,32 @@ export default function CommandesKioskContent() {
     } catch {}
   }
 
+  async function retirer(commande) {
+    setEnCours(commande.id);
+    const { ok, error } = await retirerCommandeManuelle(entrepriseId, commande.id);
+    setARetirer(null);
+    if (!ok) {
+      setMessage({ type: "err", text: error });
+      setTimeout(() => setMessage(null), 6000);
+    }
+    await charger();
+    await chargerAvenir();
+    setEnCours(null);
+  }
+
+  // Boutons Modifier / Retirer : seulement pour les commandes saisies à la main (celles du site se règlent chez Wix).
+  const boutonsManuelle = (c) =>
+    c.source === "manuel" && (
+      <>
+        <button className="admin-icon-btn" onClick={() => setAModifier(c)}>
+          {t("kq.c.modifier")}
+        </button>
+        <button className="admin-icon-btn danger" onClick={() => setARetirer(c)}>
+          {t("kq.c.retirer")}
+        </button>
+      </>
+    );
+
   async function passer(commande, etape) {
     setEnCours(commande.id);
     // Mise à jour immédiate à l'écran, puis confirmation du serveur.
@@ -393,6 +421,7 @@ export default function CommandesKioskContent() {
               <IconImprimante className="gozly-icon" /> {t("kq.c.imprimer")}
             </button>
           )}
+          {boutonsManuelle(c)}
           {liste ? (
             etapeCommande(c) !== "terminee" && (
               <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "terminee")}>
@@ -509,6 +538,7 @@ export default function CommandesKioskContent() {
                                     <IconImprimante className="gozly-icon" /> {t("kq.c.imprimer")}
                                   </button>
                                 )}
+                                {boutonsManuelle(c)}
                               </div>
                             </td>
                           </tr>
@@ -638,6 +668,43 @@ export default function CommandesKioskContent() {
         </div>
       )}
 
+      {aRetirer && (
+        <div className="modal-overlay" onClick={() => setARetirer(null)}>
+          <div className="modal-card" style={{ maxWidth: "420px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t("kq.c.retirerTitre", { n: aRetirer.numero })}</h3>
+            <p style={{ color: "var(--text-dim)" }}>{t("kq.c.retirerTexte")}</p>
+            <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+              <button type="button" className="admin-icon-btn" style={{ flex: 1, padding: "14px" }} onClick={() => setARetirer(null)}>
+                {t("kq.c.annuler")}
+              </button>
+              <button type="button" className="submit-btn" style={{ flex: 1, padding: "14px" }} disabled={enCours === aRetirer.id} onClick={() => retirer(aRetirer)}>
+                {t("kq.c.retirer")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {aModifier && (
+        <LangueProvider>
+          <CommandeEmployeModal
+            key={aModifier.id}
+            commande={aModifier}
+            saisieGozly={tablette}
+            dateParDefaut={dateAujourdhui()}
+            chargerProduits={() => chargerProduitsInventaire(entrepriseId)}
+            chargerCategories={() => chargerCategoriesInventaire(entrepriseId)}
+            enregistrer={(c) => modifierCommandeManuelle(entrepriseId, aModifier.id, c)}
+            onClose={() => setAModifier(null)}
+            onSaved={() => {
+              setAModifier(null);
+              charger();
+              chargerAvenir();
+            }}
+          />
+        </LangueProvider>
+      )}
+
       {modal && (
         <LangueProvider>
           <CommandeEmployeModal
@@ -651,6 +718,7 @@ export default function CommandesKioskContent() {
             onSaved={() => {
               setModal(false);
               charger();
+              chargerAvenir();
             }}
           />
         </LangueProvider>

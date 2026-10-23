@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import { formatMontant } from "@/lib/commandes";
-import { separerVariante, produitIdWix, versIsoQuebec } from "@/lib/commandesManuelles";
+import { separerVariante, produitIdWix, versIsoQuebec, dateHeureQuebec } from "@/lib/commandesManuelles";
 import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
 import CatalogueCommande from "@/components/commandes/CatalogueCommande";
@@ -22,19 +22,34 @@ const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitI
 // propres fonctions : chargerProduits() -> liste de produits, enregistrer(commande) -> { ok, error }.
 // saisieGozly (tablette du kiosque) : clavier, calendrier et choix d'heure de Gozly à la place de ceux du système.
 // chargerCategories (optionnel) : catégories pour le catalogue de la tablette (saisieGozly).
-export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, chargerProduits, chargerCategories, enregistrer, saisieGozly = false }) {
+export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, chargerProduits, chargerCategories, enregistrer, saisieGozly = false, commande = null }) {
   const { t } = useLangue();
+  // commande : la commande à modifier (null = nouvelle commande).
+  const ramassageInitial = dateHeureQuebec(commande?.date_ramassage);
+  const finInitiale = dateHeureQuebec(commande?.date_ramassage_fin);
   const [vue, setVue] = useState("infos"); // "infos" | "articles"
-  const [clientNom, setClientNom] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [note, setNote] = useState("");
-  const [mode, setMode] = useState("ramassage");
-  const [paye, setPaye] = useState(false);
-  const [dateRamassage, setDateRamassage] = useState(dateParDefaut);
-  const [heureRamassage, setHeureRamassage] = useState("12:00");
-  const [plage, setPlage] = useState(false); // le client passera « entre telle heure et telle heure »
-  const [heureFin, setHeureFin] = useState("13:00");
-  const [articles, setArticles] = useState([{ ...ARTICLE_VIDE }]);
+  const [clientNom, setClientNom] = useState(commande?.client_nom || "");
+  const [telephone, setTelephone] = useState(commande?.client_telephone || "");
+  const [note, setNote] = useState(commande?.note || "");
+  const [mode, setMode] = useState(commande?.mode || "ramassage");
+  const [paye, setPaye] = useState(commande ? commande.statut_paiement === "PAID" : false);
+  const [dateRamassage, setDateRamassage] = useState(commande ? ramassageInitial.date : dateParDefaut);
+  const [heureRamassage, setHeureRamassage] = useState(ramassageInitial.heure || "12:00");
+  const [plage, setPlage] = useState(!!commande?.date_ramassage_fin); // le client passera « entre telle heure et telle heure »
+  const [heureFin, setHeureFin] = useState(finInitiale.heure || "13:00");
+  const [articles, setArticles] = useState(
+    commande?.items?.length
+      ? commande.items.map((it) => ({
+          nom: it.options?.length ? `${it.nom} — ${it.options.join(", ")}` : it.nom,
+          quantite: String(it.quantite),
+          prix: it.prix != null ? String(it.prix) : "",
+          produit: null,
+          produitId: it.produit_id || null,
+          sku: it.sku || null,
+          options: it.options || [],
+        }))
+      : [{ ...ARTICLE_VIDE }]
+  );
   const [produits, setProduits] = useState([]);
   const [categories, setCategories] = useState([]);
   const [rechercheCatalogue, setRechercheCatalogue] = useState("");
@@ -131,7 +146,9 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
 
   const articlesValides = articles
     .map((a) => {
-      const separe = a.produit ? separerVariante(a.nom) : { nom: a.nom.trim(), options: a.options || [] };
+      const separe = a.produit
+        ? separerVariante(a.nom)
+        : { nom: a.options?.length ? a.nom.split(" — ")[0].trim() : a.nom.trim(), options: a.options || [] };
       return {
         nom: separe.nom,
         options: separe.options,
@@ -232,7 +249,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
         ) : vue === "infos" ? (
           <>
             <div className="modal-head">
-              <h3>{t("commandes.nouvelle")}</h3>
+              <h3>{commande ? t("commandes.modifierCommande") : t("commandes.nouvelle")}</h3>
               <button type="button" className="admin-icon-btn" onClick={onClose}>
                 {t("nav.fermer")}
               </button>
@@ -324,7 +341,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
             {erreur && <p className="settings-msg err">{erreur}</p>}
 
             <button type="button" className="submit-btn" style={{ width: "100%", marginTop: "6px" }} disabled={busy || nombreArticles === 0} onClick={creerCommande}>
-              {busy ? t("commandes.enregistrement") : t("commandes.ajouterCommande")}
+              {busy ? t("commandes.enregistrement") : commande ? t("commandes.enregistrer") : t("commandes.ajouterCommande")}
             </button>
           </>
         ) : (
