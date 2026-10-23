@@ -1489,6 +1489,18 @@ input.planning-date-picker{
 .pointage-key.confirm{background:rgba(126,231,135,0.18);border-color:rgba(126,231,135,0.4);color:#7ee787;font-size:26px;}
 .pointage-key.confirm:hover:not(:disabled){background:rgba(126,231,135,0.28);}
 .pointage-key:disabled{opacity:.4;}
+/* Heure + date (ou animation de réussite) d'un côté, clavier de l'autre ; empilés sur écran étroit. */
+.pointage-duo{display:flex;align-items:center;justify-content:center;gap:48px;margin:20px auto 0;max-width:820px;}
+.pointage-duo .pointage-kiosk{margin:0;width:340px;max-width:100%;flex-shrink:0;}
+.pointage-horloge{flex:1;min-width:0;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;}
+.pointage-heure{font-family:'Fredoka',sans-serif;font-size:72px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;}
+.pointage-date{font-size:18px;color:var(--text-dim);}
+.pointage-date::first-letter{text-transform:uppercase;}
+@media (max-width:760px){
+  .pointage-duo{flex-direction:column;gap:20px;}
+  .pointage-horloge{flex:none;min-height:0;}
+  .pointage-heure{font-size:48px;}
+}
 .pointage-success{display:flex;flex-direction:column;align-items:center;gap:10px;}
 /* Animation 640x360 dont le bas contient un filigrane : on ne montre que la bande du milieu
    (44 px rognés en haut et en bas = 640x272), l'animation reste centrée. Les !important

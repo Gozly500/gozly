@@ -15,6 +15,14 @@ export default function PointageSection({ entrepriseId }) {
   const [emplacementId, setEmplacementId] = useState(null);
   const [emplacementsLoaded, setEmplacementsLoaded] = useState(false);
   const lottieRef = useRef(null);
+  const [maintenant, setMaintenant] = useState(null); // heure affichée à côté du clavier
+  const loc = langue === "en" ? "en-CA" : "fr-CA";
+
+  useEffect(() => {
+    setMaintenant(new Date());
+    const id = setInterval(() => setMaintenant(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const storageKey = `gozly_emplacement_id_${entrepriseId}`;
 
@@ -200,13 +208,24 @@ export default function PointageSection({ entrepriseId }) {
       <h2>{t("kq.p.titre")}</h2>
       <p className="panel-hint">{t("kq.p.hint")}</p>
 
-      <div className="pointage-kiosk">
-        {showSuccess ? (
-          <div className="pointage-success">
-            <div ref={lottieRef} className="pointage-lottie"></div>
-            {message && <p className="settings-msg ok">{message.text}</p>}
-          </div>
-        ) : (
+      <div className="pointage-duo">
+        <div className="pointage-horloge">
+          {showSuccess ? (
+            <div className="pointage-success">
+              <div ref={lottieRef} className="pointage-lottie"></div>
+              {message && <p className="settings-msg ok">{message.text}</p>}
+            </div>
+          ) : (
+            maintenant && (
+              <>
+                <div className="pointage-heure">{maintenant.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" })}</div>
+                <div className="pointage-date">{maintenant.toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
+              </>
+            )
+          )}
+        </div>
+
+        <div className="pointage-kiosk">
           <>
             <div className="pointage-dots">
               {[0, 1, 2, 3].map((i) => (
@@ -214,7 +233,7 @@ export default function PointageSection({ entrepriseId }) {
               ))}
             </div>
 
-            {message && (
+            {message && message.type === "err" && (
               <p className={`settings-msg ${message.type}`} style={{ textAlign: "center" }}>
                 {message.text}
               </p>
@@ -237,7 +256,7 @@ export default function PointageSection({ entrepriseId }) {
               </button>
             </div>
           </>
-        )}
+        </div>
       </div>
     </div>
   );
