@@ -3338,8 +3338,8 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .kq-copie.sortie{transform:scale(1.45);opacity:0;}
 .kq-ouv-lent{position:absolute;left:20px;right:20px;bottom:18px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;color:#ffd479;pointer-events:auto;}
 @media (prefers-reduced-motion:reduce){.kq-boite{transition:none;}.kq-spinner{animation-duration:2s;}}
-.kq-entree{animation:kqEntree .28s cubic-bezier(.22,.8,.3,1) backwards;}
-@keyframes kqEntree{from{opacity:0;transform:scale(.9);}}
+.kq-entree{animation:kqEntree .5s cubic-bezier(.22,.8,.3,1) backwards;}
+@keyframes kqEntree{from{opacity:0;transform:scale(.78);}40%{opacity:1;}}
 @media (prefers-reduced-motion:reduce){.kq-liste,.kq-entree{animation:none;transition:none;}}
 
 /* Saisie Gozly (tablette) : la fenêtre glisse à gauche, un clavier / calendrier / choix d'heure apparaît à droite */
