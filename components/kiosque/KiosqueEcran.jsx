@@ -97,7 +97,8 @@ export default function KiosqueEcran({ id }) {
 
   return (
     <>
-      <div style={reservePourMode(mode)}>
+      {/* .kq-entree : le kiosque arrive en petit et grossit (voir useTransitionKiosque et globals.css) */}
+      <div className="kq-entree" style={reservePourMode(mode)}>
         <Ecran />
       </div>
       {mode !== "off" && <MusiqueEpingle entrepriseId={entrepriseId} mode={mode} onMode={changerEpingle} />}

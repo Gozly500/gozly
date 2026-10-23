@@ -9,6 +9,7 @@ import { MODULES } from "@/lib/modules";
 import { KIOSQUES } from "@/lib/kiosques";
 import { useLangue } from "@/components/moi/LangueContext";
 import { IconEcran } from "@/components/icons/Pictogrammes";
+import { useTransitionKiosque } from "@/components/kiosque/useTransitionKiosque";
 
 function detecterIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -34,6 +35,7 @@ export default function KiosqueAccueil() {
   const [promptEvent, setPromptEvent] = useState(null);
   const [installee, setInstallee] = useState(true);
   const [estIOS, setEstIOS] = useState(false);
+  const { sortant, choisir, conteneur } = useTransitionKiosque();
 
   useEffect(() => {
     setInstallee(dejaInstallee());
@@ -144,7 +146,11 @@ export default function KiosqueAccueil() {
 
   return (
     <div className="kiosk-screen">
-      <div className="kiosk-inner" style={{ maxWidth: "720px", width: "100%" }}>
+      <div
+        ref={conteneur}
+        className={`kiosk-inner kq-liste${sortant ? " sortant" : ""}`}
+        style={{ maxWidth: "720px", width: "100%", ...(sortant ? { transformOrigin: `${sortant.x}px ${sortant.y}px` } : null) }}
+      >
         {entrepriseNom && <p className="kiosk-entreprise">{entrepriseNom}</p>}
         <h1 style={{ textAlign: "center" }}>{t("kq.choisir")}</h1>
 
@@ -155,7 +161,7 @@ export default function KiosqueAccueil() {
             {disponibles.map((k) => {
               const module = MODULES.find((m) => m.id === k.module);
               return (
-                <Link key={k.id} href={`/kiosque/${k.id}`} className="admin-row" style={{ justifyContent: "flex-start", gap: "14px", textDecoration: "none", color: "inherit" }}>
+                <Link key={k.id} href={`/kiosque/${k.id}`} onClick={(e) => choisir(e, k.id, `/kiosque/${k.id}`)} className="admin-row" style={{ justifyContent: "flex-start", gap: "14px", textDecoration: "none", color: "inherit" }}>
                   {module?.image ? (
                     <img src={module.image} alt="" width={52} height={52} style={{ flexShrink: 0, borderRadius: "10px" }} />
                   ) : (
