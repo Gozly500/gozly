@@ -8,8 +8,7 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { MODULES } from "@/lib/modules";
 import { KIOSQUES } from "@/lib/kiosques";
 import { useLangue } from "@/components/moi/LangueContext";
-import { IconEcran } from "@/components/icons/Pictogrammes";
-import { useTransitionKiosque } from "@/components/kiosque/useTransitionKiosque";
+import ListeKiosques from "@/components/kiosque/ListeKiosques";
 
 function detecterIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -35,7 +34,6 @@ export default function KiosqueAccueil() {
   const [promptEvent, setPromptEvent] = useState(null);
   const [installee, setInstallee] = useState(true);
   const [estIOS, setEstIOS] = useState(false);
-  const { sortant, choisir, conteneur } = useTransitionKiosque();
 
   useEffect(() => {
     setInstallee(dejaInstallee());
@@ -146,35 +144,20 @@ export default function KiosqueAccueil() {
 
   return (
     <div className="kiosk-screen">
-      <div
-        ref={conteneur}
-        className={`kiosk-inner kq-liste${sortant ? " sortant" : ""}`}
-        style={{ maxWidth: "720px", width: "100%", ...(sortant ? { transformOrigin: `${sortant.x}px ${sortant.y}px` } : null) }}
-      >
+      <div className="kiosk-inner kq-liste" style={{ maxWidth: "720px", width: "100%" }}>
         {entrepriseNom && <p className="kiosk-entreprise">{entrepriseNom}</p>}
         <h1 style={{ textAlign: "center" }}>{t("kq.choisir")}</h1>
 
         {disponibles.length === 0 ? (
           <p className="chat-empty">{t("kq.aucunKiosque")}</p>
         ) : (
-          <div className="admin-list">
-            {disponibles.map((k) => {
+          <ListeKiosques
+            t={t}
+            kiosques={disponibles.map((k) => {
               const module = MODULES.find((m) => m.id === k.module);
-              return (
-                <Link key={k.id} href={`/kiosque/${k.id}`} onClick={(e) => choisir(e, k.id, `/kiosque/${k.id}`)} className="admin-row" style={{ justifyContent: "flex-start", gap: "14px", textDecoration: "none", color: "inherit" }}>
-                  {module?.image ? (
-                    <img src={module.image} alt="" width={52} height={52} style={{ flexShrink: 0, borderRadius: "10px" }} />
-                  ) : (
-                    <span style={{ fontSize: "32px", flexShrink: 0 }}>{module?.icon || <IconEcran className="gozly-icon" />}</span>
-                  )}
-                  <div className="admin-row-main" style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                    <div className="admin-row-title">{t(`kq.k.${k.id}.nom`)}</div>
-                    <div className="admin-row-sub">{t(`kq.k.${k.id}.desc`)}</div>
-                  </div>
-                </Link>
-              );
+              return { id: k.id, nom: t(`kq.k.${k.id}.nom`), desc: t(`kq.k.${k.id}.desc`), image: module?.image, icon: module?.icon };
             })}
-          </div>
+          />
         )}
 
         <div style={{ marginTop: "24px", display: "flex", gap: "10px", flexWrap: "wrap" }}>

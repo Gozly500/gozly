@@ -6,6 +6,7 @@ import MusiqueKiosk from "@/components/kiosque/MusiqueKiosk";
 import MusiqueEpingle, { reservePourMode } from "@/components/kiosque/MusiqueEpingle";
 import { useEntrepriseKiosque } from "@/components/kiosque/useEntrepriseKiosque";
 import BoutonEpingler from "@/components/kiosque/BoutonEpingler";
+import OuvertureKiosque from "@/components/kiosque/OuvertureKiosque";
 import PointageKioskContent from "@/components/PointageKioskContent";
 import PlanningKioskContent from "@/components/PlanningKioskContent";
 import InventaireKioskContent from "@/components/InventaireKioskContent";
@@ -97,7 +98,9 @@ export default function KiosqueEcran({ id }) {
 
   return (
     <>
-      {/* .kq-entree : le kiosque arrive en petit et grossit (voir useTransitionKiosque et globals.css) */}
+      {/* Si on vient de la liste : la carte de chargement zoome et s'efface (OuvertureKiosque) pendant que le kiosque arrive en
+          petit et grossit (.kq-entree, voir globals.css). */}
+      <OuvertureKiosque />
       <div className="kq-entree" style={reservePourMode(mode)}>
         <Ecran />
       </div>

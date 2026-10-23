@@ -3314,13 +3314,30 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 @media (max-height:700px){.mkp-large:not(.plein) .mkp-pochette{width:min(100%,15vh);}.mkp-large:not(.plein){gap:8px;padding:10px 14px;}.mkp-large .mkp-corps,.mkp-large .mkp-colonne{gap:8px;}}
 @media (max-width:700px){.mkp-large.plein .mkp-corps{flex-direction:column;}.mkp-large.plein .mkp-droite{position:static;}.mkp-droite-interne{position:static;}}
 
-/* Liste des kiosques : en choisir un -> la liste s'agrandit (le zoom part de la carte touchée) et s'efface en 0,15 s ; le kiosque
-   arrive alors en petit et grossit en 0,28 s, comme une app qui s'ouvre. Court exprès (productivité). Les animations de ces
+/* Le kiosque choisi arrive en petit et grossit en 0,28 s, comme une app qui s'ouvre. Court exprès (productivité). Les animations de ces
    deux éléments n'ont pas de « forwards » : une fois finie, aucune transformation ne reste (sinon les fenêtres
    « position: fixed » du kiosque seraient décalées). */
-.kq-liste{animation:kqListeEntree .22s ease-out backwards;transition:transform .15s ease-in,opacity .15s ease-in;}
-.kq-liste.sortant{transform:scale(1.18);opacity:0;pointer-events:none;}
+.kq-liste{animation:kqListeEntree .22s ease-out backwards;}
 @keyframes kqListeEntree{from{opacity:0;transform:scale(1.04);}}
+/* Choisir un kiosque : la carte touchée s'agrandit pour remplir toute la boîte (icône au milieu, texte dessous), puis « Chargement… »
+   reste affiché jusqu'à l'ouverture (voir ListeKiosques.jsx). Les autres cartes s'effacent. */
+.kq-boite{position:relative;transition:height .48s cubic-bezier(.22,.8,.3,1);}
+.kq-boite.ouvre{pointer-events:none;}
+.kq-boite.ouvre .admin-row{opacity:0;transition:opacity .25s ease;}
+.kq-ouv{position:absolute;left:0;right:0;top:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:20px;text-align:center;}
+.kq-ouv-icone{display:block;margin-bottom:18px;}
+.kq-ouv-textes{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.kq-ouv-titre{width:max-content;max-width:100%;font-size:22px;font-weight:700;color:var(--fg);}
+.kq-ouv-desc{width:max-content;max-width:min(560px,100%);font-size:14px;color:var(--text-dim);}
+.kq-ouv-charge{display:flex;align-items:center;gap:10px;margin-top:22px;font-size:14px;color:var(--text-dim);opacity:0;transition:opacity .3s ease;}
+.kq-ouv-charge.visible{opacity:1;}
+.kq-spinner{width:22px;height:22px;border-radius:50%;border:3px solid rgba(var(--w),0.2);border-top-color:var(--violet);animation:kqTourne .8s linear infinite;}
+@keyframes kqTourne{to{transform:rotate(360deg);}}
+/* Copie de la carte de chargement, posée par le kiosque au changement de page : elle zoome et s'efface (voir OuvertureKiosque.jsx) */
+.kq-copie{position:fixed;z-index:95;pointer-events:none;border-radius:22px;background:rgba(var(--w),0.05);border:1px solid rgba(var(--w),0.12);transform-origin:center;transition-property:transform,opacity;transition-timing-function:cubic-bezier(.3,.1,.3,1);}
+.kq-copie.sortie{transform:scale(1.45);opacity:0;}
+.kq-ouv-lent{position:absolute;left:20px;right:20px;bottom:18px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;color:#ffd479;pointer-events:auto;}
+@media (prefers-reduced-motion:reduce){.kq-boite{transition:none;}.kq-spinner{animation-duration:2s;}}
 .kq-entree{animation:kqEntree .28s cubic-bezier(.22,.8,.3,1) backwards;}
 @keyframes kqEntree{from{opacity:0;transform:scale(.9);}}
 @media (prefers-reduced-motion:reduce){.kq-liste,.kq-entree{animation:none;transition:none;}}
