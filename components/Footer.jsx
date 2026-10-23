@@ -9,7 +9,8 @@ export default function Footer() {
   return (
     <footer>
       <div className="wrap">
-        <div className="brand" style={{ fontSize: "17px" }}>
+        <div className="footer-marque">
+        <div className="brand" style={{ fontSize: "20px" }}>
           <span className="g-mark" style={{ width: "48px", height: "48px" }}>
             <svg viewBox="0 0 1182 1182" xmlns="http://www.w3.org/2000/svg">
               <g transform="matrix(0.136019,0,0,0.136019,590.551181,590.551181)">
@@ -40,16 +41,26 @@ export default function Footer() {
           </span>
           Gozly
         </div>
-        <div className="footer-links">
-          <span>{t("footer.droits")}</span>
-          <Link href="/conditions">{t("footer.conditions")}</Link>
-          <Link href="/confidentialite">{t("footer.confidentialite")}</Link>
-          <Link href="/scattegories">{t("footer.scat")}</Link>
-          <Link href="/annonces">{t("footer.annonces")}</Link>
-          <Link href="/aide">{t("footer.aide")}</Link>
-          <Link href="/statut">{t("footer.statut")}</Link>
-          <LangFooterLink />
+        <span className="footer-droits">{t("footer.droits")}</span>
         </div>
+        <nav className="footer-colonnes" aria-label="Pied de page">
+          <div className="footer-col">
+            <h4>{t("footer.politiques")}</h4>
+            <Link href="/conditions">{t("footer.conditions")}</Link>
+            <Link href="/confidentialite">{t("footer.confidentialite")}</Link>
+          </div>
+          <div className="footer-col">
+            <h4>{t("footer.liensUtiles")}</h4>
+            <Link href="/aide">{t("footer.aide")}</Link>
+            <Link href="/annonces">{t("footer.annonces")}</Link>
+            <Link href="/statut">{t("footer.statut")}</Link>
+          </div>
+          <div className="footer-col">
+            <h4>{t("footer.plus")}</h4>
+            <Link href="/scattegories">{t("footer.scat")}</Link>
+            <LangFooterLink />
+          </div>
+        </nav>
       </div>
     </footer>
   );
