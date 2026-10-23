@@ -12,6 +12,7 @@ import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconFlecheHaut, Icon
 import { IconMusique } from "@/components/icons/GozlyIcons";
 import { logoPlateforme } from "@/lib/plateformesMusique";
 import BetaBadge from "@/components/BetaBadge";
+import Curseur from "@/components/CurseurVolume";
 import { useT } from "@/components/LangProvider";
 
 const Svg = ({ children, ...p }) => (
@@ -44,41 +45,6 @@ function LogoPlateforme({ nom, petit = false }) {
     <span className={`musique-logo ${logo.plein ? "plein" : "blanc"}${petit ? " petit" : ""}`}>
       <img src={logo.src} alt="" style={logo.zoom !== 1 ? { transform: `scale(${logo.zoom})` } : undefined} />
     </span>
-  );
-}
-
-// Curseur au style Gozly : suit le doigt en local, n'envoie la valeur qu'au relâchement.
-function Curseur({ valeur, onValider, muet, label }) {
-  const [local, setLocal] = useState(valeur ?? 0);
-  const glisse = useRef(false);
-  useEffect(() => {
-    if (!glisse.current && valeur != null) setLocal(valeur);
-  }, [valeur]);
-
-  function valider(e) {
-    if (!glisse.current) return;
-    glisse.current = false;
-    onValider(Number(e.currentTarget.value));
-  }
-
-  return (
-    <input
-      type="range"
-      min="0"
-      max="100"
-      value={local}
-      aria-label={label}
-      disabled={valeur == null}
-      className={`gx-curseur${muet ? " muet" : ""}`}
-      style={{ "--pct": `${local}%` }}
-      onChange={(e) => {
-        glisse.current = true;
-        setLocal(Number(e.target.value));
-      }}
-      onPointerUp={valider}
-      onKeyUp={valider}
-      onBlur={valider}
-    />
   );
 }
 

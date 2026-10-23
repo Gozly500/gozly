@@ -2904,6 +2904,9 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .gx-curseur::-moz-range-progress{height:8px;background:linear-gradient(90deg,var(--violet),#a07bff);border-radius:999px;}
 .gx-curseur::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--violet);box-shadow:0 2px 8px rgba(0,0,0,0.35);}
 .gx-curseur:disabled{opacity:.4;cursor:not-allowed;}
+/* Tablette : pas de défilement de la page qui vole le geste, et une poignée plus grosse pour le doigt. */
+.gx-curseur{touch-action:none;}
+@media (pointer:coarse){.gx-curseur::-webkit-slider-thumb{width:32px;height:32px;margin-top:-12px;}}
 .gx-curseur.muet{filter:grayscale(1);opacity:.5;}
 
 /* Réglage de volume : − curseur + valeur, bouton Muet */
@@ -3223,6 +3226,26 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .mkp-pastille{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:color-mix(in srgb,var(--fg,#fff) 30%,var(--navy,#0d0d3f));}
 .mkp-pastille.joue{background:#3ddc97;box-shadow:0 0 8px #3ddc97;}
 .mkp-vide{color:var(--text-dim);font-size:14px;margin:0;}
+/* Écran Musique : onglets Haut-parleurs / Musique, plateformes et listes de lecture, appareils individuels */
+.mkp-droite{flex:1;min-width:0;gap:12px;}
+.mkp-onglets{display:flex;gap:6px;padding:4px;border-radius:14px;background:rgba(var(--w),0.08);flex-shrink:0;}
+.mkp .mkp-onglet{flex:1;height:46px;border-radius:11px;border:0;background:transparent;color:var(--text-dim);font:inherit;font-weight:600;font-size:15px;cursor:pointer;box-shadow:none;transform:none;}
+.mkp .mkp-onglet.actif{background:var(--violet);color:#fff;}
+.mkp-musique{display:flex;flex-direction:column;gap:12px;min-height:0;}
+.mkp-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.mkp-lancee{margin:0;padding:10px 14px;border-radius:12px;font-size:14px;background:rgba(61,220,151,0.15);border:1px solid rgba(61,220,151,0.4);}
+.mkp-musique .musique-plateformes{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));margin-top:0;}
+.mkp-musique .musique-grille{margin-top:0;}
+.mkp-musique .musique-retour{margin-bottom:0;}
+.mkp-musique .musique-retour strong{font-size:17px;}
+.mkp-groupe.multi{grid-template-areas:"nom play" "vol vol" "apb apb";}
+.mkp .mkp-appareils-bouton{grid-area:apb;justify-self:start;display:flex;align-items:center;gap:6px;margin-top:4px;padding:6px 12px;border-radius:999px;border:0;background:rgba(var(--w),0.1);color:var(--text-dim);font:inherit;font-size:12.5px;cursor:pointer;box-shadow:none;transform:none;}
+.mkp-chevron{display:inline-block;font-size:17px;line-height:1;transition:transform .25s ease;}
+.mkp-chevron.ouvert{transform:rotate(90deg);}
+.mkp-appareils{grid-column:1 / -1;display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:10px 6px 2px;border-top:1px solid rgba(var(--w),0.12);}
+.mkp-appareil{display:grid;grid-template-columns:minmax(70px,110px) 1fr 38px;align-items:center;gap:10px;}
+.mkp-appareil-nom{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mkp-groupe .mkp-appareil .mkp-mini{grid-area:auto;width:38px;height:38px;}
 /* Plein écran (le kiosque Musique lui-même) : deux colonnes, rien de collé sur le côté */
 .mkp-large.plein{position:static;width:auto;max-width:1040px;min-height:100vh;margin:0 auto;border:0;box-shadow:none;background:transparent;padding:24px 28px;}
 .mkp-large.plein .mkp-corps{flex-direction:row;gap:36px;align-items:stretch;}
