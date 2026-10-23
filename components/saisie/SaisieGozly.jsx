@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useLangue } from "@/components/moi/LangueContext";
 import { Clavier, Calendrier, ChoixHeure } from "@/components/saisie/PanneauxSaisie";
 
@@ -63,9 +63,13 @@ function Panneau({ ctx, champId }) {
 // Champ de formulaire : un champ normal sans SaisieGozly autour, ouvre le panneau Gozly avec.
 // type : "texte" | "textarea" | "tel" | "entier" | "decimal" | "date" | "heure".
 // onOuvre : appelé quand le champ est touché ; onBlur : quand il perd le focus (champ normal seulement).
-export function ChampGozly({ id, type = "texte", label, value, onChange, placeholder, style, disabled, maxLength, rows, onOuvre, onBlur }) {
+export function ChampGozly({ id, type = "texte", label, value, onChange, placeholder, style, disabled, maxLength, rows, onOuvre, onBlur, autoOuvrir }) {
   const sg = useContext(Ctx);
   const { langue } = useLangue();
+  // autoOuvrir : le panneau s’ouvre dès l’apparition du champ (fenêtre de recherche).
+  useEffect(() => {
+    if (autoOuvrir && sg) sg.ouvrir(id);
+  }, []);
 
   if (!sg) {
     const commun = { value, onChange: (e) => onChange(e.target.value), placeholder, "aria-label": label, maxLength, style, disabled, onFocus: onOuvre, onBlur, autoComplete: "off" };

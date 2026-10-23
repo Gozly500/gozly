@@ -250,6 +250,18 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
           </div>
 
           <div className="field">
+            <label>{t("Info supplémentaire (optionnel)")}</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={t("Ex: sans noix, allergie, message sur le gâteau")}
+              maxLength={500}
+              rows={2}
+              style={{ width: "100%", boxSizing: "border-box", resize: "vertical" }}
+            />
+          </div>
+
+          <div className="field">
             <label>{t("Ramassage ou livraison")}</label>
             <BoutonsChoix
               valeur={mode}

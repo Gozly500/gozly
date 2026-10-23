@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
+import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
 import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
-import { chargerProduitsInventaire, creerCommandeManuelle } from "@/lib/commandesNouvelle";
+import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
 import {
   formatMontant,
@@ -75,6 +76,11 @@ export default function CommandesKioskContent() {
   const [modeKiosque, setModeKiosque] = useState("liste");
   const [masquees, setMasquees] = useState(() => new Set()); // commandes terminées « vidées » de l'écran (mode sections)
   const [recherche, setRecherche] = useState("");
+  const [rechercheOuverte, setRechercheOuverte] = useState(false); // tablette : fenêtre de recherche avec le clavier Gozly
+  const [tablette, setTablette] = useState(false);
+  useEffect(() => {
+    setTablette(window.matchMedia("(pointer: coarse)").matches || new URLSearchParams(window.location.search).get("saisie") === "gozly");
+  }, []);
   const [avenir, setAvenir] = useState([]); // commandes dont le ramassage est après aujourd'hui
   const [du, setDu] = useState("");
   const [au, setAu] = useState("");
@@ -525,13 +531,27 @@ export default function CommandesKioskContent() {
           <h2>{t("kq.c.titre")}</h2>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-          <input
-            type="search"
-            className="cmd-kiosk-recherche"
-            value={recherche}
-            onChange={(e) => setRecherche(e.target.value)}
-            placeholder={t("kq.c.rechercher")}
-          />
+          {tablette ? (
+            // Tablette : toucher la recherche ouvre une fenêtre avec le clavier de Gozly (pas celui du système).
+            <input
+              type="search"
+              className="cmd-kiosk-recherche"
+              value={recherche}
+              readOnly
+              inputMode="none"
+              onClick={() => setRechercheOuverte(true)}
+              onFocus={() => setRechercheOuverte(true)}
+              placeholder={t("kq.c.rechercher")}
+            />
+          ) : (
+            <input
+              type="search"
+              className="cmd-kiosk-recherche"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              placeholder={t("kq.c.rechercher")}
+            />
+          )}
           <button
             className={`admin-icon-btn${vue === "avenir" ? " active" : ""}`}
             style={vue === "avenir" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}
@@ -597,6 +617,27 @@ export default function CommandesKioskContent() {
       </div>
       )}
 
+      {rechercheOuverte && (
+        <div className="modal-overlay" onClick={() => setRechercheOuverte(false)}>
+          <SaisieGozly actif>
+            <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-head">
+                <h3>{t("kq.c.rechercher")}</h3>
+                <button type="button" className="admin-icon-btn" onClick={() => setRechercheOuverte(false)}>
+                  {t("kq.c.fermer")}
+                </button>
+              </div>
+              <ChampGozly id="cmd-recherche" type="texte" label={t("kq.c.rechercher")} placeholder={t("kq.c.rechercher")} value={recherche} onChange={setRecherche} autoOuvrir style={{ width: "100%", boxSizing: "border-box", margin: 0 }} />
+              {recherche && (
+                <button type="button" className="admin-icon-btn" style={{ marginTop: "10px" }} onClick={() => setRecherche("")}>
+                  {t("kq.c.effacerRecherche")}
+                </button>
+              )}
+            </div>
+          </SaisieGozly>
+        </div>
+      )}
+
       {modal && (
         <LangueProvider>
           <CommandeEmployeModal
@@ -604,6 +645,7 @@ export default function CommandesKioskContent() {
             saisieGozly={window.matchMedia("(pointer: coarse)").matches || new URLSearchParams(window.location.search).get("saisie") === "gozly"}
             dateParDefaut={dateAujourdhui()}
             chargerProduits={() => chargerProduitsInventaire(entrepriseId)}
+            chargerCategories={() => chargerCategoriesInventaire(entrepriseId)}
             enregistrer={(c) => creerCommandeManuelle(entrepriseId, c)}
             onClose={() => setModal(false)}
             onSaved={() => {

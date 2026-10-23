@@ -7,6 +7,7 @@ import { formatMontant } from "@/lib/commandes";
 import { separerVariante, produitIdWix, versIsoQuebec } from "@/lib/commandesManuelles";
 import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
+import CatalogueCommande from "@/components/commandes/CatalogueCommande";
 
 const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitId: null, sku: null, options: [] };
 
@@ -20,7 +21,8 @@ const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitI
 // Par défaut il parle aux routes de l'app employé ; l'app gestionnaire lui passe ses
 // propres fonctions : chargerProduits() -> liste de produits, enregistrer(commande) -> { ok, error }.
 // saisieGozly (tablette du kiosque) : clavier, calendrier et choix d'heure de Gozly à la place de ceux du système.
-export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, chargerProduits, enregistrer, saisieGozly = false }) {
+// chargerCategories (optionnel) : catégories pour le catalogue de la tablette (saisieGozly).
+export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, chargerProduits, chargerCategories, enregistrer, saisieGozly = false }) {
   const { t } = useLangue();
   const [vue, setVue] = useState("infos"); // "infos" | "articles"
   const [clientNom, setClientNom] = useState("");
@@ -34,6 +36,9 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
   const [heureFin, setHeureFin] = useState("13:00");
   const [articles, setArticles] = useState([{ ...ARTICLE_VIDE }]);
   const [produits, setProduits] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [rechercheCatalogue, setRechercheCatalogue] = useState("");
+  const [articleLibre, setArticleLibre] = useState({ nom: "", prix: "" });
   const [ouvert, setOuvert] = useState(null); // ligne dont la liste de produits est ouverte
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState("");
@@ -47,7 +52,51 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
     Promise.resolve(source)
       .then((liste) => setProduits(liste || []))
       .catch(() => {});
+    if (saisieGozly && chargerCategories) {
+      Promise.resolve(chargerCategories())
+        .then((liste) => setCategories(liste || []))
+        .catch(() => {});
+    }
   }, []);
+
+  // Catalogue de la tablette : le panier, ce sont les articles de la commande (sans la ligne vide du départ).
+  const panier = articles
+    .map((a, i) => ({ i, nom: a.nom, quantite: parseInt(a.quantite, 10) || 0, prix: parseFloat(String(a.prix).replace(",", ".")), vide: !a.nom.trim() }))
+    .filter((l) => !l.vide && l.quantite > 0);
+
+  function ajouterAuPanier(produit, quantite) {
+    setArticles((prev) => {
+      const gardes = prev.filter((a) => a.nom.trim());
+      const idx = produit.id ? gardes.findIndex((a) => a.produit?.id === produit.id) : -1;
+      if (idx >= 0) {
+        return gardes.map((a, k) => (k === idx ? { ...a, quantite: String((parseInt(a.quantite, 10) || 0) + quantite) } : a));
+      }
+      const ligne = produit.libre
+        ? { ...ARTICLE_VIDE, nom: produit.nom, quantite: String(quantite), prix: Number.isFinite(produit.prix) ? String(produit.prix) : "" }
+        : {
+            ...ARTICLE_VIDE,
+            nom: produit.nom,
+            quantite: String(quantite),
+            prix: produit.prix != null ? String(produit.prix) : "",
+            produit,
+            produitId: produitIdWix(produit),
+            sku: produit.sku || null,
+            options: separerVariante(produit.nom).options,
+          };
+      return [...gardes, ligne];
+    });
+  }
+
+  function changerQuantitePanier(i, delta) {
+    setArticles((prev) => prev.map((a, k) => (k === i ? { ...a, quantite: String(Math.max(1, (parseInt(a.quantite, 10) || 1) + delta)) } : a)));
+  }
+
+  function retirerDuPanier(i) {
+    setArticles((prev) => {
+      const reste = prev.filter((_, k) => k !== i);
+      return reste.length > 0 ? reste : [{ ...ARTICLE_VIDE }];
+    });
+  }
 
   function majArticle(i, champ, valeur) {
     setArticles((prev) => prev.map((a, idx) => (idx === i ? { ...a, [champ]: valeur } : a)));
@@ -157,8 +206,30 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <SaisieGozly actif={saisieGozly}>
-      <div className="modal-card" style={{ maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-        {vue === "infos" ? (
+      <div className={`modal-card${saisieGozly && vue === "articles" ? " cg-large" : ""}`} style={{ maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+        {vue === "articles" && saisieGozly ? (
+          <>
+            <div className="modal-head">
+              <h3>{t("commandes.ajouterProduits")}</h3>
+              <button type="button" className="admin-icon-btn" onClick={enregistrerArticles}>
+                <IconFlecheGauche className="gozly-icon" /> {t("commandes.retour")}
+              </button>
+            </div>
+            <CatalogueCommande
+              produits={produits}
+              categories={categories}
+              panier={panier}
+              onAjouter={ajouterAuPanier}
+              onQuantite={changerQuantitePanier}
+              onRetirer={retirerDuPanier}
+              onValider={enregistrerArticles}
+              recherche={rechercheCatalogue}
+              setRecherche={setRechercheCatalogue}
+              libre={articleLibre}
+              setLibre={setArticleLibre}
+            />
+          </>
+        ) : vue === "infos" ? (
           <>
             <div className="modal-head">
               <h3>{t("commandes.nouvelle")}</h3>
