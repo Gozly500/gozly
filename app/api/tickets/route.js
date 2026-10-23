@@ -81,7 +81,7 @@ export async function POST(request) {
     }
     const hier = Date.now() - 24 * 3600 * 1000;
     if ((existants || []).filter((t) => new Date(t.created_at).getTime() > hier).length >= LIMITES.ticketsParJour) {
-      return NextResponse.json({ error: "Tu as ouvert beaucoup de tickets aujourd'hui. Réessaie demain ou écris-nous à gozly.pro@gmail.com." }, { status: 429 });
+      return NextResponse.json({ error: "Tu as ouvert beaucoup de tickets aujourd'hui. Réessaie demain ou écris-nous à info@gozly.net." }, { status: 429 });
     }
 
     const { data: ticket, error } = await service.from("tickets_site").insert({ user_id: user.id, sujet }).select("id").single();

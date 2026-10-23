@@ -78,14 +78,11 @@ export default function ContactPage() {
           </div>
 
           <div className="contact-alt">
-            {t("contact.alt.debut")} <a href="mailto:gozly.pro@gmail.com">Gmail</a> {t("contact.alt.ou")} <a href="#">Outlook</a>{t("contact.alt.fin")}
+            {t("contact.alt.debut")} <a href="mailto:info@gozly.net">Gmail</a> {t("contact.alt.ou")} <a href="#">Outlook</a>{t("contact.alt.fin")}
             <br />
             {t("contact.alt.ok")}
             <span className="email-line">
-              <a href="mailto:gozly.pro@gmail.com">gozly.pro@gmail.com</a>
-            </span>
-            <span className="email-line">
-              <a href="mailto:guloumetv@gmail.com">guloumetv@gmail.com</a>
+              <a href="mailto:info@gozly.net">info@gozly.net</a>
             </span>
           </div>
         </div>
