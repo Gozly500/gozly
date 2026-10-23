@@ -241,6 +241,18 @@ export default function CommandesKioskContent() {
     }
   }, [commandes, avenir, modeKiosque, sonActif]);
 
+  // Activer le son : on joue le son tout de suite, PENDANT le toucher. Sur iPad/iPhone, un son doit d'abord être lancé
+  // par un geste de l'utilisateur sur ce même lecteur audio, sinon les sons joués plus tard (nouvelle commande) sont
+  // refusés. Ça sert aussi de confirmation : on entend que le son fonctionne.
+  function basculerSon() {
+    if (!sonActif) {
+      if (!audioRef.current) audioRef.current = new Audio(SON_NOUVELLE_COMMANDE);
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+    setSonActif((v) => !v);
+  }
+
   async function imprimer(commande) {
     const { ok, error } = await imprimerCommande(entrepriseId, commande.id, "manuel");
     setMessage(
@@ -529,7 +541,7 @@ export default function CommandesKioskContent() {
           </button>
           <button
             className="admin-icon-btn"
-            onClick={() => setSonActif((v) => !v)}
+            onClick={basculerSon}
             style={!sonActif ? { background: "rgba(255,212,121,0.25)", borderColor: "rgba(255,212,121,0.6)" } : undefined}
           >
             {sonActif ? <><IconCloche className="gozly-icon" /> {t("kq.c.sonOn")}</> : <><IconClocheBarree className="gozly-icon" /> {t("kq.c.sonOff")}</>}
