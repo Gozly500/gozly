@@ -3129,6 +3129,20 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
   .tele-etapes{padding:20px;}
 }
 
+/* Calculateur de paie de l'app employé : carte de l'horaire, montants cachés par défaut */
+.moi-paie{margin:0 0 14px;padding:16px;border-radius:18px;background:rgba(var(--w),0.07);border:1px solid rgba(var(--w),0.16);}
+.moi-paie-tete{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-size:15px;}
+.moi-paie .moi-paie-oeil{width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(var(--w),0.12);border:1px solid rgba(var(--w),0.2);color:var(--fg);cursor:pointer;box-shadow:none;}
+.moi-paie-ligne{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
+.moi-paie-ligne .moi-paie-montant{font-size:30px;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums;}
+.moi-paie-ligne.secondaire .moi-paie-montant{font-size:18px;font-weight:600;}
+.moi-paie-valeurs{display:flex;flex-direction:column;align-items:flex-end;}
+.moi-paie-valeurs small{color:var(--text-dim);font-size:12px;}
+.moi-paie-barre{height:8px;margin:8px 0 10px;border-radius:999px;background:rgba(var(--w),0.14);overflow:hidden;}
+.moi-paie-barre span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--violet),#a07bff);transition:width .5s ease;}
+.moi-paie-note{margin:10px 0 0;color:var(--text-dim);font-size:12px;line-height:1.4;}
+.moi-jour-paie{margin-left:auto;margin-right:10px;color:var(--text-dim);font-size:14px;font-variant-numeric:tabular-nums;}
+
 /* Lecteur Musique épinglé dans les kiosques (compact au centre en bas, ou grand panneau à droite) */
 .mkp{position:fixed;z-index:40;color:var(--fg,#fff);background:color-mix(in srgb,var(--navy,#0d0d3f) 90%,#fff 10%);border:1px solid rgba(var(--w),0.16);box-shadow:0 10px 40px rgba(0,0,0,.45);}
 .mkp-compact{left:50%;transform:translateX(-50%);bottom:8px;width:min(580px,calc(100vw - 190px));padding:8px 10px 8px 8px;border-radius:24px;transition:border-radius .45s cubic-bezier(.22,.8,.3,1),box-shadow .45s ease;}

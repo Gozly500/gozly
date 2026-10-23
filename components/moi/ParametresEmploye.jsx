@@ -89,6 +89,7 @@ const SECTIONS = [
     descCle: "parametres.notificationsDesc",
     href: "/moi/parametres/notifications",
   },
+  { id: "paie", emoji: "💰", titreCle: "parametres.paieTitre", descCle: "parametres.paieDesc", href: "/moi/parametres/paie" },
 ];
 
 export default function ParametresEmploye() {

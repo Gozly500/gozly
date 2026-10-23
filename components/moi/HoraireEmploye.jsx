@@ -11,6 +11,7 @@ import { localeDate } from "@/lib/i18n/moi";
 import RemplacantModal from "@/components/moi/RemplacantModal";
 import { dateAujourdhui } from "@/lib/commandes";
 import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import CartePaie, { Montant, montantDe } from "@/components/moi/CartePaie";
 
 function heure(t) {
   return t.slice(0, 5);
@@ -36,6 +37,34 @@ export default function HoraireEmploye() {
   const [pointageActif, setPointageActif] = useState(false);
   const [enPoste, setEnPoste] = useState(false);
   const [pointageOuvert, setPointageOuvert] = useState(false);
+  const [paie, setPaie] = useState(null); // calculateur de paie (Paramètres > Paie) : null tant qu'il est désactivé
+  const [cache, setCache] = useState(true); // montants cachés par défaut (points)
+
+  // Paie de la semaine affichée ; se rafraîchit chaque minute pour suivre un pointage en cours.
+  useEffect(() => {
+    const semaine = weekStart.toISOString().slice(0, 10);
+    let ignore = false;
+    async function charger() {
+      try {
+        const res = await employeFetch(`/api/employe-app/paie?semaine=${semaine}`);
+        const data = res.ok ? await res.json() : null;
+        if (!ignore) setPaie(data?.actif ? data : null);
+      } catch {}
+    }
+    charger();
+    const id = setInterval(() => document.visibilityState === "visible" && charger(), 60000);
+    return () => {
+      ignore = true;
+      clearInterval(id);
+    };
+  }, [weekStart]);
+
+  // Confidentialité : les montants se recachent dès que l'app passe en arrière-plan.
+  useEffect(() => {
+    const surVisibilite = () => document.visibilityState === "hidden" && setCache(true);
+    document.addEventListener("visibilitychange", surVisibilite);
+    return () => document.removeEventListener("visibilitychange", surVisibilite);
+  }, []);
 
   // Le bouton Pointer est toujours là (même sans quart prévu) si le pointage mobile est activé.
   async function chargerEtatPointage() {
@@ -116,6 +145,8 @@ export default function HoraireEmploye() {
         </button>
       </div>
 
+      <CartePaie paie={paie} cache={cache} onBascule={() => setCache((c) => !c)} />
+
       {loading ? (
         <ChargementAnimation />
       ) : (
@@ -124,12 +155,20 @@ export default function HoraireEmploye() {
             const dateISO = jour.toISOString().slice(0, 10);
             const quartsDuJour = quarts.filter((q) => q.date === dateISO);
             const ouvert = joursOuverts[dateISO];
+            // Paie du jour : ce qui est gagné (jour passé ou en cours) ou prévu (jour à venir).
+            const pj = paie?.taux != null ? paie.jours?.[dateISO] : null;
+            const minutesJour = pj ? (dateISO <= dateAujourdhui() && pj.gagnees > 0 ? pj.gagnees : pj.prevues) : 0;
             return (
               <div className="moi-jour-card" key={dateISO}>
                 <div className="moi-jour-head">
                   <div className="moi-jour-date">
                     {jour.toLocaleDateString(localeDate(langue), { weekday: "long", day: "numeric", month: "long" })}
                   </div>
+                  {minutesJour > 0 && (
+                    <span className="moi-jour-paie">
+                      <Montant valeur={montantDe(minutesJour, paie.taux)} cache={cache} />
+                    </span>
+                  )}
                   {quartsDuJour.length > 0 && (
                     <button
                       type="button"
