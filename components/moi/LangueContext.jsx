@@ -7,8 +7,10 @@ const LangueContext = createContext(null);
 
 // Enrobe tout /moi/* (voir app/moi/layout.js) - la préférence de langue est
 // mémorisée sur l'appareil, comme le thème (ParametresApparence.jsx).
-export function LangueProvider({ children }) {
-  const [langue, setLangueState] = useState(DEFAULT_LANGUE);
+// forcee : impose la langue (le tableau de bord a la sienne, qui ne vient pas de cet appareil).
+export function LangueProvider({ children, forcee }) {
+  const [langueChoisie, setLangueState] = useState(DEFAULT_LANGUE);
+  const langue = isValidLangue(forcee) ? forcee : langueChoisie;
 
   useEffect(() => {
     try {

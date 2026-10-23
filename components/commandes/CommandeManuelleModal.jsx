@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { formatMontant, bornesJour } from "@/lib/commandes";
 import { imprimerCommande, mettreAJourTachesCommandes } from "@/lib/commandesClient";
-import { IconX } from "@/components/icons/Pictogrammes";
+import { IconFlecheGauche, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
+import { LangueProvider } from "@/components/moi/LangueContext";
+import CatalogueCommande from "@/components/commandes/CatalogueCommande";
 
 const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitId: null, sku: null, options: [] };
 
@@ -61,7 +63,11 @@ function BoutonsChoix({ valeur, onChange, choix }) {
 // Création / modification d'une commande saisie à la main (source = 'manuel').
 // `commande` = la ligne à modifier, ou null pour une nouvelle commande.
 export default function CommandeManuelleModal({ entrepriseId, commande, onClose, onSaved }) {
-  const { t } = useT();
+  const { t, lang } = useT();
+  const [vue, setVue] = useState("infos"); // "infos" | "articles" (catalogue)
+  const [categories, setCategories] = useState([]);
+  const [rechercheCatalogue, setRechercheCatalogue] = useState("");
+  const [articleLibre, setArticleLibre] = useState({ nom: "", prix: "" });
   const [clientNom, setClientNom] = useState(commande?.client_nom || "");
   const [telephone, setTelephone] = useState(commande?.client_telephone || "");
   const [note, setNote] = useState(commande?.note || "");
@@ -81,7 +87,6 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
       : [{ ...ARTICLE_VIDE }]
   );
   const [produits, setProduits] = useState([]);
-  const [ouvert, setOuvert] = useState(null); // index de la ligne dont la liste de produits est ouverte
   const ramassageInitial = dateHeureQuebec(commande?.date_ramassage);
   const [dateRamassage, setDateRamassage] = useState(ramassageInitial.date);
   const [heureRamassage, setHeureRamassage] = useState(ramassageInitial.heure);
@@ -91,43 +96,64 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
   useEffect(() => {
     supabase
       .from("produits_inventaire")
-      .select("id, nom, sku, prix, source, source_id")
+      .select("id, nom, sku, prix, source, source_id, categorie_id")
       .eq("entreprise_id", entrepriseId)
       .order("nom", { ascending: true })
       .limit(1000)
       .then(({ data }) => setProduits(data || []));
+    supabase
+      .from("categories_inventaire")
+      .select("id, nom, ordre")
+      .eq("entreprise_id", entrepriseId)
+      .order("ordre", { ascending: true })
+      .order("nom", { ascending: true })
+      .then(({ data }) => setCategories(data || []));
   }, [entrepriseId]);
 
-  function majArticle(i, champ, valeur) {
-    setArticles((prev) => prev.map((a, idx) => (idx === i ? { ...a, [champ]: valeur } : a)));
+  // Catalogue (CatalogueCommande) : le panier, ce sont les articles de la commande (sans la ligne vide du départ).
+  const panier = articles
+    .map((a, i) => ({ i, nom: a.nom, quantite: parseInt(a.quantite, 10) || 0, prix: parseFloat(String(a.prix).replace(",", ".")), vide: !a.nom.trim() }))
+    .filter((l) => !l.vide && l.quantite > 0);
+
+  function ajouterAuPanier(produit, quantite) {
+    setArticles((prev) => {
+      const gardes = prev.filter((a) => a.nom.trim());
+      const idx = produit.id ? gardes.findIndex((a) => a.produit?.id === produit.id) : -1;
+      if (idx >= 0) return gardes.map((a, k) => (k === idx ? { ...a, quantite: String((parseInt(a.quantite, 10) || 0) + quantite) } : a));
+      const ligne = produit.libre
+        ? { ...ARTICLE_VIDE, nom: produit.nom, quantite: String(quantite), prix: Number.isFinite(produit.prix) ? String(produit.prix) : "" }
+        : {
+            ...ARTICLE_VIDE,
+            nom: produit.nom,
+            quantite: String(quantite),
+            prix: produit.prix != null ? String(produit.prix) : "",
+            produit,
+            produitId: produitIdWix(produit),
+            sku: produit.sku || null,
+            options: separerVariante(produit.nom).options,
+          };
+      return [...gardes, ligne];
+    });
   }
 
-  // Taper dans le champ efface le lien avec le produit choisi (article libre) ;
-  // choisir un produit de la liste remplit son nom, son prix et ses références.
-  function taperNom(i, texte) {
-    setArticles((prev) =>
-      prev.map((a, idx) => (idx === i ? { ...a, nom: texte, produit: null, produitId: null, sku: null, options: [] } : a))
-    );
-    setOuvert(i);
+  function changerQuantitePanier(i, delta) {
+    setArticles((prev) => prev.map((a, k) => (k === i ? { ...a, quantite: String(Math.max(1, (parseInt(a.quantite, 10) || 1) + delta)) } : a)));
   }
 
-  function choisirProduit(i, produit) {
-    setArticles((prev) =>
-      prev.map((a, idx) =>
-        idx === i
-          ? {
-              ...a,
-              nom: produit.nom,
-              prix: produit.prix != null ? String(produit.prix) : a.prix,
-              produit,
-              produitId: produitIdWix(produit),
-              sku: produit.sku || null,
-              options: separerVariante(produit.nom).options,
-            }
-          : a
-      )
-    );
-    setOuvert(null);
+  function retirerDuPanier(i) {
+    setArticles((prev) => {
+      const reste = prev.filter((_, k) => k !== i);
+      return reste.length > 0 ? reste : [{ ...ARTICLE_VIDE }];
+    });
+  }
+
+  // « Valider » : retire les lignes vides et revient à la commande.
+  function validerArticles() {
+    setArticles((prev) => {
+      const gardes = prev.filter((a) => a.nom.trim() && (parseInt(a.quantite, 10) || 0) > 0);
+      return gardes.length > 0 ? gardes : [{ ...ARTICLE_VIDE }];
+    });
+    setVue("infos");
   }
 
   const articlesValides = articles
@@ -230,7 +256,33 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-card" style={vue === "articles" ? { maxWidth: "880px", width: "100%" } : undefined} onClick={(e) => e.stopPropagation()}>
+        {vue === "articles" ? (
+          <>
+            <div className="modal-head">
+              <h3>{t("Ajouter des produits")}</h3>
+              <button type="button" className="admin-icon-btn" onClick={validerArticles}>
+                <IconFlecheGauche className="gozly-icon" /> {t("Retour")}
+              </button>
+            </div>
+            <LangueProvider forcee={lang}>
+              <CatalogueCommande
+                produits={produits}
+                categories={categories}
+                panier={panier}
+                onAjouter={ajouterAuPanier}
+                onQuantite={changerQuantitePanier}
+                onRetirer={retirerDuPanier}
+                onValider={validerArticles}
+                recherche={rechercheCatalogue}
+                setRecherche={setRechercheCatalogue}
+                libre={articleLibre}
+                setLibre={setArticleLibre}
+              />
+            </LangueProvider>
+          </>
+        ) : (
+          <>
         <div className="modal-head">
           <h3>{commande ? t("Modifier la commande") : t("Nouvelle commande")}</h3>
           <button className="admin-icon-btn" onClick={onClose}>
@@ -283,65 +335,9 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
 
           <div className="field">
             <label>{t("Articles")}</label>
-            {articles.map((a, i) => (
-              <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 56px 80px auto", gap: "6px", marginBottom: "6px" }}>
-                <div className="emplacement-select-wrap" style={{ minWidth: 0 }}>
-                  <input
-                    type="text"
-                    value={a.nom}
-                    onChange={(e) => taperNom(i, e.target.value)}
-                    onFocus={() => setOuvert(i)}
-                    onBlur={() => setTimeout(() => setOuvert((o) => (o === i ? null : o)), 150)}
-                    placeholder={t("Cherche un produit de l'inventaire")}
-                    autoComplete="off"
-                  />
-                  {ouvert === i && (
-                    <div className="emplacement-select-options" style={{ maxHeight: "220px", overflowY: "auto" }}>
-                      {produits
-                        .filter((p) => !a.nom.trim() || a.produit?.id === p.id || p.nom.toLowerCase().includes(a.nom.trim().toLowerCase()))
-                        .slice(0, 40)
-                        .map((p) => (
-                          <div
-                            key={p.id}
-                            className={`emplacement-select-option${a.produit?.id === p.id ? " active" : ""}`}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              choisirProduit(i, p);
-                            }}
-                          >
-                            {p.nom}
-                            {p.prix != null && <span style={{ color: "var(--text-dim)" }}> · {formatMontant(p.prix)}</span>}
-                          </div>
-                        ))}
-                      {produits.length === 0 && (
-                        <div className="emplacement-select-option" style={{ color: "var(--text-dim)", cursor: "default" }}>
-                          {t("Aucun produit dans l'inventaire : l'article sera libre.")}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <input type="number" min="1" value={a.quantite} onChange={(e) => majArticle(i, "quantite", e.target.value)} aria-label={t("Quantité")} />
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={a.prix}
-                  onChange={(e) => majArticle(i, "prix", e.target.value)}
-                  placeholder={t("Prix")}
-                  aria-label={t("Prix unitaire")}
-                />
-                <button
-                  type="button"
-                  className="admin-icon-btn danger"
-                  onClick={() => setArticles((prev) => (prev.length > 1 ? prev.filter((_, idx) => idx !== i) : [{ ...ARTICLE_VIDE }]))}
-                  aria-label={t("Retirer l'article")}
-                >
-                  <IconX className="gozly-icon" />
-                </button>
-              </div>
-            ))}
-            <button type="button" className="admin-icon-btn" onClick={() => setArticles((prev) => [...prev, { ...ARTICLE_VIDE }])}>
-              {t("+ Ajouter un article")}
+            <button type="button" className="submit-btn" style={{ width: "100%" }} onClick={() => setVue("articles")}>
+              {panier.length > 0 ? <>{panier.reduce((n, l) => n + l.quantite, 0)} {t("article(s)")} · {formatMontant(total)}</> : t("Ajouter des produits")}{" "}
+              <IconFlecheDroite className="gozly-icon-inline" />
             </button>
           </div>
 
@@ -366,6 +362,8 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
             </button>
           </div>
         </form>
+          </>
+        )}
       </div>
     </div>
   );
