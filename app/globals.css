@@ -3140,6 +3140,7 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .moi-paie-valeurs small{color:var(--text-dim);font-size:12px;}
 .moi-paie-barre{height:8px;margin:8px 0 10px;border-radius:999px;background:rgba(var(--w),0.14);overflow:hidden;}
 .moi-paie-barre span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--violet),#a07bff);transition:width .5s ease;}
+.moi-paie-sep{height:1px;margin:12px 0;background:rgba(var(--w),0.16);}
 .moi-paie-note{margin:10px 0 0;color:var(--text-dim);font-size:12px;line-height:1.4;}
 .moi-jour-paie{margin-left:auto;margin-right:10px;color:var(--text-dim);font-size:14px;font-variant-numeric:tabular-nums;}
 /* Heures réellement travaillées (pointages) : carte de la semaine + ligne dans chaque jour */

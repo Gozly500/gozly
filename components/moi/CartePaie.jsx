@@ -28,7 +28,7 @@ export function Montant({ valeur, cache }) {
 }
 
 // Carte « Ma paie cette semaine » de l'horaire : gagné jusqu'ici et prévu, avec un bouton œil pour cacher les montants.
-export default function CartePaie({ paie, cache, onBascule }) {
+export default function CartePaie({ paie, heures, cache, onBascule }) {
   const { t } = useLangue();
   if (!paie?.actif) return null;
 
@@ -49,21 +49,37 @@ export default function CartePaie({ paie, cache, onBascule }) {
   const gagne = montantDe(paie.minutesGagnees, paie.taux);
   const prevu = montantDe(paie.minutesPrevues, paie.taux);
   const pct = paie.minutesPrevues > 0 ? Math.min(100, Math.round((paie.minutesGagnees / paie.minutesPrevues) * 100)) : 0;
+  // Une seule carte : les heures réellement travaillées (visibles) au-dessus, puis la paie (cachée par défaut).
+  const aHeures = !!heures?.aDesPointages;
+  const enCours = aHeures && Object.values(heures.jours).some((j) => j.enCours);
 
   return (
     <div className="moi-paie">
       <div className="moi-paie-tete">
-        <strong>{t("paie.semaine")}</strong>
+        <strong>{t(aHeures ? "heures.maSemaine" : "paie.semaine")}</strong>
         <button type="button" className="moi-paie-oeil" onClick={onBascule} aria-pressed={!cache} aria-label={t(cache ? "paie.afficher" : "paie.cacher")} title={t(cache ? "paie.afficher" : "paie.cacher")}>
           <Oeil barre={!cache} />
         </button>
       </div>
 
+      {aHeures && (
+        <>
+          <div className="moi-paie-ligne">
+            <span>{t("heures.travailleesCourt")}</span>
+            <span className="moi-paie-valeurs">
+              <span className="moi-paie-montant">{formatHeures(heures.minutesTotal)}</span>
+              {enCours && <small style={{ color: "#ffd479" }}>{t("heures.enCours")}</small>}
+            </span>
+          </div>
+          <div className="moi-paie-sep" />
+        </>
+      )}
+
       <div className="moi-paie-ligne">
         <span>{t("paie.gagne")}</span>
         <span className="moi-paie-valeurs">
           <Montant valeur={gagne} cache={cache} />
-          <small>{formatHeures(paie.minutesGagnees)}</small>
+          {!aHeures && <small>{formatHeures(paie.minutesGagnees)}</small>}
         </span>
       </div>
       <div className="moi-paie-barre" aria-hidden="true">

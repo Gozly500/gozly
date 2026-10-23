@@ -131,6 +131,24 @@ export default function HoraireEmploye() {
 
   const jours = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
+  // Paie : « gagné » vient des MÊMES heures que la carte et les lignes « Travaillé » (une seule source : les pointages,
+  // avec la règle du gestionnaire). Sans aucun pointage cette semaine, on garde l'estimation d'après l'horaire.
+  const payeActive = !!paie?.actif && paie.taux != null;
+  const paieAff =
+    payeActive && heures?.aDesPointages
+      ? {
+          ...paie,
+          source: "pointage",
+          minutesGagnees: heures.minutesTotal,
+          jours: Object.fromEntries(
+            [...new Set([...Object.keys(paie.jours || {}), ...Object.keys(heures.jours || {})])].map((d) => [
+              d,
+              { gagnees: heures.jours?.[d]?.minutes ?? 0, prevues: paie.jours?.[d]?.prevues ?? 0 },
+            ])
+          ),
+        }
+      : paie;
+
   return (
     <div className="moi-horaire">
       <RappelNotifications types={["notif_semaine_publiee"]} sujet="horaire" />
@@ -168,8 +186,9 @@ export default function HoraireEmploye() {
         </button>
       </div>
 
-      <CarteHeures heures={heures} />
-      <CartePaie paie={paie} cache={cache} onBascule={() => setCache((c) => !c)} />
+      {/* Une seule carte quand la paie est activée (heures + paie) ; sinon seulement les heures travaillées. */}
+      {!payeActive && <CarteHeures heures={heures} />}
+      <CartePaie paie={paieAff} heures={heures} cache={cache} onBascule={() => setCache((c) => !c)} />
 
       {loading ? (
         <ChargementAnimation />
@@ -180,8 +199,11 @@ export default function HoraireEmploye() {
             const quartsDuJour = quarts.filter((q) => q.date === dateISO);
             const ouvert = joursOuverts[dateISO];
             // Paie du jour : ce qui est gagné (jour passé ou en cours) ou prévu (jour à venir).
-            const pj = paie?.taux != null ? paie.jours?.[dateISO] : null;
-            const minutesJour = pj ? (dateISO <= dateAujourdhui() && pj.gagnees > 0 ? pj.gagnees : pj.prevues) : 0;
+            const pj = paieAff?.taux != null ? paieAff.jours?.[dateISO] : null;
+            // Jour passé quand on a des pointages : seulement ce qui a été gagné (rien si l'employé n'a pas travaillé),
+            // jamais le montant prévu d'un quart qu'il n'a pas fait.
+            const passe = dateISO < dateAujourdhui();
+            const minutesJour = pj ? (passe && heures?.aDesPointages ? pj.gagnees : dateISO <= dateAujourdhui() && pj.gagnees > 0 ? pj.gagnees : pj.prevues) : 0;
             return (
               <div className="moi-jour-card" key={dateISO}>
                 <div className="moi-jour-head">
@@ -190,7 +212,7 @@ export default function HoraireEmploye() {
                   </div>
                   {minutesJour > 0 && (
                     <span className="moi-jour-paie">
-                      <Montant valeur={montantDe(minutesJour, paie.taux)} cache={cache} />
+                      <Montant valeur={montantDe(minutesJour, paieAff.taux)} cache={cache} />
                     </span>
                   )}
                   {quartsDuJour.length > 0 && (
