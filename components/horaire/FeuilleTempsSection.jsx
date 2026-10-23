@@ -9,6 +9,7 @@ import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { PERMISSIONS } from "@/lib/permissions";
 import { telechargerPdfFeuilleTemps } from "@/lib/exportPdf";
+import PointerPourEmployeModal from "@/components/horaire/PointerPourEmployeModal";
 import { IconAttention, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
@@ -71,6 +72,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null); // { pointageId, employeNom, entree, sortie }
   const [saving, setSaving] = useState(false);
+  const [ajoutOuvert, setAjoutOuvert] = useState(false); // fenêtre « Pointer pour un employé »
   const [exportOpen, setExportOpen] = useState(false);
   const exportRef = useRef(null);
   useFermerAuClicExterieur(exportRef, exportOpen, () => setExportOpen(false));
@@ -266,7 +268,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
         // l'horaire quand le mode "horaire" est actif.
         const fin = p.sortie ? new Date(p.sortie) : new Date();
         const debutCalcul = debutEffectif(p);
-        return { pointageId: p.id, debut: p.entree, fin: p.sortie, auto: !!p.sortie_auto, minutes: (fin - debutCalcul) / 60000 };
+        return { pointageId: p.id, debut: p.entree, fin: p.sortie, auto: !!p.sortie_auto, ajoute: p.source === "gestionnaire", minutes: (fin - debutCalcul) / 60000 };
       });
   }
 
@@ -444,6 +446,12 @@ export default function FeuilleTempsSection({ entrepriseId }) {
           </span>
         )}
 
+        {peutCorriger && (
+          <button className="admin-icon-btn" onClick={() => setAjoutOuvert(true)}>
+            + {tr("Pointer pour un employé")}
+          </button>
+        )}
+
         {peutApprouver &&
           (emplacements.length > 1 && !emplacementId ? (
             <span className="section-hint" style={{ margin: 0 }}>{tr("Choisis une succursale pour approuver.")}</span>
@@ -550,6 +558,11 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                                     style={{ background: "none", border: "none", color: "inherit", font: "inherit", cursor: "pointer", padding: 0 }}
                                   >
                                     {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>{tr("en cours")}</em>}
+                                    {x.ajoute && (
+                                      <span title={tr("Ajouté par un gestionnaire")} style={{ color: "var(--text-dim)", fontSize: "11.5px", marginLeft: "6px" }}>
+                                        {tr("(ajouté)")}
+                                      </span>
+                                    )}
                                     {x.auto && (
                                       <span
                                         title={tr("Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin.")}
@@ -562,6 +575,11 @@ export default function FeuilleTempsSection({ entrepriseId }) {
                                 ) : (
                                   <>
                                     {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>{tr("en cours")}</em>}
+                                    {x.ajoute && (
+                                      <span title={tr("Ajouté par un gestionnaire")} style={{ color: "var(--text-dim)", fontSize: "11.5px", marginLeft: "6px" }}>
+                                        {tr("(ajouté)")}
+                                      </span>
+                                    )}
                                     {x.auto && (
                                       <span
                                         title={tr("Départ posé automatiquement à la fermeture : l'employé a peut-être oublié de pointer. Corrige l'heure si besoin.")}
@@ -587,6 +605,20 @@ export default function FeuilleTempsSection({ entrepriseId }) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {ajoutOuvert && (
+        <PointerPourEmployeModal
+          entrepriseId={entrepriseId}
+          employes={employes}
+          emplacements={emplacements}
+          emplacementId={emplacementId}
+          onClose={() => setAjoutOuvert(false)}
+          onSaved={() => {
+            setAjoutOuvert(false);
+            load();
+          }}
+        />
       )}
 
       {modal && (

@@ -8,6 +8,7 @@ import { useGestion } from "@/components/gestion/GestionShell";
 import { telechargerPdfFeuilleTemps } from "@/lib/exportPdf";
 import { IconAttention, IconCrochet, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
+import PointerPourEmployeModal from "@/components/horaire/PointerPourEmployeModal";
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -64,6 +65,7 @@ export default function FeuilleTempsMobile() {
   const [ouvertId, setOuvertId] = useState(null);
   const [modal, setModal] = useState(null); // { pointageId, employeNom, entree, sortie }
   const [saving, setSaving] = useState(false);
+  const [ajoutOuvert, setAjoutOuvert] = useState(false); // fenêtre « Pointer pour un employé »
 
   const weekEnd = addDays(weekStart, 7);
 
@@ -167,7 +169,7 @@ export default function FeuilleTempsMobile() {
       .filter((p) => p.employe_id === employeId)
       .map((p) => {
         const fin = p.sortie ? new Date(p.sortie) : new Date();
-        return { pointageId: p.id, debut: p.entree, fin: p.sortie, auto: !!p.sortie_auto, minutes: (fin - debutEffectif(p)) / 60000 };
+        return { pointageId: p.id, debut: p.entree, fin: p.sortie, auto: !!p.sortie_auto, ajoute: p.source === "gestionnaire", minutes: (fin - debutEffectif(p)) / 60000 };
       });
   }
 
@@ -265,6 +267,7 @@ export default function FeuilleTempsMobile() {
     const contenu = (
       <>
         {heureCourte(x.debut)} – {x.fin ? heureCourte(x.fin) : <em style={{ color: "#ffd479" }}>{tr("en cours")}</em>}
+        {x.ajoute && <span title={tr("Ajouté par un gestionnaire")} style={{ color: "var(--text-dim)", fontSize: "11.5px", marginLeft: "6px" }}>{tr("(ajouté)")}</span>}
         {x.auto && <span className="gestion-oubli"><IconAttention className="gozly-icon" />{" "}{tr("oubli potentiel")}</span>}
       </>
     );
@@ -290,6 +293,12 @@ export default function FeuilleTempsMobile() {
       </div>
 
       <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={setEmplacementId} includeToutes />
+
+      {peutCorriger && (
+        <button type="button" className="admin-icon-btn" style={{ width: "100%", marginBottom: "12px" }} onClick={() => setAjoutOuvert(true)}>
+          + {tr("Pointer pour un employé")}
+        </button>
+      )}
 
       <div className="gestion-approbation">
         {approbationActuelle ? (
@@ -377,6 +386,20 @@ export default function FeuilleTempsMobile() {
               })}
           </div>
         </>
+      )}
+
+      {ajoutOuvert && (
+        <PointerPourEmployeModal
+          entrepriseId={entrepriseId}
+          employes={employes}
+          emplacements={emplacements}
+          emplacementId={emplacementId}
+          onClose={() => setAjoutOuvert(false)}
+          onSaved={() => {
+            setAjoutOuvert(false);
+            charger();
+          }}
+        />
       )}
 
       {modal && (
