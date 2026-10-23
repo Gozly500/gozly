@@ -3115,3 +3115,105 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
   .tele-logiciel .tele-dispo{text-align:center;}
   .tele-etapes{padding:20px;}
 }
+
+/* Lecteur Musique épinglé dans les kiosques (compact au centre en bas, ou grand panneau à droite) */
+.mkp{position:fixed;z-index:40;color:var(--fg,#fff);background:color-mix(in srgb,var(--navy,#0d0d3f) 90%,#fff 10%);border:1px solid rgba(var(--w),0.16);box-shadow:0 10px 40px rgba(0,0,0,.45);}
+.mkp-compact{left:50%;transform:translateX(-50%);bottom:8px;width:min(560px,calc(100vw - 190px));display:flex;align-items:center;gap:12px;padding:8px 10px 8px 8px;border-radius:20px;}
+.mkp-pochette{width:min(100%,30vh);aspect-ratio:1;margin:0 auto;border-radius:18px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(138,86,254,0.4),rgba(72,0,255,0.22));border:1px solid rgba(var(--w),0.15);}
+.mkp-pochette img{width:100%;height:100%;object-fit:cover;}
+.mkp-pochette .gozly-icon{width:34%;height:34%;opacity:.8;}
+.mkp-pochette.petite{width:52px;height:52px;border-radius:12px;flex-shrink:0;margin:0;}
+.mkp-textes{flex:1;min-width:0;}
+.mkp-textes.centre{flex:none;text-align:center;}
+.mkp-titre{font-size:16px;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mkp-large .mkp-titre{font-size:19px;white-space:normal;}
+.mkp-sous{margin-top:2px;color:var(--text-dim);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mkp-transport{display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0;}
+.mkp-large .mkp-transport{gap:18px;}
+.mkp-rond{width:44px;height:44px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;background:rgba(var(--w),0.12);border:1px solid rgba(var(--w),0.22);color:var(--fg,#fff);cursor:pointer;transition:background .15s,transform .1s;}
+.mkp-rond svg{width:20px;height:20px;}
+.mkp-rond:active{transform:scale(.93);}
+.mkp-rond.principal{width:52px;height:52px;color:#fff;background:linear-gradient(160deg,var(--indigo),var(--navy));box-shadow:0 5px 14px rgba(0,0,0,0.35);}
+.mkp-rond.principal svg{width:24px;height:24px;}
+.mkp-mini{width:38px;height:38px;border-radius:12px;padding:0;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:color-mix(in srgb,var(--fg,#fff) 70%,var(--navy,#0d0d3f));cursor:pointer;}
+.mkp-mini:active{background:rgba(var(--w),0.14);}
+.mkp-mini svg{width:20px;height:20px;}
+.mkp-large{right:0;top:0;bottom:0;width:340px;display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-radius:0;border-width:0 0 0 1px;overflow:hidden;}
+.mkp-tete{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.mkp-tete-titre{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;}
+.mkp-tete-titre .gozly-icon{width:20px;height:20px;}
+.mkp-tete-boutons{display:flex;gap:2px;}
+.mkp-corps{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;}
+.mkp-colonne{display:flex;flex-direction:column;gap:12px;min-height:0;}
+.mkp-etiquette{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);font-weight:700;}
+.mkp-volume{display:grid;grid-template-columns:22px 1fr 30px;align-items:center;gap:10px;margin-top:6px;}
+.mkp-volume strong{font-size:14px;text-align:right;}
+.mkp-picto{width:20px;height:20px;color:var(--text-dim);}
+.mkp-groupes{flex:1;gap:6px;overflow:hidden;}
+.mkp-groupe{display:grid;grid-template-columns:1fr auto;grid-template-areas:"nom play" "vol vol";align-items:center;gap:2px 4px;padding:6px 6px 10px 10px;border-radius:14px;background:rgba(var(--w),0.06);border:1px solid transparent;flex-shrink:0;}
+.mkp-groupe.actif{border-color:rgba(138,86,254,0.6);background:rgba(138,86,254,0.14);}
+.mkp-groupe .mkp-mini{grid-area:play;width:34px;height:34px;}
+.mkp-groupe-nom{grid-area:nom;display:flex;align-items:center;gap:8px;min-width:0;background:none;border:0;padding:6px 0;color:inherit;font:inherit;font-weight:600;font-size:14px;text-align:left;cursor:pointer;}
+.mkp .mkp-groupe-nom,.mkp .mkp-groupe-nom:hover,.mkp .mkp-groupe-nom:focus{background:transparent;box-shadow:none;border-radius:0;outline:none;transform:none;}
+.mkp-groupe-nom span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mkp-groupe-volume{grid-area:vol;padding-right:6px;}
+.mkp-pastille{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:color-mix(in srgb,var(--fg,#fff) 30%,var(--navy,#0d0d3f));}
+.mkp-pastille.joue{background:#3ddc97;box-shadow:0 0 8px #3ddc97;}
+.mkp-vide{color:var(--text-dim);font-size:14px;margin:0;}
+/* Plein écran (le kiosque Musique lui-même) : deux colonnes, rien de collé sur le côté */
+.mkp-large.plein{position:static;width:auto;max-width:1040px;min-height:100vh;margin:0 auto;border:0;box-shadow:none;background:transparent;padding:24px 28px;}
+.mkp-large.plein .mkp-corps{flex-direction:row;gap:36px;align-items:stretch;}
+.mkp-large.plein .mkp-colonne{flex:1;}
+.mkp-large.plein .mkp-pochette{width:min(100%,38vh);}
+@media (max-width:700px){.mkp-large.plein .mkp-corps{flex-direction:column;}}
+
+/* Saisie Gozly (tablette) : la fenêtre glisse à gauche, un clavier / calendrier / choix d'heure apparaît à droite */
+.sg-duo{display:flex;align-items:center;justify-content:center;width:100%;max-height:100%;}
+.sg-duo .modal-card{flex:0 1 460px;width:auto;max-width:460px;min-width:0;max-height:92vh;}
+.sg-panneau{flex:0 0 auto;width:0;overflow:hidden;opacity:0;margin-left:0;transition:width .38s cubic-bezier(.22,.8,.3,1),opacity .25s ease,margin-left .38s cubic-bezier(.22,.8,.3,1);}
+.sg-duo.ouvert .sg-panneau{width:min(600px,calc(50vw - 40px));opacity:1;margin-left:20px;}
+.sg-interne{width:min(600px,calc(50vw - 40px));box-sizing:border-box;padding:16px;background:var(--pop);backdrop-filter:blur(20px);border:1px solid rgba(var(--w),0.16);border-radius:24px;box-shadow:0 30px 60px -15px rgba(0,0,0,0.5);}
+.sg-champ{cursor:pointer;caret-color:transparent;}
+.sg-champ.actif{border-color:var(--violet);box-shadow:0 0 0 3px rgba(138,86,254,0.35);}
+.sg-miroir{background:rgba(var(--w),0.08);border:1px solid rgba(var(--w),0.14);border-radius:14px;padding:8px 14px 10px;margin-bottom:12px;min-height:58px;}
+.sg-miroir-label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);font-weight:700;}
+.sg-miroir-texte{margin-top:2px;font-size:20px;line-height:1.3;white-space:pre-wrap;overflow-wrap:anywhere;max-height:3.9em;overflow:hidden;}
+.sg-miroir-texte.grand{font-size:30px;font-weight:700;}
+.sg-miroir-vide{color:var(--text-dim);}
+.sg-caret{display:inline-block;width:2px;height:1.1em;margin-left:2px;vertical-align:text-bottom;background:var(--violet);animation:sgClignote 1s steps(2,start) infinite;}
+@keyframes sgClignote{to{visibility:hidden;}}
+.sg-grille{display:grid;grid-template-columns:repeat(20,1fr);gap:6px;}
+.sg-panneau button.sg-touche{height:54px;padding:0;border-radius:12px;font-size:20px;font-weight:600;color:var(--fg);background:rgba(var(--w),0.12);border:1px solid rgba(var(--w),0.18);box-shadow:none;cursor:pointer;transform:none;}
+.sg-panneau button.sg-touche:active{background:rgba(var(--w),0.3);transform:scale(.96);}
+.sg-panneau button.sg-touche.accent{height:44px;font-size:18px;background:rgba(138,86,254,0.18);}
+.sg-panneau button.sg-touche.special{background:rgba(var(--w),0.22);font-size:18px;}
+.sg-panneau button.sg-touche.special.actif{background:var(--violet);color:#fff;}
+.sg-panneau button.sg-touche.num{height:70px;font-size:28px;}
+.sg-clavier.num .sg-grille{grid-template-columns:repeat(3,1fr);max-width:360px;margin:0 auto;}
+.sg-clavier.num .sg-grille>*{grid-column:auto!important;}
+.sg-panneau button.sg-ok{display:block;width:100%;height:50px;margin-top:12px;border-radius:14px;border:0;font-size:17px;font-weight:700;color:#fff;background:var(--violet);cursor:pointer;box-shadow:none;}
+.sg-cal-tete{display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px;text-transform:capitalize;font-size:18px;}
+.sg-panneau button.sg-fleche{width:50px;height:50px;padding:0;border-radius:12px;font-size:30px;line-height:1;color:var(--fg);background:rgba(var(--w),0.12);border:1px solid rgba(var(--w),0.18);box-shadow:none;cursor:pointer;}
+.sg-cal-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.sg-cal-jour-nom{text-align:center;color:var(--text-dim);font-size:13px;text-transform:uppercase;padding-bottom:2px;}
+.sg-panneau button.sg-cal-jour{height:52px;padding:0;border-radius:12px;font-size:18px;font-weight:600;color:var(--fg);background:rgba(var(--w),0.08);border:2px solid transparent;box-shadow:none;cursor:pointer;}
+.sg-panneau button.sg-cal-jour.aujourdhui{border-color:var(--violet);}
+.sg-panneau button.sg-cal-jour.choisi{background:var(--violet);color:#fff;}
+.sg-raccourcis{display:flex;gap:8px;margin-top:12px;}
+.sg-panneau button.sg-raccourci{flex:1;height:48px;padding:0;border-radius:12px;font-size:16px;font-weight:600;color:var(--fg);background:rgba(var(--w),0.14);border:1px solid rgba(var(--w),0.2);box-shadow:none;cursor:pointer;}
+.sg-sous-titre{display:block;margin:12px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);font-weight:700;}
+.sg-heure-grille{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+.sg-panneau button.sg-heure-case{height:50px;padding:0;border-radius:12px;font-size:19px;font-weight:600;color:var(--fg);background:rgba(var(--w),0.1);border:2px solid transparent;box-shadow:none;cursor:pointer;}
+.sg-panneau button.sg-heure-case.choisi{background:var(--violet);color:#fff;}
+.sg-plage{display:flex;align-items:center;gap:8px;}
+.sg-plage button.sg-bascule{flex:0 0 auto;}
+@media (max-width:900px){
+  /* Écran étroit (tablette à la verticale) : le panneau monte du bas au lieu de se mettre à droite */
+  .sg-duo{align-items:flex-start;}
+  .sg-duo .modal-card{max-height:calc(100vh - 40px);}
+  .sg-panneau{position:fixed;left:0;right:0;bottom:0;width:auto;height:auto;margin:0;opacity:1;overflow:visible;transform:translateY(105%);transition:transform .35s cubic-bezier(.22,.8,.3,1);z-index:90;}
+  .sg-duo.ouvert .sg-panneau{width:auto;margin-left:0;transform:none;}
+  .sg-interne{width:auto;border-radius:24px 24px 0 0;}
+  .sg-duo.ouvert{align-self:flex-start;margin-top:-12px;}
+  .sg-duo.ouvert .modal-card{max-height:max(240px,calc(100vh - 630px));}
+}

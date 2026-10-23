@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import MusiqueKiosk from "@/components/kiosque/MusiqueKiosk";
+import MusiqueEpingle, { reservePourMode } from "@/components/kiosque/MusiqueEpingle";
+import { useEntrepriseKiosque } from "@/components/kiosque/useEntrepriseKiosque";
+import { IconMusique } from "@/components/icons/GozlyIcons";
 import PointageKioskContent from "@/components/PointageKioskContent";
 import PlanningKioskContent from "@/components/PlanningKioskContent";
 import InventaireKioskContent from "@/components/InventaireKioskContent";
@@ -14,7 +18,10 @@ const ECRANS = {
   taches: PlanningKioskContent,
   inventaire: InventaireKioskContent,
   commandes: CommandesKioskContent,
+  musique: MusiqueKiosk,
 };
+
+const CLE_EPINGLE = "gozly-kiosque-musique"; // mémorisé sur la tablette : "off" | "compact" | "large"
 
 // Petit bouton rond discret, collé dans un coin (retour à gauche, langue à droite).
 const BOUTON_COIN = {
@@ -39,6 +46,26 @@ const BOUTON_COIN = {
 export default function KiosqueEcran({ id }) {
   const Ecran = ECRANS[id];
   const { t, langue, setLangue } = useLangue();
+  const { entrepriseId, modules } = useEntrepriseKiosque();
+  const [epingle, setEpingle] = useState("off");
+
+  useEffect(() => {
+    try {
+      const m = localStorage.getItem(CLE_EPINGLE);
+      if (m === "compact" || m === "large") setEpingle(m);
+    } catch {}
+  }, []);
+
+  function changerEpingle(m) {
+    setEpingle(m);
+    try {
+      localStorage.setItem(CLE_EPINGLE, m);
+    } catch {}
+  }
+
+  // Le lecteur épinglé se superpose aux autres kiosques quand le module Musique est actif.
+  const peutEpingler = id !== "musique" && modules.includes("musique");
+  const mode = peutEpingler ? epingle : "off";
 
   useEffect(() => {
     let verrou = null;
@@ -69,10 +96,18 @@ export default function KiosqueEcran({ id }) {
 
   return (
     <>
-      <Ecran />
+      <div style={reservePourMode(mode)}>
+        <Ecran />
+      </div>
+      {mode !== "off" && <MusiqueEpingle entrepriseId={entrepriseId} mode={mode} onMode={changerEpingle} />}
       <Link href="/kiosque" aria-label={t("kq.retourListe")} style={{ ...BOUTON_COIN, left: "4px" }}>
         <IconFlecheGauche className="gozly-icon" />
       </Link>
+      {peutEpingler && mode === "off" && (
+        <button type="button" aria-label={t("kq.mus.epingler")} onClick={() => changerEpingle("compact")} style={{ ...BOUTON_COIN, left: "54px", border: 0, cursor: "pointer" }}>
+          <IconMusique className="gozly-icon" />
+        </button>
+      )}
       {/* Montre la langue vers laquelle on bascule : « EN » quand l'écran est en français. */}
       <button
         type="button"

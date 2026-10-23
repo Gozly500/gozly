@@ -588,6 +588,8 @@ export default function CommandesKioskContent() {
       {modal && (
         <LangueProvider>
           <CommandeEmployeModal
+            // Tablette (écran tactile) : le clavier, le calendrier et le choix d'heure de Gozly. ?saisie=gozly pour l'essayer sur un ordinateur.
+            saisieGozly={window.matchMedia("(pointer: coarse)").matches || new URLSearchParams(window.location.search).get("saisie") === "gozly"}
             dateParDefaut={dateAujourdhui()}
             chargerProduits={() => chargerProduitsInventaire(entrepriseId)}
             enregistrer={(c) => creerCommandeManuelle(entrepriseId, c)}

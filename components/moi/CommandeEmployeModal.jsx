@@ -6,6 +6,7 @@ import { useLangue } from "@/components/moi/LangueContext";
 import { formatMontant } from "@/lib/commandes";
 import { separerVariante, produitIdWix, versIsoQuebec } from "@/lib/commandesManuelles";
 import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
+import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
 
 const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitId: null, sku: null, options: [] };
 
@@ -18,7 +19,8 @@ const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitI
 //
 // Par défaut il parle aux routes de l'app employé ; l'app gestionnaire lui passe ses
 // propres fonctions : chargerProduits() -> liste de produits, enregistrer(commande) -> { ok, error }.
-export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, chargerProduits, enregistrer }) {
+// saisieGozly (tablette du kiosque) : clavier, calendrier et choix d'heure de Gozly à la place de ceux du système.
+export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, chargerProduits, enregistrer, saisieGozly = false }) {
   const { t } = useLangue();
   const [vue, setVue] = useState("infos"); // "infos" | "articles"
   const [clientNom, setClientNom] = useState("");
@@ -28,6 +30,8 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
   const [paye, setPaye] = useState(false);
   const [dateRamassage, setDateRamassage] = useState(dateParDefaut);
   const [heureRamassage, setHeureRamassage] = useState("12:00");
+  const [plage, setPlage] = useState(false); // le client passera « entre telle heure et telle heure »
+  const [heureFin, setHeureFin] = useState("13:00");
   const [articles, setArticles] = useState([{ ...ARTICLE_VIDE }]);
   const [produits, setProduits] = useState([]);
   const [ouvert, setOuvert] = useState(null); // ligne dont la liste de produits est ouverte
@@ -108,6 +112,11 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
       setErreur(t("commandes.erreurArticle"));
       return;
     }
+    const avecPlage = plage && dateRamassage;
+    if (avecPlage && heureFin <= heureRamassage) {
+      setErreur(t("sg.erreurPlage"));
+      return;
+    }
     setBusy(true);
     setErreur("");
 
@@ -118,6 +127,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
       mode,
       paye,
       date_ramassage: dateRamassage ? versIsoQuebec(dateRamassage, heureRamassage) : null,
+      date_ramassage_fin: avecPlage ? versIsoQuebec(dateRamassage, heureFin) : null,
       items: articlesValides.map((a) => ({ ...a, prix: Number.isFinite(a.prix) ? a.prix : null })),
     };
 
@@ -146,6 +156,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
 
   return (
     <div className="modal-overlay" onClick={onClose}>
+      <SaisieGozly actif={saisieGozly}>
       <div className="modal-card" style={{ maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         {vue === "infos" ? (
           <>
@@ -157,17 +168,20 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
             </div>
 
             <div className="field">
-              <input type="text" value={clientNom} onChange={(e) => setClientNom(e.target.value)} placeholder={t("commandes.nomCommande")} maxLength={120} />
+              <ChampGozly id="nom" type="texte" label={t("commandes.nomCommande")} value={clientNom} onChange={setClientNom} placeholder={t("commandes.nomCommande")} maxLength={120} />
             </div>
 
             <div className="field">
-              <input type="tel" inputMode="tel" value={telephone} onChange={(e) => setTelephone(e.target.value)} placeholder={t("commandes.telephone")} maxLength={40} />
+              <ChampGozly id="tel" type="tel" label={t("commandes.telephone")} value={telephone} onChange={setTelephone} placeholder={t("commandes.telephone")} maxLength={40} />
             </div>
 
             <div className="field">
-              <textarea
+              <ChampGozly
+                id="note"
+                type="textarea"
+                label={t("commandes.note")}
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                onChange={setNote}
                 placeholder={t("commandes.note")}
                 maxLength={500}
                 rows={2}
@@ -177,8 +191,32 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
 
             <div className="field">
               <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 110px", gap: "6px" }}>
-                <input type="date" value={dateRamassage} onChange={(e) => setDateRamassage(e.target.value)} aria-label={t("commandes.date")} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }} />
-                <input type="time" value={heureRamassage} onChange={(e) => setHeureRamassage(e.target.value)} disabled={!dateRamassage} aria-label={t("commandes.heure")} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }} />
+                <ChampGozly id="date" type="date" label={t("commandes.date")} placeholder={t("commandes.date")} value={dateRamassage} onChange={setDateRamassage} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }} />
+                <ChampGozly id="heure" type="heure" label={t("commandes.heure")} placeholder={t("commandes.heure")} value={heureRamassage} onChange={setHeureRamassage} disabled={!dateRamassage} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }} />
+              </div>
+              {/* Certains clients ne sont pas sûrs : « je passe entre telle heure et telle heure ». */}
+              <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "8px" }}>
+                <button
+                  type="button"
+                  className="admin-icon-btn"
+                  aria-pressed={plage}
+                  style={{ flex: "0 0 auto", ...boutonChoix(plage) }}
+                  disabled={!dateRamassage}
+                  onClick={() => {
+                    if (!plage) {
+                      const [h, m] = heureRamassage.split(":").map(Number);
+                      if (heureFin <= heureRamassage) setHeureFin(`${String(Math.min(23, h + 1)).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}`);
+                    }
+                    setPlage((p) => !p);
+                  }}
+                >
+                  {plage ? "✓ " : ""}{t("sg.plage")}
+                </button>
+                {plage && (
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <ChampGozly id="heureFin" type="heure" label={t("sg.jusqua")} placeholder={t("sg.jusqua")} value={heureFin} onChange={setHeureFin} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }} />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -231,14 +269,15 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
               <div key={i} style={{ marginBottom: "14px" }}>
                 <div style={{ display: "flex", gap: "6px", alignItems: "flex-start" }}>
                   <div className="emplacement-select-wrap" style={{ minWidth: 0, flex: 1, width: "auto", marginBottom: 0 }}>
-                    <input
-                      type="text"
+                    <ChampGozly
+                      id={`nom${i}`}
+                      type="texte"
+                      label={t("commandes.produit")}
                       value={a.nom}
-                      onChange={(e) => taperNom(i, e.target.value)}
-                      onFocus={() => setOuvert(i)}
+                      onChange={(v) => taperNom(i, v)}
+                      onOuvre={() => setOuvert(i)}
                       onBlur={() => setTimeout(() => setOuvert((o) => (o === i ? null : o)), 300)}
                       placeholder={t("commandes.produit")}
-                      autoComplete="off"
                       style={{ width: "100%", boxSizing: "border-box", margin: 0 }}
                     />
                     {ouvert === i && (
@@ -271,22 +310,24 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
                   </button>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "6px", marginTop: "6px" }}>
-                  <input
-                    type="number"
-                    min="1"
+                  <ChampGozly
+                    id={`qte${i}`}
+                    type="entier"
+                    label={t("commandes.quantite")}
                     value={a.quantite}
-                    onChange={(e) => majArticle(i, "quantite", e.target.value)}
+                    onChange={(v) => majArticle(i, "quantite", v)}
+                    onOuvre={() => setOuvert(null)}
                     placeholder={t("commandes.quantite")}
-                    aria-label={t("commandes.quantite")}
                     style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }}
                   />
-                  <input
-                    type="text"
-                    inputMode="decimal"
+                  <ChampGozly
+                    id={`prix${i}`}
+                    type="decimal"
+                    label={t("commandes.prix")}
                     value={a.prix}
-                    onChange={(e) => majArticle(i, "prix", e.target.value)}
+                    onChange={(v) => majArticle(i, "prix", v)}
+                    onOuvre={() => setOuvert(null)}
                     placeholder={t("commandes.prix")}
-                    aria-label={t("commandes.prix")}
                     style={{ width: "100%", minWidth: 0, boxSizing: "border-box", margin: 0 }}
                   />
                 </div>
@@ -304,6 +345,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
           </>
         )}
       </div>
+      </SaisieGozly>
     </div>
   );
 }

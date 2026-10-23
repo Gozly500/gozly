@@ -101,6 +101,12 @@ export async function POST(request) {
     }
     dateRamassage = new Date(ms).toISOString();
   }
+  // Plage horaire (« je passe entre telle heure et telle heure ») : fin du créneau, après le début.
+  let dateRamassageFin = null;
+  if (dateRamassage && corps.date_ramassage_fin) {
+    const msFin = Date.parse(corps.date_ramassage_fin);
+    if (!Number.isNaN(msFin) && msFin > Date.parse(dateRamassage)) dateRamassageFin = new Date(msFin).toISOString();
+  }
 
   const service = getServiceClient();
 
@@ -143,7 +149,7 @@ export async function POST(request) {
     items: articles,
     date_commande: new Date().toISOString(),
     date_ramassage: dateRamassage,
-    date_ramassage_fin: null,
+    date_ramassage_fin: dateRamassageFin,
     updated_at: new Date().toISOString(),
   });
 
