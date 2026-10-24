@@ -39,7 +39,9 @@ function LogoPlateforme({ nom }) {
 }
 
 // État Sonos de l'entreprise + envoi des commandes. En démo (demo = true) : faux haut-parleurs, rien n'est envoyé.
-function useSonos({ entrepriseId, demo }) {
+// epingle : lecteur épinglé dans un autre kiosque (pas l'écran Musique lui-même). Il reste allumé toute la journée et sert surtout à voir
+// ce qui joue : il n'a pas besoin d'être aussi frais que l'écran Musique, et Sonos limite chaque compte à 20 000 demandes par jour.
+function useSonos({ entrepriseId, demo, epingle = false }) {
   const [etat, setEtat] = useState(demo ? etatDemo() : null);
   const pauseJusqua = useRef(0); // après un 429 de Sonos (trop de demandes) : pas de nouvelle demande avant cet instant
   const derniereLecture = useRef(0); // instant de la dernière demande d'état (rythme adaptatif)
@@ -61,7 +63,7 @@ function useSonos({ entrepriseId, demo }) {
     charger();
     const id = setInterval(() => {
       const maintenant = Date.now();
-      if (document.visibilityState === "visible" && maintenant >= pauseJusqua.current && maintenant - derniereLecture.current >= delaiRafraichissement(etatRef.current?.groupes)) charger();
+      if (document.visibilityState === "visible" && maintenant >= pauseJusqua.current && maintenant - derniereLecture.current >= (epingle ? delaiRafraichissement(etatRef.current?.groupes, 30000, 90000, 180000) : delaiRafraichissement(etatRef.current?.groupes))) charger();
     }, 2000);
     return () => clearInterval(id);
   }, [entrepriseId, demo]);
@@ -158,7 +160,7 @@ const pochette = (g) => (g?.image ? <img src={g.image} alt="" /> : <IconMusique 
 // Le mode se choisit seulement en épinglant (voir BoutonEpingler) ; ici on ne peut que retirer le lecteur (onMode("off")).
 export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = false, onMode }) {
   const { t } = useLangue();
-  const { etat, agir, rafraichir } = useSonos({ entrepriseId, demo });
+  const { etat, agir, rafraichir } = useSonos({ entrepriseId, demo, epingle: mode !== "plein" });
   const [cibleId, setCibleId] = useState(null);
   const [deploye, setDeploye] = useState(false); // lecteur compact déployé (volume général + groupes)
   const racine = useRef(null);
