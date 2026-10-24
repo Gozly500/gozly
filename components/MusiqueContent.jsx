@@ -105,6 +105,7 @@ export default function MusiqueContent() {
   const [occupe, setOccupe] = useState(false);
   const [deliageConfirme, setDeliageConfirme] = useState(false);
   const contenuCharge = useRef(false);
+  const pauseJusqua = useRef(0); // après un 429 de Sonos : pas de nouvelle demande avant cet instant
   const [demo, setDemo] = useState(false); // ?demo=1 : faux haut-parleurs pour voir la page sans compte Sonos
 
   const [cibleId, setCibleId] = useState(null); // groupe sur lequel on joue la musique choisie
@@ -177,15 +178,20 @@ export default function MusiqueContent() {
     if (!entrepriseId || demo) return;
     const r = await sonosApi(`/api/sonos/etat?entrepriseId=${entrepriseId}`);
     if (r.ok) {
+      setMessage((m) => (m && m.type === "err" && /Sonos/.test(m.text) ? null : m));
       setEtat(r.data);
       if (r.data.lie && !r.data.expire && !contenuCharge.current) {
         contenuCharge.current = true;
         const c = await sonosApi(`/api/sonos/contenu?entrepriseId=${entrepriseId}`);
         if (c.ok) setContenu(c.data);
+        else contenuCharge.current = false; // échec (ex. 429) : on réessaie au prochain tour plutôt que d'afficher « aucun favori »
       }
     } else {
-      setEtat((e) => e || { configure: true, lie: true, groupes: [] });
-      setMessage({ type: "err", text: r.data?.error || t("Sonos n'a pas répondu.") });
+      // Erreur (ex. 429 « trop de demandes ») : on garde ce qu'on affichait, sans annoncer « aucun haut-parleur »,
+      // et on laisse souffler Sonos quelques secondes avant de redemander.
+      setEtat((e) => e || { configure: true, lie: true, groupes: [], enErreur: true });
+      if (r.status === 429) pauseJusqua.current = Date.now() + 15000;
+      setMessage({ type: "err", text: r.status === 429 ? t("Sonos est occupé, nouvelle tentative dans un instant…") : r.data?.error || t("Sonos n'a pas répondu.") });
     }
   }
 
@@ -193,7 +199,7 @@ export default function MusiqueContent() {
     if (!entrepriseId || demo) return;
     chargerEtat();
     const id = setInterval(() => {
-      if (document.visibilityState === "visible") chargerEtat();
+      if (document.visibilityState === "visible" && Date.now() >= pauseJusqua.current) chargerEtat();
     }, 8000);
     return () => clearInterval(id);
   }, [entrepriseId, demo]);
@@ -354,7 +360,7 @@ export default function MusiqueContent() {
             </div>
           ) : (
             <>
-              {groupes.length === 0 && !demo && (
+              {groupes.length === 0 && !demo && !etat.enErreur && (
                 <div className="settings-section">
                   <h3>{t("Ton compte Sonos est lié, mais aucun haut-parleur n'a été trouvé")}</h3>
                   <p className="panel-hint">{t("Les haut-parleurs Sonos du compte apparaîtront ici dès qu'il y en aura. Si tu en as, relie ton compte de nouveau et, dans la fenêtre de Sonos, choisis bien ton système. Tu peux aussi voir à quoi ressemble la page avec de faux haut-parleurs.")}</p>

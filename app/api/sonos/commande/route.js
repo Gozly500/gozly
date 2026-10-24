@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { appelSonos, contexteSonos, foyer, lireEtat, reponseErreurSonos } from "@/lib/sonosServer";
+import { appelSonos, contexteSonos, foyer, lireEtat, reponseErreurSonos, oublierEtat } from "@/lib/sonosServer";
 
 const ID = /^[A-Za-z0-9_.:\-]{1,80}$/;
 const volumeValide = (v) => Number.isInteger(v) && v >= 0 && v <= 100;
@@ -53,6 +53,7 @@ export async function POST(request) {
   if (ctx.reponse) return ctx.reponse;
   const { service, entreprise } = ctx;
   const eid = entreprise.id;
+  oublierEtat(eid); // la prochaine lecture de l'état doit montrer le résultat de cette commande
   const appel = (methode, chemin, corps) => appelSonos(service, eid, methode, chemin, corps);
 
   if (c.groupeId !== undefined && !ID.test(String(c.groupeId))) return NextResponse.json({ error: "Groupe invalide." }, { status: 400 });

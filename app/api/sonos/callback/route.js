@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
-import { adresseRetour, configSonos, echangerCode, enregistrerJetons, lireState } from "@/lib/sonosServer";
+import { adresseRetour, configSonos, echangerCode, enregistrerJetons, lireState, oublierEtat } from "@/lib/sonosServer";
 
 // Retour de Sonos après l'autorisation : on échange le code contre les jetons, puis on revient sur la page Musique.
 export async function GET(request) {
@@ -19,6 +19,7 @@ export async function GET(request) {
     // Nouvelle liaison : on repart d'un foyer inconnu.
     await enregistrerJetons(service, state.entrepriseId, jetons, state.userId);
     await service.from("sonos_connexions").update({ household_id: null }).eq("entreprise_id", state.entrepriseId);
+    oublierEtat(state.entrepriseId);
     return retour("ok");
   } catch (err) {
     console.error("Erreur liaison Sonos:", err.message);
