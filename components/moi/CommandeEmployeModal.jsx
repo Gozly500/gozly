@@ -21,8 +21,9 @@ const ARTICLE_VIDE = { nom: "", quantite: "1", prix: "", produit: null, produitI
 // Par défaut il parle aux routes de l'app employé ; l'app gestionnaire lui passe ses
 // propres fonctions : chargerProduits() -> liste de produits, enregistrer(commande) -> { ok, error }.
 // saisieGozly (tablette du kiosque) : clavier, calendrier et choix d'heure de Gozly à la place de ceux du système.
-// chargerCategories (optionnel) : catégories pour le catalogue de la tablette (saisieGozly).
-export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, chargerProduits, chargerCategories, enregistrer, saisieGozly = false, commande = null }) {
+// catalogue : écran « Ajouter des produits » (catégories, produits, panier) au lieu de la liste de lignes ; par défaut, comme saisieGozly.
+// chargerCategories (optionnel) : catégories pour ce catalogue.
+export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, chargerProduits, chargerCategories, enregistrer, saisieGozly = false, catalogue = saisieGozly, commande = null }) {
   const { t } = useLangue();
   // commande : la commande à modifier (null = nouvelle commande).
   const ramassageInitial = dateHeureQuebec(commande?.date_ramassage);
@@ -67,7 +68,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
     Promise.resolve(source)
       .then((liste) => setProduits(liste || []))
       .catch(() => {});
-    if (saisieGozly && chargerCategories) {
+    if (catalogue && chargerCategories) {
       Promise.resolve(chargerCategories())
         .then((liste) => setCategories(liste || []))
         .catch(() => {});
@@ -223,8 +224,8 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <SaisieGozly actif={saisieGozly}>
-      <div className={`modal-card${saisieGozly && vue === "articles" ? " cg-large" : ""}`} style={{ maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-        {vue === "articles" && saisieGozly ? (
+      <div className={`modal-card${catalogue && vue === "articles" ? " cg-large" : ""}`} style={{ maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+        {vue === "articles" && catalogue ? (
           <>
             <div className="modal-head">
               <h3>{t("commandes.ajouterProduits")}</h3>

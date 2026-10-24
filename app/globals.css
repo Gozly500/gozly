@@ -3367,6 +3367,7 @@ a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 /* Saisie Gozly (tablette) : la fenêtre glisse à gauche, un clavier / calendrier / choix d'heure apparaît à droite */
 .sg-duo{display:flex;align-items:center;justify-content:center;width:100%;max-height:100%;}
 .sg-duo .modal-card{flex:0 1 460px;width:auto;max-width:460px;min-width:0;max-height:92vh;}
+.modal-card.cg-large{width:100%;max-width:880px;}
 .sg-duo .modal-card.cg-large{flex:0 1 880px;max-width:880px;}
 /* Catalogue de la prise de commande (tablette) : catégories / produits à gauche, panier à droite. */
 .cg-corps{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;height:min(64vh,600px);min-height:360px;}
