@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { sonosApi, ETATS_LECTURE } from "@/lib/sonosClient";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
@@ -10,17 +10,20 @@ import { useT } from "@/components/LangProvider";
 export default function MusiqueWidget({ entrepriseId }) {
   const { t } = useT();
   const [etat, setEtat] = useState(null);
+  const pauseJusqua = useRef(0); // après un 429 de Sonos (trop de demandes) : pas de nouvelle demande avant cet instant
 
   async function charger() {
     const r = await sonosApi(`/api/sonos/etat?entrepriseId=${entrepriseId}`);
-    setEtat(r.ok ? r.data : { erreur: true });
+    if (r.status === 429) pauseJusqua.current = Date.now() + 60000;
+    // Erreur : on garde ce qu'on affichait.
+    setEtat(r.ok ? r.data : (e) => e || { erreur: true });
   }
 
   useEffect(() => {
     charger();
     const id = setInterval(() => {
-      if (document.visibilityState === "visible") charger();
-    }, 15000);
+      if (document.visibilityState === "visible" && Date.now() >= pauseJusqua.current) charger();
+    }, 30000);
     return () => clearInterval(id);
   }, [entrepriseId]);
 
