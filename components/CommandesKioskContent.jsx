@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
+import { useAnimationCartes } from "@/lib/useAnimationCartes";
 import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
 import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle, modifierCommandeManuelle, retirerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
@@ -102,6 +103,8 @@ export default function CommandesKioskContent() {
   const [modal, setModal] = useState(false);
   const [aModifier, setAModifier] = useState(null); // commande saisie à la main en cours de modification
   const [aRetirer, setARetirer] = useState(null); // commande à retirer (confirmation)
+  const anim = useAnimationCartes(commandes); // les cartes se décalent et la nouvelle grandit
+  const dejaCharge = useRef(false); // le premier chargement n'est pas animé
   const [enCours, setEnCours] = useState(null);
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const [message, setMessage] = useState(null);
@@ -187,6 +190,8 @@ export default function CommandesKioskContent() {
 
     // Ordre chronologique du ramassage (ou de la commande sans ramassage).
     const liste = (data || []).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b)));
+    if (dejaCharge.current) anim.preparer();
+    dejaCharge.current = true;
     setCommandes(liste);
   }, [entrepriseId, modeKiosque]);
 
@@ -316,11 +321,18 @@ export default function CommandesKioskContent() {
 
   async function retirer(commande) {
     setEnCours(commande.id);
-    const { ok, error } = await retirerCommandeManuelle(entrepriseId, commande.id);
     setARetirer(null);
+    // La carte se désagrège pendant que la suppression se fait ; les autres cartes glissent ensuite pour combler la place.
+    const effet = anim.desagreger(commande.id);
+    const [{ ok, error }] = await Promise.all([retirerCommandeManuelle(entrepriseId, commande.id), effet ? new Promise((r) => setTimeout(r, 650)) : null]);
     if (!ok) {
+      effet?.annuler();
       setMessage({ type: "err", text: error });
       setTimeout(() => setMessage(null), 6000);
+    } else {
+      anim.preparer();
+      setCommandes((prev) => prev.filter((c) => c.id !== commande.id));
+      setAvenir((prev) => prev.filter((c) => c.id !== commande.id));
     }
     await charger();
     await chargerAvenir();
@@ -345,6 +357,7 @@ export default function CommandesKioskContent() {
   async function passer(commande, etape) {
     setEnCours(commande.id);
     // Mise à jour immédiate à l'écran, puis confirmation du serveur.
+    anim.preparer();
     setCommandes((prev) => prev.map((c) => (c.id === commande.id ? { ...c, etape } : c)));
     setAvenir((prev) => prev.map((c) => (c.id === commande.id ? { ...c, etape } : c)));
     const { ok, error } = await changerEtapeCommande(entrepriseId, commande.id, etape);
@@ -417,7 +430,7 @@ export default function CommandesKioskContent() {
     const paiement = libellePaiement(c) ? t(`kq.c.pay.${clePaiement}`) : null;
     const etat = etatCommande(c);
     return (
-      <article className={`cmd-kiosk-card${liste && etapeCommande(c) === "terminee" ? " cmd-kiosk-card-finie" : ""}`} key={c.id}>
+      <article className={`cmd-kiosk-card${liste && etapeCommande(c) === "terminee" ? " cmd-kiosk-card-finie" : ""}`} key={c.id} ref={anim.ref(c.id)}>
         <div className="cmd-kiosk-card-top">
           <strong>#{c.numero || "—"}</strong>
           <span>{libelleRamassage(c, locale) ? t("kq.c.ramassageHeure", { h: libelleRamassage(c, locale) }) : heureCommande(c.date_commande, locale)}</span>
