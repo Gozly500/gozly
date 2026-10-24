@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { sonosApi, ETATS_LECTURE, delaiRafraichissement } from "@/lib/sonosClient";
+import { sonosApi, ETATS_LECTURE, delaiRafraichissement, pauseApres429 } from "@/lib/sonosClient";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
@@ -18,7 +18,7 @@ export default function MusiqueWidget({ entrepriseId }) {
   async function charger() {
     derniereLecture.current = Date.now();
     const r = await sonosApi(`/api/sonos/etat?entrepriseId=${entrepriseId}`);
-    if (r.status === 429) pauseJusqua.current = Date.now() + 60000;
+    if (r.status === 429) pauseJusqua.current = Date.now() + pauseApres429(r);
     // Erreur : on garde ce qu'on affichait.
     setEtat(r.ok ? r.data : (e) => e || { erreur: true });
   }
@@ -27,7 +27,7 @@ export default function MusiqueWidget({ entrepriseId }) {
     charger();
     const id = setInterval(() => {
       const maintenant = Date.now();
-      if (document.visibilityState === "visible" && maintenant >= pauseJusqua.current && maintenant - derniereLecture.current >= delaiRafraichissement(etatRef.current?.groupes, 20000, 45000)) charger();
+      if (document.visibilityState === "visible" && maintenant >= pauseJusqua.current && maintenant - derniereLecture.current >= delaiRafraichissement(etatRef.current?.groupes, 20000, 60000)) charger();
     }, 2000);
     return () => clearInterval(id);
   }, [entrepriseId]);

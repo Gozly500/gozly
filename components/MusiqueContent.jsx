@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
-import { sonosApi, ETATS_LECTURE, delaiRafraichissement } from "@/lib/sonosClient";
+import { sonosApi, ETATS_LECTURE, delaiRafraichissement, pauseApres429 } from "@/lib/sonosClient";
 import { ACTIONS_IMMEDIATES, CONTENU_DEMO, appliquerDemo, etatDemo } from "@/lib/sonosDemo";
 import SimpleSelect from "@/components/SimpleSelect";
 import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconFlecheHaut, IconPlus } from "@/components/icons/Pictogrammes";
@@ -194,8 +194,8 @@ export default function MusiqueContent() {
       // Erreur (ex. 429 « trop de demandes ») : on garde ce qu'on affichait, sans annoncer « aucun haut-parleur »,
       // et on laisse souffler Sonos quelques secondes avant de redemander.
       setEtat((e) => e || { configure: true, lie: true, groupes: [], enErreur: true });
-      if (r.status === 429) pauseJusqua.current = Date.now() + 60000;
-      setMessage({ type: "err", text: r.status === 429 ? `${t("Sonos est occupé, nouvelle tentative dans un instant…")}${r.data?.detail ? ` [${r.data.detail}]` : ""}` : r.data?.error || t("Sonos n'a pas répondu.") });
+      if (r.status === 429) pauseJusqua.current = Date.now() + pauseApres429(r);
+      setMessage({ type: "err", text: r.status === 429 ? (r.data?.reprise > 600 ? `${t("Sonos a atteint la limite de demandes de la journée pour ce compte. La musique reviendra vers")} ${new Date(Date.now() + r.data.reprise * 1000).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })}.` : `${t("Sonos est occupé, nouvelle tentative dans un instant…")}${r.data?.detail ? ` [${r.data.detail}]` : ""}`) : r.data?.error || t("Sonos n'a pas répondu.") });
     }
   }
 
