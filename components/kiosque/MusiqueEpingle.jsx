@@ -48,7 +48,7 @@ function useSonos({ entrepriseId, demo }) {
     const r = await sonosApi(`/api/sonos/etat?entrepriseId=${entrepriseId}`);
     // positionLe : l'instant où la position a été lue, pour que la barre de progression avance toute seule entre deux lectures.
     const maintenant = Date.now();
-    if (r.status === 429) pauseJusqua.current = Date.now() + 15000;
+    if (r.status === 429) pauseJusqua.current = Date.now() + 60000;
     setEtat(r.ok ? { ...r.data, groupes: (r.data.groupes || []).map((g) => ({ ...g, positionLe: maintenant })) } : (e) => e || { erreur: true });
   }
 
