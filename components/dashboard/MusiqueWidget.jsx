@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { sonosApi, ETATS_LECTURE } from "@/lib/sonosClient";
+import { sonosApi, ETATS_LECTURE, delaiRafraichissement } from "@/lib/sonosClient";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
@@ -11,8 +11,12 @@ export default function MusiqueWidget({ entrepriseId }) {
   const { t } = useT();
   const [etat, setEtat] = useState(null);
   const pauseJusqua = useRef(0); // après un 429 de Sonos (trop de demandes) : pas de nouvelle demande avant cet instant
+  const derniereLecture = useRef(0); // instant de la dernière demande d'état (rythme adaptatif)
+  const etatRef = useRef(null);
+  etatRef.current = etat;
 
   async function charger() {
+    derniereLecture.current = Date.now();
     const r = await sonosApi(`/api/sonos/etat?entrepriseId=${entrepriseId}`);
     if (r.status === 429) pauseJusqua.current = Date.now() + 60000;
     // Erreur : on garde ce qu'on affichait.
@@ -22,8 +26,9 @@ export default function MusiqueWidget({ entrepriseId }) {
   useEffect(() => {
     charger();
     const id = setInterval(() => {
-      if (document.visibilityState === "visible" && Date.now() >= pauseJusqua.current) charger();
-    }, 30000);
+      const maintenant = Date.now();
+      if (document.visibilityState === "visible" && maintenant >= pauseJusqua.current && maintenant - derniereLecture.current >= delaiRafraichissement(etatRef.current?.groupes, 20000, 45000)) charger();
+    }, 2000);
     return () => clearInterval(id);
   }, [entrepriseId]);
 

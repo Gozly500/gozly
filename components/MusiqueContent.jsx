@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import DashSidebar from "@/components/DashSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
-import { sonosApi, ETATS_LECTURE } from "@/lib/sonosClient";
+import { sonosApi, ETATS_LECTURE, delaiRafraichissement } from "@/lib/sonosClient";
 import { ACTIONS_IMMEDIATES, CONTENU_DEMO, appliquerDemo, etatDemo } from "@/lib/sonosDemo";
 import SimpleSelect from "@/components/SimpleSelect";
 import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconFlecheHaut, IconPlus } from "@/components/icons/Pictogrammes";
@@ -106,6 +106,9 @@ export default function MusiqueContent() {
   const [deliageConfirme, setDeliageConfirme] = useState(false);
   const contenuCharge = useRef(false);
   const pauseJusqua = useRef(0); // après un 429 de Sonos : pas de nouvelle demande avant cet instant
+  const derniereLecture = useRef(0); // instant de la dernière demande d'état (rythme adaptatif)
+  const etatRef = useRef(null);
+  etatRef.current = etat;
   const [demo, setDemo] = useState(false); // ?demo=1 : faux haut-parleurs pour voir la page sans compte Sonos
 
   const [cibleId, setCibleId] = useState(null); // groupe sur lequel on joue la musique choisie
@@ -176,6 +179,7 @@ export default function MusiqueContent() {
 
   async function chargerEtat() {
     if (!entrepriseId || demo) return;
+    derniereLecture.current = Date.now();
     const r = await sonosApi(`/api/sonos/etat?entrepriseId=${entrepriseId}`);
     if (r.ok) {
       setMessage((m) => (m && m.type === "err" && /Sonos/.test(m.text) ? null : m));
@@ -199,8 +203,9 @@ export default function MusiqueContent() {
     if (!entrepriseId || demo) return;
     chargerEtat();
     const id = setInterval(() => {
-      if (document.visibilityState === "visible" && Date.now() >= pauseJusqua.current) chargerEtat();
-    }, 12000);
+      const maintenant = Date.now();
+      if (document.visibilityState === "visible" && maintenant >= pauseJusqua.current && maintenant - derniereLecture.current >= delaiRafraichissement(etatRef.current?.groupes)) chargerEtat();
+    }, 2000);
     return () => clearInterval(id);
   }, [entrepriseId, demo]);
 

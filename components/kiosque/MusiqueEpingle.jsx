@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { sonosApi } from "@/lib/sonosClient";
+import { sonosApi, delaiRafraichissement } from "@/lib/sonosClient";
 import { ACTIONS_IMMEDIATES, CONTENU_DEMO, appliquerDemo, etatDemo } from "@/lib/sonosDemo";
 import { logoPlateforme } from "@/lib/plateformesMusique";
 import { useLangue } from "@/components/moi/LangueContext";
@@ -42,9 +42,13 @@ function LogoPlateforme({ nom }) {
 function useSonos({ entrepriseId, demo }) {
   const [etat, setEtat] = useState(demo ? etatDemo() : null);
   const pauseJusqua = useRef(0); // après un 429 de Sonos (trop de demandes) : pas de nouvelle demande avant cet instant
+  const derniereLecture = useRef(0); // instant de la dernière demande d'état (rythme adaptatif)
+  const etatRef = useRef(null);
+  etatRef.current = etat;
 
   async function charger() {
     if (!entrepriseId || demo) return;
+    derniereLecture.current = Date.now();
     const r = await sonosApi(`/api/sonos/etat?entrepriseId=${entrepriseId}`);
     // positionLe : l'instant où la position a été lue, pour que la barre de progression avance toute seule entre deux lectures.
     const maintenant = Date.now();
@@ -56,8 +60,9 @@ function useSonos({ entrepriseId, demo }) {
     if (demo || !entrepriseId) return;
     charger();
     const id = setInterval(() => {
-      if (document.visibilityState === "visible" && Date.now() >= pauseJusqua.current) charger();
-    }, 12000);
+      const maintenant = Date.now();
+      if (document.visibilityState === "visible" && maintenant >= pauseJusqua.current && maintenant - derniereLecture.current >= delaiRafraichissement(etatRef.current?.groupes)) charger();
+    }, 2000);
     return () => clearInterval(id);
   }, [entrepriseId, demo]);
 
