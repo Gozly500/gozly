@@ -191,7 +191,7 @@ export default function MusiqueContent() {
       // et on laisse souffler Sonos quelques secondes avant de redemander.
       setEtat((e) => e || { configure: true, lie: true, groupes: [], enErreur: true });
       if (r.status === 429) pauseJusqua.current = Date.now() + 15000;
-      setMessage({ type: "err", text: r.status === 429 ? t("Sonos est occupé, nouvelle tentative dans un instant…") : r.data?.error || t("Sonos n'a pas répondu.") });
+      setMessage({ type: "err", text: r.status === 429 ? `${t("Sonos est occupé, nouvelle tentative dans un instant…")}${r.data?.detail ? ` [${r.data.detail}]` : ""}` : r.data?.error || t("Sonos n'a pas répondu.") });
     }
   }
 
@@ -200,7 +200,7 @@ export default function MusiqueContent() {
     chargerEtat();
     const id = setInterval(() => {
       if (document.visibilityState === "visible" && Date.now() >= pauseJusqua.current) chargerEtat();
-    }, 8000);
+    }, 12000);
     return () => clearInterval(id);
   }, [entrepriseId, demo]);
 

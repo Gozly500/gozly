@@ -57,7 +57,7 @@ function useSonos({ entrepriseId, demo }) {
     charger();
     const id = setInterval(() => {
       if (document.visibilityState === "visible" && Date.now() >= pauseJusqua.current) charger();
-    }, 8000);
+    }, 12000);
     return () => clearInterval(id);
   }, [entrepriseId, demo]);
 
