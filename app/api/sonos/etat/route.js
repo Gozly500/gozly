@@ -25,8 +25,8 @@ export async function GET(request) {
 }
 
 async function lire(ctx, configure) {
-  const { data: connexion } = await ctx.service.from("sonos_connexions").select("entreprise_id").eq("entreprise_id", ctx.entreprise.id).maybeSingle();
-  if (!connexion) return { corps: { configure, lie: false }, status: 200 };
+  const { data: connexion } = await ctx.service.from("sonos_connexions").select("entreprise_id, refresh_token").eq("entreprise_id", ctx.entreprise.id).maybeSingle();
+  if (!connexion?.refresh_token) return { corps: { configure, lie: false }, status: 200 };
 
   const r = await lireEtat(ctx.service, ctx.entreprise.id);
   if (!r.ok) {

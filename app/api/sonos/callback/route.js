@@ -16,9 +16,9 @@ export async function GET(request) {
   if (!service) return retour("erreur");
   try {
     const jetons = await echangerCode(code, adresseRetour(request));
-    // Nouvelle liaison : on repart d'un foyer inconnu.
+    // Nouvelle liaison : le numéro de système déjà connu est gardé (voir deconnecter) ; si le client a lié un autre compte Sonos,
+    // lireEtat s'en aperçoit (système introuvable ou vide) et le redécouvre.
     await enregistrerJetons(service, state.entrepriseId, jetons, state.userId);
-    await service.from("sonos_connexions").update({ household_id: null }).eq("entreprise_id", state.entrepriseId);
     oublierEtat(state.entrepriseId);
     return retour("ok");
   } catch (err) {
