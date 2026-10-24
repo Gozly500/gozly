@@ -112,6 +112,10 @@ export default function CommandesKioskContent() {
   const [vue, setVue] = useState("jour"); // "jour" | "avenir" (mode liste seulement)
   // Affichage choisi dans Personnalisation : "liste" (cartes, commandes du jour) ou "sections" (En attente / Traitées / Terminées).
   const [modeKiosque, setModeKiosque] = useState("liste");
+  // Son des nouvelles commandes en ligne choisi dans Personnalisation : "une_fois" | "continu" (null = selon l'affichage, comme avant).
+  const [sonMode, setSonMode] = useState(null);
+  const [pret, setPret] = useState(false); // premier chargement terminé (pas de son pour les commandes déjà là)
+  const [aConfirmer, setAConfirmer] = useState(() => new Set()); // liste + son continu : commandes en ligne pas encore vues
   const [masquees, setMasquees] = useState(() => new Set()); // commandes terminées « vidées » de l'écran (mode sections)
   const [recherche, setRecherche] = useState("");
   const [rechercheOuverte, setRechercheOuverte] = useState(false); // tablette : fenêtre de recherche avec le clavier Gozly
@@ -147,6 +151,9 @@ export default function CommandesKioskContent() {
         // Colonne ajoutée par commandes_kiosque_mode.sql : tant qu'elle n'existe pas, mode liste.
         const { data: reglage, error: erreurReglage } = await supabase.from("entreprises").select("commandes_kiosque_mode").eq("id", eid).maybeSingle();
         if (!ignore && !erreurReglage && reglage?.commandes_kiosque_mode === "sections") setModeKiosque("sections");
+        // Colonne ajoutée par commandes_son_mode.sql : tant qu'elle n'existe pas, le son suit l'affichage (continu en 3 sections, une fois en liste).
+        const { data: son, error: erreurSon } = await supabase.from("entreprises").select("commandes_son_mode").eq("id", eid).maybeSingle();
+        if (!ignore && !erreurSon && son?.commandes_son_mode) setSonMode(son.commandes_son_mode === "continu" ? "continu" : "une_fois");
         try {
           const ids = JSON.parse(window.localStorage.getItem(`gozly_cmd_masquees_${eid}`) || "[]");
           if (!ignore && Array.isArray(ids)) setMasquees(new Set(ids));
@@ -220,8 +227,9 @@ export default function CommandesKioskContent() {
         await chargerAvenir();
       }
     }
-    charger();
-    chargerAvenir();
+    Promise.all([charger(), chargerAvenir()]).then(() => {
+      if (actif) setPret(true);
+    });
     cycle();
     const id = setInterval(() => {
       if (document.visibilityState === "visible") cycle();
@@ -237,12 +245,19 @@ export default function CommandesKioskContent() {
   }, [entrepriseId]);
 
   const nbEnAttente = modeKiosque === "sections" ? commandes.filter((c) => etapeCommande(c) === "en_attente").length : 0;
+  const sonContinu = (sonMode ?? (modeKiosque === "sections" ? "continu" : "une_fois")) === "continu";
+  // Liste + son continu : les commandes en ligne arrivées et pas encore vues (retirées d'ici dès qu'elles sont terminées ou annulées).
+  const nbAConfirmer =
+    modeKiosque === "liste" && sonContinu
+      ? [...commandes, ...avenir].filter((c) => aConfirmer.has(c.id) && etapeCommande(c) !== "terminee" && etapeCommande(c) !== "annulee").length
+      : 0;
+  const boucleSon = sonContinu && (modeKiosque === "sections" ? nbEnAttente > 0 : nbAConfirmer > 0);
 
   // Son en boucle tant qu'une commande attend : on le joue, et 5 secondes
-  // après la fin on le rejoue, jusqu'à ce que plus rien ne soit "En attente".
+  // après la fin on le rejoue, jusqu'à ce que plus rien ne soit "En attente" (3 sections) ou à confirmer (liste), en mode continu.
   // (Un navigateur n'autorise le son qu'après un toucher : bouton "Activer le son".)
   useEffect(() => {
-    if (!sonActif || nbEnAttente === 0) return;
+    if (!sonActif || !boucleSon) return;
     if (!audioRef.current) audioRef.current = new Audio(SON_NOUVELLE_COMMANDE);
     const audio = audioRef.current;
     let minuteur;
@@ -266,26 +281,44 @@ export default function CommandesKioskContent() {
       audio.removeEventListener("ended", apresFin);
       audio.pause();
     };
-  }, [sonActif, nbEnAttente > 0]);
+  }, [sonActif, boucleSon]);
 
-  // Mode liste : un seul son quand une nouvelle commande en ligne apparaît (jour ou à venir).
+  // Nouvelle commande en ligne (jour ou à venir), peu importe l'affichage :
+  //  - son « une seule fois » : on le joue une fois ;
+  //  - son « continu » : 3 sections, la boucle ci-dessus repart toute seule (la commande arrive « En attente ») ;
+  //    liste, la commande est notée « à confirmer » et la boucle dure jusqu'à ce qu'on la touche ou qu'on arrête le son.
   const dejaVuesRef = useRef(null);
   useEffect(() => {
-    if (modeKiosque !== "liste") return;
+    if (!pret) return;
     const toutes = [...commandes, ...avenir];
     const ids = new Set(toutes.map((c) => c.id));
     if (dejaVuesRef.current === null) {
-      if (toutes.length > 0) dejaVuesRef.current = ids; // premier chargement : pas de son
+      dejaVuesRef.current = ids; // premier chargement : pas de son
       return;
     }
     const nouvelles = toutes.filter((c) => !dejaVuesRef.current.has(c.id) && c.source !== "manuel");
     dejaVuesRef.current = ids;
-    if (nouvelles.length > 0 && sonActif) {
+    if (nouvelles.length === 0) return;
+    if (sonContinu) {
+      if (modeKiosque === "liste") setAConfirmer((prev) => new Set([...prev, ...nouvelles.map((c) => c.id)]));
+      return;
+    }
+    if (sonActif) {
       if (!audioRef.current) audioRef.current = new Audio(SON_NOUVELLE_COMMANDE);
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => {});
     }
-  }, [commandes, avenir, modeKiosque, sonActif]);
+  }, [commandes, avenir, pret, modeKiosque, sonActif, sonContinu]);
+
+  // Liste + son continu : toucher une commande, ou « Arrêter le son », la marque comme vue.
+  function confirmerVue(id) {
+    setAConfirmer((prev) => {
+      if (!prev.has(id)) return prev;
+      const suivant = new Set(prev);
+      suivant.delete(id);
+      return suivant;
+    });
+  }
 
   // Activer le son : on joue le son tout de suite, PENDANT le toucher. Sur iPad/iPhone, un son doit d'abord être lancé
   // par un geste de l'utilisateur sur ce même lecteur audio, sinon les sons joués plus tard (nouvelle commande) sont
@@ -430,7 +463,7 @@ export default function CommandesKioskContent() {
     const paiement = libellePaiement(c) ? t(`kq.c.pay.${clePaiement}`) : null;
     const etat = etatCommande(c);
     return (
-      <article className={`cmd-kiosk-card${liste && etapeCommande(c) === "terminee" ? " cmd-kiosk-card-finie" : ""}`} key={c.id} ref={anim.ref(c.id)}>
+      <article className={`cmd-kiosk-card${liste && etapeCommande(c) === "terminee" ? " cmd-kiosk-card-finie" : ""}`} key={c.id} ref={anim.ref(c.id)} onClick={() => aConfirmer.size > 0 && confirmerVue(c.id)}>
         <div className="cmd-kiosk-card-top">
           <strong>#{c.numero || "—"}</strong>
           <span>{libelleRamassage(c, locale) ? t("kq.c.ramassageHeure", { h: libelleRamassage(c, locale) }) : heureCommande(c.date_commande, locale)}</span>
@@ -651,6 +684,17 @@ export default function CommandesKioskContent() {
       </header>
 
       {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
+
+      {nbAConfirmer > 0 && (
+        <div className="cmd-kiosk-alerte" role="status">
+          <span>
+            <IconCloche className="gozly-icon" /> {t("kq.c.nouvelleEnLigne")}
+          </span>
+          <button type="button" className="admin-icon-btn" onClick={() => setAConfirmer(new Set())}>
+            {t("kq.c.arreterSon")}
+          </button>
+        </div>
+      )}
 
       {vue === "avenir" ? (
         vueAvenir

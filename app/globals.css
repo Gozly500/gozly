@@ -2192,6 +2192,8 @@ label.moi-picker-row input[type="checkbox"]{order:-1;flex-shrink:0;margin:0;}
 .cmd-kiosk-items{font-size:15px;display:flex;flex-direction:column;gap:3px;}
 .cmd-kiosk-options{color:var(--text-dim);font-size:13px;}
 .cmd-kiosk-total{font-weight:700;font-size:16px;}
+.cmd-kiosk-alerte{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding:12px 16px;border-radius:16px;font-weight:700;background:rgba(255,212,121,0.18);border:1px solid rgba(255,212,121,0.55);color:#ffd479;animation:cmdAlertePulse 1.6s ease-in-out infinite;}
+@keyframes cmdAlertePulse{50%{background:rgba(255,212,121,0.3);}}
 .cmd-kiosk-actions{display:flex;gap:8px;margin-top:4px;}
 .cmd-kiosk-actions .submit-btn{flex:1;padding:14px;font-size:16px;}
 /* Bouton rond « ⋯ » (même hauteur que Terminer) : il se déplie vers la gauche, par-dessus, en pastille Modifier / Retirer. */

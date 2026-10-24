@@ -64,6 +64,11 @@ const OPTIONS_RETENTION_DEMANDES = [
   { id: "12", label: "12 mois" },
 ];
 
+const OPTIONS_SON_COMMANDES = [
+  { id: "une_fois", label: "Une seule fois" },
+  { id: "continu", label: "En continu jusqu'à ce que la commande soit prise" },
+];
+
 const OPTIONS_KIOSQUE_COMMANDES = [
   { id: "liste", label: "Liste (cartes des commandes du jour)" },
   { id: "sections", label: "3 sections (En attente, Traitées, Terminées)" },
@@ -155,6 +160,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [retentionCommandes, setRetentionCommandes] = useState("12");
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
   const [kiosqueCommandes, setKiosqueCommandes] = useState("liste");
+  const [sonCommandes, setSonCommandes] = useState("une_fois");
   const [commandesVersTaches, setCommandesVersTaches] = useState("active");
   const [planifDansCommandes, setPlanifDansCommandes] = useState("desactive");
   const [lieuWix, setLieuWix] = useState(""); // "" = toutes les succursales
@@ -199,6 +205,10 @@ export default function PersonnalisationSection({ entrepriseId }) {
     // Mode d'affichage du kiosque : lu à part (colonne de commandes_kiosque_mode.sql, absente tant que le SQL n'est pas exécuté).
     const { data: kiosqueData, error: kiosqueErreur } = await supabase.from("entreprises").select("commandes_kiosque_mode").eq("id", entrepriseId).maybeSingle();
     if (!kiosqueErreur) setKiosqueCommandes(kiosqueData?.commandes_kiosque_mode === "sections" ? "sections" : "liste");
+    // Son des nouvelles commandes : colonne de commandes_son_mode.sql (absente tant que le SQL n'est pas exécuté : comportement selon l'affichage).
+    const { data: sonData, error: sonErreur } = await supabase.from("entreprises").select("commandes_son_mode").eq("id", entrepriseId).maybeSingle();
+    if (!sonErreur && sonData?.commandes_son_mode) setSonCommandes(sonData.commandes_son_mode === "continu" ? "continu" : "une_fois");
+    else if (!kiosqueErreur) setSonCommandes(kiosqueData?.commandes_kiosque_mode === "sections" ? "continu" : "une_fois");
 
     // Rappels de températures : lus à part (colonne de temperature_rappels.sql, absente tant que le SQL n'est pas exécuté).
     const { data: rappelsData, error: rappelsErreur } = await supabase.from("entreprises").select("temperature_rappels_actif").eq("id", entrepriseId).maybeSingle();
@@ -288,6 +298,21 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setMsg(
       error
         ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_kiosque_mode.sql dans Supabase?") }
+        : { type: "ok", text: t("Préférence enregistrée. Recharge le kiosque pour l'appliquer.") }
+    );
+  }
+
+  async function handleChangeSonCommandes(value) {
+    setSonCommandes(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase.from("entreprises").update({ commandes_son_mode: value }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(
+      error
+        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_son_mode.sql dans Supabase?") }
         : { type: "ok", text: t("Préférence enregistrée. Recharge le kiosque pour l'appliquer.") }
     );
   }
@@ -680,6 +705,14 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   options={OPTIONS_KIOSQUE_COMMANDES}
                   value={kiosqueCommandes}
                   onChange={handleChangeKiosqueCommandes}
+                  disabled={saving}
+                />
+                <ParametreSelect
+                  label={t("Son des nouvelles commandes en ligne")}
+                  info={t("Une seule fois : le son joue une fois quand une commande en ligne arrive. En continu : il se répète toutes les quelques secondes jusqu'à ce que la commande soit prise en charge (3 sections : quand tu la passes de « En attente » à « Traitées » ; liste : quand tu touches la commande ou le bouton « Arrêter le son »). Vaut pour les deux affichages. Le son doit être activé sur le kiosque (bouton « Activer le son »). Recharge le kiosque après un changement.")}
+                  options={OPTIONS_SON_COMMANDES}
+                  value={sonCommandes}
+                  onChange={handleChangeSonCommandes}
                   disabled={saving}
                 />
                 <ParametreSelect
