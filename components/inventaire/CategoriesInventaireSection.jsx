@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { IconFlecheBas, IconFlecheHaut } from "@/components/icons/Pictogrammes";
+import ListeReordonnable from "@/components/ListeReordonnable";
 import { useT } from "@/components/LangProvider";
 
 // Catégories de produits de l'Inventaire : créer, renommer, ordonner (▲▼) et retirer.
@@ -85,16 +85,10 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
     load();
   }
 
-  // Monte (-1) ou descend (+1) une catégorie : on renumérote toute la liste (1, 2, 3...)
-  // pour ne jamais dépendre d'anciens numéros en double.
-  async function deplacer(index, sens) {
-    const cible = index + sens;
-    if (cible < 0 || cible >= categories.length) return;
-    const nouvelle = [...categories];
-    [nouvelle[index], nouvelle[cible]] = [nouvelle[cible], nouvelle[index]];
+  // Après un glisser-déposer : on renumérote toute la liste (1, 2, 3...) pour ne jamais dépendre d’anciens numéros en double.
+  async function reordonner(nouvelle) {
     const avecOrdre = nouvelle.map((c, i) => ({ ...c, ordre: i + 1 }));
-    positionsAvantRef.current = new Map([...lignesRef.current].map(([id, el]) => [id, el.getBoundingClientRect().top]));
-    setCategories(avecOrdre); // affichage immédiat, avec l'animation
+    setCategories(avecOrdre); // affichage immédiat
     await Promise.all(
       avecOrdre
         .filter((c, i) => c.id !== categories[i]?.id || c.ordre !== categories[i]?.ordre)
@@ -124,17 +118,15 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
       </form>
       {erreur && <p className="settings-msg err">{erreur}</p>}
 
-      <div className="admin-list" style={{ maxWidth: "720px" }}>
-        {categories.length === 0 && <div className="admin-empty">{t("Aucune catégorie pour l'instant.")}</div>}
-        {categories.map((c, i) => (
-          <div
-            className="admin-row"
-            key={c.id}
-            ref={(el) => {
-              if (el) lignesRef.current.set(c.id, el);
-              else lignesRef.current.delete(c.id);
-            }}
-          >
+      <ListeReordonnable
+        className="admin-list"
+        style={{ maxWidth: "720px" }}
+        items={categories}
+        getId={(c) => c.id}
+        onReorder={reordonner}
+        renderItem={(c, i, g) => (
+          <div className="admin-row" key={c.id} ref={g.ref} style={g.style}>
+            {g.poignee}
             <div className="admin-row-main">
               {renommerId === c.id ? (
                 <form
@@ -157,12 +149,6 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
               )}
             </div>
             <div className="admin-row-controls" style={{ gap: "6px" }}>
-              <button className="admin-icon-btn" disabled={i === 0} onClick={() => deplacer(i, -1)} aria-label={t("Monter")}>
-                <IconFlecheHaut className="gozly-icon" />
-              </button>
-              <button className="admin-icon-btn" disabled={i === categories.length - 1} onClick={() => deplacer(i, 1)} aria-label={t("Descendre")}>
-                <IconFlecheBas className="gozly-icon" />
-              </button>
               <button
                 className="admin-icon-btn"
                 onClick={() => {
@@ -177,8 +163,10 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
               </button>
             </div>
           </div>
-        ))}
-      </div>
+        )}
+      >
+        {categories.length === 0 && <div className="admin-empty">{t("Aucune catégorie pour l'instant.")}</div>}
+      </ListeReordonnable>
     </div>
   );
 }

@@ -1380,6 +1380,11 @@ footer .brand{color:var(--fg,#fff);gap:12px;}
   }
 .admin-row:first-child{border-top:none;}
 .admin-row:hover{background:rgba(var(--w),0.03);}
+/* Poignée de glisser-déposer (ListeReordonnable) */
+button.glisse-poignee{flex:0 0 auto;width:34px;height:40px;padding:0;margin:0 4px 0 -6px;display:flex;align-items:center;justify-content:center;border:0;border-radius:10px;background:transparent;color:var(--text-dim);box-shadow:none;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;transform:none;}
+button.glisse-poignee:hover,button.glisse-poignee:focus-visible{background:rgba(var(--w),0.1);color:var(--fg);}
+button.glisse-poignee:active{cursor:grabbing;}
+.glisse-poignee + .admin-row-main{margin-right:auto;}
 .admin-row-main{display:flex;flex-direction:column;gap:3px;min-width:160px;}
 .admin-row-title{font-size:14.5px;font-weight:600;color:var(--fg);}
 .admin-row-sub{font-size:12.5px;color:var(--text-dim);}

@@ -3,7 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
-import { IconFlecheBas, IconFlecheHaut, IconX } from "@/components/icons/Pictogrammes";
+import { IconX } from "@/components/icons/Pictogrammes";
+import ListeReordonnable from "@/components/ListeReordonnable";
 import { useT } from "@/components/LangProvider";
 
 // Liste des tâches "modèles" d'une catégorie (ex: les sortes de pizza) -
@@ -141,15 +142,9 @@ export default function CategoriesSection({ entrepriseId }) {
     load();
   }
 
-  // Monte (-1) ou descend (+1) une catégorie : on renumérote toute la liste
-  // (1, 2, 3...) pour ne jamais dépendre d'anciens numéros en double.
-  async function deplacer(index, sens) {
-    const cible = index + sens;
-    if (cible < 0 || cible >= categories.length) return;
-    const nouvelle = [...categories];
-    [nouvelle[index], nouvelle[cible]] = [nouvelle[cible], nouvelle[index]];
+  // Après un glisser-déposer : on renumérote toute la liste (1, 2, 3...) pour ne jamais dépendre d’anciens numéros en double.
+  async function reordonner(nouvelle) {
     const avecOrdre = nouvelle.map((c, i) => ({ ...c, ordre: i + 1 }));
-    positionsAvantRef.current = new Map([...lignesRef.current].map(([id, el]) => [id, el.getBoundingClientRect().top]));
     setCategories(avecOrdre); // affichage immédiat
     await Promise.all(
       avecOrdre.filter((c, i) => c.id !== categories[i]?.id || c.ordre !== categories[i]?.ordre).map((c) =>
@@ -184,18 +179,16 @@ export default function CategoriesSection({ entrepriseId }) {
       <h2>{t("Catégories")}</h2>
       <p className="panel-hint">{t("Les catégories dans lesquelles tes tâches sont classées (ex: Cuisine, Ménage).")}</p>
 
-      <div className="admin-list" style={{ marginBottom: "20px", maxWidth: "560px" }}>
-        {categories.map((cat, index) => (
-          <div
-            className="admin-row"
-            style={{ flexDirection: "column", alignItems: "stretch" }}
-            key={cat.id}
-            ref={(el) => {
-              if (el) lignesRef.current.set(cat.id, el);
-              else lignesRef.current.delete(cat.id);
-            }}
-          >
+      <ListeReordonnable
+        className="admin-list"
+        style={{ marginBottom: "20px", maxWidth: "560px" }}
+        items={categories}
+        getId={(c) => c.id}
+        onReorder={reordonner}
+        renderItem={(cat, index, g) => (
+          <div className="admin-row" style={{ flexDirection: "column", alignItems: "stretch", ...g.style }} key={cat.id} ref={g.ref}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+              {g.poignee}
               {editingId === cat.id ? (
                 <input
                   type="text"
@@ -216,22 +209,7 @@ export default function CategoriesSection({ entrepriseId }) {
               )}
 
               <div className="admin-row-controls">
-                {cat.nom === NOM_CATEGORIE_COMMANDES ? (
-                  <>
-                    <button className="admin-icon-btn" onClick={() => deplacer(index, -1)} disabled={index === 0} title={t("Monter")} aria-label={t("Monter la catégorie")}>
-                      <IconFlecheHaut className="gozly-icon" />
-                    </button>
-                    <button
-                      className="admin-icon-btn"
-                      onClick={() => deplacer(index, 1)}
-                      disabled={index === categories.length - 1}
-                      title={t("Descendre")}
-                      aria-label={t("Descendre la catégorie")}
-                    >
-                      <IconFlecheBas className="gozly-icon" />
-                    </button>
-                  </>
-                ) : editingId === cat.id ? (
+                {cat.nom === NOM_CATEGORIE_COMMANDES ? null : editingId === cat.id ? (
                   <>
                     <button className="admin-icon-btn" onClick={() => handleSaveEdit(cat.id)}>
                       {t("Enregistrer")}
@@ -242,24 +220,6 @@ export default function CategoriesSection({ entrepriseId }) {
                   </>
                 ) : (
                   <>
-                    <button
-                      className="admin-icon-btn"
-                      onClick={() => deplacer(index, -1)}
-                      disabled={index === 0}
-                      title={t("Monter")}
-                      aria-label={t("Monter la catégorie")}
-                    >
-                      <IconFlecheHaut className="gozly-icon" />
-                    </button>
-                    <button
-                      className="admin-icon-btn"
-                      onClick={() => deplacer(index, 1)}
-                      disabled={index === categories.length - 1}
-                      title={t("Descendre")}
-                      aria-label={t("Descendre la catégorie")}
-                    >
-                      <IconFlecheBas className="gozly-icon" />
-                    </button>
                     <button
                       className="admin-icon-btn"
                       onClick={() => setModelesOuvertId((cur) => (cur === cat.id ? null : cat.id))}
@@ -279,9 +239,10 @@ export default function CategoriesSection({ entrepriseId }) {
 
             {modelesOuvertId === cat.id && <ModelesSection entrepriseId={entrepriseId} categorieId={cat.id} />}
           </div>
-        ))}
+        )}
+      >
         {categories.length === 0 && <div className="admin-empty">{t("Aucune catégorie pour l'instant.")}</div>}
-      </div>
+      </ListeReordonnable>
 
       <form className="admin-add-form" onSubmit={handleAdd}>
         <input type="text" placeholder={t("Nom de la catégorie")} value={nom} onChange={(e) => setNom(e.target.value)} required />

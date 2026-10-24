@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { TYPES_EQUIPEMENT, UNITES } from "@/lib/temperature";
 import { chargerEquipements } from "@/lib/equipementsTemperature";
-import { IconFlecheBas, IconFlecheHaut } from "@/components/icons/Pictogrammes";
+import ListeReordonnable from "@/components/ListeReordonnable";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import SimpleSelect from "@/components/SimpleSelect";
 import { useT } from "@/components/LangProvider";
@@ -118,13 +118,8 @@ export default function TemperatureEquipementsContent() {
     load();
   }
 
-  // Monte (-1) ou descend (+1) un équipement : on renumérote toute la liste (1, 2, 3...) pour ne jamais
-  // dépendre d'anciens numéros en double (comme les catégories de tâches).
-  async function deplacer(index, sens) {
-    const cible = index + sens;
-    if (cible < 0 || cible >= equipements.length) return;
-    const nouvelle = [...equipements];
-    [nouvelle[index], nouvelle[cible]] = [nouvelle[cible], nouvelle[index]];
+  // Après un glisser-déposer : on renumérote toute la liste (1, 2, 3...) pour ne jamais dépendre d’anciens numéros en double.
+  async function reordonner(nouvelle) {
     const avecOrdre = nouvelle.map((x, i) => ({ ...x, ordre: i + 1 }));
     setEquipements(avecOrdre); // affichage immédiat
     await Promise.all(
@@ -184,10 +179,16 @@ export default function TemperatureEquipementsContent() {
             <>
               <div className="settings-section">
                 <h3>{tr("Équipements")}</h3>
-                <div className="admin-list" style={{ marginTop: "14px", maxWidth: "560px" }}>
-                  {equipements.map((eq, index) => (
-                    <div className="admin-row" style={{ flexDirection: "column", alignItems: "stretch" }} key={eq.id}>
+                <ListeReordonnable
+                  className="admin-list"
+                  style={{ marginTop: "14px", maxWidth: "560px" }}
+                  items={equipements}
+                  getId={(x) => x.id}
+                  onReorder={reordonner}
+                  renderItem={(eq, index, g) => (
+                    <div className="admin-row" style={{ flexDirection: "column", alignItems: "stretch", ...g.style }} key={eq.id} ref={g.ref}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+                        {g.poignee}
                         <div className="admin-row-main">
                           <div className="admin-row-title">{eq.nom}</div>
                           <div className="admin-row-sub">
@@ -207,18 +208,6 @@ export default function TemperatureEquipementsContent() {
                             </>
                           ) : (
                             <>
-                              <button className="admin-icon-btn" onClick={() => deplacer(index, -1)} disabled={index === 0} title={tr("Monter")} aria-label={tr("Monter l'équipement")}>
-                                <IconFlecheHaut className="gozly-icon" />
-                              </button>
-                              <button
-                                className="admin-icon-btn"
-                                onClick={() => deplacer(index, 1)}
-                                disabled={index === equipements.length - 1}
-                                title={tr("Descendre")}
-                                aria-label={tr("Descendre l'équipement")}
-                              >
-                                <IconFlecheBas className="gozly-icon" />
-                              </button>
                               <button className="admin-icon-btn" onClick={() => startEdit(eq)}>
                                 {tr("Modifier")}
                               </button>
@@ -247,9 +236,10 @@ export default function TemperatureEquipementsContent() {
                         </div>
                       )}
                     </div>
-                  ))}
+                  )}
+                >
                   {equipements.length === 0 && <div className="admin-empty">{tr("Aucun équipement pour l'instant.")}</div>}
-                </div>
+                </ListeReordonnable>
               </div>
 
               <div className="settings-section">
