@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import NotificationsPush from "@/components/moi/NotificationsPush";
+import DiagnosticNotifications from "@/components/moi/DiagnosticNotifications";
 import MoiRetour from "@/components/moi/MoiRetour";
 import { useLangue } from "@/components/moi/LangueContext";
 
@@ -112,6 +113,8 @@ export default function ParametresNotifications() {
           ))}
         </div>
       )}
+
+      <DiagnosticNotifications />
     </div>
   );
 }
