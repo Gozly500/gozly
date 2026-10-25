@@ -767,6 +767,12 @@ export default function CommandesKioskContent() {
 
       {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
 
+      {sonActif && sonVerrouille && (
+        <button type="button" className="cmd-kiosk-son-bloque" onClick={basculerSon}>
+          <IconClocheBarree className="gozly-icon" /> {t("kq.c.sonBloque")}
+        </button>
+      )}
+
       {nbAConfirmer > 0 && (
         <div className="cmd-kiosk-alerte" role="status">
           <span>
