@@ -89,6 +89,28 @@ export function MenuCommande({ onModifier, onRetirer, t }) {
   );
 }
 
+// Essaie de lever le verrou du navigateur sur le son (il faut un toucher de l'utilisateur, sauf sur une application installée) : on lance
+// le son à volume nul puis on l'arrête tout de suite. Retourne true si le navigateur l'a accepté.
+let lecteurSon = null;
+function obtenirLecteurSon() {
+  if (!lecteurSon) lecteurSon = new Audio(SON_NOUVELLE_COMMANDE);
+  return lecteurSon;
+}
+async function deverrouillerSon() {
+  const lecteur = obtenirLecteurSon();
+  try {
+    lecteur.volume = 0;
+    await lecteur.play();
+    lecteur.pause();
+    lecteur.currentTime = 0;
+    lecteur.volume = 1;
+    return true;
+  } catch {
+    lecteur.volume = 1;
+    return false;
+  }
+}
+
 const SON_NOUVELLE_COMMANDE = "/sons/nouvelle-commande.mp3";
 const PAUSE_ENTRE_SONS_MS = 5000;
 
@@ -108,7 +130,9 @@ export default function CommandesKioskContent() {
   const [enCours, setEnCours] = useState(null);
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const [message, setMessage] = useState(null);
-  const [sonActif, setSonActif] = useState(false);
+  const [sonActif, setSonActif] = useState(false); // le son est voulu (mémorisé sur cet appareil)
+  const [sonVerrouille, setSonVerrouille] = useState(false); // voulu, mais le navigateur attend un toucher pour l'autoriser (après un rechargement)
+  const son = sonActif && !sonVerrouille; // le son peut vraiment jouer
   const [vue, setVue] = useState("jour"); // "jour" | "avenir" (mode liste seulement)
   // Affichage choisi dans Personnalisation : "liste" (cartes, commandes du jour) ou "sections" (En attente / Traitées / Terminées).
   const [modeKiosque, setModeKiosque] = useState("liste");
@@ -154,6 +178,17 @@ export default function CommandesKioskContent() {
         // Colonne ajoutée par commandes_son_mode.sql : tant qu'elle n'existe pas, le son suit l'affichage (continu en 3 sections, une fois en liste).
         const { data: son, error: erreurSon } = await supabase.from("entreprises").select("commandes_son_mode").eq("id", eid).maybeSingle();
         if (!ignore && !erreurSon && son?.commandes_son_mode) setSonMode(son.commandes_son_mode === "continu" ? "continu" : "une_fois");
+        // Le son reste voulu d'une fois à l'autre (rechargement, retour au kiosque, tablette qui se rallume) : mémorisé sur cet appareil.
+        // Le navigateur exige un toucher pour jouer un son : on essaie tout de suite, sinon le premier toucher sur l'écran le réactive.
+        try {
+          if (window.localStorage.getItem(`gozly_cmd_son_${eid}`) === "1" && !ignore) {
+            setSonActif(true);
+            setSonVerrouille(true);
+            deverrouillerSon().then((ok) => {
+              if (ok && !ignore) setSonVerrouille(false);
+            });
+          }
+        } catch {}
         try {
           const ids = JSON.parse(window.localStorage.getItem(`gozly_cmd_masquees_${eid}`) || "[]");
           if (!ignore && Array.isArray(ids)) setMasquees(new Set(ids));
@@ -257,8 +292,8 @@ export default function CommandesKioskContent() {
   // après la fin on le rejoue, jusqu'à ce que plus rien ne soit "En attente" (3 sections) ou à confirmer (liste), en mode continu.
   // (Un navigateur n'autorise le son qu'après un toucher : bouton "Activer le son".)
   useEffect(() => {
-    if (!sonActif || !boucleSon) return;
-    if (!audioRef.current) audioRef.current = new Audio(SON_NOUVELLE_COMMANDE);
+    if (!son || !boucleSon) return;
+    if (!audioRef.current) audioRef.current = obtenirLecteurSon();
     const audio = audioRef.current;
     let minuteur;
     let actif = true;
@@ -266,7 +301,7 @@ export default function CommandesKioskContent() {
     function jouer() {
       if (!actif) return;
       audio.currentTime = 0;
-      audio.play().catch(() => {});
+      audio.play().catch(() => setSonVerrouille(true)); // refusé (page rechargée, tablette rallumée) : le prochain toucher réactive
     }
     function apresFin() {
       if (actif) minuteur = setTimeout(jouer, PAUSE_ENTRE_SONS_MS);
@@ -281,7 +316,7 @@ export default function CommandesKioskContent() {
       audio.removeEventListener("ended", apresFin);
       audio.pause();
     };
-  }, [sonActif, boucleSon]);
+  }, [son, boucleSon]);
 
   // Nouvelle commande en ligne (jour ou à venir), peu importe l'affichage :
   //  - son « une seule fois » : on le joue une fois ;
@@ -303,12 +338,46 @@ export default function CommandesKioskContent() {
       if (modeKiosque === "liste") setAConfirmer((prev) => new Set([...prev, ...nouvelles.map((c) => c.id)]));
       return;
     }
-    if (sonActif) {
-      if (!audioRef.current) audioRef.current = new Audio(SON_NOUVELLE_COMMANDE);
+    if (son) {
+      if (!audioRef.current) audioRef.current = obtenirLecteurSon();
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
+      audioRef.current.play().catch(() => setSonVerrouille(true));
     }
-  }, [commandes, avenir, pret, modeKiosque, sonActif, sonContinu]);
+  }, [commandes, avenir, pret, modeKiosque, son, sonContinu]);
+
+  // Son voulu mais verrouillé par le navigateur : le premier toucher n'importe où sur l'écran le réactive (sans bruit).
+  useEffect(() => {
+    if (!sonActif || !sonVerrouille) return;
+    const reactiver = () => {
+      deverrouillerSon().then((ok) => {
+        if (ok) setSonVerrouille(false);
+      });
+    };
+    window.addEventListener("pointerdown", reactiver, { once: true });
+    return () => window.removeEventListener("pointerdown", reactiver);
+  }, [sonActif, sonVerrouille]);
+
+  // Tant que le son est voulu, l'écran reste allumé : une tablette qui s'endort ne peut plus jouer le son ni recevoir les commandes.
+  useEffect(() => {
+    if (!sonActif || !navigator.wakeLock) return;
+    let verrou = null;
+    let arrete = false;
+    async function demander() {
+      try {
+        verrou = await navigator.wakeLock.request("screen");
+      } catch {}
+    }
+    const auRetour = () => {
+      if (document.visibilityState === "visible" && !arrete) demander();
+    };
+    demander();
+    document.addEventListener("visibilitychange", auRetour);
+    return () => {
+      arrete = true;
+      document.removeEventListener("visibilitychange", auRetour);
+      verrou?.release?.().catch(() => {});
+    };
+  }, [sonActif]);
 
   // Liste + son continu : toucher une commande, ou « Arrêter le son », la marque comme vue.
   function confirmerVue(id) {
@@ -324,12 +393,25 @@ export default function CommandesKioskContent() {
   // par un geste de l'utilisateur sur ce même lecteur audio, sinon les sons joués plus tard (nouvelle commande) sont
   // refusés. Ça sert aussi de confirmation : on entend que le son fonctionne.
   function basculerSon() {
+    // Voulu mais verrouillé : le toucher sur le bouton suffit à réactiver (et on entend le son, comme confirmation).
+    if (sonActif && sonVerrouille) {
+      if (!audioRef.current) audioRef.current = obtenirLecteurSon();
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().then(() => setSonVerrouille(false)).catch(() => {});
+      return;
+    }
     if (!sonActif) {
-      if (!audioRef.current) audioRef.current = new Audio(SON_NOUVELLE_COMMANDE);
+      if (!audioRef.current) audioRef.current = obtenirLecteurSon();
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(() => {});
+      setSonVerrouille(false);
     }
-    setSonActif((v) => !v);
+    const suivant = !sonActif;
+    setSonActif(suivant);
+    try {
+      if (suivant) window.localStorage.setItem(`gozly_cmd_son_${entrepriseId}`, "1");
+      else window.localStorage.removeItem(`gozly_cmd_son_${entrepriseId}`);
+    } catch {}
   }
 
   async function imprimer(commande) {
@@ -673,9 +755,9 @@ export default function CommandesKioskContent() {
           <button
             className="admin-icon-btn"
             onClick={basculerSon}
-            style={!sonActif ? { background: "rgba(255,212,121,0.25)", borderColor: "rgba(255,212,121,0.6)" } : undefined}
+            style={!son ? { background: "rgba(255,212,121,0.25)", borderColor: "rgba(255,212,121,0.6)" } : undefined}
           >
-            {sonActif ? <><IconCloche className="gozly-icon" /> {t("kq.c.sonOn")}</> : <><IconClocheBarree className="gozly-icon" /> {t("kq.c.sonOff")}</>}
+            {son ? <><IconCloche className="gozly-icon" /> {t("kq.c.sonOn")}</> : sonActif ? <><IconClocheBarree className="gozly-icon" /> {t("kq.c.sonReactiver")}</> : <><IconClocheBarree className="gozly-icon" /> {t("kq.c.sonOff")}</>}
           </button>
           <button className="submit-btn" onClick={() => setModal(true)}>
             {t("kq.c.nouvelle")}
