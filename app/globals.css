@@ -1890,21 +1890,77 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .moi-header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .moi-header-icon-btn{display:flex;align-items:center;justify-content:center;padding:8px;}
 .moi-header-icon-btn .gozly-icon{width:17px;height:17px;}
-.moi-main{flex:1;overflow-y:auto;padding:20px;padding-bottom:calc(64px + env(safe-area-inset-bottom) + 20px);}
+.moi-main{flex:1;overflow-y:auto;padding:20px;padding-bottom:calc(var(--tab-total) + 20px);}
 
+/* Barre d'onglets du bas : une pilule flottante (comme iOS / One UI), avec une pastille qui glisse sous l'onglet actif. */
+:root{--tab-h:64px;--tab-marge:12px;--tab-total:calc(var(--tab-h) + var(--tab-marge) + env(safe-area-inset-bottom));}
 .moi-tabbar{
-    position:fixed;bottom:0;left:0;right:0;display:flex;
-    height:64px;box-sizing:content-box;padding-bottom:env(safe-area-inset-bottom);
-    background:color-mix(in srgb, var(--navy) 85%, transparent);backdrop-filter:blur(20px);
-    border-top:1px solid rgba(var(--w),0.12);
+    position:fixed;left:50%;transform:translateX(-50%);z-index:45;
+    bottom:calc(var(--tab-marge) + env(safe-area-inset-bottom));
+    width:min(calc(100% - 28px),520px);box-sizing:border-box;padding:6px;
+    display:flex;flex-direction:column;align-items:stretch;border-radius:calc(var(--tab-h) / 2);
+    transition:box-shadow .4s ease;
+    background:color-mix(in srgb, var(--navy) 70%, transparent);
+    backdrop-filter:blur(26px) saturate(1.5);-webkit-backdrop-filter:blur(26px) saturate(1.5);
+    border:1px solid rgba(var(--w),0.18);
+    box-shadow:0 14px 34px rgba(0,0,0,.4), inset 0 1px 0 rgba(var(--w),0.14);
   }
+.moi-tabbar.ouvert{box-shadow:0 22px 50px rgba(0,0,0,.55), inset 0 1px 0 rgba(var(--w),0.16);}
+/* La rangée d'onglets : c'est elle qui fait la hauteur de la pilule fermée. */
+.moi-tabbar-rangee{position:relative;display:flex;align-items:stretch;height:calc(var(--tab-h) - 12px);}
+/* Partie dépliée (Menu) : sa hauteur grandit de 0 à son contenu, la pilule s'ouvre vers le haut. */
+.moi-tabbar-deploye{display:grid;grid-template-rows:0fr;transition:grid-template-rows .42s cubic-bezier(.3,.9,.4,1);}
+.moi-tabbar{transform-origin:50% 100%;}
+.moi-tabbar.ouvert{animation:moiPiluleRebond .7s cubic-bezier(.3,.7,.4,1) both;}
+@keyframes moiPiluleRebond{
+  0%{transform:translateX(-50%) scale(1,1);}
+  45%{transform:translateX(-50%) scale(1.018,1.085);}
+  70%{transform:translateX(-50%) scale(.996,.982);}
+  100%{transform:translateX(-50%) scale(1,1);}
+}
+.moi-tabbar.ouvert .moi-tabbar-deploye{grid-template-rows:1fr;}
+.moi-tabbar-deploye-int{overflow:hidden;min-height:0;display:flex;flex-direction:column;gap:2px;}
+.moi-tabbar.ouvert .moi-tabbar-deploye-int{padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid rgba(var(--w),0.14);}
+.moi-menu-item{
+    display:flex;align-items:center;gap:14px;width:100%;box-sizing:border-box;padding:13px 16px;border-radius:22px;
+    background:none;border:0;color:var(--text);font-size:16px;font-weight:600;text-align:left;text-decoration:none;cursor:pointer;
+    opacity:0;transform:translateY(14px);transition:opacity .25s ease, transform .35s cubic-bezier(.34,1.3,.5,1), background .2s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+.moi-menu-item .gozly-icon{width:22px;height:22px;flex-shrink:0;}
+.moi-menu-item:active{background:rgba(var(--w),0.12);}
+.moi-menu-item.active{background:rgba(var(--w),0.14);color:var(--fg);}
+.moi-tabbar.ouvert .moi-menu-item{opacity:1;transform:none;}
+.moi-tabbar.ouvert .moi-menu-item:nth-child(1){transition-delay:.12s;}
+.moi-tabbar.ouvert .moi-menu-item:nth-child(2){transition-delay:.18s;}
+.moi-tabbar.ouvert .moi-menu-item:nth-child(3){transition-delay:.24s;}
+.moi-tabbar.ouvert .moi-menu-item:nth-child(n+4){transition-delay:.3s;}
+/* Un toucher en dehors referme la pilule. */
+.moi-tabbar-fond{position:fixed;inset:0;z-index:44;background:rgba(0,0,0,.28);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:moiFondMenu .25s ease;}
+@keyframes moiFondMenu{from{opacity:0;}}
+/* La pastille de l'onglet actif : glisse d'un onglet à l'autre avec un petit rebond. */
+.moi-tab-pastille{
+    position:absolute;top:0;bottom:0;left:0;border-radius:999px;pointer-events:none;
+    width:calc(100% / var(--nb,3));
+    background:linear-gradient(160deg,rgba(var(--w),0.24),rgba(var(--w),0.12));
+    box-shadow:inset 0 1px 0 rgba(var(--w),0.25), 0 2px 8px rgba(0,0,0,.18);
+    transform:translateX(calc(var(--i,0) * 100%));
+    transition:transform .5s cubic-bezier(.34,1.35,.5,1), opacity .25s ease;
+  }
+.moi-tab-pastille.cachee{opacity:0;}
 .moi-tab{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-    background:none;border:none;color:var(--text-dim);font-size:11.5px;font-weight:600;
-    border-radius:0;padding:0 4px;
+    position:relative;z-index:1;
+    flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    background:none;border:none;color:var(--text-dim);font-size:11px;font-weight:600;
+    border-radius:999px;padding:0 4px;transition:color .25s ease, transform .18s ease;-webkit-tap-highlight-color:transparent;
   }
-.moi-tab-icon{font-size:19px;display:flex;}
+.moi-tab:hover{background:rgba(var(--w),0.1);}
+.moi-tab.active:hover{background:none;}
+.moi-tab:active{transform:scale(.92);}
+.moi-tab-icon{font-size:19px;display:flex;transition:transform .35s cubic-bezier(.34,1.56,.64,1);}
 .moi-tab.active{color:var(--fg);}
+.moi-tab.active .moi-tab-icon{transform:translateY(-1px) scale(1.12);}
+@media (prefers-reduced-motion:reduce){.moi-tab-pastille,.moi-tab,.moi-tab-icon,.moi-tabbar-deploye,.moi-menu-item{transition:none;}.moi-tabbar-fond{animation:none;}.moi-tabbar.ouvert{animation:none;}}
 .moi-tab.disabled{opacity:.4;}
 
 .pointage-mobile-bloc{
@@ -1977,7 +2033,7 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 .moi-rappel a{flex-shrink:0;font-weight:700;color:var(--fg);text-decoration:underline;}
 
 .moi-pointer-flottant{
-  position:fixed;right:16px;bottom:calc(64px + 14px + env(safe-area-inset-bottom));z-index:40;
+  position:fixed;right:16px;bottom:calc(var(--tab-total) + 10px);z-index:40;
   padding:12px 20px;border:none;border-radius:30px;cursor:pointer;font-weight:700;font-size:14.5px;color:#fff;
   background:linear-gradient(150deg,var(--violet),var(--indigo));box-shadow:0 6px 18px rgba(0,0,0,0.35);
 }
@@ -2121,18 +2177,18 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
     /* réserve la place du bouton "+ Ajouter" fixé au-dessus de la barre
        d'onglets, même quand il n'est pas affiché (vue "thread"), pour que
        rien ne soit jamais caché derrière. */
-    padding-bottom:calc(64px + env(safe-area-inset-bottom) + 56px);
+    padding-bottom:calc(var(--tab-total) + 72px);
   }
 .moi-discussion .chat-layout{flex:1;min-height:0;height:auto;border:none;border-radius:0;background:none;}
 .moi-discussion .chat-conv-list{width:100%;border-right:none;}
 .moi-discussion .chat-conv-list.hidden-mobile{display:none;}
 
 .moi-discussion-add-btn{
-    position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));
-    width:100%;box-sizing:border-box;z-index:5;
-    padding:16px;font-size:15px;font-weight:700;text-align:center;border-radius:0;
+    position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-total) + 8px);
+    width:min(calc(100% - 28px),520px);box-sizing:border-box;z-index:5;
+    padding:15px;font-size:15px;font-weight:700;text-align:center;border-radius:999px;
     background:linear-gradient(160deg,#2a2a8f,#191960);
-    border:none;border-top:1px solid rgba(var(--w),0.15);color:#fff;
+    border:1px solid rgba(var(--w),0.18);color:#fff;box-shadow:0 10px 26px rgba(0,0,0,.35);
   }
 
 .moi-notifications-bar{padding:0 0 10px;}
@@ -2307,7 +2363,7 @@ button.cmd-menu-option:active{background:rgba(var(--w),0.14);}
 .gestion-echange{color:#8fd0ff;font-size:11.5px;margin-left:6px;}
 .moi-quart-echange{margin-left:8px;padding:1px 7px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;background:rgba(120,200,255,0.18);color:#8fd0ff;vertical-align:middle;}
 /* Discussion de l'app gestionnaire : une colonne à la fois, hauteur fixe (seuls les messages défilent). */
-.gestion-discussion{flex:1;display:flex;flex-direction:column;min-height:0;padding-bottom:calc(64px + env(safe-area-inset-bottom));}
+.gestion-discussion{flex:1;display:flex;flex-direction:column;min-height:0;padding-bottom:var(--tab-total);}
 .gestion-discussion > div{flex:1;display:flex;flex-direction:column;min-height:0;}
 .chat-layout-mobile{flex:1;min-height:0;height:auto;border:none;border-radius:0;background:none;}
 .chat-layout-mobile .chat-conv-list{width:100%;border-right:none;}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import PastilleOnglets from "@/components/PastilleOnglets";
 import ChargementAnimation from "@/components/moi/ChargementAnimation";
 import { usePathname, useRouter } from "next/navigation";
 import { employeFetch, getEmployeToken, clearEmployeToken } from "@/lib/employeAuth";
@@ -36,12 +37,16 @@ const ONGLETS_MENU = [
 // jouer qu'une fois par session, pas à chaque changement d'onglet.
 const CLE_SPLASH_VU = "gozly_moi_splash_vu";
 
+// Réponse de /api/employe-app/moi gardée en mémoire d'une page à l'autre (le module survit aux navigations) : en changeant d'onglet,
+// l'app s'affiche tout de suite avec ces données et les rafraîchit en arrière-plan, au lieu de repasser par un écran de chargement.
+let moiEnMemoire = null;
+
 export default function MoiShell({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useLangue();
-  const [checking, setChecking] = useState(true);
-  const [moi, setMoi] = useState(null);
+  const [checking, setChecking] = useState(!moiEnMemoire);
+  const [moi, setMoi] = useState(moiEnMemoire);
   const [menuOuvert, setMenuOuvert] = useState(false);
   // Démarre à false des deux côtés (serveur et client) pour éviter un
   // mismatch d'hydratation - sessionStorage n'existe pas côté serveur.
@@ -68,14 +73,27 @@ export default function MoiShell({ children }) {
     employeFetch("/api/employe-app/moi").then(async (res) => {
       if (!res.ok) {
         clearEmployeToken();
+        moiEnMemoire = null;
         router.push("/moi/connexion");
         return;
       }
-      setMoi(await res.json());
+      const donnees = await res.json();
+      moiEnMemoire = donnees;
+      setMoi(donnees);
       setChecking(false);
       repareAbonnementPush(); // récupère en silence un abonnement push perdu (voir NotificationsPush.jsx)
     });
   }, [router]);
+
+  const modulesActifs = moi?.modulesActifs || [];
+  const ongletsMenu = ONGLETS_MENU.filter((o) => !o.module || modulesActifs.includes(o.module));
+  const estDiscussion = pathname === "/moi/discussion";
+  const menuActif = ongletsMenu.some((o) => o.href === pathname);
+
+  // Index de l'onglet actif dans la barre (les onglets principaux, puis « Menu » s'il y en a un) ; -1 = aucun (page hors barre).
+  const nbOnglets = ONGLETS_PRINCIPAUX.length + (ongletsMenu.length > 0 ? 1 : 0);
+  let indexActif = ONGLETS_PRINCIPAUX.findIndex((o) => pathname === o.href);
+  if (indexActif < 0 && menuActif && ongletsMenu.length > 0) indexActif = ONGLETS_PRINCIPAUX.length;
 
   // Si le splash joue, on garde l'app cachée jusqu'à ce qu'il soit fini
   // (même si les données ont fini de charger avant), pour ne pas couper
@@ -89,11 +107,6 @@ export default function MoiShell({ children }) {
       </div>
     );
   }
-
-  const modulesActifs = moi?.modulesActifs || [];
-  const ongletsMenu = ONGLETS_MENU.filter((o) => !o.module || modulesActifs.includes(o.module));
-  const estDiscussion = pathname === "/moi/discussion";
-  const menuActif = ongletsMenu.some((o) => o.href === pathname);
 
   function allerA(href) {
     setMenuOuvert(false);
@@ -128,59 +141,55 @@ export default function MoiShell({ children }) {
 
       <main className={`moi-main${estDiscussion ? " moi-main-chat" : ""}`}>{children}</main>
 
-      <nav className="moi-tabbar">
-        {ONGLETS_PRINCIPAUX.map((o) => (
-          <button
-            key={o.id}
-            type="button"
-            className={`moi-tab${pathname === o.href ? " active" : ""}`}
-            onClick={() => allerA(o.href)}
-          >
-            <span className="moi-tab-icon">
-              {o.Icone ? <o.Icone className="gozly-icon" /> : o.icon}
-              {o.id === "discussion" && <PastilleMessages />}
-            </span>
-            <span>{t(o.cle)}</span>
-          </button>
-        ))}
-        {ongletsMenu.length > 0 && (
-          <button
-            type="button"
-            className={`moi-tab${menuActif ? " active" : ""}`}
-            onClick={() => setMenuOuvert(true)}
-          >
-            <span className="moi-tab-icon">
-              <IconMenu className="gozly-icon" />
-            </span>
-            <span>{t("nav.menu")}</span>
-          </button>
-        )}
-      </nav>
-
-      {menuOuvert && (
-        <div className="modal-overlay" onClick={() => setMenuOuvert(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <h3>{t("nav.menu")}</h3>
-              <button className="admin-icon-btn" onClick={() => setMenuOuvert(false)}>
-                {t("nav.fermer")}
+      {menuOuvert && <div className="moi-tabbar-fond" onClick={() => setMenuOuvert(false)} />}
+      <nav className={`moi-tabbar${menuOuvert ? " ouvert" : ""}`}>
+        {/* Le Menu déplie la pilule vers le haut au lieu d'ouvrir une fenêtre. */}
+        <div className="moi-tabbar-deploye" aria-hidden={!menuOuvert}>
+          <div className="moi-tabbar-deploye-int">
+            {ongletsMenu.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                tabIndex={menuOuvert ? 0 : -1}
+                className={`moi-menu-item${pathname === o.href ? " active" : ""}`}
+                onClick={() => allerA(o.href)}
+              >
+                {o.Icone ? <o.Icone className="gozly-icon" /> : <span>{o.icon}</span>} {t(o.cle)}
               </button>
-            </div>
-            <div className="dash-nav">
-              {ongletsMenu.map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  className={`dash-nav-item${pathname === o.href ? " active" : ""}`}
-                  onClick={() => allerA(o.href)}
-                >
-                  {o.Icone ? <o.Icone className="gozly-icon" /> : <span>{o.icon}</span>} {t(o.cle)}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
-      )}
+        <div className="moi-tabbar-rangee">
+          <PastilleOnglets index={menuOuvert && ongletsMenu.length > 0 ? ONGLETS_PRINCIPAUX.length : indexActif} nb={nbOnglets} />
+          {ONGLETS_PRINCIPAUX.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              className={`moi-tab${!menuOuvert && pathname === o.href ? " active" : ""}`}
+              onClick={() => allerA(o.href)}
+            >
+              <span className="moi-tab-icon">
+                {o.Icone ? <o.Icone className="gozly-icon" /> : o.icon}
+                {o.id === "discussion" && <PastilleMessages />}
+              </span>
+              <span>{t(o.cle)}</span>
+            </button>
+          ))}
+          {ongletsMenu.length > 0 && (
+            <button
+              type="button"
+              className={`moi-tab${menuOuvert || menuActif ? " active" : ""}`}
+              aria-expanded={menuOuvert}
+              onClick={() => setMenuOuvert((o) => !o)}
+            >
+              <span className="moi-tab-icon">
+                <IconMenu className="gozly-icon" />
+              </span>
+              <span>{t("nav.menu")}</span>
+            </button>
+          )}
+        </div>
+      </nav>
     </div>
     </AnnoncesProvider>
   );

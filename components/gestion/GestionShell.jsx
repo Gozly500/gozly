@@ -8,6 +8,7 @@ import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from
 import { PERMISSIONS } from "@/lib/permissions";
 import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu, IconMusique } from "@/components/icons/GozlyIcons";
 import { useT } from "@/components/LangProvider";
+import PastilleOnglets from "@/components/PastilleOnglets";
 
 const GestionContexte = createContext(null);
 export function useGestion() {
@@ -125,6 +126,10 @@ export default function GestionShell({ actif, children }) {
   const ongletsPrincipaux = IDS_PRINCIPAUX.map((id) => onglets.find((o) => o.id === id)).filter(Boolean);
   const ongletsMenu = onglets.filter((o) => !IDS_PRINCIPAUX.includes(o.id));
   const menuActif = ongletsMenu.some((o) => o.id === actif);
+  // Pastille de la barre en pilule : position de l'onglet actif (les onglets principaux, puis « Menu »).
+  const nbOnglets = ongletsPrincipaux.length + (ongletsMenu.length > 0 ? 1 : 0);
+  let indexActif = ongletsPrincipaux.findIndex((o) => o.id === actif);
+  if (indexActif < 0 && menuActif) indexActif = ongletsPrincipaux.length;
 
   const contexte = { user, entrepriseId, entrepriseNom, modulesActifs, mesPermissions, a, peutVoirFeuille, onglets };
 
@@ -164,50 +169,44 @@ export default function GestionShell({ actif, children }) {
           {entrepriseId ? children : <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>}
         </main>
 
-        <nav className="moi-tabbar">
-          {ongletsPrincipaux.map((o) => (
-            <Link key={o.id} href={o.href} className={`moi-tab${actif === o.id ? " active" : ""}`} style={{ textDecoration: "none" }}>
-              <span className="moi-tab-icon">
-                <o.Icone className="gozly-icon" />
-              </span>
-              <span>{t(o.label)}</span>
-            </Link>
-          ))}
-          {ongletsMenu.length > 0 && (
-            <button type="button" className={`moi-tab${menuActif ? " active" : ""}`} onClick={() => setMenuOuvert(true)}>
-              <span className="moi-tab-icon">
-                <IconMenu className="gozly-icon" />
-              </span>
-              <span>{t("Menu")}</span>
-            </button>
-          )}
-        </nav>
-
-        {menuOuvert && (
-          <div className="modal-overlay" onClick={() => setMenuOuvert(false)}>
-            <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-head">
-                <h3>{t("Menu")}</h3>
-                <button className="admin-icon-btn" onClick={() => setMenuOuvert(false)}>
-                  {t("Fermer")}
-                </button>
-              </div>
-              <div className="dash-nav">
-                {ongletsMenu.map((o) => (
-                  <Link
-                    key={o.id}
-                    href={o.href}
-                    className={`dash-nav-item${actif === o.id ? " active" : ""}`}
-                    onClick={() => setMenuOuvert(false)}
-                    style={{ textDecoration: "none" }}
-                  >
-                    <o.Icone className="gozly-icon" /> {t(o.label)}
-                  </Link>
-                ))}
-              </div>
+        {menuOuvert && <div className="moi-tabbar-fond" onClick={() => setMenuOuvert(false)} />}
+        <nav className={`moi-tabbar${menuOuvert ? " ouvert" : ""}`}>
+          {/* Le Menu déplie la pilule vers le haut au lieu d'ouvrir une fenêtre. */}
+          <div className="moi-tabbar-deploye" aria-hidden={!menuOuvert}>
+            <div className="moi-tabbar-deploye-int">
+              {ongletsMenu.map((o) => (
+                <Link
+                  key={o.id}
+                  href={o.href}
+                  tabIndex={menuOuvert ? 0 : -1}
+                  className={`moi-menu-item${actif === o.id ? " active" : ""}`}
+                  onClick={() => setMenuOuvert(false)}
+                >
+                  <o.Icone className="gozly-icon" /> {t(o.label)}
+                </Link>
+              ))}
             </div>
           </div>
-        )}
+          <div className="moi-tabbar-rangee">
+            <PastilleOnglets index={menuOuvert && ongletsMenu.length > 0 ? ongletsPrincipaux.length : indexActif} nb={nbOnglets} />
+            {ongletsPrincipaux.map((o) => (
+              <Link key={o.id} href={o.href} className={`moi-tab${!menuOuvert && actif === o.id ? " active" : ""}`} style={{ textDecoration: "none" }}>
+                <span className="moi-tab-icon">
+                  <o.Icone className="gozly-icon" />
+                </span>
+                <span>{t(o.label)}</span>
+              </Link>
+            ))}
+            {ongletsMenu.length > 0 && (
+              <button type="button" className={`moi-tab${menuOuvert || menuActif ? " active" : ""}`} aria-expanded={menuOuvert} onClick={() => setMenuOuvert((o) => !o)}>
+                <span className="moi-tab-icon">
+                  <IconMenu className="gozly-icon" />
+                </span>
+                <span>{t("Menu")}</span>
+              </button>
+            )}
+          </div>
+        </nav>
       </div>
     </GestionContexte.Provider>
   );
