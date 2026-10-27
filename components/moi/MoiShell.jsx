@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import PastilleOnglets from "@/components/PastilleOnglets";
 import ChargementAnimation from "@/components/moi/ChargementAnimation";
 import { usePathname, useRouter } from "next/navigation";
@@ -41,7 +41,29 @@ const CLE_SPLASH_VU = "gozly_moi_splash_vu";
 // l'app s'affiche tout de suite avec ces données et les rafraîchit en arrière-plan, au lieu de repasser par un écran de chargement.
 let moiEnMemoire = null;
 
+// Quand la coquille vit dans le layout (elle reste en place d'une page à l'autre), le MoiShell que chaque page enveloppe encore
+// ne fait que rendre son contenu.
+const DansCoquille = createContext(false);
+
+const PAGES_SANS_COQUILLE = ["/moi/connexion", "/moi/bienvenue"];
+
+export function MoiCoquille({ children }) {
+  const pathname = usePathname();
+  if (PAGES_SANS_COQUILLE.some((p) => pathname === p || pathname?.startsWith(p + "/"))) return children;
+  return (
+    <MoiShellReel>
+      <DansCoquille.Provider value={true}>{children}</DansCoquille.Provider>
+    </MoiShellReel>
+  );
+}
+
 export default function MoiShell({ children }) {
+  const dedans = useContext(DansCoquille);
+  if (dedans) return children;
+  return <MoiShellReel>{children}</MoiShellReel>;
+}
+
+function MoiShellReel({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useLangue();

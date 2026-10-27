@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
@@ -20,7 +20,30 @@ const PERMISSIONS_FEUILLE = ["voir_feuille_temps", "corriger_feuille_temps", "ap
 // Cadre de l'app mobile du gestionnaire (/gestion) : connexion, entreprise active,
 // permissions, modules actifs, en-tête et barre d'onglets du bas. Les pages
 // s'affichent dedans et lisent l'état avec useGestion().
+const DansCoquille = createContext(false);
+
+// Onglet actif d'après l'adresse (la coquille vit dans le layout et ne reçoit plus « actif » de chaque page).
+function actifDepuis(pathname) {
+  const segment = (pathname || "").split("/")[2];
+  return segment || "accueil";
+}
+
+export function GestionCoquille({ children }) {
+  const actif = actifDepuis(usePathname());
+  return (
+    <GestionShellReel actif={actif}>
+      <DansCoquille.Provider value={true}>{children}</DansCoquille.Provider>
+    </GestionShellReel>
+  );
+}
+
 export default function GestionShell({ actif, children }) {
+  const dedans = useContext(DansCoquille);
+  if (dedans) return children;
+  return <GestionShellReel actif={actif}>{children}</GestionShellReel>;
+}
+
+function GestionShellReel({ actif, children }) {
   const { t } = useT();
   const router = useRouter();
   const [pret, setPret] = useState(false);

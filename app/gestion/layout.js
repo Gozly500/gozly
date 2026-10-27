@@ -1,4 +1,5 @@
 import DashboardThemeLayout from "@/app/dashboard/layout";
+import { GestionCoquille } from "@/components/gestion/GestionShell";
 import { LangueProvider } from "@/components/moi/LangueContext";
 
 export const metadata = {
@@ -17,7 +18,9 @@ export default function GestionLayout({ children }) {
   return (
     <DashboardThemeLayout>
       <div className="page moi-page gestion-page">
-        <LangueProvider>{children}</LangueProvider>
+        <LangueProvider>
+          <GestionCoquille>{children}</GestionCoquille>
+        </LangueProvider>
       </div>
     </DashboardThemeLayout>
   );

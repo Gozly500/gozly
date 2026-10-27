@@ -1,4 +1,5 @@
 import MoiThemeAppliqueur from "@/components/moi/MoiThemeAppliqueur";
+import { MoiCoquille } from "@/components/moi/MoiShell";
 import { LangueProvider } from "@/components/moi/LangueContext";
 
 export const metadata = {
@@ -16,7 +17,9 @@ export default function MoiLayout({ children }) {
   return (
     <div className="page moi-page">
       <MoiThemeAppliqueur />
-      <LangueProvider>{children}</LangueProvider>
+      <LangueProvider>
+        <MoiCoquille>{children}</MoiCoquille>
+      </LangueProvider>
     </div>
   );
 }
