@@ -180,7 +180,33 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
   );
 }
 
-export default function PersonnalisationSection({ entrepriseId }) {
+// Les modules qui ont des réglages, et les catégories de chacun : la barre latérale de la page Paramètres les affiche
+// (module -> sous-liste de catégories) et ce composant n'affiche que le groupe choisi (module + categorie).
+// Un module avec une seule catégorie ne montre pas de sous-liste.
+export const MODULES_PERSONNALISATION = [
+  {
+    id: "horaire",
+    label: "Horaire & Pointage",
+    categories: [
+      { id: "horaire", label: "Horaire" },
+      { id: "pointage", label: "Pointage" },
+      { id: "demandes", label: "Demandes" },
+    ],
+  },
+  { id: "temperature", label: "Températures", categories: [{ id: "general", label: "Général" }] },
+  {
+    id: "commandes",
+    label: "Commandes",
+    categories: [
+      { id: "general", label: "Général" },
+      { id: "kiosque", label: "Kiosque" },
+      { id: "impression", label: "Impression" },
+    ],
+  },
+  { id: "inventaire", label: "Inventaire", categories: [{ id: "general", label: "Général" }] },
+];
+
+export default function PersonnalisationSection({ entrepriseId, module, categorie }) {
   const { t } = useT();
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
@@ -559,227 +585,195 @@ export default function PersonnalisationSection({ entrepriseId }) {
     return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
-  const horaireActif = modulesActifs.includes("horaire");
-  const inventaireActif = modulesActifs.includes("inventaire");
-  const temperatureActif = modulesActifs.includes("temperature");
-  const commandesActif = modulesActifs.includes("commandes");
+  const moduleChoisi = MODULES_PERSONNALISATION.find((x) => x.id === module && modulesActifs.includes(x.id));
+  const categorieChoisie = moduleChoisi?.categories.find((c) => c.id === categorie);
+  const aucunModule = !MODULES_PERSONNALISATION.some((x) => modulesActifs.includes(x.id));
+  const dans = (moduleId, categorieId) => moduleChoisi?.id === moduleId && categorieChoisie?.id === categorieId;
 
   return (
     <div>
-      <h2>{t("Personnalisation")}</h2>
-      <p className="panel-hint">{t("Ajuste le comportement de tes modules actifs.")}</p>
+      <h2>{moduleChoisi ? t(moduleChoisi.label) : t("Personnalisation")}</h2>
+      {categorieChoisie && moduleChoisi.categories.length > 1 ? (
+        <p className="panel-hint">{t(categorieChoisie.label)}</p>
+      ) : (
+        <p className="panel-hint">{t("Ajuste le comportement de tes modules actifs.")}</p>
+      )}
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
-      {!horaireActif && !inventaireActif && !temperatureActif && !commandesActif ? (
+      {aucunModule && (
         <p className="section-hint">
           {t("Active un module (ex: Horaire & Pointage) pour voir apparaître ici ses options de personnalisation.")}
         </p>
-      ) : (
-        <div className="integration-list">
-      {horaireActif && (
-        <div className="integration-item">
-          <button
-            type="button"
-            className={`integration-header${sectionsOuvertes.horaire ? " open" : ""}`}
-            onClick={() => toggleSection("horaire")}
-          >
-            <span className="ih-label">{t("Horaire & Pointage")}</span>
-            <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
-          </button>
-          {sectionsOuvertes.horaire && (
-            <div className="integration-body">
-              <div className="param-subgroup">
-                <div className="param-subgroup-label">{t("Horaire")}</div>
-                <div className="param-grid">
-                  <ParametreSelect
-                    label={t("Premier jour de la semaine")}
-                    info={t("Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps.")}
-                    options={OPTIONS_PREMIER_JOUR}
-                    value={premierJourSemaine}
-                    onChange={handleChangePremierJour}
-                    disabled={saving}
-                  />
-                </div>
-              </div>
+      )}
+      {!aucunModule && !categorieChoisie && <p className="section-hint">{t("Choisis un module dans le menu de gauche pour ajuster ses réglages.")}</p>}
 
-              <div className="param-subgroup">
-                <div className="param-subgroup-label">{t("Pointage")}</div>
-                <div className="param-grid">
-                  <ParametreSelect
-                    label={t("Pointage mobile (GPS)")}
-                    info={t("Permet de pointer depuis l'app mobile plutôt qu'au kiosque, en vérifiant la position GPS par rapport à l'adresse de la succursale (voir Emplacements). Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, les jours où ils ont un quart prévu.")}
-                    options={OPTIONS_POINTAGE_MOBILE}
-                    value={pointageMobile}
-                    onChange={handleChangePointageMobile}
-                    disabled={saving}
-                  />
-                  <ParametreSelect
-                    label={t("Rappel de pointage")}
-                    info={t("Envoie une notification « N'oublie pas de pointer » à l'employé dont le quart publié a commencé depuis 10 minutes sans qu'il ait pointé. Les employés doivent avoir activé les notifications dans l'app.")}
-                    options={OPTIONS_RAPPELS_POINTAGE}
-                    value={rappelsPointage}
-                    onChange={handleChangeRappelsPointage}
-                    disabled={saving}
-                  />
-                  <ParametreSelect
-                    label={t("Calcul des heures")}
-                    info={t("Heure réelle : les heures comptent dès que l'employé pointe. Heure prévue : s'il pointe en avance, elles comptent à partir de l'heure de son quart. S'il pointe en retard ou sans quart prévu, l'heure réelle est toujours utilisée.")}
-                    options={OPTIONS_CALCUL_POINTAGE}
-                    value={calculPointage}
-                    onChange={handleChangeCalculPointage}
-                    disabled={saving}
-                  />
-                  <ParametreSelect
-                    label={t("Visibilité de la feuille de temps")}
-                    info={t("Les membres en lecture seule (ex: comptable) doivent-ils attendre ton approbation pour voir une semaine (manuelle), ou la voient-ils dès qu'elle existe (automatique) ?")}
-                    options={OPTIONS_VISIBILITE_FEUILLE_TEMPS}
-                    value={visibiliteFeuilleTemps}
-                    onChange={handleChangeVisibiliteFeuilleTemps}
-                    disabled={saving}
-                  />
-                </div>
-                <AvertissementPointageMobile actif={pointageMobile === "active"} lieux={lieuxPointage} />
-              </div>
+      {dans("horaire", "horaire") && (
+        <div className="param-grid">
+            <ParametreSelect
+              label={t("Premier jour de la semaine")}
+              info={t("Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps.")}
+              options={OPTIONS_PREMIER_JOUR}
+              value={premierJourSemaine}
+              onChange={handleChangePremierJour}
+              disabled={saving}
+            />
+          </div>
+      )}
 
-              <div className="param-subgroup">
-                <div className="param-subgroup-label">{t("Demandes")}</div>
-                <div className="param-grid">
-                  <ParametreSelect
-                    label={t("Approbation des congés")}
-                    info={t("Quand un employé demande un congé : approuver toi-même (manuelle), valider tout de suite (automatique), ou désactiver complètement les demandes de congé.")}
-                    options={OPTIONS_APPROBATION_DEMANDES}
-                    value={approbationConges}
-                    onChange={handleChangeApprobationConges}
-                    disabled={saving}
-                  />
-                  <ParametreSelect
-                    label={t("Approbation des échanges")}
-                    info={t("Quand un employé accepte de prendre le quart d'un collègue : approuver l'échange toi-même (manuelle), le valider tout de suite (automatique), ou désactiver complètement les échanges.")}
-                    options={OPTIONS_APPROBATION_DEMANDES}
-                    value={approbationEchanges}
-                    onChange={handleChangeApprobation}
-                    disabled={saving}
-                  />
-                  <ParametreSelect
-                    label={t("Conservation des demandes")}
-                    info={t("Combien de temps garder une demande de congé ou d'échange une fois traitée avant sa suppression automatique. Une demande jamais traitée est supprimée après 2 semaines, peu importe ce réglage.")}
-                    options={OPTIONS_RETENTION_DEMANDES}
-                    value={retentionDemandes}
-                    onChange={handleChangeRetentionDemandes}
-                    disabled={saving}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+      {dans("horaire", "pointage") && (
+        <div>
+          <div className="param-grid">
+            <ParametreSelect
+              label={t("Pointage mobile (GPS)")}
+              info={t("Permet de pointer depuis l'app mobile plutôt qu'au kiosque, en vérifiant la position GPS par rapport à l'adresse de la succursale (voir Emplacements). Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, les jours où ils ont un quart prévu.")}
+              options={OPTIONS_POINTAGE_MOBILE}
+              value={pointageMobile}
+              onChange={handleChangePointageMobile}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Rappel de pointage")}
+              info={t("Envoie une notification « N'oublie pas de pointer » à l'employé dont le quart publié a commencé depuis 10 minutes sans qu'il ait pointé. Les employés doivent avoir activé les notifications dans l'app.")}
+              options={OPTIONS_RAPPELS_POINTAGE}
+              value={rappelsPointage}
+              onChange={handleChangeRappelsPointage}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Calcul des heures")}
+              info={t("Heure réelle : les heures comptent dès que l'employé pointe. Heure prévue : s'il pointe en avance, elles comptent à partir de l'heure de son quart. S'il pointe en retard ou sans quart prévu, l'heure réelle est toujours utilisée.")}
+              options={OPTIONS_CALCUL_POINTAGE}
+              value={calculPointage}
+              onChange={handleChangeCalculPointage}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Visibilité de la feuille de temps")}
+              info={t("Les membres en lecture seule (ex: comptable) doivent-ils attendre ton approbation pour voir une semaine (manuelle), ou la voient-ils dès qu'elle existe (automatique) ?")}
+              options={OPTIONS_VISIBILITE_FEUILLE_TEMPS}
+              value={visibiliteFeuilleTemps}
+              onChange={handleChangeVisibiliteFeuilleTemps}
+              disabled={saving}
+            />
+          </div>
+          <AvertissementPointageMobile actif={pointageMobile === "active"} lieux={lieuxPointage} />
         </div>
       )}
 
-      {temperatureActif && (
-        <div className="integration-item">
-          <button
-            type="button"
-            className={`integration-header${sectionsOuvertes.temperature ? " open" : ""}`}
-            onClick={() => toggleSection("temperature")}
-          >
-            <span className="ih-label">{t("Températures")}</span>
-            <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
-          </button>
-          {sectionsOuvertes.temperature && (
-            <div className="integration-body">
-              <div className="param-grid">
-                <ParametreSelect
-                  label={t("Conservation des fiches")}
-                  info={t("Combien de temps garder les fiches de température avant leur suppression automatique. Pense à les exporter (Températures → Historique → Exporter) pour les garder en local.")}
-                  options={OPTIONS_RETENTION_TEMPERATURE}
-                  value={retentionTemperature}
-                  onChange={handleChangeRetentionTemperature}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label={t("Rappels d'enregistrement")}
-                  info={t("Envoie une notification « N'oubliez pas d'enregistrer les températures » aux employés au travail, 30 minutes avant la fin du créneau (11 h 30 pour le matin, 23 h 30 pour le soir), si aucun relevé n'a encore été enregistré pour ce créneau. Les employés doivent avoir activé les notifications dans l'app.")}
-                  options={OPTIONS_RAPPELS_TEMPERATURE}
-                  value={rappelsTemperature}
-                  onChange={handleChangeRappelsTemperature}
-                  disabled={saving}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+      {dans("horaire", "demandes") && (
+        <div className="param-grid">
+            <ParametreSelect
+              label={t("Approbation des congés")}
+              info={t("Quand un employé demande un congé : approuver toi-même (manuelle), valider tout de suite (automatique), ou désactiver complètement les demandes de congé.")}
+              options={OPTIONS_APPROBATION_DEMANDES}
+              value={approbationConges}
+              onChange={handleChangeApprobationConges}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Approbation des échanges")}
+              info={t("Quand un employé accepte de prendre le quart d'un collègue : approuver l'échange toi-même (manuelle), le valider tout de suite (automatique), ou désactiver complètement les échanges.")}
+              options={OPTIONS_APPROBATION_DEMANDES}
+              value={approbationEchanges}
+              onChange={handleChangeApprobation}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Conservation des demandes")}
+              info={t("Combien de temps garder une demande de congé ou d'échange une fois traitée avant sa suppression automatique. Une demande jamais traitée est supprimée après 2 semaines, peu importe ce réglage.")}
+              options={OPTIONS_RETENTION_DEMANDES}
+              value={retentionDemandes}
+              onChange={handleChangeRetentionDemandes}
+              disabled={saving}
+            />
+          </div>
       )}
 
-      {commandesActif && (
-        <div className="integration-item">
-          <button
-            type="button"
-            className={`integration-header${sectionsOuvertes.commandes ? " open" : ""}`}
-            onClick={() => toggleSection("commandes")}
-          >
-            <span className="ih-label">{t("Commandes")}</span>
-            <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
-          </button>
-          {sectionsOuvertes.commandes && (
-            <div className="integration-body">
-              <div className="param-subgroup">
-                <div className="param-subgroup-label">{t("Général")}</div>
-              <div className="param-grid">
-                <ParametreSelect
-                  label={t("Conservation des commandes")}
-                  info={t("Combien de temps garder la copie des commandes reçues de Wix avant sa suppression automatique. Ton registre officiel reste dans ton tableau de bord Wix. Les commandes que tu entres à la main dans Gozly ne sont jamais supprimées automatiquement.")}
-                  options={OPTIONS_RETENTION_COMMANDES}
-                  value={retentionCommandes}
-                  onChange={handleChangeRetentionCommandes}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label={t("Succursale Wix de ce dashboard")}
-                  info={t("Si le même site Wix alimente plusieurs dashboards Gozly (une succursale chacun), choisis ici la succursale dont CE dashboard reçoit les commandes et les ventes. Les commandes d'une autre succursale sont retirées de ce dashboard. « Toutes » = aucune séparation. La liste vient des commandes déjà reçues : synchronise d'abord, ou repasse sur « Toutes » pour revoir toutes les succursales.")}
-                  options={[
-                    { id: "", label: "Toutes les succursales" },
-                    ...[...new Set([...lieuxWixDispo, ...(lieuWix ? [lieuWix] : [])])].map((nom) => ({ id: nom, label: nom })),
-                  ]}
-                  value={lieuWix}
-                  onChange={handleChangeLieuWix}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label={t("Planification dans les commandes")}
-                  info={t("Ajoute une boîte « Planification » à droite de la page Commandes : les jours de la semaine (avec le nombre de réservations), et pour le jour choisi les catégories de tâches où tu peux ajouter ta production, sans quitter les réservations. Nécessite le module Tâches.")}
-                  options={OPTIONS_PLANIF_COMMANDES}
-                  value={planifDansCommandes}
-                  onChange={handleChangePlanifDansCommandes}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label={t("Affichage du kiosque des commandes")}
-                  info={t("Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »). 3 sections : toutes les commandes arrivent dans « En attente », puis passent à « Traitées » et « Terminées », peu importe leur date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées (bouton Vider, et celles d'avant hier disparaissent seules). Recharge le kiosque après un changement.")}
-                  options={OPTIONS_KIOSQUE_COMMANDES}
-                  value={kiosqueCommandes}
-                  onChange={handleChangeKiosqueCommandes}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label={t("Son des nouvelles commandes en ligne")}
-                  info={t("Une seule fois : le son joue une fois quand une commande en ligne arrive. En continu : il se répète toutes les quelques secondes jusqu'à ce que la commande soit prise en charge (3 sections : quand tu la passes de « En attente » à « Traitées » ; liste : quand tu touches la commande ou le bouton « Arrêter le son »). Vaut pour les deux affichages. Le son doit être activé sur le kiosque (bouton « Activer le son »). Recharge le kiosque après un changement.")}
-                  options={OPTIONS_SON_COMMANDES}
-                  value={sonCommandes}
-                  onChange={handleChangeSonCommandes}
-                  disabled={saving}
-                />
-                <ParametreSelect
-                  label={t("Tâches automatiques des commandes")}
-                  info={t("Crée automatiquement, dans le module Tâches, une tâche par produit avec le total à préparer pour chaque jour de ramassage (ex: « Pizza au tomate × 6 »), dans la catégorie « Réservations ». Cocher la tâche veut dire que c'est préparé. Nécessite le module Tâches.")}
-                  options={OPTIONS_COMMANDES_VERS_TACHES}
-                  value={commandesVersTaches}
-                  onChange={handleChangeCommandesVersTaches}
-                  disabled={saving}
-                />
-              </div>
-              </div>
-              <ImpressionCommandesBloc
+      {dans("temperature", "general") && (
+        <div className="param-grid">
+            <ParametreSelect
+              label={t("Conservation des fiches")}
+              info={t("Combien de temps garder les fiches de température avant leur suppression automatique. Pense à les exporter (Températures → Historique → Exporter) pour les garder en local.")}
+              options={OPTIONS_RETENTION_TEMPERATURE}
+              value={retentionTemperature}
+              onChange={handleChangeRetentionTemperature}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Rappels d'enregistrement")}
+              info={t("Envoie une notification « N'oubliez pas d'enregistrer les températures » aux employés au travail, 30 minutes avant la fin du créneau (11 h 30 pour le matin, 23 h 30 pour le soir), si aucun relevé n'a encore été enregistré pour ce créneau. Les employés doivent avoir activé les notifications dans l'app.")}
+              options={OPTIONS_RAPPELS_TEMPERATURE}
+              value={rappelsTemperature}
+              onChange={handleChangeRappelsTemperature}
+              disabled={saving}
+            />
+          </div>
+      )}
+
+      {dans("commandes", "general") && (
+        <div className="param-grid">
+            <ParametreSelect
+              label={t("Conservation des commandes")}
+              info={t("Combien de temps garder la copie des commandes reçues de Wix avant sa suppression automatique. Ton registre officiel reste dans ton tableau de bord Wix. Les commandes que tu entres à la main dans Gozly ne sont jamais supprimées automatiquement.")}
+              options={OPTIONS_RETENTION_COMMANDES}
+              value={retentionCommandes}
+              onChange={handleChangeRetentionCommandes}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Succursale Wix de ce dashboard")}
+              info={t("Si le même site Wix alimente plusieurs dashboards Gozly (une succursale chacun), choisis ici la succursale dont CE dashboard reçoit les commandes et les ventes. Les commandes d'une autre succursale sont retirées de ce dashboard. « Toutes » = aucune séparation. La liste vient des commandes déjà reçues : synchronise d'abord, ou repasse sur « Toutes » pour revoir toutes les succursales.")}
+              options={[
+                { id: "", label: "Toutes les succursales" },
+                ...[...new Set([...lieuxWixDispo, ...(lieuWix ? [lieuWix] : [])])].map((nom) => ({ id: nom, label: nom })),
+              ]}
+              value={lieuWix}
+              onChange={handleChangeLieuWix}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Planification dans les commandes")}
+              info={t("Ajoute une boîte « Planification » à droite de la page Commandes : les jours de la semaine (avec le nombre de réservations), et pour le jour choisi les catégories de tâches où tu peux ajouter ta production, sans quitter les réservations. Nécessite le module Tâches.")}
+              options={OPTIONS_PLANIF_COMMANDES}
+              value={planifDansCommandes}
+              onChange={handleChangePlanifDansCommandes}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Tâches automatiques des commandes")}
+              info={t("Crée automatiquement, dans le module Tâches, une tâche par produit avec le total à préparer pour chaque jour de ramassage (ex: « Pizza au tomate × 6 »), dans la catégorie « Réservations ». Cocher la tâche veut dire que c'est préparé. Nécessite le module Tâches.")}
+              options={OPTIONS_COMMANDES_VERS_TACHES}
+              value={commandesVersTaches}
+              onChange={handleChangeCommandesVersTaches}
+              disabled={saving}
+            />
+          </div>
+      )}
+
+      {dans("commandes", "kiosque") && (
+        <div className="param-grid">
+            <ParametreSelect
+              label={t("Affichage du kiosque des commandes")}
+              info={t("Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »). 3 sections : toutes les commandes arrivent dans « En attente », puis passent à « Traitées » et « Terminées », peu importe leur date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées (bouton Vider, et celles d'avant hier disparaissent seules). Recharge le kiosque après un changement.")}
+              options={OPTIONS_KIOSQUE_COMMANDES}
+              value={kiosqueCommandes}
+              onChange={handleChangeKiosqueCommandes}
+              disabled={saving}
+            />
+            <ParametreSelect
+              label={t("Son des nouvelles commandes en ligne")}
+              info={t("Une seule fois : le son joue une fois quand une commande en ligne arrive. En continu : il se répète toutes les quelques secondes jusqu'à ce que la commande soit prise en charge (3 sections : quand tu la passes de « En attente » à « Traitées » ; liste : quand tu touches la commande ou le bouton « Arrêter le son »). Vaut pour les deux affichages. Le son doit être activé sur le kiosque (bouton « Activer le son »). Recharge le kiosque après un changement.")}
+              options={OPTIONS_SON_COMMANDES}
+              value={sonCommandes}
+              onChange={handleChangeSonCommandes}
+              disabled={saving}
+            />
+          </div>
+      )}
+
+      {dans("commandes", "impression") && (
+        <ImpressionCommandesBloc
                 entrepriseId={entrepriseId}
                 selecteur={
                       <ParametreSelect
@@ -792,38 +786,19 @@ export default function PersonnalisationSection({ entrepriseId }) {
                       />
                 }
               />
-            </div>
-          )}
-        </div>
       )}
 
-      {inventaireActif && (
-        <div className="integration-item">
-          <button
-            type="button"
-            className={`integration-header${sectionsOuvertes.inventaire ? " open" : ""}`}
-            onClick={() => toggleSection("inventaire")}
-          >
-            <span className="ih-label">{t("Inventaire")}</span>
-            <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
-          </button>
-          {sectionsOuvertes.inventaire && (
-            <div className="integration-body">
-              <div className="param-grid">
-                <ParametreSelect
-                  label={t("Synchronisation vers Wix")}
-                  info={t("Une fois Wix connecté (Entreprise → Intégrations) : pousser tes produits vers Wix automatiquement à chaque ajout/modification/suppression, ou seulement quand tu cliques « Synchroniser ».")}
-                  options={OPTIONS_PUSH_WIX}
-                  value={pushWix}
-                  onChange={handleChangePushWix}
-                  disabled={saving}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-        </div>
+      {dans("inventaire", "general") && (
+        <div className="param-grid">
+            <ParametreSelect
+              label={t("Synchronisation vers Wix")}
+              info={t("Une fois Wix connecté (Entreprise → Intégrations) : pousser tes produits vers Wix automatiquement à chaque ajout/modification/suppression, ou seulement quand tu cliques « Synchroniser ».")}
+              options={OPTIONS_PUSH_WIX}
+              value={pushWix}
+              onChange={handleChangePushWix}
+              disabled={saving}
+            />
+          </div>
       )}
     </div>
   );

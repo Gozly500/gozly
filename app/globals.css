@@ -3658,3 +3658,24 @@ button.cg-x{width:30px;height:30px;padding:0;flex-shrink:0;display:flex;align-it
 .popup-app-texte li{margin-bottom:5px;}
 .popup-app-texte a{color:#a07bff;text-decoration:underline;}
 .popup-app-bouton{width:100%;margin-top:8px;padding:13px;font-size:15px;}
+
+/* Paramètres > Personnalisation : barre latérale à deux niveaux (module -> sous-liste de catégories qui se déplie). */
+.param-nav-groupe{display:flex;flex-direction:column;}
+.param-nav-libelle{flex:1;}
+.settings-nav-item.param-nav-ouvert{color:var(--fg);}
+.param-nav-fleche{display:flex;color:var(--text-dim);transition:transform .35s cubic-bezier(.34,1.4,.5,1);}
+.param-nav-fleche.ouvert{transform:rotate(180deg);}
+.param-nav-sous{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s cubic-bezier(.2,.85,.25,1);}
+.param-nav-sous.ouvert{grid-template-rows:1fr;}
+.param-nav-sous-int{overflow:hidden;min-height:0;display:flex;flex-direction:column;gap:2px;margin-left:18px;}
+.settings-nav-item.param-nav-sous-item{padding:9px 14px;font-size:13.5px;border-radius:0 12px 12px 0;border-left:2px solid rgba(var(--w),0.14);}
+.settings-nav-item.param-nav-sous-item.active{border-left-color:#a07bff;}
+@media (max-width:820px){
+  .param-nav-groupe{flex-direction:row;align-items:center;gap:6px;}
+  .param-nav-sous{display:none;}
+  .param-nav-sous.ouvert{display:flex;}
+  .param-nav-sous-int{flex-direction:row;margin-left:0;gap:6px;}
+  .settings-nav-item.param-nav-sous-item{border-left:none;border-radius:14px;}
+  .param-nav-fleche{display:none;}
+}
+@media (prefers-reduced-motion:reduce){.param-nav-sous,.param-nav-fleche{transition:none;}}
