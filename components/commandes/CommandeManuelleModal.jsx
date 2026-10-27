@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { formatMontant, bornesJour } from "@/lib/commandes";
 import { imprimerCommande, mettreAJourTachesCommandes } from "@/lib/commandesClient";
+import { lireProduitsTries } from "@/lib/ordreProduits";
 import { IconFlecheGauche, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { LangueProvider } from "@/components/moi/LangueContext";
@@ -94,13 +95,10 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
   const [erreur, setErreur] = useState("");
 
   useEffect(() => {
-    supabase
-      .from("produits_inventaire")
-      .select("id, nom, sku, prix, source, source_id, categorie_id")
-      .eq("entreprise_id", entrepriseId)
-      .order("nom", { ascending: true })
-      .limit(1000)
-      .then(({ data }) => setProduits(data || []));
+    lireProduitsTries(
+      (colonnes) => supabase.from("produits_inventaire").select(colonnes).eq("entreprise_id", entrepriseId).order("nom", { ascending: true }).limit(1000),
+      "id, nom, sku, prix, source, source_id, categorie_id"
+    ).then(setProduits);
     supabase
       .from("categories_inventaire")
       .select("id, nom, ordre")

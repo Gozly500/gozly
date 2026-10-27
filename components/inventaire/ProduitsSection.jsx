@@ -7,6 +7,7 @@ import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { IconAttention, IconFlecheBas, IconFlecheDroite, IconLoupe } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
+import ListeReordonnable from "@/components/ListeReordonnable";
 
 const FORM_VIDE = { nom: "", variante: "", sku: "", quantite: "", seuilAlerte: "", prix: "", notes: "", categorieId: "" };
 
@@ -35,10 +36,17 @@ function construireEntrees(liste) {
     if (!parBase.has(cle)) parBase.set(cle, { base, produits: [] });
     parBase.get(cle).produits.push(p);
   }
-  return [...parBase.values()].map((g) =>
+  const entrees = [...parBase.values()].map((g) =>
     g.produits.length === 1 && !separerNom(g.produits[0].nom).variante ? { type: "simple", produit: g.produits[0] } : { type: "groupe", ...g }
   );
+  // Dans l'ordre choisi par glisser-déposer (« Réorganiser ») ; les produits pas encore classés viennent après, dans l'ordre d'avant.
+  const rang = (e) => Math.min(...produitsDe(e).map((p) => p.ordre ?? Infinity));
+  return entrees.sort((a, b) => (rang(a) === rang(b) ? 0 : rang(a) < rang(b) ? -1 : 1));
 }
+
+// Les produits d'une entrée (un produit simple, ou toutes les variantes d'un groupe) et son identifiant stable.
+const produitsDe = (e) => (e.type === "simple" ? [e.produit] : e.produits);
+const cleEntree = (e) => (e.type === "simple" ? `p-${e.produit.id}` : `g-${e.base.toLowerCase()}`);
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession();
@@ -93,6 +101,8 @@ export default function ProduitsSection({ entrepriseId }) {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(FORM_VIDE);
   const [saving, setSaving] = useState(false);
+  const [reorgId, setReorgId] = useState(null); // catégorie (ou « sans ») dont on réorganise les produits
+  const [erreurOrdre, setErreurOrdre] = useState("");
 
   // Catégories de produits. categoriesPretes = la table existe (inventaire_categories.sql exécuté).
   const [categories, setCategories] = useState([]);
@@ -318,6 +328,22 @@ export default function ProduitsSection({ entrepriseId }) {
   ];
   const optionsCategorieProduit = [{ id: "", nom: t("Sans catégorie") }, ...categories.map((c) => ({ id: c.id, nom: c.nom }))];
 
+  // Après un glisser-déposer : on renumérote toutes les entrées de la catégorie (1, 2, 3...) ; les variantes d'un produit partagent
+  // son numéro. Affichage immédiat, puis enregistrement (colonne produits_inventaire.ordre : supabase/produits_ordre.sql).
+  async function reordonnerEntrees(nouvelles) {
+    setErreurOrdre("");
+    const ordreDe = new Map();
+    nouvelles.forEach((e, i) => produitsDe(e).forEach((p) => ordreDe.set(p.id, i + 1)));
+    const avant = new Map(produits.map((p) => [p.id, p.ordre]));
+    setProduits((prev) => prev.map((p) => (ordreDe.has(p.id) ? { ...p, ordre: ordreDe.get(p.id) } : p)));
+    const aChanger = [...ordreDe].filter(([id, ordre]) => avant.get(id) !== ordre);
+    const resultats = await Promise.all(aChanger.map(([id, ordre]) => supabase.from("produits_inventaire").update({ ordre }).eq("id", id)));
+    if (resultats.some((r) => r.error)) {
+      setErreurOrdre(t("Impossible d'enregistrer l'ordre. As-tu exécuté produits_ordre.sql dans Supabase?"));
+      load();
+    }
+  }
+
   function ligneProduit(p, { variante = false } = {}) {
     const enAlerte = p.quantite <= p.seuil_alerte;
     const titre = variante ? separerNom(p.nom).variante || "Standard" : p.nom;
@@ -451,6 +477,8 @@ export default function ProduitsSection({ entrepriseId }) {
         </div>
       )}
 
+      {erreurOrdre && <p className="settings-msg err">{erreurOrdre}</p>}
+
       {produits.length === 0 ? (
         <div className="admin-list" style={{ maxWidth: "900px" }}>
           <div className="admin-empty">{t("Aucun produit pour l'instant.")}</div>
@@ -462,14 +490,59 @@ export default function ProduitsSection({ entrepriseId }) {
       ) : (
         groupes.map((g) => (
           <div key={g.id} style={{ marginBottom: "22px" }}>
-            {g.nom && (
-              <div className="inventaire-categorie-titre">
-                {g.nom} <span>({g.produits.length})</span>
-              </div>
-            )}
-            <div className="admin-list" style={{ maxWidth: "900px" }}>
-              {construireEntrees(g.produits).map(rendreEntree)}
-            </div>
+            {(() => {
+              const entrees = construireEntrees(g.produits);
+              const peutReorg = mots.length === 0 && entrees.length > 1; // pas pendant une recherche : la liste est filtrée
+              const enReorg = peutReorg && reorgId === g.id;
+              return (
+                <>
+                  {(g.nom || peutReorg) && (
+                    <div className="inventaire-categorie-titre" style={{ display: "flex", alignItems: "center", gap: "10px", maxWidth: "900px" }}>
+                      <span style={{ color: "var(--fg)", fontWeight: 700, fontSize: "15px" }}>
+                        {g.nom} {g.nom && <span style={{ color: "var(--text-dim)", fontWeight: 400, fontSize: "13px" }}>({g.produits.length})</span>}
+                      </span>
+                      {peutReorg && (
+                        <button type="button" className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={() => setReorgId(enReorg ? null : g.id)}>
+                          {enReorg ? t("Terminé") : t("Réorganiser")}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {enReorg ? (
+                    <>
+                      <p className="section-hint" style={{ margin: "0 0 10px 4px", maxWidth: "900px" }}>
+                        {t("Glisse les produits pour choisir leur ordre : celui du haut s'affiche en premier dans le kiosque et dans la prise de commande.")}
+                      </p>
+                      <ListeReordonnable
+                        className="admin-list"
+                        style={{ maxWidth: "900px" }}
+                        items={entrees}
+                        getId={cleEntree}
+                        onReorder={reordonnerEntrees}
+                        renderItem={(e, i, gp) => (
+                          <div className="admin-row" key={cleEntree(e)} ref={gp.ref} style={gp.style}>
+                            {gp.poignee}
+                            <div className="admin-row-main">
+                              <div className="admin-row-title">{e.type === "simple" ? e.produit.nom : e.base}</div>
+                              {e.type === "groupe" && (
+                                <div className="admin-row-sub">
+                                  {e.produits.length} {t("variante")}
+                                  {e.produits.length > 1 ? "s" : ""}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      />
+                    </>
+                  ) : (
+                    <div className="admin-list" style={{ maxWidth: "900px" }}>
+                      {entrees.map(rendreEntree)}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         ))
       )}
