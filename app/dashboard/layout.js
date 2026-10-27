@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import PopupsGestion from "@/components/PopupsGestion";
 import { LANG_COOKIE, isValidLang } from "@/lib/i18n/site";
 import { DEFAULT_THEME, THEME_STORAGE_KEY, THEME_ACCENT_STORAGE_KEY, isValidTheme, isValidAccent, appliquerAccent } from "@/lib/themes";
 
@@ -93,5 +94,10 @@ export default function DashboardLayout({ children }) {
     };
   }, [theme]);
 
-  return children;
+  return (
+    <>
+      {children}
+      <PopupsGestion />
+    </>
+  );
 }

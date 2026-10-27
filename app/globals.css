@@ -3645,3 +3645,16 @@ button.cg-x{width:30px;height:30px;padding:0;flex-shrink:0;display:flex;align-it
     font-size:13.5px;line-height:1.5;color:var(--text);animation:moiDepliage .35s cubic-bezier(.2,.85,.25,1) backwards;transform-origin:top;}
 .param-avertissement-titre{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:6px;color:#ffd479;}
 .param-avertissement p{margin:6px 0 0;color:var(--text);}
+
+/* Pop-up d'ouverture (« Gozly a été mis à jour »). */
+.popup-app-overlay{z-index:400;animation:moi-fade-in .25s ease-out;}
+.popup-app-carte{max-width:440px;display:flex;flex-direction:column;gap:10px;animation:moiModalRebond .5s cubic-bezier(.34,1.45,.5,1) backwards !important;}
+.popup-app-etiquette{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#a07bff;}
+.popup-app-etiquette span{font-weight:600;letter-spacing:0;text-transform:none;color:var(--text-dim);}
+.popup-app-titre{margin:0;font-size:21px;line-height:1.25;}
+.popup-app-texte{max-height:min(46vh,360px);overflow-y:auto;font-size:14.5px;line-height:1.6;color:var(--text);}
+.popup-app-texte p{margin:0 0 10px;}
+.popup-app-texte ul{margin:0 0 10px 20px;}
+.popup-app-texte li{margin-bottom:5px;}
+.popup-app-texte a{color:#a07bff;text-decoration:underline;}
+.popup-app-bouton{width:100%;margin-top:8px;padding:13px;font-size:15px;}

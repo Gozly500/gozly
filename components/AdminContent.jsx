@@ -9,6 +9,7 @@ import AdminsSection from "@/components/admin/AdminsSection";
 import DiscordSection from "@/components/admin/DiscordSection";
 import SupportSection from "@/components/admin/SupportSection";
 import AnnoncesSiteSection from "@/components/admin/AnnoncesSiteSection";
+import PopupsAppSection from "@/components/admin/PopupsAppSection";
 import { IconBouclier, IconDiscord, IconFlecheGauche, IconMegaphone, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
 
 const TABS = [
@@ -24,6 +25,10 @@ const SOUS_MENUS = {
   support: [
     { id: "tickets", label: "Tickets" },
     { id: "contact", label: "Formulaire de contact" },
+  ],
+  annonces: [
+    { id: "site", label: "Annonces du site" },
+    { id: "popups", label: "Pop-ups d'ouverture" },
   ],
   discord: [
     { id: "annonces", label: "Messages" },
@@ -170,7 +175,7 @@ export default function AdminContent() {
       <div className="settings-panel">
         {activeTab === "clients" && <ClientsSection />}
         {activeTab === "support" && <SupportSection sous={sous} />}
-        {activeTab === "annonces" && <AnnoncesSiteSection />}
+        {activeTab === "annonces" && (sous === "popups" ? <PopupsAppSection /> : <AnnoncesSiteSection />)}
         {activeTab === "discord" && <DiscordSection sous={sous} />}
         {activeTab === "admins" && <AdminsSection currentEmail={email} />}
       </div>

@@ -15,6 +15,7 @@ import { AnnoncesProvider } from "@/components/moi/AnnoncesContext";
 import { useLangue } from "@/components/moi/LangueContext";
 import PastilleMessages from "@/components/moi/PastilleMessages";
 import Avatar from "@/components/Avatar";
+import PopupsEmploye from "@/components/moi/PopupsEmploye";
 
 // L'accueil n'est pas un onglet: on y retourne en appuyant sur son nom
 // en haut à gauche (voir le <header> plus bas).
@@ -221,6 +222,7 @@ function MoiShellReel({ children }) {
           )}
         </div>
       </nav>
+      <PopupsEmploye />
     </div>
     </AnnoncesProvider>
   );
