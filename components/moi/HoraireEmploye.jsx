@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ChargementAnimation from "@/components/moi/ChargementAnimation";
+import Squelettes from "@/components/moi/Squelettes";
 import { employeFetch } from "@/lib/employeAuth";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import RappelNotifications from "@/components/moi/RappelNotifications";
@@ -35,6 +35,7 @@ export default function HoraireEmploye() {
   const [remplacantQuart, setRemplacantQuart] = useState(null); // quart pour lequel on lance un appel de remplaçant
   const [quarts, setQuarts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sens, setSens] = useState(null); // "avant" / "arriere" : les jours glissent du côté où on va quand on change de semaine
   const [joursOuverts, setJoursOuverts] = useState({});
   const [pointageActif, setPointageActif] = useState(false);
   const [enPoste, setEnPoste] = useState(false);
@@ -153,7 +154,7 @@ export default function HoraireEmploye() {
     <div className="moi-horaire">
       <RappelNotifications types={["notif_semaine_publiee"]} sujet="horaire" />
       {pointageActif && (
-        <button type="button" className="moi-pointer-flottant" onClick={() => setPointageOuvert(true)}>
+        <button type="button" className={`moi-pointer-flottant${enPoste ? " en-poste" : ""}`} onClick={() => setPointageOuvert(true)}>
           {enPoste ? t("pointage.terminer") : t("pointage.pointer")}
         </button>
       )}
@@ -177,11 +178,17 @@ export default function HoraireEmploye() {
         </div>
       )}
       <div className="moi-week-nav">
-        <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
+        <button className="admin-icon-btn" onClick={() => {
+            setSens("arriere");
+            setWeekStart((w) => addDays(w, -7));
+          }}>
           <IconFlecheGauche className="gozly-icon" />
         </button>
         <span className="moi-week-label">{weekLabel}</span>
-        <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
+        <button className="admin-icon-btn" onClick={() => {
+            setSens("avant");
+            setWeekStart((w) => addDays(w, 7));
+          }}>
           <IconFlecheDroite className="gozly-icon" />
         </button>
       </div>
@@ -191,9 +198,9 @@ export default function HoraireEmploye() {
       <CartePaie paie={paieAff} heures={heures} cache={cache} onBascule={() => setCache((c) => !c)} />
 
       {loading ? (
-        <ChargementAnimation />
+        <Squelettes nb={6} haut={92} />
       ) : (
-        <div className="moi-jours-list">
+        <div className="moi-jours-list" data-sens={sens || undefined}>
           {jours.map((jour) => {
             const dateISO = jour.toISOString().slice(0, 10);
             const quartsDuJour = quarts.filter((q) => q.date === dateISO);
@@ -205,10 +212,11 @@ export default function HoraireEmploye() {
             const passe = dateISO < dateAujourdhui();
             const minutesJour = pj ? (passe && heures?.aDesPointages ? pj.gagnees : dateISO <= dateAujourdhui() && pj.gagnees > 0 ? pj.gagnees : pj.prevues) : 0;
             return (
-              <div className="moi-jour-card" key={dateISO}>
+              <div className={`moi-jour-card${dateISO === dateAujourdhui() ? " aujourdhui" : ""}`} key={dateISO}>
                 <div className="moi-jour-head">
                   <div className="moi-jour-date">
                     {jour.toLocaleDateString(localeDate(langue), { weekday: "long", day: "numeric", month: "long" })}
+                    {dateISO === dateAujourdhui() && <span className="moi-aujourdhui-pastille">{t("taches.aujourdhui")}</span>}
                   </div>
                   {minutesJour > 0 && (
                     <span className="moi-jour-paie">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import ChargementAnimation from "@/components/moi/ChargementAnimation";
+import Squelettes from "@/components/moi/Squelettes";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import TemperatureInput from "@/components/TemperatureInput";
@@ -101,7 +101,7 @@ export default function TemperatureEmploye() {
   }
 
   if (loading) {
-    return <ChargementAnimation />;
+    return <Squelettes nb={4} haut={88} />;
   }
 
   if (equipements.length === 0) {

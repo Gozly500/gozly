@@ -56,6 +56,13 @@ function GestionShellReel({ actif, children }) {
   const [menuOuvert, setMenuOuvert] = useState(false); // fenêtre des autres modules
   const [impersonation, setImpersonation] = useState(null); // mode admin : on regarde l'entreprise d'un client
 
+  // iOS n'applique :active (l'effet d'enfoncement des boutons) que si la page écoute le toucher.
+  useEffect(() => {
+    const vide = () => {};
+    document.addEventListener("touchstart", vide, { passive: true });
+    return () => document.removeEventListener("touchstart", vide);
+  }, []);
+
   useEffect(() => {
     let ignore = false;
     setImpersonation(getImpersonation());
@@ -189,7 +196,9 @@ function GestionShellReel({ actif, children }) {
         )}
 
         <main className={`moi-main${actif === "discussion" ? " moi-main-chat" : ""}`}>
-          {entrepriseId ? children : <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>}
+          <div key={actif} className="moi-page-anim">
+            {entrepriseId ? children : <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>}
+          </div>
         </main>
 
         {menuOuvert && <div className="moi-tabbar-fond" onClick={() => setMenuOuvert(false)} />}

@@ -3541,3 +3541,101 @@ button.cg-x{width:30px;height:30px;padding:0;flex-shrink:0;display:flex;align-it
   .sg-duo.ouvert{align-self:flex-start;margin-top:-12px;}
   .sg-duo.ouvert .modal-card{max-height:max(240px,calc(100vh - 630px));}
 }
+
+/* ===== App employé / gestion : un peu plus vivante ===== */
+
+/* Toucher : la pression enfonce l'élément, le relâchement le fait rebondir (propriété `scale`, indépendante des `transform` existants). */
+.moi-page :is(.btn-small,.submit-btn,.admin-icon-btn,.moi-tab,.moi-menu-item,.moi-accueil-card,.chat-conv-item,.moi-jour-toggle,
+    .settings-nav-item,.moi-pointer-flottant,.chat-send-btn,.chat-plus-item,.moi-discussion-add-btn,.moi-header-identite){
+    --tr-reste:background .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease,filter .2s ease;
+    transition:scale .5s cubic-bezier(.34,1.8,.5,1),var(--tr-reste);
+    -webkit-tap-highlight-color:transparent;
+  }
+.moi-page :is(.btn-small,.submit-btn,.admin-icon-btn,.moi-tab,.moi-menu-item,.moi-jour-toggle,.settings-nav-item,
+    .moi-pointer-flottant,.chat-send-btn,.chat-plus-item,.moi-header-identite):active:not(:disabled){
+    scale:.93;transition:scale .09s ease-out,var(--tr-reste);
+  }
+.moi-page :is(.moi-accueil-card,.chat-conv-item,.moi-discussion-add-btn):active:not(:disabled){
+    scale:.97;transition:scale .09s ease-out,var(--tr-reste);
+  }
+
+/* Changement de page : fondu + léger glissement vers le haut (`top` et non `transform`, pour ne pas décaler les éléments fixes de la page). */
+.moi-page-anim{position:relative;animation:moiPageEntree .3s cubic-bezier(.2,.8,.25,1) backwards;}
+@keyframes moiPageEntree{from{opacity:0;top:14px;}to{opacity:1;top:0;}}
+.moi-main-chat .moi-page-anim{flex:1;display:flex;flex-direction:column;min-height:0;}
+
+/* Cartes qui arrivent en cascade (--n = rang de la carte, plafonné). */
+:is(.moi-jours-list,.moi-accueil-trio,.moi-accueil-grid,.planning-days,.moi-page .admin-list,.moi-squelettes) > *{
+    animation:moiCarteEntree .5s cubic-bezier(.2,.85,.25,1) backwards;
+    animation-delay:calc(var(--n,0) * 55ms + 60ms);
+  }
+:is(.moi-jours-list,.moi-accueil-trio,.moi-accueil-grid,.planning-days,.moi-page .admin-list,.moi-squelettes) > :nth-child(2){--n:1;}
+:is(.moi-jours-list,.moi-accueil-trio,.moi-accueil-grid,.planning-days,.moi-page .admin-list,.moi-squelettes) > :nth-child(3){--n:2;}
+:is(.moi-jours-list,.moi-accueil-trio,.moi-accueil-grid,.planning-days,.moi-page .admin-list,.moi-squelettes) > :nth-child(4){--n:3;}
+:is(.moi-jours-list,.moi-accueil-trio,.moi-accueil-grid,.planning-days,.moi-page .admin-list,.moi-squelettes) > :nth-child(5){--n:4;}
+:is(.moi-jours-list,.moi-accueil-trio,.moi-accueil-grid,.planning-days,.moi-page .admin-list,.moi-squelettes) > :nth-child(6){--n:5;}
+:is(.moi-jours-list,.moi-accueil-trio,.moi-accueil-grid,.planning-days,.moi-page .admin-list,.moi-squelettes) > :nth-child(7){--n:6;}
+:is(.moi-jours-list,.moi-accueil-trio,.moi-accueil-grid,.planning-days,.moi-page .admin-list,.moi-squelettes) > :nth-child(n+8){--n:7;}
+@keyframes moiCarteEntree{from{opacity:0;transform:translateY(18px) scale(.97);}to{opacity:1;transform:none;}}
+.chat-conv-list .chat-conv-item{animation:moiCarteEntree .5s cubic-bezier(.2,.85,.25,1) backwards;animation-delay:calc(var(--n,0) * 55ms + 60ms);}
+/* Changement de semaine : les jours glissent du côté où on va. */
+.moi-jours-list[data-sens="avant"] > *{animation-name:moiCarteDroite;}
+.moi-jours-list[data-sens="arriere"] > *{animation-name:moiCarteGauche;}
+@keyframes moiCarteDroite{from{opacity:0;transform:translateX(34px);}to{opacity:1;transform:none;}}
+@keyframes moiCarteGauche{from{opacity:0;transform:translateX(-34px);}to{opacity:1;transform:none;}}
+
+/* Aujourd'hui, dans l'horaire. */
+.moi-jour-card.aujourdhui{border-color:rgba(160,123,255,0.65);box-shadow:0 0 0 1px rgba(160,123,255,0.28),0 0 22px rgba(122,63,224,0.22);}
+.moi-aujourdhui-pastille{display:block;width:fit-content;margin:5px 0 0;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.04em;
+    text-transform:uppercase;color:#fff;background:linear-gradient(150deg,var(--violet),var(--indigo));vertical-align:middle;}
+.moi-quart-detail{animation:moiDepliage .32s cubic-bezier(.2,.85,.25,1) backwards;transform-origin:top;}
+@keyframes moiDepliage{from{opacity:0;transform:translateY(-8px) scaleY(.92);}to{opacity:1;transform:none;}}
+
+/* Squelettes de chargement. */
+.moi-squelettes{display:flex;flex-direction:column;gap:12px;}
+.moi-squelette{height:var(--haut,84px);border-radius:16px;border:1px solid rgba(var(--w),0.14);
+    background:linear-gradient(100deg,rgba(var(--w),0.09) 30%,rgba(var(--w),0.2) 50%,rgba(var(--w),0.09) 70%);
+    background-size:300% 100%;}
+.moi-squelettes > .moi-squelette{animation:moiCarteEntree .5s cubic-bezier(.2,.85,.25,1) backwards,moiBrille 1.5s ease-in-out infinite;
+    animation-delay:calc(var(--n,0) * 55ms),0s;}
+@keyframes moiBrille{from{background-position:100% 0;}to{background-position:0 0;}}
+
+/* Bouton Pointer : entrée en rebond, et pastille qui pulse quand on est en poste. */
+.moi-pointer-flottant{animation:moiPointerEntree .6s cubic-bezier(.34,1.56,.64,1) .2s backwards;}
+@keyframes moiPointerEntree{from{opacity:0;transform:translateY(24px) scale(.6);}to{opacity:1;transform:none;}}
+.moi-pointer-flottant.en-poste{background:linear-gradient(150deg,#1fa06c,#0d6a47);animation:moiPointerEntree .6s cubic-bezier(.34,1.56,.64,1) .2s backwards,moiEnPoste 2.2s ease-out infinite 1s;}
+.moi-pointer-flottant.en-poste::before{content:"";display:inline-block;width:8px;height:8px;margin-right:9px;border-radius:50%;background:#8dffc8;vertical-align:middle;box-shadow:0 0 8px #8dffc8;}
+@keyframes moiEnPoste{0%{box-shadow:0 6px 18px rgba(0,0,0,.35),0 0 0 0 rgba(60,220,150,.55);}70%,100%{box-shadow:0 6px 18px rgba(0,0,0,.35),0 0 0 16px rgba(60,220,150,0);}}
+
+/* Fenêtres : fondu du fond + rebond de la carte. */
+.moi-page .modal-overlay{animation:moi-fade-in .2s ease-out;}
+.moi-page .modal-card{animation:moiModalRebond .42s cubic-bezier(.34,1.45,.5,1) backwards;}
+@keyframes moiModalRebond{from{opacity:0;transform:translateY(24px) scale(.92);}to{opacity:1;transform:none;}}
+
+/* Confettis de fin de journée. */
+.moi-confettis{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:300;}
+.moi-confettis span{position:absolute;left:50%;top:42%;border-radius:2px;animation:moiConfetti var(--d) cubic-bezier(.3,.1,.3,1) var(--dl) both;}
+@keyframes moiConfetti{
+    0%{opacity:1;transform:translate(0,0) rotate(0) scale(.3);animation-timing-function:cubic-bezier(.1,.7,.3,1);}
+    22%{opacity:1;transform:translate(var(--bx),var(--by)) rotate(calc(var(--r) * .3)) scale(1);animation-timing-function:cubic-bezier(.45,0,.8,.6);}
+    100%{opacity:0;transform:translate(var(--fx),70vh) rotate(var(--r)) scale(.9);}
+  }
+
+/* Discussion : les nouveaux messages arrivent en rebond, du côté de leur auteur. */
+.chat-bulle-nouvelle{transform-origin:left bottom;animation:moiBulleAutre .5s cubic-bezier(.34,1.5,.5,1) backwards;}
+.chat-bulle-nouvelle.mine{transform-origin:right bottom;animation-name:moiBulleMoi;}
+@keyframes moiBulleAutre{from{opacity:0;transform:translateX(-22px) translateY(10px) scale(.85);}to{opacity:1;transform:none;}}
+@keyframes moiBulleMoi{from{opacity:0;transform:translateX(22px) translateY(10px) scale(.85);}to{opacity:1;transform:none;}}
+
+/* Demandes : le formulaire se déploie, l'étiquette de statut « pop » quand elle change. */
+.moi-form-entree{animation:moiDepliage .35s cubic-bezier(.2,.85,.25,1) backwards;transform-origin:top;}
+.moi-pop{display:inline-block;animation:moiPop .5s cubic-bezier(.34,1.8,.5,1) backwards;}
+@keyframes moiPop{from{opacity:0;transform:scale(.4);}to{opacity:1;transform:none;}}
+.moi-page .settings-msg{animation:moi-fade-in .25s ease-out;}
+
+@media (prefers-reduced-motion: reduce){
+  .moi-page-anim,:is(.moi-jours-list,.moi-accueil-trio,.moi-accueil-grid,.planning-days,.moi-page .admin-list,.moi-squelettes) > *,
+  .moi-quart-detail,.moi-pointer-flottant,.moi-page .modal-card,.chat-bulle-nouvelle,.moi-form-entree,.moi-pop{animation:none !important;}
+  .moi-confettis{display:none;}
+  .moi-page :is(.btn-small,.submit-btn,.admin-icon-btn,.moi-tab,.moi-accueil-card,.chat-conv-item,.moi-pointer-flottant):active{scale:1;}
+}

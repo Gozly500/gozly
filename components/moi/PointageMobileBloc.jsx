@@ -5,6 +5,7 @@ import { employeFetch } from "@/lib/employeAuth";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { useLangue } from "@/components/moi/LangueContext";
 import { localeDate } from "@/lib/i18n/moi";
+import Confettis from "@/components/moi/Confettis";
 
 function formatHeure(iso, langue) {
   return new Date(iso).toLocaleTimeString(localeDate(langue), { hour: "2-digit", minute: "2-digit" });
@@ -124,6 +125,7 @@ export default function PointageMobileBloc({ forcer = false, onTermine } = {}) {
   if (succes) {
     return (
       <div className="pointage-mobile-bloc pointage-success">
+        {succes.type !== "arrivee" && <Confettis />}
         <div ref={lottieRef} className="pointage-lottie"></div>
         <p className="settings-msg ok">
           {t("pointage.succesLigne", {

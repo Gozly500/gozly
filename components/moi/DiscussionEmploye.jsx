@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ChargementAnimation from "@/components/moi/ChargementAnimation";
+import Squelettes from "@/components/moi/Squelettes";
 import { employeFetch } from "@/lib/employeAuth";
 import { localeDate } from "@/lib/i18n/moi";
 import { dansLeQuart, erreurPlage } from "@/lib/echangeQuart";
@@ -45,6 +46,8 @@ export default function DiscussionEmploye() {
   const [erreur, setErreur] = useState(null);
   const [vue, setVue] = useState("liste"); // "liste" | "thread"
   const messagesRef = useRef(null);
+  // Messages déjà là à l'ouverture d'une conversation : seuls ceux arrivés ensuite jouent l'animation d'arrivée.
+  const messagesConnusRef = useRef({ conversationId: null, ids: new Set() });
   const dernierIdRef = useRef(null);
   const presDuBasRef = useRef(true);
   const pollRef = useRef(null);
@@ -282,6 +285,9 @@ export default function DiscussionEmploye() {
     }
     const data = await res.json();
     const nouveaux = data.messages || [];
+    if (messagesConnusRef.current.conversationId !== conversationId) {
+      messagesConnusRef.current = { conversationId, ids: new Set(nouveaux.map((x) => x.id)) };
+    }
     // On regarde cette conversation : son dernier message compte comme lu.
     const dernierRecu = nouveaux[nouveaux.length - 1];
     if (dernierRecu && vueRef.current === "thread") marquerLu(conversationId, dernierRecu.createdAt);
@@ -585,7 +591,7 @@ export default function DiscussionEmploye() {
   }
 
   if (loading) {
-    return <ChargementAnimation />;
+    return <Squelettes nb={5} haut={66} />;
   }
 
   if (erreur && conversations.length === 0) {
@@ -612,7 +618,7 @@ export default function DiscussionEmploye() {
           </div>
           <div className="chat-section-label">{terme ? t("chat.resultats") : t("chat.conversations")}</div>
           {terme && conversationsVisibles.length === 0 && colleguesTrouves.length === 0 && <p className="chat-empty">{t("chat.aucunResultat")}</p>}
-          {conversationsVisibles.map((c) => {
+          {conversationsVisibles.map((c, i) => {
             // Non lu : un message d'un AUTRE, plus récent que le dernier que j'ai vu.
             const nonLu =
               !!c.dernierMessageDate &&
@@ -622,6 +628,7 @@ export default function DiscussionEmploye() {
               <button
                 key={c.id}
                 type="button"
+                style={{ "--n": Math.min(i, 7) }}
                 className={`chat-conv-item${activeId === c.id && vue === "thread" ? " active" : ""}${nonLu ? " non-lu" : ""}`}
                 onClick={() => ouvrirConversation(c)}
               >
@@ -697,6 +704,8 @@ export default function DiscussionEmploye() {
                   ecritPlusieurs: t("chat.ecritPlusieurs"),
                 };
                 const directe = conversations.find((c) => c.id === activeId)?.type === "directe";
+                // Un message déjà là à l'ouverture ne joue pas l'animation ; les miens seulement tant qu'ils sont provisoires (tmp-).
+                const animeeArrivee = (m) => (m.deMoi ? String(m.id).startsWith("tmp-") : !messagesConnusRef.current.ids.has(m.id));
                 return (
                   <>
                     {messages.map((m) =>
@@ -705,7 +714,11 @@ export default function DiscussionEmploye() {
                           {texteSysteme(m.systeme)}
                         </div>
                       ) : (
-                      <div key={m.id} style={{ display: "flex", flexDirection: "column" }}>
+                      <div
+                        key={m.id}
+                        className={animeeArrivee(m) ? `chat-bulle-nouvelle${m.deMoi ? " mine" : ""}` : undefined}
+                        style={{ display: "flex", flexDirection: "column" }}
+                      >
                         <BulleMessage
                           m={{
                             id: m.id,

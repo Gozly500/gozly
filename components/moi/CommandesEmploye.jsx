@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ChargementAnimation from "@/components/moi/ChargementAnimation";
+import Squelettes from "@/components/moi/Squelettes";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
@@ -107,7 +107,7 @@ export default function CommandesEmploye() {
       </div>
 
       {loading ? (
-        <ChargementAnimation />
+        <Squelettes nb={3} haut={96} />
       ) : commandes.length === 0 ? (
         <p className="chat-empty">{t("commandes.aucune")}</p>
       ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ChargementAnimation from "@/components/moi/ChargementAnimation";
+import Squelettes from "@/components/moi/Squelettes";
 import { employeFetch } from "@/lib/employeAuth";
 import RappelNotifications from "@/components/moi/RappelNotifications";
 import { useLangue } from "@/components/moi/LangueContext";
@@ -51,8 +51,8 @@ export default function DemandesEmploye() {
     chargerTout();
   }, []);
 
-  async function chargerTout() {
-    setLoading(true);
+  async function chargerTout(silencieux = false) {
+    if (!silencieux) setLoading(true);
     const [moiRes, congesRes, echangesRes, colleguesRes, quartsRes] = await Promise.all([
       employeFetch("/api/employe-app/moi"),
       employeFetch("/api/employe-app/demandes/conges"),
@@ -91,7 +91,7 @@ export default function DemandesEmploye() {
     setDateFin("");
     setRaison("");
     setFormCongeOpen(false);
-    chargerTout();
+    chargerTout(true);
   }
 
   async function handleSubmitEchange(e) {
@@ -114,7 +114,7 @@ export default function DemandesEmploye() {
     setHeureDebutEch("");
     setHeureFinEch("");
     setFormEchangeOpen(false);
-    chargerTout();
+    chargerTout(true);
   }
 
   async function repondreEchange(id, accepte) {
@@ -130,11 +130,11 @@ export default function DemandesEmploye() {
       setMsg({ type: "err", text: data.error || t("demandes.erreurReponse") });
       return;
     }
-    chargerTout();
+    chargerTout(true);
   }
 
   if (loading) {
-    return <ChargementAnimation />;
+    return <Squelettes nb={4} haut={72} />;
   }
 
   if (!congesActif && !echangesActif) {
@@ -165,7 +165,7 @@ export default function DemandesEmploye() {
           </button>
 
           {formCongeOpen && (
-            <form onSubmit={handleSubmitConge} style={{ marginBottom: "18px" }}>
+            <form className="moi-form-entree" onSubmit={handleSubmitConge} style={{ marginBottom: "18px" }}>
               <div className="field-row">
                 <div className="field">
                   <label>{t("demandes.dateDebut")}</label>
@@ -200,7 +200,7 @@ export default function DemandesEmploye() {
                       })}
                     </div>
                     <div className="admin-row-sub">
-                      <Pictos texte={badgeConge(c.statut, t)} />
+                      <span className="moi-pop" key={c.statut}><Pictos texte={badgeConge(c.statut, t)} /></span>
                       {c.raison && ` · ${c.raison}`}
                     </div>
                   </div>
@@ -218,7 +218,7 @@ export default function DemandesEmploye() {
           </button>
 
           {formEchangeOpen && (
-            <form onSubmit={handleSubmitEchange} style={{ marginBottom: "18px" }}>
+            <form className="moi-form-entree" onSubmit={handleSubmitEchange} style={{ marginBottom: "18px" }}>
               <div className="field">
                 <label>{t("demandes.quelQuart")}</label>
                 <select
@@ -302,7 +302,7 @@ export default function DemandesEmploye() {
                           ·{" "}
                         </>
                       )}
-                      <Pictos texte={badgeEchange(d, t)} />
+                      <span className="moi-pop" key={d.statut + (d.statutEmploye || "")}><Pictos texte={badgeEchange(d, t)} /></span>
                     </div>
                   </div>
                   {d.role === "receveur" && d.statutEmploye === "en_attente" && (

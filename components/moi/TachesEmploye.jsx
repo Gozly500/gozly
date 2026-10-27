@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import ChargementAnimation from "@/components/moi/ChargementAnimation";
+import Squelettes from "@/components/moi/Squelettes";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
@@ -209,7 +209,7 @@ export default function TachesEmploye() {
       </div>
 
       {loading ? (
-        <ChargementAnimation />
+        <Squelettes nb={4} haut={110} />
       ) : taches.length === 0 ? (
         <p className="chat-empty">{t("taches.aucune")}</p>
       ) : (

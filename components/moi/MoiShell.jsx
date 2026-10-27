@@ -85,6 +85,13 @@ function MoiShellReel({ children }) {
     } catch {}
   }, []);
 
+  // iOS n'applique :active (l'effet d'enfoncement des boutons) que si la page écoute le toucher.
+  useEffect(() => {
+    const vide = () => {};
+    document.addEventListener("touchstart", vide, { passive: true });
+    return () => document.removeEventListener("touchstart", vide);
+  }, []);
+
   useEffect(() => {
     const token = getEmployeToken();
     if (!token) {
@@ -161,7 +168,9 @@ function MoiShellReel({ children }) {
 
       <AnnoncesBandeau />
 
-      <main className={`moi-main${estDiscussion ? " moi-main-chat" : ""}`}>{children}</main>
+      <main className={`moi-main${estDiscussion ? " moi-main-chat" : ""}`}>
+        <div key={pathname} className="moi-page-anim">{children}</div>
+      </main>
 
       {menuOuvert && <div className="moi-tabbar-fond" onClick={() => setMenuOuvert(false)} />}
       <nav className={`moi-tabbar${menuOuvert ? " ouvert" : ""}`}>
