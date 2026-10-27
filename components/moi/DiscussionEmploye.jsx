@@ -47,6 +47,7 @@ export default function DiscussionEmploye() {
   const [vue, setVue] = useState("liste"); // "liste" | "thread"
   const messagesRef = useRef(null);
   // Messages déjà là à l'ouverture d'une conversation : seuls ceux arrivés ensuite jouent l'animation d'arrivée.
+  const messagesEnvoyesRef = useRef(new Map()); // id -> heure d'envoi des messages que je viens d'envoyer (voir chargerMessages)
   const messagesConnusRef = useRef({ conversationId: null, ids: new Set() });
   const dernierIdRef = useRef(null);
   const presDuBasRef = useRef(true);
@@ -291,8 +292,21 @@ export default function DiscussionEmploye() {
     // On regarde cette conversation : son dernier message compte comme lu.
     const dernierRecu = nouveaux[nouveaux.length - 1];
     if (dernierRecu && vueRef.current === "thread") marquerLu(conversationId, dernierRecu.createdAt);
-    // Même liste qu'avant : on garde la référence pour ne pas re-rendre.
-    setMessages((actuels) => (JSON.stringify(actuels) === JSON.stringify(nouveaux) ? actuels : nouveaux));
+    setMessages((actuels) => {
+      // Un rechargement parti juste avant l'envoi ne contient pas encore mon message : on garde mes messages en attente
+      // (provisoires, ou envoyés depuis moins de 30 s et pas encore revenus du serveur), sinon ils disparaissent puis réapparaissent.
+      const parId = new Map(actuels.map((x) => [x.id, x]));
+      const fusion = nouveaux.map((n) => (parId.get(n.id)?.cle ? { ...n, cle: parId.get(n.id).cle } : n));
+      const enAttente = actuels.filter(
+        (x) =>
+          x.deMoi &&
+          !fusion.some((n) => n.id === x.id) &&
+          (String(x.id).startsWith("tmp-") || Date.now() - (messagesEnvoyesRef.current.get(x.id) || 0) < 30000)
+      );
+      const liste = enAttente.length ? [...fusion, ...enAttente] : fusion;
+      // Même liste qu'avant : on garde la référence pour ne pas re-rendre.
+      return JSON.stringify(actuels) === JSON.stringify(liste) ? actuels : liste;
+    });
   }
 
   function ouvrirConversation(c) {
@@ -343,6 +357,7 @@ export default function DiscussionEmploye() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.message) throw new Error("envoi");
+      messagesEnvoyesRef.current.set(data.message.id, Date.now());
       setMessages((actuels) => {
         const sansDoublon = actuels.filter((m) => m.id !== data.message.id);
         // `cle` garde l'identité de la bulle : sans ça elle serait recréée et son animation d'arrivée coupée.
