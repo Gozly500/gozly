@@ -7,7 +7,7 @@ import PopupMiseAJour from "@/components/PopupMiseAJour";
 
 // Pop-ups d'ouverture du tableau de bord et de l'app Gestion (écrits dans le panneau admin Gozly) : une seule fois par utilisateur.
 export default function PopupsGestion() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [popups, setPopups] = useState([]);
 
   useEffect(() => {
@@ -41,5 +41,5 @@ export default function PopupsGestion() {
     } catch {}
   }
 
-  return <PopupMiseAJour popups={popups} onVu={vu} bouton={t("Compris")} etiquette={t("Nouveauté")} compteur={(n) => t("{n} autres ensuite", { n: n - 1 })} />;
+  return <PopupMiseAJour popups={popups} langue={lang} onVu={vu} bouton={t("Compris")} etiquette={t("Nouveauté")} compteur={(n) => t("{n} autres ensuite", { n: n - 1 })} />;
 }

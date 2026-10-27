@@ -6,10 +6,15 @@ import TexteAnnonce from "@/components/TexteAnnonce";
 // Affiche le premier de la liste ; `onVu(id)` est appelé au clic sur le bouton (le parent le retire et le marque comme vu ;
 // il peut renvoyer une promesse). Le pop-up peut avoir un bouton de lien (boutonTexte / boutonUrl) : le cliquer compte aussi comme « vu ».
 // Pas de fermeture par un clic à côté : un message vu par accident ne reviendrait plus.
-// apercu : (panneau admin) le lien ne mène nulle part.
-export default function PopupMiseAJour({ popups, onVu, bouton = "Compris", etiquette = "Nouveauté", compteur, apercu = false }) {
-  const popup = popups?.[0];
-  if (!popup) return null;
+// apercu : (panneau admin) le lien ne mène nulle part. langue : "fr" | "en" (version anglaise facultative : titreEn, contenuEn, boutonTexteEn).
+export default function PopupMiseAJour({ popups, onVu, bouton = "Compris", etiquette = "Nouveauté", compteur, apercu = false, langue = "fr" }) {
+  const brut = popups?.[0];
+  if (!brut) return null;
+  // Version anglaise si la personne est en anglais ET qu'elle existe ; sinon la française.
+  const anglais = langue === "en" && !!brut.titreEn;
+  const popup = anglais
+    ? { ...brut, titre: brut.titreEn, contenu: brut.contenuEn || "", boutonTexte: brut.boutonTexteEn || brut.boutonTexte }
+    : brut;
   const nb = popups.length;
   const lien = popup.boutonTexte && popup.boutonUrl ? popup.boutonUrl : null;
   const externe = !!lien && /^https?:\/\//i.test(lien);

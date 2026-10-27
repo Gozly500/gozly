@@ -15,7 +15,7 @@ async function jeton(ref) {
 }
 
 const formatDate = (iso) => new Date(iso).toLocaleString("fr-CA", { dateStyle: "medium", timeStyle: "short" });
-const VIDE = { id: null, titre: "", contenu: "", cibles: ["employes"], activer: false, debutLe: "", finLe: "", boutonTexte: "", boutonUrl: "" };
+const VIDE = { id: null, titre: "", contenu: "", cibles: ["employes"], activer: false, debutLe: "", finLe: "", boutonTexte: "", boutonUrl: "", titreEn: "", contenuEn: "", boutonTexteEn: "", avaitAnglais: false };
 
 // Date ISO <-> champ « datetime-local » (heure locale du navigateur).
 const versChamp = (iso) => {
@@ -46,7 +46,10 @@ export default function PopupsAppSection() {
   const [etat, setEtat] = useState({ chargement: true, popups: [], erreur: "" });
   const [form, setForm] = useState(VIDE);
   const [envoi, setEnvoi] = useState({ occupe: false, ok: false, message: "" });
-  const [apercu, setApercu] = useState(null);
+  const [apercu, setApercu] = useState(null); // { popup, langue }
+  const [langueForm, setLangueForm] = useState("fr"); // onglet du formulaire : "fr" | "en"
+  const en = langueForm === "en";
+  const [cTitre, cContenu, cBouton] = en ? ["titreEn", "contenuEn", "boutonTexteEn"] : ["titre", "contenu", "boutonTexte"];
 
   const charger = useCallback(async () => {
     const token = await jeton(tokenRef);
@@ -105,6 +108,8 @@ export default function PopupsAppSection() {
         finLe: versIso(form.finLe),
         boutonTexte: form.boutonTexte,
         boutonUrl: form.boutonUrl,
+        // Version anglaise : envoyée seulement s'il y en a une (ou s'il y en avait une, pour pouvoir l'effacer).
+        en: form.titreEn || form.contenuEn || form.boutonTexteEn || form.avaitAnglais ? { titre: form.titreEn, contenu: form.contenuEn, boutonTexte: form.boutonTexteEn } : undefined,
       },
       modification ? "Changements enregistrés." : form.activer ? "Pop-up créé et activé : il s'affichera à la prochaine ouverture de l'app." : "Pop-up créé (désactivé). Active-le quand tu es prêt."
     );
@@ -122,7 +127,12 @@ export default function PopupsAppSection() {
       finLe: versChamp(p.fin_le),
       boutonTexte: p.bouton_texte || "",
       boutonUrl: p.bouton_url || "",
+      titreEn: p.titre_en || "",
+      contenuEn: p.contenu_en || "",
+      boutonTexteEn: p.bouton_texte_en || "",
+      avaitAnglais: !!(p.titre_en || p.contenu_en || p.bouton_texte_en),
     });
+    setLangueForm("fr");
     setEnvoi({ occupe: false, ok: false, message: "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -157,13 +167,34 @@ export default function PopupsAppSection() {
       {!etat.erreur && (
         <form onSubmit={enregistrer} style={{ display: "flex", flexDirection: "column", gap: "14px", maxWidth: "660px", marginBottom: "36px" }}>
           <h3 style={{ margin: 0 }}>{form.id ? "Modifier le pop-up" : "Nouveau pop-up"}</h3>
-          <input type="text" value={form.titre} maxLength={120} onChange={(e) => setForm({ ...form, titre: e.target.value })} placeholder="Titre (ex : Gozly a été mis à jour!)" />
+          <div>
+            <div className="annonce-roles">
+              <button type="button" className={!en ? "actif" : ""} aria-pressed={!en} onClick={() => setLangueForm("fr")}>
+                Français
+              </button>
+              <button type="button" className={en ? "actif" : ""} aria-pressed={en} onClick={() => setLangueForm("en")}>
+                English{form.titreEn ? " ✓" : " (facultatif)"}
+              </button>
+            </div>
+            {en && <p className="aide-note" style={{ marginTop: "8px" }}>Les personnes dont l'app est en anglais verront cette version. Sans version anglaise, elles verront la française.</p>}
+          </div>
+          <input
+            type="text"
+            value={form[cTitre]}
+            maxLength={120}
+            onChange={(e) => setForm({ ...form, [cTitre]: e.target.value })}
+            placeholder={en ? "Title (e.g. Gozly has been updated!)" : "Titre (ex : Gozly a été mis à jour!)"}
+          />
           <textarea
-            value={form.contenu}
+            value={form[cContenu]}
             rows={7}
             maxLength={3000}
-            onChange={(e) => setForm({ ...form, contenu: e.target.value })}
-            placeholder={"Texte du message. Tu peux utiliser **gras**, *italique*, [un lien](https://gozly.net) et des listes (une ligne qui commence par « - »). Une ligne vide sépare les paragraphes."}
+            onChange={(e) => setForm({ ...form, [cContenu]: e.target.value })}
+            placeholder={
+              en
+                ? "Message text. You can use **bold**, *italic*, [a link](https://gozly.net) and lists (a line starting with \"- \"). A blank line separates paragraphs."
+                : "Texte du message. Tu peux utiliser **gras**, *italique*, [un lien](https://gozly.net) et des listes (une ligne qui commence par « - »). Une ligne vide sépare les paragraphes."
+            }
           />
 
           <div>
@@ -208,7 +239,7 @@ export default function PopupsAppSection() {
               Bouton de lien (facultatif)
             </div>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-              <input type="text" value={form.boutonTexte} maxLength={40} onChange={(e) => setForm({ ...form, boutonTexte: e.target.value })} placeholder="Texte (ex : Voir les nouveautés)" style={{ flex: "1 1 200px" }} />
+              <input type="text" value={form[cBouton]} maxLength={40} onChange={(e) => setForm({ ...form, [cBouton]: e.target.value })} placeholder={en ? "Text (e.g. See what's new)" : "Texte (ex : Voir les nouveautés)"} style={{ flex: "1 1 200px" }} />
               <input type="text" value={form.boutonUrl} maxLength={500} onChange={(e) => setForm({ ...form, boutonUrl: e.target.value })} placeholder="Adresse (https://... ou /moi/demandes)" style={{ flex: "2 1 260px" }} />
             </div>
           </div>
@@ -228,8 +259,8 @@ export default function PopupsAppSection() {
             <button type="submit" className="btn-small" disabled={envoi.occupe}>
               {envoi.occupe ? "Enregistrement..." : form.id ? "Enregistrer les changements" : form.activer ? "Créer et activer" : "Créer le pop-up"}
             </button>
-            <button type="button" className="admin-icon-btn" disabled={!form.titre.trim()} onClick={() => setApercu({ id: "apercu", titre: form.titre, contenu: form.contenu, boutonTexte: form.boutonTexte, boutonUrl: form.boutonUrl })}>
-              Aperçu
+            <button type="button" className="admin-icon-btn" disabled={!form[cTitre].trim()} onClick={() => setApercu({ langue: langueForm, popup: { id: "apercu", titre: form.titre, contenu: form.contenu, boutonTexte: form.boutonTexte, boutonUrl: form.boutonUrl, titreEn: form.titreEn, contenuEn: form.contenuEn, boutonTexteEn: form.boutonTexteEn } })}>
+              {en ? "Aperçu (English)" : "Aperçu"}
             </button>
             {form.id && (
               <button type="button" className="admin-icon-btn" onClick={() => setForm(VIDE)}>
@@ -250,7 +281,10 @@ export default function PopupsAppSection() {
         {etat.popups.map((p) => (
           <div className="admin-row" key={p.id} style={{ alignItems: "center" }}>
             <div className="admin-row-main" style={{ flex: 1 }}>
-              <div className="admin-row-title">{p.titre}</div>
+              <div className="admin-row-title">
+                {p.titre}
+                {p.titre_en && <span className="admin-status-pill active" style={{ marginLeft: "8px", fontSize: "10.5px" }}>FR + EN</span>}
+              </div>
               <div className="admin-row-sub">
                 {(p.cibles || []).map((c) => (c === "employes" ? "Employés" : "Gestionnaires")).join(" + ")} · {formatDate(p.created_at)}
                 {p.debut_le ? ` · dès le ${formatDate(p.debut_le)}` : ""}
@@ -260,9 +294,18 @@ export default function PopupsAppSection() {
             </div>
             <div className="admin-row-controls">
               <span className={`admin-status-pill ${etatPopup(p).classe}`}>{etatPopup(p).texte}</span>
-              <button type="button" className="admin-icon-btn" onClick={() => setApercu({ id: "apercu", titre: p.titre, contenu: p.contenu, boutonTexte: p.bouton_texte, boutonUrl: p.bouton_url })}>
+              <button type="button" className="admin-icon-btn" onClick={() => setApercu({ langue: "fr", popup: { id: "apercu", titre: p.titre, contenu: p.contenu, boutonTexte: p.bouton_texte, boutonUrl: p.bouton_url } })}>
                 Aperçu
               </button>
+              {p.titre_en && (
+                <button
+                  type="button"
+                  className="admin-icon-btn"
+                  onClick={() => setApercu({ langue: "en", popup: { id: "apercu", titre: p.titre, contenu: p.contenu, boutonTexte: p.bouton_texte, boutonUrl: p.bouton_url, titreEn: p.titre_en, contenuEn: p.contenu_en, boutonTexteEn: p.bouton_texte_en } })}
+                >
+                  Aperçu EN
+                </button>
+              )}
               <button type="button" className="admin-icon-btn" onClick={() => modifier(p)}>
                 Modifier
               </button>
@@ -283,7 +326,7 @@ export default function PopupsAppSection() {
         {etat.popups.length === 0 && !etat.erreur && <div className="admin-empty">Aucun pop-up pour l'instant.</div>}
       </div>
 
-      {apercu && <PopupMiseAJour popups={[apercu]} onVu={() => setApercu(null)} bouton="Fermer l'aperçu" apercu />}
+      {apercu && <PopupMiseAJour popups={[apercu.popup]} langue={apercu.langue} onVu={() => setApercu(null)} bouton={apercu.langue === "en" ? "Close preview" : "Fermer l'aperçu"} etiquette={apercu.langue === "en" ? "What's new" : "Nouveauté"} apercu />}
     </div>
   );
 }
