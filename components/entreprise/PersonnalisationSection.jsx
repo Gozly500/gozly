@@ -6,7 +6,7 @@ import InfoTooltip from "@/components/InfoTooltip";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import ImpressionCommandesBloc from "@/components/entreprise/ImpressionCommandesBloc";
 import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
-import { IconFlecheBas } from "@/components/icons/Pictogrammes";
+import { IconFlecheBas, IconAttention } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
 const OPTIONS_PREMIER_JOUR = [
@@ -104,6 +104,43 @@ const OPTIONS_RETENTION_TEMPERATURE = [
 
 // Liste déroulante maison (voir .forfait-select-*) avec sa bulle d'aide "i".
 // Gère son propre état ouvert/fermé et se ferme au clic à l'extérieur.
+// Avertit, quand le pointage mobile est activé, de ce qui manque pour qu'il fonctionne : la position GPS (adresse) de chaque
+// succursale (ou de l'entreprise si elle n'en a pas), et les horaires d'ouverture (fermeture automatique des pointages oubliés).
+function AvertissementPointageMobile({ actif, lieux }) {
+  const { t } = useT();
+  if (!actif) return null;
+  const { succursales, entrepriseSansPosition, nomEntreprise } = lieux;
+  const sansSuccursale = succursales.length === 0;
+  const sansPosition = sansSuccursale
+    ? entrepriseSansPosition
+      ? [nomEntreprise || t("l'entreprise")]
+      : []
+    : succursales.filter((s) => s.latitude == null || s.longitude == null).map((s) => s.nom);
+  const sansHoraires = sansSuccursale ? [] : succursales.filter((s) => !s.horaires_ouverture).map((s) => s.nom);
+  if (sansPosition.length === 0 && sansHoraires.length === 0) return null;
+
+  return (
+    <div className="param-avertissement" role="alert">
+      <div className="param-avertissement-titre">
+        <IconAttention className="gozly-icon" /> {t("Il manque des informations pour que le pointage mobile fonctionne")}
+      </div>
+      {sansPosition.length > 0 && (
+        <p>
+          {sansSuccursale
+            ? t("Gozly a besoin de l'adresse de l'entreprise pour vérifier la position GPS des employés. Ajoute-la dans Informations.")
+            : t("Gozly a besoin de l'adresse de chaque succursale pour vérifier la position GPS des employés. Sans adresse (position introuvable), l'employé ne peut pas pointer : {noms}. Ajoute-la dans Emplacements.", { noms: sansPosition.join(", ") })}
+        </p>
+      )}
+      {sansHoraires.length > 0 && (
+        <p>
+          {t("Gozly a aussi besoin des horaires d'ouverture pour fermer automatiquement les pointages oubliés. Il en manque pour : {noms}. Ajoute-les dans Emplacements > Horaires.", { noms: sansHoraires.join(", ") })}
+        </p>
+      )}
+      {succursales.length > 1 && <p>{t("Si l'entreprise a plusieurs succursales, chaque employé doit aussi être assigné à la sienne (Employés).")}</p>}
+    </div>
+  );
+}
+
 function ParametreSelect({ label, info, options, value, onChange, disabled }) {
   const { t } = useT();
   const [open, setOpen] = useState(false);
@@ -151,6 +188,9 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [approbationConges, setApprobationConges] = useState("manuelle");
   const [calculPointage, setCalculPointage] = useState("reel");
   const [pointageMobile, setPointageMobile] = useState("desactive");
+  // Ce qu'il faut pour que le pointage mobile marche : une position GPS (adresse) par succursale, et les horaires d'ouverture
+  // (pour fermer automatiquement les pointages oubliés). Sert à avertir quand il en manque.
+  const [lieuxPointage, setLieuxPointage] = useState({ entrepriseSansPosition: false, nomEntreprise: "", succursales: [] });
   const [rappelsTemperature, setRappelsTemperature] = useState("desactive");
   const [rappelsPointage, setRappelsPointage] = useState("desactive");
   const [pushWix, setPushWix] = useState("manuel");
@@ -181,11 +221,24 @@ export default function PersonnalisationSection({ entrepriseId }) {
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles, commandes_vers_taches, wix_lieu_nom, commandes_planning_integre"
+          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles, commandes_vers_taches, wix_lieu_nom, commandes_planning_integre, nom, latitude, longitude"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
     ]);
+    // Succursales (horaires_ouverture vient de supabase/horaires_ouverture.sql : on relit sans si la colonne n'existe pas).
+    let { data: succursalesData, error: erreurSuccursales } = await supabase
+      .from("emplacements")
+      .select("id, nom, latitude, longitude, horaires_ouverture")
+      .eq("entreprise_id", entrepriseId);
+    if (erreurSuccursales) {
+      ({ data: succursalesData } = await supabase.from("emplacements").select("id, nom, latitude, longitude").eq("entreprise_id", entrepriseId));
+    }
+    setLieuxPointage({
+      entrepriseSansPosition: entrepriseData?.latitude == null || entrepriseData?.longitude == null,
+      nomEntreprise: entrepriseData?.nom || "",
+      succursales: succursalesData || [],
+    });
     setModulesActifs((actifsData || []).map((m) => m.module));
     setPremierJourSemaine(entrepriseData?.premier_jour_semaine || "lundi");
     setApprobationEchanges(deriveApprobation(entrepriseData?.echanges_actif, entrepriseData?.auto_approuver_echanges));
@@ -586,6 +639,7 @@ export default function PersonnalisationSection({ entrepriseId }) {
                     disabled={saving}
                   />
                 </div>
+                <AvertissementPointageMobile actif={pointageMobile === "active"} lieux={lieuxPointage} />
               </div>
 
               <div className="param-subgroup">

@@ -3639,3 +3639,9 @@ button.cg-x{width:30px;height:30px;padding:0;flex-shrink:0;display:flex;align-it
   .moi-confettis{display:none;}
   .moi-page :is(.btn-small,.submit-btn,.admin-icon-btn,.moi-tab,.moi-accueil-card,.chat-conv-item,.moi-pointer-flottant):active{scale:1;}
 }
+
+/* Avertissement sous « Pointage mobile » : ce qui manque pour qu'il fonctionne. */
+.param-avertissement{margin-top:14px;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,196,87,0.55);background:rgba(255,196,87,0.1);
+    font-size:13.5px;line-height:1.5;color:var(--text);animation:moiDepliage .35s cubic-bezier(.2,.85,.25,1) backwards;transform-origin:top;}
+.param-avertissement-titre{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:6px;color:#ffd479;}
+.param-avertissement p{margin:6px 0 0;color:var(--text);}
