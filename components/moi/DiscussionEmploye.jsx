@@ -345,7 +345,8 @@ export default function DiscussionEmploye() {
       if (!res.ok || !data.message) throw new Error("envoi");
       setMessages((actuels) => {
         const sansDoublon = actuels.filter((m) => m.id !== data.message.id);
-        return sansDoublon.map((m) => (m.id === idTemporaire ? data.message : m));
+        // `cle` garde l'identité de la bulle : sans ça elle serait recréée et son animation d'arrivée coupée.
+        return sansDoublon.map((m) => (m.id === idTemporaire ? { ...data.message, cle: idTemporaire } : m));
       });
     } catch {
       // Échec : on retire le message et on remet le texte pour réessayer.
@@ -705,7 +706,7 @@ export default function DiscussionEmploye() {
                 };
                 const directe = conversations.find((c) => c.id === activeId)?.type === "directe";
                 // Un message déjà là à l'ouverture ne joue pas l'animation ; les miens seulement tant qu'ils sont provisoires (tmp-).
-                const animeeArrivee = (m) => (m.deMoi ? String(m.id).startsWith("tmp-") : !messagesConnusRef.current.ids.has(m.id));
+                const animeeArrivee = (m) => (m.deMoi ? String(m.cle || m.id).startsWith("tmp-") : !messagesConnusRef.current.ids.has(m.id));
                 return (
                   <>
                     {messages.map((m) =>
@@ -715,7 +716,7 @@ export default function DiscussionEmploye() {
                         </div>
                       ) : (
                       <div
-                        key={m.id}
+                        key={m.cle || m.id}
                         className={animeeArrivee(m) ? `chat-bulle-nouvelle${m.deMoi ? " mine" : ""}` : undefined}
                         style={{ display: "flex", flexDirection: "column" }}
                       >
