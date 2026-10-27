@@ -25,7 +25,7 @@ export default function PopupsEmploye() {
 
   function vu(id) {
     setPopups((l) => l.filter((p) => p.id !== id));
-    employeFetch("/api/employe-app/popups", { method: "POST", body: JSON.stringify({ id }) }).catch(() => {});
+    return employeFetch("/api/employe-app/popups", { method: "POST", body: JSON.stringify({ id }) }).catch(() => {});
   }
 
   return <PopupMiseAJour popups={popups} onVu={vu} bouton={t("popup.compris")} etiquette={t("popup.nouveaute")} compteur={(n) => t("popup.restants", { n: n - 1 })} />;

@@ -15,7 +15,25 @@ async function jeton(ref) {
 }
 
 const formatDate = (iso) => new Date(iso).toLocaleString("fr-CA", { dateStyle: "medium", timeStyle: "short" });
-const VIDE = { id: null, titre: "", contenu: "", cibles: ["employes"], activer: false };
+const VIDE = { id: null, titre: "", contenu: "", cibles: ["employes"], activer: false, debutLe: "", finLe: "", boutonTexte: "", boutonUrl: "" };
+
+// Date ISO <-> champ « datetime-local » (heure locale du navigateur).
+const versChamp = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const z = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;
+};
+const versIso = (champ) => (champ ? new Date(champ).toISOString() : null);
+
+// État affiché d'un pop-up : désactivé / programmé (début dans le futur) / expiré (fin passée) / actif.
+function etatPopup(p) {
+  if (!p.actif) return { classe: "inactive", texte: "Désactivé" };
+  const maintenant = Date.now();
+  if (p.debut_le && new Date(p.debut_le).getTime() > maintenant) return { classe: "inactive", texte: "Programmé" };
+  if (p.fin_le && new Date(p.fin_le).getTime() < maintenant) return { classe: "inactive", texte: "Expiré" };
+  return { classe: "active", texte: "Actif" };
+}
 const CIBLES = [
   { id: "employes", nom: "Employés (app Gozly Équipe)" },
   { id: "gestion", nom: "Gestionnaires (tableau de bord et app Gestion)" },
@@ -76,14 +94,35 @@ export default function PopupsAppSection() {
     e.preventDefault();
     const modification = !!form.id;
     const ok = await action(
-      { action: modification ? "modifier" : "creer", id: form.id, titre: form.titre, contenu: form.contenu, cibles: form.cibles, activer: form.activer },
+      {
+        action: modification ? "modifier" : "creer",
+        id: form.id,
+        titre: form.titre,
+        contenu: form.contenu,
+        cibles: form.cibles,
+        activer: form.activer,
+        debutLe: versIso(form.debutLe),
+        finLe: versIso(form.finLe),
+        boutonTexte: form.boutonTexte,
+        boutonUrl: form.boutonUrl,
+      },
       modification ? "Changements enregistrés." : form.activer ? "Pop-up créé et activé : il s'affichera à la prochaine ouverture de l'app." : "Pop-up créé (désactivé). Active-le quand tu es prêt."
     );
     if (ok) setForm(VIDE);
   }
 
   function modifier(p) {
-    setForm({ id: p.id, titre: p.titre, contenu: p.contenu, cibles: p.cibles || ["employes"], activer: false });
+    setForm({
+      id: p.id,
+      titre: p.titre,
+      contenu: p.contenu,
+      cibles: p.cibles || ["employes"],
+      activer: false,
+      debutLe: versChamp(p.debut_le),
+      finLe: versChamp(p.fin_le),
+      boutonTexte: p.bouton_texte || "",
+      boutonUrl: p.bouton_url || "",
+    });
     setEnvoi({ occupe: false, ok: false, message: "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -143,6 +182,37 @@ export default function PopupsAppSection() {
             </div>
           </div>
 
+          <div>
+            <div className="admin-row-sub" style={{ marginBottom: "6px" }}>
+              Période d'affichage (facultatif : sans dates, il s'affiche dès qu'il est actif et jusqu'à ce que tu le désactives)
+            </div>
+            <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "13px", color: "var(--text-dim)" }}>
+                Début
+                <input type="datetime-local" value={form.debutLe} onChange={(e) => setForm({ ...form, debutLe: e.target.value })} />
+              </label>
+              <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "13px", color: "var(--text-dim)" }}>
+                Fin
+                <input type="datetime-local" value={form.finLe} onChange={(e) => setForm({ ...form, finLe: e.target.value })} />
+              </label>
+              {(form.debutLe || form.finLe) && (
+                <button type="button" className="admin-icon-btn" style={{ alignSelf: "flex-end" }} onClick={() => setForm({ ...form, debutLe: "", finLe: "" })}>
+                  Effacer les dates
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div className="admin-row-sub" style={{ marginBottom: "6px" }}>
+              Bouton de lien (facultatif)
+            </div>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <input type="text" value={form.boutonTexte} maxLength={40} onChange={(e) => setForm({ ...form, boutonTexte: e.target.value })} placeholder="Texte (ex : Voir les nouveautés)" style={{ flex: "1 1 200px" }} />
+              <input type="text" value={form.boutonUrl} maxLength={500} onChange={(e) => setForm({ ...form, boutonUrl: e.target.value })} placeholder="Adresse (https://... ou /moi/demandes)" style={{ flex: "2 1 260px" }} />
+            </div>
+          </div>
+
           {!form.id && (
             <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}>
               <span className="switch">
@@ -158,7 +228,7 @@ export default function PopupsAppSection() {
             <button type="submit" className="btn-small" disabled={envoi.occupe}>
               {envoi.occupe ? "Enregistrement..." : form.id ? "Enregistrer les changements" : form.activer ? "Créer et activer" : "Créer le pop-up"}
             </button>
-            <button type="button" className="admin-icon-btn" disabled={!form.titre.trim()} onClick={() => setApercu({ id: "apercu", titre: form.titre, contenu: form.contenu })}>
+            <button type="button" className="admin-icon-btn" disabled={!form.titre.trim()} onClick={() => setApercu({ id: "apercu", titre: form.titre, contenu: form.contenu, boutonTexte: form.boutonTexte, boutonUrl: form.boutonUrl })}>
               Aperçu
             </button>
             {form.id && (
@@ -183,12 +253,14 @@ export default function PopupsAppSection() {
               <div className="admin-row-title">{p.titre}</div>
               <div className="admin-row-sub">
                 {(p.cibles || []).map((c) => (c === "employes" ? "Employés" : "Gestionnaires")).join(" + ")} · {formatDate(p.created_at)}
+                {p.debut_le ? ` · dès le ${formatDate(p.debut_le)}` : ""}
+                {p.fin_le ? ` · jusqu'au ${formatDate(p.fin_le)}` : ""}
                 {p.actif ? ` · vu par ${p.vus} personne(s)` : ""}
               </div>
             </div>
             <div className="admin-row-controls">
-              <span className={`admin-status-pill ${p.actif ? "active" : "inactive"}`}>{p.actif ? "Actif" : "Désactivé"}</span>
-              <button type="button" className="admin-icon-btn" onClick={() => setApercu({ id: "apercu", titre: p.titre, contenu: p.contenu })}>
+              <span className={`admin-status-pill ${etatPopup(p).classe}`}>{etatPopup(p).texte}</span>
+              <button type="button" className="admin-icon-btn" onClick={() => setApercu({ id: "apercu", titre: p.titre, contenu: p.contenu, boutonTexte: p.bouton_texte, boutonUrl: p.bouton_url })}>
                 Aperçu
               </button>
               <button type="button" className="admin-icon-btn" onClick={() => modifier(p)}>
@@ -211,7 +283,7 @@ export default function PopupsAppSection() {
         {etat.popups.length === 0 && !etat.erreur && <div className="admin-empty">Aucun pop-up pour l'instant.</div>}
       </div>
 
-      {apercu && <PopupMiseAJour popups={[apercu]} onVu={() => setApercu(null)} bouton="Fermer l'aperçu" />}
+      {apercu && <PopupMiseAJour popups={[apercu]} onVu={() => setApercu(null)} bouton="Fermer l'aperçu" apercu />}
     </div>
   );
 }

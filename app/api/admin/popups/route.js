@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminServer";
 import { db } from "@/lib/annoncesSite";
-import { CIBLES_POPUP, LIMITES_POPUP } from "@/lib/popupsServer";
+import { CIBLES_POPUP, LIMITES_POPUP, lienValide } from "@/lib/popupsServer";
 
 export const dynamic = "force-dynamic";
 
-const messageTable = (error) =>
-  /popups_app|popups_vus/.test(error?.message || "") ? "La base n'est pas prête (SQL popups_app.sql à exécuter)." : error?.message || "Erreur.";
+const messageTable = (error) => {
+  const m = error?.message || "";
+  if (/debut_le|fin_le|bouton_texte|bouton_url/.test(m)) return "La base n'est pas prête pour les dates et le bouton (SQL popups_app_dates_bouton.sql à exécuter).";
+  return /popups_app|popups_vus/.test(m) ? "La base n'est pas prête (SQL popups_app.sql à exécuter)." : m || "Erreur.";
+};
 
 // GET : tous les pop-ups (actifs et brouillons) avec le nombre de personnes qui les ont déjà vus.
 export async function GET(request) {
@@ -58,10 +61,25 @@ export async function POST(request) {
   if (contenu.length > LIMITES_POPUP.contenu) return NextResponse.json({ error: `Texte trop long (maximum ${LIMITES_POPUP.contenu} caractères).` }, { status: 400 });
   if (cibles.length === 0) return NextResponse.json({ error: "Choisis qui doit voir ce pop-up." }, { status: 400 });
 
+  // Période d'affichage (facultative) et bouton de lien (facultatif : texte ET adresse, ou rien).
+  const date = (v) => (v ? new Date(v) : null);
+  const debut = date(c.debutLe);
+  const fin = date(c.finLe);
+  if ((debut && isNaN(debut)) || (fin && isNaN(fin))) return NextResponse.json({ error: "Date invalide." }, { status: 400 });
+  if (debut && fin && fin <= debut) return NextResponse.json({ error: "La date de fin doit être après la date de début." }, { status: 400 });
+  const boutonTexte = String(c.boutonTexte || "").trim();
+  const boutonUrl = String(c.boutonUrl || "").trim();
+  if (!!boutonTexte !== !!boutonUrl) return NextResponse.json({ error: "Le bouton a besoin d'un texte ET d'une adresse (ou laisse les deux vides)." }, { status: 400 });
+  if (boutonTexte.length > LIMITES_POPUP.boutonTexte) return NextResponse.json({ error: `Texte du bouton trop long (maximum ${LIMITES_POPUP.boutonTexte} caractères).` }, { status: 400 });
+  if (boutonUrl && (boutonUrl.length > LIMITES_POPUP.boutonUrl || !lienValide(boutonUrl))) {
+    return NextResponse.json({ error: "Adresse du bouton invalide : elle doit commencer par https:// (ou par / pour une page de l'app)." }, { status: 400 });
+  }
+  const periodeEtBouton = { debut_le: debut ? debut.toISOString() : null, fin_le: fin ? fin.toISOString() : null, bouton_texte: boutonTexte || null, bouton_url: boutonUrl || null };
+
   if (c.action === "modifier") {
     if (!c.id) return NextResponse.json({ error: "id manquant." }, { status: 400 });
-    return fin((await service.from("popups_app").update({ titre, contenu, cibles, maj: new Date().toISOString() }).eq("id", c.id)).error);
+    return fin((await service.from("popups_app").update({ titre, contenu, cibles, ...periodeEtBouton, maj: new Date().toISOString() }).eq("id", c.id)).error);
   }
   const actif = !!c.activer;
-  return fin((await service.from("popups_app").insert({ titre, contenu, cibles, actif, active_le: actif ? new Date().toISOString() : null, cree_par: user?.email || null })).error);
+  return fin((await service.from("popups_app").insert({ titre, contenu, cibles, ...periodeEtBouton, actif, active_le: actif ? new Date().toISOString() : null, cree_par: user?.email || null })).error);
 }
