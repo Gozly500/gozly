@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { SERVICES_PAIE } from "@/lib/servicesPaie";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
+import DiagnosticWixModal from "@/components/inventaire/DiagnosticWixModal";
 import { useT } from "@/components/LangProvider";
 
 // Regroupe les intégrations par catégorie pour les retrouver plus
@@ -29,6 +30,8 @@ async function authHeaders() {
 }
 
 export default function IntegrationsSection({ entrepriseId }) {
+  const [supportWixOuvert, setSupportWixOuvert] = useState(false); // « Outils de support » de Wix (caché tant qu'on n'en a pas besoin)
+  const [diagWixOuvert, setDiagWixOuvert] = useState(false);
   const { t } = useT();
   const [categoriesOuvertes, setCategoriesOuvertes] = useState({});
 
@@ -281,6 +284,24 @@ export default function IntegrationsSection({ entrepriseId }) {
               <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
                 {busy ? "..." : t("Déconnecter")}
               </button>
+
+              <div style={{ marginTop: "18px" }}>
+                <button type="button" className="outils-support-toggle" aria-expanded={supportWixOuvert} onClick={() => setSupportWixOuvert((v) => !v)}>
+                  {t("Outils de support")}
+                  <span className={`param-nav-fleche${supportWixOuvert ? " ouvert" : ""}`}>
+                    <IconFlecheBas className="gozly-icon-inline" />
+                  </span>
+                </button>
+                {supportWixOuvert && (
+                  <div className="outils-support-corps">
+                    <p className="section-hint">{t("À utiliser seulement si un produit Wix manque ou si la synchronisation se comporte bizarrement, de préférence avec le support Gozly.")}</p>
+                    <button type="button" className="admin-icon-btn" onClick={() => setDiagWixOuvert(true)}>
+                      {t("Diagnostic Wix")}
+                    </button>
+                  </div>
+                )}
+              </div>
+              {diagWixOuvert && <DiagnosticWixModal entrepriseId={entrepriseId} onClose={() => setDiagWixOuvert(false)} />}
             </>
           )}
 

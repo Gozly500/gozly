@@ -3679,3 +3679,37 @@ button.cg-x{width:30px;height:30px;padding:0;flex-shrink:0;display:flex;align-it
   .param-nav-fleche{display:none;}
 }
 @media (prefers-reduced-motion:reduce){.param-nav-sous,.param-nav-fleche{transition:none;}}
+
+/* Inventaire > Produits : menu d'actions d'une connexion, cases à cocher et barre de sélection. */
+.menu-actions{position:relative;display:inline-block;}
+.menu-actions-fleche{display:inline-flex;margin-left:6px;vertical-align:middle;}
+.menu-actions-liste{position:absolute;top:calc(100% + 8px);min-width:290px;max-width:min(340px,86vw);z-index:70;padding:6px;border-radius:16px;
+    background:var(--pop);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(var(--w),0.16);
+    box-shadow:0 22px 44px -14px rgba(0,0,0,0.6);animation:menuActionsEntree .2s cubic-bezier(.2,.85,.25,1);}
+.menu-actions-liste.droite{right:0;transform-origin:top right;}
+.menu-actions-liste.gauche{left:0;transform-origin:top left;}
+@keyframes menuActionsEntree{from{opacity:0;transform:translateY(-6px) scale(.97);}to{opacity:1;transform:none;}}
+.menu-actions-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 12px;border:0;border-radius:11px;background:none;
+    color:var(--fg);text-align:left;cursor:pointer;font:inherit;transition:background .15s ease;}
+.menu-actions-item:hover:not(:disabled){background:rgba(var(--w),0.09);}
+.menu-actions-item:disabled{opacity:.45;cursor:default;}
+.menu-actions-libelle{font-size:14px;font-weight:600;}
+.menu-actions-detail{font-size:12px;color:var(--text-dim);font-weight:400;line-height:1.35;}
+.menu-actions-item.danger .menu-actions-libelle{color:#ff9494;}
+.menu-actions-item.danger:hover:not(:disabled){background:rgba(255,80,80,0.13);}
+.menu-actions-sep{height:1px;margin:5px 6px;background:rgba(var(--w),0.12);}
+
+.case-selection{margin-right:2px;}
+input[type="checkbox"].case-selection:indeterminate:not(:checked){background:var(--violet);border-color:var(--violet);}
+input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content:'';position:absolute;left:4px;top:8px;width:10px;height:2px;border:0;background:#fff;transform:none;border-radius:1px;}
+.produits-barre-selection{position:sticky;top:12px;z-index:30;display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:900px;margin:0 0 16px;padding:10px 14px;
+    border-radius:16px;background:var(--pop);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(var(--w),0.2);
+    box-shadow:0 14px 30px -12px rgba(0,0,0,0.55);animation:menuActionsEntree .2s cubic-bezier(.2,.85,.25,1);}
+.produits-barre-selection strong{margin-right:auto;font-size:14px;}
+
+/* Outils de support (Paramètres > Intégrations) : discrets, fermés par défaut. */
+.outils-support-toggle{display:inline-flex;align-items:center;gap:6px;padding:4px 0;border:0;background:none;color:var(--text-dim);font-size:12.5px;cursor:pointer;}
+.outils-support-toggle:hover{color:var(--fg);}
+.outils-support-corps{margin-top:8px;padding:12px 14px;border-radius:14px;border:1px dashed rgba(var(--w),0.2);}
+.outils-support-corps .section-hint{margin:0 0 10px;}
+.case-selection + .admin-row-main{margin-right:auto;margin-left:8px;}

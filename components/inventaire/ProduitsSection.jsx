@@ -4,7 +4,8 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
-import { IconAttention, IconFlecheBas, IconFlecheDroite, IconLoupe } from "@/components/icons/Pictogrammes";
+import { IconAttention, IconFlecheBas, IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import MenuActions from "@/components/MenuActions";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 import ListeReordonnable from "@/components/ListeReordonnable";
@@ -103,16 +104,14 @@ export default function ProduitsSection({ entrepriseId }) {
   const [saving, setSaving] = useState(false);
   const [reorgId, setReorgId] = useState(null); // catégorie (ou « sans ») dont on réorganise les produits
   const [erreurOrdre, setErreurOrdre] = useState("");
+  const [selection, setSelection] = useState(() => new Set()); // ids des produits cochés
+  const [actionEnCours, setActionEnCours] = useState(false);
 
   // Catégories de produits. categoriesPretes = la table existe (inventaire_categories.sql exécuté).
   const [categories, setCategories] = useState([]);
   const [categoriesPretes, setCategoriesPretes] = useState(false);
   const [filtreCategorie, setFiltreCategorie] = useState("toutes"); // "toutes" | "sans" | id
   const [recherche, setRecherche] = useState("");
-  const [diagOuvert, setDiagOuvert] = useState(false);
-  const [diagTerme, setDiagTerme] = useState("");
-  const [diagResultat, setDiagResultat] = useState(null);
-  const [diagBusy, setDiagBusy] = useState(false);
   const [groupesOuverts, setGroupesOuverts] = useState(() => new Set()); // produits à variantes dépliés
 
   useEffect(() => {
@@ -172,24 +171,6 @@ export default function ProduitsSection({ entrepriseId }) {
       setSyncMsg({ type: "err", text: t("La synchronisation a échoué.") });
     }
     setSyncing(false);
-  }
-
-  // Diagnostic : ce que Wix répond réellement pour les produits (pour comprendre ceux qui manquent).
-  async function lancerDiagnostic() {
-    setDiagBusy(true);
-    setDiagResultat(null);
-    try {
-      const res = await fetch("/api/inventaire/diagnostic-wix", {
-        method: "POST",
-        headers: await authHeaders(),
-        body: JSON.stringify({ entrepriseId, terme: diagTerme }),
-      });
-      const data = await res.json();
-      setDiagResultat(res.ok ? data.diagnostic : { erreur: data.error, detail: data.detail });
-    } catch {
-      setDiagResultat({ erreur: t("Le diagnostic a échoué.") });
-    }
-    setDiagBusy(false);
   }
 
   async function chargerCategories() {
@@ -290,6 +271,72 @@ export default function ProduitsSection({ entrepriseId }) {
     load();
   }
 
+  // ---------- Sélection multiple ----------
+  function cocher(ids, coche) {
+    setSelection((prev) => {
+      const suivant = new Set(prev);
+      ids.forEach((id) => (coche ? suivant.add(id) : suivant.delete(id)));
+      return suivant;
+    });
+  }
+
+  // Les requêtes .in() passent par l'adresse : on les découpe par paquets de 50.
+  async function parPaquets(ids, operation) {
+    for (let i = 0; i < ids.length; i += 50) {
+      const { error } = await operation(ids.slice(i, i + 50));
+      if (error) return error;
+    }
+    return null;
+  }
+
+  async function retirerSelection() {
+    const ids = produits.filter((p) => selection.has(p.id)).map((p) => p.id);
+    if (ids.length === 0) return;
+    const avecWix = produits.some((p) => selection.has(p.id) && p.source === "wix");
+    const message = t("Retirer {n} produit(s) ? Cette action est irréversible.", { n: ids.length }) + (avecWix ? " " + t("Les produits venus de Wix reviendront à la prochaine synchronisation Wix.") : "");
+    if (!window.confirm(message)) return;
+    setActionEnCours(true);
+    setSyncMsg(null);
+    const erreur = await parPaquets(ids, (lot) => supabase.from("produits_inventaire").delete().in("id", lot));
+    setActionEnCours(false);
+    setSelection(new Set());
+    setSyncMsg(erreur ? { type: "err", text: t("L'opération a échoué.") } : { type: "ok", text: t("{n} produit(s) retiré(s).", { n: ids.length }) });
+    load();
+  }
+
+  async function deplacerSelection(categorieId) {
+    const ids = produits.filter((p) => selection.has(p.id)).map((p) => p.id);
+    if (ids.length === 0) return;
+    setActionEnCours(true);
+    setSyncMsg(null);
+    const erreur = await parPaquets(ids, (lot) => supabase.from("produits_inventaire").update({ categorie_id: categorieId || null }).in("id", lot));
+    setActionEnCours(false);
+    setSelection(new Set());
+    setSyncMsg(erreur ? { type: "err", text: t("L'opération a échoué.") } : { type: "ok", text: t("{n} produit(s) déplacé(s).", { n: ids.length }) });
+    load();
+  }
+
+  // ---------- Actions de la connexion Wix (menu « Wix ») ----------
+  async function detacherWix() {
+    const n = produits.filter((p) => p.source === "wix").length;
+    if (n === 0) return;
+    if (!window.confirm(t("Détacher {n} produit(s) de Wix ? Ils restent dans Gozly mais ne sont plus liés à Wix (leur quantité ne se synchronise plus). Si tu synchronises Wix ensuite, les produits de Wix seront recréés en double.", { n }))) return;
+    setSyncMsg(null);
+    const { error } = await supabase.from("produits_inventaire").update({ source: null, source_id: null }).eq("entreprise_id", entrepriseId).eq("source", "wix");
+    setSyncMsg(error ? { type: "err", text: t("L'opération a échoué.") } : { type: "ok", text: t("{n} produit(s) détaché(s) de Wix.", { n }) });
+    load();
+  }
+
+  async function retirerProduitsWix() {
+    const n = produits.filter((p) => p.source === "wix").length;
+    if (n === 0) return;
+    if (!window.confirm(t("Retirer les {n} produit(s) venus de Wix ? Ils seront supprimés de Gozly (pas de Wix) et reviendront si tu synchronises Wix de nouveau. Les catégories ne sont pas supprimées.", { n }))) return;
+    setSyncMsg(null);
+    const { error } = await supabase.from("produits_inventaire").delete().eq("entreprise_id", entrepriseId).eq("source", "wix");
+    setSyncMsg(error ? { type: "err", text: t("L'opération a échoué.") } : { type: "ok", text: t("{n} produit(s) venu(s) de Wix retiré(s).", { n }) });
+    load();
+  }
+
   async function handleDelete(id) {
     await supabase.from("produits_inventaire").delete().eq("id", id);
     load();
@@ -298,6 +345,8 @@ export default function ProduitsSection({ entrepriseId }) {
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
+
+  const nbWix = produits.filter((p) => p.source === "wix").length;
 
   // ---------- Recherche + affichage groupé par catégorie ----------
   const mots = normaliser(recherche).split(/s+/).filter(Boolean);
@@ -349,6 +398,13 @@ export default function ProduitsSection({ entrepriseId }) {
     const titre = variante ? separerNom(p.nom).variante || "Standard" : p.nom;
     return (
       <div className={`admin-row${variante ? " inventaire-variante" : ""}`} key={p.id}>
+        <input
+          type="checkbox"
+          className="case-selection"
+          checked={selection.has(p.id)}
+          onChange={(e) => cocher([p.id], e.target.checked)}
+          aria-label={t("Sélectionner ce produit")}
+        />
         <div className="admin-row-main">
           <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
             {!variante && <span className="inventaire-chevron" />}{titre} {p.source === "wix" && <IconIntegration className="gozly-icon" />} {enAlerte && <IconAttention className="gozly-icon" />}
@@ -382,6 +438,8 @@ export default function ProduitsSection({ entrepriseId }) {
     const total = e.produits.reduce((somme, p) => somme + (Number(p.quantite) || 0), 0);
     const enAlerte = e.produits.some((p) => p.quantite <= p.seuil_alerte);
     const cle = e.base.toLowerCase();
+    const idsGroupe = e.produits.map((p) => p.id);
+    const nbCoches = idsGroupe.filter((id) => selection.has(id)).length;
     // Replié par défaut ; une recherche déplie tout pour montrer les variantes trouvées.
     const ouvert = groupesOuverts.has(cle) || mots.length > 0;
     return (
@@ -398,6 +456,17 @@ export default function ProduitsSection({ entrepriseId }) {
             })
           }
         >
+          <input
+            type="checkbox"
+            className="case-selection"
+            ref={(el) => {
+              if (el) el.indeterminate = nbCoches > 0 && nbCoches < idsGroupe.length;
+            }}
+            checked={nbCoches === idsGroupe.length}
+            onClick={(ev) => ev.stopPropagation()}
+            onChange={(ev) => cocher(idsGroupe, ev.target.checked)}
+            aria-label={t("Sélectionner ce produit")}
+          />
           <div className="admin-row-main">
             <div className="admin-row-title" style={enAlerte ? { color: "#ff9494" } : undefined}>
               <span className="inventaire-chevron">{ouvert ? <IconFlecheBas className="gozly-icon-inline" /> : <IconFlecheDroite className="gozly-icon-inline" />}</span> {e.base} {enAlerte && <IconAttention className="gozly-icon" />}
@@ -442,15 +511,31 @@ export default function ProduitsSection({ entrepriseId }) {
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          {wixConnecte && (
-            <button className="admin-icon-btn" onClick={handleSyncWix} disabled={syncing}>
-              {syncing ? t("Synchronisation...") : <><IconIntegration className="gozly-icon" />{" "}{t("Synchroniser Wix")}</>}
-            </button>
-          )}
-          {wixConnecte && (
-            <button className="admin-icon-btn" onClick={() => setDiagOuvert(true)}>
-              <IconLoupe className="gozly-icon" />{" "}{t("Diagnostic Wix")}
-            </button>
+          {(wixConnecte || nbWix > 0) && (
+            <MenuActions
+              libelle="Wix"
+              icone={<IconIntegration className="gozly-icon" />}
+              actions={[
+                ...(wixConnecte
+                  ? [{ id: "sync", libelle: syncing ? t("Synchronisation...") : t("Synchroniser"), detail: t("Récupère les produits et les catégories de Wix"), desactive: syncing, onClick: handleSyncWix }]
+                  : []),
+                {
+                  id: "detacher",
+                  libelle: t("Détacher de Wix"),
+                  detail: nbWix ? t("{n} produit(s) restent dans Gozly, sans lien avec Wix", { n: nbWix }) : t("Aucun produit lié à Wix"),
+                  desactive: nbWix === 0,
+                  onClick: detacherWix,
+                },
+                {
+                  id: "retirer",
+                  libelle: t("Retirer tous les produits Wix"),
+                  detail: nbWix ? t("Supprime de Gozly les {n} produit(s) venus de Wix", { n: nbWix }) : t("Aucun produit lié à Wix"),
+                  danger: true,
+                  desactive: nbWix === 0,
+                  onClick: retirerProduitsWix,
+                },
+              ]}
+            />
           )}
           <button className="submit-btn" onClick={openAdd}>
             {t("+ Ajouter un produit")}
@@ -477,6 +562,28 @@ export default function ProduitsSection({ entrepriseId }) {
         </div>
       )}
 
+      {selection.size > 0 && (
+        <div className="produits-barre-selection">
+          <strong>{t("{n} sélectionné(s)", { n: selection.size })}</strong>
+          <button type="button" className="admin-icon-btn" onClick={() => cocher(groupes.flatMap((g) => g.produits.map((p) => p.id)), true)}>
+            {t("Tout sélectionner")}
+          </button>
+          <button type="button" className="admin-icon-btn" onClick={() => setSelection(new Set())}>
+            {t("Annuler")}
+          </button>
+          {categoriesPretes && categories.length > 0 && (
+            <MenuActions
+              libelle={t("Déplacer vers une catégorie")}
+              disabled={actionEnCours}
+              actions={[...categories.map((c) => ({ id: c.id, libelle: c.nom, onClick: () => deplacerSelection(c.id) })), { separateur: true }, { id: "sans", libelle: t("Sans catégorie"), onClick: () => deplacerSelection(null) }]}
+            />
+          )}
+          <button type="button" className="admin-icon-btn danger" onClick={retirerSelection} disabled={actionEnCours}>
+            {actionEnCours ? "..." : t("Retirer")}
+          </button>
+        </div>
+      )}
+
       {erreurOrdre && <p className="settings-msg err">{erreurOrdre}</p>}
 
       {produits.length === 0 ? (
@@ -498,6 +605,21 @@ export default function ProduitsSection({ entrepriseId }) {
                 <>
                   {(g.nom || peutReorg) && (
                     <div className="inventaire-categorie-titre" style={{ display: "flex", alignItems: "center", gap: "10px", maxWidth: "900px" }}>
+                      {!enReorg && (
+                        <input
+                          type="checkbox"
+                          className="case-selection"
+                          ref={(el) => {
+                            if (el) {
+                              const n = g.produits.filter((p) => selection.has(p.id)).length;
+                              el.indeterminate = n > 0 && n < g.produits.length;
+                            }
+                          }}
+                          checked={g.produits.length > 0 && g.produits.every((p) => selection.has(p.id))}
+                          onChange={(e) => cocher(g.produits.map((p) => p.id), e.target.checked)}
+                          aria-label={t("Sélectionner tous les produits de cette catégorie")}
+                        />
+                      )}
                       <span style={{ color: "var(--fg)", fontWeight: 700, fontSize: "15px" }}>
                         {g.nom} {g.nom && <span style={{ color: "var(--text-dim)", fontWeight: 400, fontSize: "13px" }}>({g.produits.length})</span>}
                       </span>
@@ -545,29 +667,6 @@ export default function ProduitsSection({ entrepriseId }) {
             })()}
           </div>
         ))
-      )}
-
-      {diagOuvert && (
-        <div className="modal-overlay" onClick={() => setDiagOuvert(false)}>
-          <div className="modal-card" style={{ maxWidth: "620px" }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <h3>{t("Diagnostic Wix")}</h3>
-              <button className="admin-icon-btn" onClick={() => setDiagOuvert(false)}>
-                {t("Fermer")}
-              </button>
-            </div>
-            <p className="section-hint">
-              {t("Montre ce que Wix répond pour tes produits. Tape le début du nom d'un produit qui manque (ex: Lasagne) pour voir si Wix le renvoie.")}
-            </p>
-            <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-              <input type="text" value={diagTerme} onChange={(e) => setDiagTerme(e.target.value)} placeholder={t("Début du nom (optionnel)")} style={{ flex: 1, minWidth: 0, margin: 0 }} />
-              <button className="submit-btn" onClick={lancerDiagnostic} disabled={diagBusy}>
-                {diagBusy ? "..." : t("Lancer")}
-              </button>
-            </div>
-            {diagResultat && <pre className="diag-resultat">{JSON.stringify(diagResultat, null, 2)}</pre>}
-          </div>
-        </div>
       )}
 
       {modalOpen && (
