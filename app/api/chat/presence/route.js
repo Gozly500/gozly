@@ -45,6 +45,7 @@ export async function POST(request) {
     monNom: profil?.full_name || "Administration",
     ecrit: typeof ecrit === "boolean" ? ecrit : undefined,
     lu: !!lu,
+    avecAvatars: true,
   });
   return NextResponse.json(etat);
 }
