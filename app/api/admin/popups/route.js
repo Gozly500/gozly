@@ -63,10 +63,10 @@ export async function POST(request) {
 
   // Période d'affichage (facultative) et bouton de lien (facultatif : texte ET adresse, ou rien).
   const date = (v) => (v ? new Date(v) : null);
-  const debut = date(c.debutLe);
-  const fin = date(c.finLe);
-  if ((debut && isNaN(debut)) || (fin && isNaN(fin))) return NextResponse.json({ error: "Date invalide." }, { status: 400 });
-  if (debut && fin && fin <= debut) return NextResponse.json({ error: "La date de fin doit être après la date de début." }, { status: 400 });
+  const dateDebut = date(c.debutLe);
+  const dateFin = date(c.finLe);
+  if ((dateDebut && isNaN(dateDebut)) || (dateFin && isNaN(dateFin))) return NextResponse.json({ error: "Date invalide." }, { status: 400 });
+  if (dateDebut && dateFin && dateFin <= dateDebut) return NextResponse.json({ error: "La date de fin doit être après la date de début." }, { status: 400 });
   const boutonTexte = String(c.boutonTexte || "").trim();
   const boutonUrl = String(c.boutonUrl || "").trim();
   if (!!boutonTexte !== !!boutonUrl) return NextResponse.json({ error: "Le bouton a besoin d'un texte ET d'une adresse (ou laisse les deux vides)." }, { status: 400 });
@@ -74,7 +74,7 @@ export async function POST(request) {
   if (boutonUrl && (boutonUrl.length > LIMITES_POPUP.boutonUrl || !lienValide(boutonUrl))) {
     return NextResponse.json({ error: "Adresse du bouton invalide : elle doit commencer par https:// (ou par / pour une page de l'app)." }, { status: 400 });
   }
-  const periodeEtBouton = { debut_le: debut ? debut.toISOString() : null, fin_le: fin ? fin.toISOString() : null, bouton_texte: boutonTexte || null, bouton_url: boutonUrl || null };
+  const periodeEtBouton = { debut_le: dateDebut ? dateDebut.toISOString() : null, fin_le: dateFin ? dateFin.toISOString() : null, bouton_texte: boutonTexte || null, bouton_url: boutonUrl || null };
 
   if (c.action === "modifier") {
     if (!c.id) return NextResponse.json({ error: "id manquant." }, { status: 400 });
