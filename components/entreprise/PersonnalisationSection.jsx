@@ -180,6 +180,142 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
   );
 }
 
+const FREQUENCES_EXPORT_NUAGE = [
+  { id: "aucun", label: "Désactivé" },
+  { id: "hebdo", label: "Chaque semaine" },
+  { id: "mensuel", label: "Chaque mois" },
+];
+
+const NOMS_STOCKAGE = { microsoft: "OneDrive", google: "Google Drive" };
+
+// Export automatique des fiches de température vers le OneDrive / Google Drive connecté dans Paramètres > Intégrations.
+// La connexion se fait dans Intégrations ; ce qu'on y dépose (et à quelle fréquence) se choisit ici, dans le module.
+function ExportsNuageTemperature({ entrepriseId }) {
+  const { t } = useT();
+  const [connexions, setConnexions] = useState(null);
+  const [occupe, setOccupe] = useState(null);
+  const [msg, setMsg] = useState(null);
+
+  async function entetes() {
+    const { data } = await supabase.auth.getSession();
+    return { "Content-Type": "application/json", Authorization: `Bearer ${data?.session?.access_token}` };
+  }
+
+  async function charger() {
+    try {
+      const res = await fetch(`/api/stockage/statut?entrepriseId=${entrepriseId}`, { headers: await entetes() });
+      const data = await res.json();
+      setConnexions(data.connexions || {});
+    } catch {
+      setConnexions({});
+    }
+  }
+
+  useEffect(() => {
+    if (entrepriseId) charger();
+  }, [entrepriseId]);
+
+  async function changerFrequence(fournisseur, frequence) {
+    const avant = connexions[fournisseur].exportTemperatures;
+    setConnexions((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], exportTemperatures: frequence } }));
+    setMsg(null);
+    try {
+      const res = await fetch("/api/stockage/reglages", {
+        method: "POST",
+        headers: await entetes(),
+        body: JSON.stringify({ entrepriseId, fournisseur, exportTemperatures: frequence }),
+      });
+      if (!res.ok) throw new Error();
+      setMsg({ type: "ok", text: t("Préférence enregistrée.") });
+    } catch {
+      setConnexions((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], exportTemperatures: avant } }));
+      setMsg({ type: "err", text: t("L'enregistrement a échoué.") });
+    }
+  }
+
+  async function exporterMaintenant(fournisseur) {
+    const nom = NOMS_STOCKAGE[fournisseur];
+    setOccupe(fournisseur);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/stockage/exporter-maintenant", {
+        method: "POST",
+        headers: await entetes(),
+        body: JSON.stringify({ entrepriseId, fournisseur }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg({ type: "err", text: data.error || t("L'export a échoué.") });
+        charger();
+      } else if (data.releves === 0) {
+        setMsg({ type: "ok", text: t("Aucun relevé de température à exporter pour les 30 derniers jours.") });
+      } else {
+        setMsg({ type: "ok", text: t("Export terminé : {n} relevé(s) déposé(s) dans {nom} (dossier Gozly > Temperatures).", { n: data.releves, nom }) });
+      }
+    } catch {
+      setMsg({ type: "err", text: t("L'export a échoué.") });
+    }
+    setOccupe(null);
+  }
+
+  if (!connexions) return null;
+  const fournisseurs = Object.keys(connexions);
+
+  if (fournisseurs.length === 0) {
+    return (
+      <p className="section-hint" style={{ marginTop: "14px" }}>
+        {t("Pour sauvegarder automatiquement tes fiches de température dans OneDrive ou Google Drive, connecte-le d'abord dans")}{" "}
+        <a href="/dashboard/entreprise/parametres?onglet=integrations">{t("Intégrations")}</a>.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <div className="param-grid">
+        {fournisseurs.map((fournisseur) => {
+          const c = connexions[fournisseur];
+          const nom = NOMS_STOCKAGE[fournisseur];
+          if (c.statut !== "connecte") return null;
+          return (
+            <ParametreSelect
+              key={fournisseur}
+              label={t("Export automatique vers {nom}", { nom })}
+              info={t("Chaque semaine ou chaque mois, Gozly dépose les fiches de la période passée en fichier Excel (CSV) dans le dossier « Gozly » de ton {nom}, avant leur suppression de Gozly.", { nom })}
+              options={FREQUENCES_EXPORT_NUAGE}
+              value={c.exportTemperatures}
+              onChange={(v) => changerFrequence(fournisseur, v)}
+              disabled={false}
+            />
+          );
+        })}
+      </div>
+
+      {fournisseurs.map((fournisseur) => {
+        const c = connexions[fournisseur];
+        const nom = NOMS_STOCKAGE[fournisseur];
+        if (c.statut !== "connecte") {
+          return (
+            <p key={fournisseur} className="settings-msg err">
+              {t("La connexion à {nom} a expiré : reconnecte ton compte dans Intégrations.", { nom })}
+            </p>
+          );
+        }
+        return (
+          <div key={fournisseur} style={{ marginTop: "12px" }}>
+            <button type="button" className="admin-icon-btn" onClick={() => exporterMaintenant(fournisseur)} disabled={occupe === fournisseur}>
+              {occupe === fournisseur ? "..." : t("Exporter maintenant vers {nom} (30 derniers jours)", { nom })}
+            </button>
+            {c.dernierExport && <span className="section-hint" style={{ marginLeft: "10px" }}>{t("Dernier export : {date}", { date: c.dernierExport })}</span>}
+            {c.erreur && <p className="settings-msg err">{c.erreur}</p>}
+          </div>
+        );
+      })}
+      {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
+    </>
+  );
+}
+
 // Les modules qui ont des réglages, et les catégories de chacun : la barre latérale de la page Paramètres les affiche
 // (module -> sous-liste de catégories) et ce composant n'affiche que le groupe choisi (module + categorie).
 // Un module avec une seule catégorie ne montre pas de sous-liste.
@@ -691,6 +827,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
       )}
 
       {dans("temperature", "general") && (
+        <>
         <div className="param-grid">
             <ParametreSelect
               label={t("Conservation des fiches")}
@@ -709,6 +846,8 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
               disabled={saving}
             />
           </div>
+          <ExportsNuageTemperature entrepriseId={entrepriseId} />
+        </>
       )}
 
       {dans("commandes", "general") && (

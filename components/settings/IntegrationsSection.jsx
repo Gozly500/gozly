@@ -28,12 +28,6 @@ const STOCKAGES = {
   google: { nom: "Google Drive" },
 };
 
-const FREQUENCES_EXPORT = [
-  { id: "aucun", label: "Désactivé" },
-  { id: "hebdo", label: "Chaque semaine" },
-  { id: "mensuel", label: "Chaque mois" },
-];
-
 const CATEGORIES = [
   { id: "ventes", label: "Ventes & Inventaire", services: SERVICES_VENTES },
   { id: "stockage", label: "Stockage de fichiers", services: SERVICES_STOCKAGE },
@@ -152,52 +146,6 @@ export default function IntegrationsSection({ entrepriseId }) {
       definirMsgStockage(fournisseur, { type: "err", text: t("La connexion a échoué.") });
       definirOccupeStockage(fournisseur, false);
     }
-  }
-
-  async function handleFrequenceStockage(fournisseur, frequence) {
-    const avant = stock[fournisseur]?.frequence;
-    setStock((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], frequence } }));
-    definirMsgStockage(fournisseur, null);
-    try {
-      const res = await fetch("/api/stockage/reglages", {
-        method: "POST",
-        headers: await authHeaders(),
-        body: JSON.stringify({ entrepriseId, fournisseur, exportTemperatures: frequence }),
-      });
-      if (!res.ok) throw new Error();
-      definirMsgStockage(fournisseur, { type: "ok", text: t("Préférence enregistrée.") });
-    } catch {
-      setStock((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], frequence: avant } }));
-      definirMsgStockage(fournisseur, { type: "err", text: t("L'enregistrement a échoué.") });
-    }
-  }
-
-  async function handleExporterMaintenant(fournisseur) {
-    const nom = STOCKAGES[fournisseur].nom;
-    definirOccupeStockage(fournisseur, true);
-    definirMsgStockage(fournisseur, null);
-    try {
-      const res = await fetch("/api/stockage/exporter-maintenant", {
-        method: "POST",
-        headers: await authHeaders(),
-        body: JSON.stringify({ entrepriseId, fournisseur }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        definirMsgStockage(fournisseur, { type: "err", text: data.error || t("L'export a échoué.") });
-        chargerStockage();
-      } else if (data.releves === 0) {
-        definirMsgStockage(fournisseur, { type: "ok", text: t("Aucun relevé de température à exporter pour les 30 derniers jours.") });
-      } else {
-        definirMsgStockage(fournisseur, {
-          type: "ok",
-          text: t("Export terminé : {n} relevé(s) déposé(s) dans {nom} (dossier Gozly > Temperatures).", { n: data.releves, nom }),
-        });
-      }
-    } catch {
-      definirMsgStockage(fournisseur, { type: "err", text: t("L'export a échoué.") });
-    }
-    definirOccupeStockage(fournisseur, false);
   }
 
   async function handleDeconnecterStockage(fournisseur) {
@@ -561,30 +509,9 @@ export default function IntegrationsSection({ entrepriseId }) {
           {od.etat === "connecte" && (
             <>
               {od.email && <p className="section-hint">{t("Compte : {email}", { email: od.email })}</p>}
-
-              <p className="section-hint" style={{ marginBottom: "6px" }}>{t("Export automatique des fiches de température")}</p>
-              <div className="avatar-segment">
-                {FREQUENCES_EXPORT.map((f) => (
-                  <button key={f.id} type="button" className={od.frequence === f.id ? "actif" : ""} onClick={() => handleFrequenceStockage(fournisseur, f.id)}>
-                    {t(f.label)}
-                  </button>
-                ))}
-              </div>
-              <p className="section-hint" style={{ marginTop: "10px" }}>
-                {t("Les fiches de la semaine (ou du mois) passée sont déposées dans le dossier « Gozly » de ton {nom}, avant leur suppression de Gozly.", { nom })}
-                {od.dernierExport ? ` ${t("Dernier export : {date}", { date: od.dernierExport })}` : ""}
-              </p>
-              {od.erreur && <p className="settings-msg err">{od.erreur}</p>}
-
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "10px" }}>
-                <button type="button" className="admin-icon-btn" onClick={() => handleExporterMaintenant(fournisseur)} disabled={occupe}>
-                  {occupe ? "..." : t("Exporter maintenant (30 derniers jours)")}
-                </button>
-                <button type="button" className="admin-icon-btn danger" onClick={() => handleDeconnecterStockage(fournisseur)} disabled={occupe}>
-                  {t("Déconnecter")}
-                </button>
-              </div>
-              <p className="section-hint" style={{ marginTop: "8px" }}>{t("Les fichiers déjà déposés restent dans ton {nom} si tu te déconnectes.", { nom })}</p>
+              <button type="button" className="admin-icon-btn danger" onClick={() => handleDeconnecterStockage(fournisseur)} disabled={occupe}>
+                {occupe ? "..." : t("Déconnecter")}
+              </button>
             </>
           )}
 
