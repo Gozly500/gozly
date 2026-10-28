@@ -3,9 +3,10 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import ContactForm from "@/components/ContactForm";
 import { getT } from "@/lib/i18n/siteServer";
+import { metaPublic } from "@/lib/seoPages";
 
 export function generateMetadata() {
-  return { title: getT().t("contact.meta") };
+  return metaPublic("contact");
 }
 
 export default function ContactPage() {

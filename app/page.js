@@ -8,12 +8,20 @@ import HeroParallax from "@/components/HeroParallax";
 import SmoothScroll from "@/components/SmoothScroll";
 import { Rich } from "@/components/LangProvider";
 import { getT } from "@/lib/i18n/siteServer";
+import JsonLd from "@/components/JsonLd";
+import { metaPublic } from "@/lib/seoPages";
+import { donneesAccueil } from "@/lib/seoDonnees";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
+export function generateMetadata() {
+  return metaPublic("accueil");
+}
+
 export default function HomePage() {
-  const { t } = getT();
+  const { t, lang } = getT();
   return (
     <div className="page page-default">
+      <JsonLd data={donneesAccueil(lang)} />
       <SmoothScroll />
       <Loader />
       <Nav />

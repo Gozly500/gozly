@@ -3,16 +3,20 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import ScattegoriesChoix from "@/components/ScattegoriesChoix";
 import { getT } from "@/lib/i18n/siteServer";
+import JsonLd from "@/components/JsonLd";
+import { metaPublic } from "@/lib/seoPages";
+import { donneesScattegories, FAQ_SCATTEGORIES } from "@/lib/seoDonnees";
 
 export function generateMetadata() {
-  const { t } = getT();
-  return { title: t("scat.meta"), description: t("scat.sous") };
+  return metaPublic("scattegories");
 }
 
 export default function ScattegoriesPage() {
-  const { t } = getT();
+  const { t, lang } = getT();
+  const faq = FAQ_SCATTEGORIES[lang === "en" ? "en" : "fr"];
   return (
     <div className="page page-default scat-page">
+      <JsonLd data={donneesScattegories(lang)} />
       <Loader />
       <Nav />
 
@@ -26,6 +30,18 @@ export default function ScattegoriesPage() {
       <section id="scattegories">
         <div className="wrap scat-wrap">
           <ScattegoriesChoix />
+        </div>
+      </section>
+
+      <section className="seo-faq-section">
+        <div className="wrap seo-faq">
+          <h2>{faq.titre}</h2>
+          {faq.questions.map((x) => (
+            <details key={x.q}>
+              <summary>{x.q}</summary>
+              <p>{x.r}</p>
+            </details>
+          ))}
         </div>
       </section>
 

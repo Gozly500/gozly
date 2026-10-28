@@ -3,9 +3,10 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import StatutContent from "@/components/StatutContent";
 import { getT } from "@/lib/i18n/siteServer";
+import { metaPublic } from "@/lib/seoPages";
 
 export function generateMetadata() {
-  return { title: getT().t("statut.meta") };
+  return metaPublic("statut");
 }
 
 export default function StatutPage() {

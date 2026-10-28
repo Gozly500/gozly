@@ -2,9 +2,10 @@ import LegalPage from "@/components/LegalPage";
 import { LEGAL } from "@/lib/legal";
 import { getT, getLang } from "@/lib/i18n/siteServer";
 import { CONFIDENTIALITE_EN } from "@/lib/legalEn";
+import { metaPublic } from "@/lib/seoPages";
 
 export function generateMetadata() {
-  return { title: "Gozly - " + getT().t("signup.confidentialite") };
+  return metaPublic("confidentialite");
 }
 
 const sections = [

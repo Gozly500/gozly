@@ -3,9 +3,10 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import SignupForm from "@/components/SignupForm";
 import { getT } from "@/lib/i18n/siteServer";
+import { metaPublic } from "@/lib/seoPages";
 
 export function generateMetadata() {
-  return { title: getT().t("signup.meta") };
+  return metaPublic("inscription");
 }
 
 export default function SignupPage() {

@@ -3,9 +3,10 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import TelechargerContent from "@/components/TelechargerContent";
 import { getT } from "@/lib/i18n/siteServer";
+import { metaPublic } from "@/lib/seoPages";
 
 export function generateMetadata() {
-  return { title: getT().t("tele.meta") };
+  return metaPublic("telecharger");
 }
 
 // Un bloc par logiciel : clé du logiciel (voir lib/logiciels.js), clés de texte du titre, du sous-titre et des fonctions

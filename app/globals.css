@@ -3713,3 +3713,14 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .outils-support-corps{margin-top:8px;padding:12px 14px;border-radius:14px;border:1px dashed rgba(var(--w),0.2);}
 .outils-support-corps .section-hint{margin:0 0 10px;}
 .case-selection + .admin-row-main{margin-right:auto;margin-left:8px;}
+
+/* FAQ de la page Scattegories (visible pour les visiteurs, lue aussi par Google et les IA). */
+.seo-faq{max-width:820px;margin:0 auto;padding:10px 0 70px;}
+.seo-faq h2{margin:0 0 18px;font-size:26px;}
+.seo-faq details{padding:14px 2px;border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);}
+.seo-faq details:last-of-type{border-bottom:1px solid color-mix(in srgb,currentColor 18%,transparent);}
+.seo-faq summary{cursor:pointer;font-weight:600;font-size:16.5px;list-style:none;}
+.seo-faq summary::-webkit-details-marker{display:none;}
+.seo-faq summary::after{content:"+";float:right;font-weight:400;}
+.seo-faq details[open] summary::after{content:"−";}
+.seo-faq p{margin:10px 0 0;line-height:1.6;color:color-mix(in srgb,currentColor 78%,transparent);}

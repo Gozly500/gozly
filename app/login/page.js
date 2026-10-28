@@ -3,9 +3,10 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import LoginForm from "@/components/LoginForm";
 import { getT } from "@/lib/i18n/siteServer";
+import { metaPublic } from "@/lib/seoPages";
 
 export function generateMetadata() {
-  return { title: getT().t("login.meta") };
+  return metaPublic("connexion");
 }
 
 export default function LoginPage() {

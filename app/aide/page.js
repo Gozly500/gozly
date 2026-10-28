@@ -4,9 +4,10 @@ import Footer from "@/components/Footer";
 import AideContent from "@/components/AideContent";
 import { AIDE_UI } from "@/lib/aide";
 import { getLang } from "@/lib/i18n/siteServer";
+import { metaPublic } from "@/lib/seoPages";
 
 export function generateMetadata() {
-  return { title: AIDE_UI[getLang()].meta };
+  return metaPublic("aide");
 }
 
 export default function AidePage() {
