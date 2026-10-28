@@ -37,6 +37,12 @@ export default function EntrepriseParametresContent() {
   const [moduleChoisi, setModuleChoisi] = useState(null);
   const [categorieChoisie, setCategorieChoisie] = useState(null);
 
+  // Retour d'une connexion externe (ex: OneDrive) : l'adresse peut demander d'ouvrir directement un onglet (?onglet=integrations).
+  useEffect(() => {
+    const onglet = new URLSearchParams(window.location.search).get("onglet");
+    if (TABS.some((tab) => tab.id === onglet)) setActiveTab(onglet);
+  }, []);
+
   useEffect(() => {
     let ignore = false;
 

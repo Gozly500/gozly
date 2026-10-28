@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/exporter-stockage",
+      "schedule": "0 5 * * *"
+    },
+    {
       "path": "/api/cron/nettoyer-demandes",
       "schedule": "0 6 * * *"
     },
