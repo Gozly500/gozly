@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 //   GET /api/logiciels/<logiciel>/maj/<Nom>-Setup-X.Y.Z.exe        -> l'installateur de cette version
 // Chaque requête exige la session du compte (en-tête Authorization: Bearer ...) ET un forfait qui inclut le
 // logiciel. Seuls les fichiers de la dernière publication sont servis, via un lien temporaire GitHub.
-// Les logiciels déjà installés (Go-Page) utilisent /api/logiciels/texte/maj : cette adresse ne doit pas changer.
+// Les logiciels déjà installés (Textas, ex-Go-Page) utilisent /api/logiciels/texte/maj : cette adresse ne doit pas changer.
 export async function GET(request, { params }) {
   const logiciel = params.logiciel;
   if (!logicielExiste(logiciel)) return NextResponse.json({ error: "Logiciel inconnu." }, { status: 404 });

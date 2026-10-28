@@ -3,7 +3,7 @@ import { getSupabaseForToken } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { FOURNISSEURS } from "@/lib/exportsStockage";
 
-// Où un logiciel de la suite (Go-Page, Calky) peut enregistrer : les entreprises de l'utilisateur qui ont un
+// Où un logiciel de la suite (Textas, Calky) peut enregistrer : les entreprises de l'utilisateur qui ont un
 // OneDrive ou un Google Drive connecté dans Paramètres > Intégrations. Jamais de jeton dans la réponse.
 export async function GET(request) {
   const token = (request.headers.get("authorization") || "").replace("Bearer ", "");

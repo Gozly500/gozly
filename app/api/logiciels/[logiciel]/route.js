@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 // GET /api/logiciels/<logiciel>            -> infos publiques (version, taille), sans lien de téléchargement
 // GET /api/logiciels/<logiciel>?telecharger=1 + "Authorization: Bearer <session>" -> lien temporaire,
-//     seulement si le forfait du compte inclut ce logiciel. <logiciel> = texte (Go-Page), calky...
+//     seulement si le forfait du compte inclut ce logiciel. <logiciel> = texte (Textas), calky...
 export async function GET(request, { params }) {
   const logiciel = params.logiciel;
   if (!logicielExiste(logiciel)) return NextResponse.json({ error: "Logiciel inconnu." }, { status: 404 });
