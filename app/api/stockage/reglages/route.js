@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { authentifierStockage } from "@/lib/stockageServer";
 
+const FOURNISSEURS = ["microsoft", "google"];
 const FREQUENCES = ["aucun", "hebdo", "mensuel"];
 
 // Fréquence de l'export automatique des fiches de température vers le stockage en ligne.
 export async function POST(request) {
   const { entrepriseId, fournisseur, exportTemperatures } = await request.json().catch(() => ({}));
-  if (fournisseur !== "microsoft" || !FREQUENCES.includes(exportTemperatures)) {
+  if (!FOURNISSEURS.includes(fournisseur) || !FREQUENCES.includes(exportTemperatures)) {
     return NextResponse.json({ error: "Réglage invalide." }, { status: 400 });
   }
 

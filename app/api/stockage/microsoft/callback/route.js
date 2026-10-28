@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { encrypt } from "@/lib/paieCrypto";
-import { echangerCode, lireEtat, lireProfil } from "@/lib/stockageMicrosoft";
+import { lireEtat } from "@/lib/stockageEtat";
+import { echangerCode, lireProfil } from "@/lib/stockageMicrosoft";
 
 // Retour de Microsoft après que le client a accepté la connexion : échange le code contre les jetons,
 // les garde (chiffrés) pour l'entreprise indiquée dans l'état signé, puis ramène le client dans Paramètres.
@@ -13,7 +14,7 @@ export async function GET(request) {
   }
 
   const retour = (resultat) =>
-    NextResponse.redirect(`${etat.origine}/dashboard/entreprise/parametres?onglet=integrations&stockage=${resultat}`);
+    NextResponse.redirect(`${etat.origine}/dashboard/entreprise/parametres?onglet=integrations&stockage=${resultat}&fournisseur=microsoft`);
 
   const code = url.searchParams.get("code");
   if (url.searchParams.get("error") || !code) return retour("annule");

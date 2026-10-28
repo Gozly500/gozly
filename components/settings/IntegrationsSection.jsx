@@ -20,8 +20,13 @@ const SERVICES_VENTES = [
 
 const SERVICES_STOCKAGE = [
   { id: "onedrive", label: "OneDrive", disponible: true },
-  { id: "google-drive", label: "Google Drive", disponible: false },
+  { id: "google-drive", label: "Google Drive", disponible: true },
 ];
+
+const STOCKAGES = {
+  microsoft: { nom: "OneDrive" },
+  google: { nom: "Google Drive" },
+};
 
 const FREQUENCES_EXPORT = [
   { id: "aucun", label: "Désactivé" },
@@ -60,10 +65,10 @@ export default function IntegrationsSection({ entrepriseId }) {
   const [nethrisModalOuvert, setNethrisModalOuvert] = useState(false);
   const [nethrisForm, setNethrisForm] = useState({ codeEntreprise: "", codeUtilisateur: "", motDePasse: "" });
 
-  // OneDrive : etat = "chargement" | "deconnecte" | "connecte" | "a_reconnecter"
-  const [od, setOd] = useState({ etat: "chargement" });
-  const [odBusy, setOdBusy] = useState(false);
-  const [odMsg, setOdMsg] = useState(null);
+  // Stockage (OneDrive = "microsoft", Google Drive = "google") : etat = "chargement" | "deconnecte" | "connecte" | "a_reconnecter"
+  const [stock, setStock] = useState({ microsoft: { etat: "chargement" }, google: { etat: "chargement" } });
+  const [stockBusy, setStockBusy] = useState({});
+  const [stockMsg, setStockMsg] = useState({});
 
   useEffect(() => {
     if (!entrepriseId) return;
@@ -73,32 +78,45 @@ export default function IntegrationsSection({ entrepriseId }) {
     return () => clearInterval(pollRef.current);
   }, [entrepriseId]);
 
-  // Retour de la page de connexion Microsoft (?stockage=ok|annule|erreur) : on rouvre la bonne catégorie et on dit comment ça s'est passé.
+  // Retour de la page de connexion Microsoft/Google (?stockage=ok|annule|erreur&fournisseur=...) : on rouvre la bonne catégorie et on dit comment ça s'est passé.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const resultat = params.get("stockage");
     if (!resultat) return;
+    const fournisseur = STOCKAGES[params.get("fournisseur")] ? params.get("fournisseur") : "microsoft";
+    const nom = STOCKAGES[fournisseur].nom;
     setCategoriesOuvertes((cur) => ({ ...cur, stockage: true }));
-    setOdMsg(
+    definirMsgStockage(
+      fournisseur,
       resultat === "ok"
-        ? { type: "ok", text: t("OneDrive est connecté.") }
+        ? { type: "ok", text: t("{nom} est connecté.", { nom }) }
         : resultat === "annule"
-        ? { type: "err", text: t("Connexion à OneDrive annulée.") }
+        ? { type: "err", text: t("Connexion à {nom} annulée.", { nom }) }
         : { type: "err", text: t("La connexion a échoué.") }
     );
+    params.delete("fournisseur");
     params.delete("stockage");
     params.delete("onglet");
     const reste = params.toString();
     window.history.replaceState(null, "", window.location.pathname + (reste ? `?${reste}` : ""));
   }, []);
 
+  function definirMsgStockage(fournisseur, msg) {
+    setStockMsg((cur) => ({ ...cur, [fournisseur]: msg }));
+  }
+
+  function definirOccupeStockage(fournisseur, valeur) {
+    setStockBusy((cur) => ({ ...cur, [fournisseur]: valeur }));
+  }
+
   async function chargerStockage() {
     try {
       const res = await fetch(`/api/stockage/statut?entrepriseId=${entrepriseId}`, { headers: await authHeaders() });
       const data = await res.json();
-      const c = data.connexions?.microsoft;
-      setOd(
-        c
+      const suivant = {};
+      for (const fournisseur of Object.keys(STOCKAGES)) {
+        const c = data.connexions?.[fournisseur];
+        suivant[fournisseur] = c
           ? {
               etat: c.statut === "connecte" ? "connecte" : "a_reconnecter",
               email: c.email,
@@ -106,92 +124,97 @@ export default function IntegrationsSection({ entrepriseId }) {
               dernierExport: c.dernierExport,
               erreur: c.erreur,
             }
-          : { etat: "deconnecte" }
-      );
+          : { etat: "deconnecte" };
+      }
+      setStock(suivant);
     } catch {
-      setOd({ etat: "deconnecte" });
+      setStock({ microsoft: { etat: "deconnecte" }, google: { etat: "deconnecte" } });
     }
   }
 
-  async function handleConnecterOneDrive() {
-    setOdBusy(true);
-    setOdMsg(null);
+  async function handleConnecterStockage(fournisseur) {
+    definirOccupeStockage(fournisseur, true);
+    definirMsgStockage(fournisseur, null);
     try {
-      const res = await fetch("/api/stockage/microsoft/connecter", {
+      const res = await fetch(`/api/stockage/${fournisseur}/connecter`, {
         method: "POST",
         headers: await authHeaders(),
         body: JSON.stringify({ entrepriseId }),
       });
       const data = await res.json();
       if (!res.ok || !data.lien) {
-        setOdMsg({ type: "err", text: data.error || t("La connexion a échoué.") });
-        setOdBusy(false);
+        definirMsgStockage(fournisseur, { type: "err", text: data.error || t("La connexion a échoué.") });
+        definirOccupeStockage(fournisseur, false);
         return;
       }
       window.location.href = data.lien;
     } catch {
-      setOdMsg({ type: "err", text: t("La connexion a échoué.") });
-      setOdBusy(false);
+      definirMsgStockage(fournisseur, { type: "err", text: t("La connexion a échoué.") });
+      definirOccupeStockage(fournisseur, false);
     }
   }
 
-  async function handleFrequenceOneDrive(frequence) {
-    const avant = od.frequence;
-    setOd((cur) => ({ ...cur, frequence }));
-    setOdMsg(null);
+  async function handleFrequenceStockage(fournisseur, frequence) {
+    const avant = stock[fournisseur]?.frequence;
+    setStock((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], frequence } }));
+    definirMsgStockage(fournisseur, null);
     try {
       const res = await fetch("/api/stockage/reglages", {
         method: "POST",
         headers: await authHeaders(),
-        body: JSON.stringify({ entrepriseId, fournisseur: "microsoft", exportTemperatures: frequence }),
+        body: JSON.stringify({ entrepriseId, fournisseur, exportTemperatures: frequence }),
       });
       if (!res.ok) throw new Error();
-      setOdMsg({ type: "ok", text: t("Préférence enregistrée.") });
+      definirMsgStockage(fournisseur, { type: "ok", text: t("Préférence enregistrée.") });
     } catch {
-      setOd((cur) => ({ ...cur, frequence: avant }));
-      setOdMsg({ type: "err", text: t("L'enregistrement a échoué.") });
+      setStock((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], frequence: avant } }));
+      definirMsgStockage(fournisseur, { type: "err", text: t("L'enregistrement a échoué.") });
     }
   }
 
-  async function handleExporterMaintenant() {
-    setOdBusy(true);
-    setOdMsg(null);
+  async function handleExporterMaintenant(fournisseur) {
+    const nom = STOCKAGES[fournisseur].nom;
+    definirOccupeStockage(fournisseur, true);
+    definirMsgStockage(fournisseur, null);
     try {
       const res = await fetch("/api/stockage/exporter-maintenant", {
         method: "POST",
         headers: await authHeaders(),
-        body: JSON.stringify({ entrepriseId, fournisseur: "microsoft" }),
+        body: JSON.stringify({ entrepriseId, fournisseur }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setOdMsg({ type: "err", text: data.error || t("L'export a échoué.") });
+        definirMsgStockage(fournisseur, { type: "err", text: data.error || t("L'export a échoué.") });
         chargerStockage();
       } else if (data.releves === 0) {
-        setOdMsg({ type: "ok", text: t("Aucun relevé de température à exporter pour les 30 derniers jours.") });
+        definirMsgStockage(fournisseur, { type: "ok", text: t("Aucun relevé de température à exporter pour les 30 derniers jours.") });
       } else {
-        setOdMsg({ type: "ok", text: t("Export terminé : {n} relevé(s) déposé(s) dans OneDrive (dossier Gozly > Temperatures).", { n: data.releves }) });
+        definirMsgStockage(fournisseur, {
+          type: "ok",
+          text: t("Export terminé : {n} relevé(s) déposé(s) dans {nom} (dossier Gozly > Temperatures).", { n: data.releves, nom }),
+        });
       }
     } catch {
-      setOdMsg({ type: "err", text: t("L'export a échoué.") });
+      definirMsgStockage(fournisseur, { type: "err", text: t("L'export a échoué.") });
     }
-    setOdBusy(false);
+    definirOccupeStockage(fournisseur, false);
   }
 
-  async function handleDeconnecterOneDrive() {
-    setOdBusy(true);
-    setOdMsg(null);
+  async function handleDeconnecterStockage(fournisseur) {
+    definirOccupeStockage(fournisseur, true);
+    definirMsgStockage(fournisseur, null);
     try {
       await fetch("/api/stockage/deconnecter", {
         method: "POST",
         headers: await authHeaders(),
-        body: JSON.stringify({ entrepriseId, fournisseur: "microsoft" }),
+        body: JSON.stringify({ entrepriseId, fournisseur }),
       });
-      setOd({ etat: "deconnecte" });
-      setOdMsg({ type: "ok", text: t("OneDrive est déconnecté.") });
+      setStock((cur) => ({ ...cur, [fournisseur]: { etat: "deconnecte" } }));
+      definirMsgStockage(fournisseur, { type: "ok", text: t("{nom} est déconnecté.", { nom: STOCKAGES[fournisseur].nom }) });
     } catch {
-      setOdMsg({ type: "err", text: t("La déconnexion a échoué.") });
+      definirMsgStockage(fournisseur, { type: "err", text: t("La déconnexion a échoué.") });
     }
-    setOdBusy(false);
+    definirOccupeStockage(fournisseur, false);
   }
 
   function toggleCategorie(id) {
@@ -491,12 +514,16 @@ export default function IntegrationsSection({ entrepriseId }) {
     );
   }
 
-  function renderOneDrive() {
+  function renderStockage(fournisseur) {
+    const nom = STOCKAGES[fournisseur].nom;
+    const od = stock[fournisseur] || { etat: "chargement" };
+    const occupe = !!stockBusy[fournisseur];
+    const msg = stockMsg[fournisseur];
     return (
       <div className="integration-item">
         <div className="integration-header open">
           <span className="ih-label">
-            {t("OneDrive")}
+            {nom}
             {od.etat === "connecte" && (
               <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
                 <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} />{" "}{t("Connecté")}
@@ -511,21 +538,21 @@ export default function IntegrationsSection({ entrepriseId }) {
           {od.etat === "deconnecte" && (
             <>
               <p className="section-hint">
-                {t("Connecte ton OneDrive pour que Gozly y dépose automatiquement tes fiches de température (un fichier Excel par semaine ou par mois, dans un dossier « Gozly »). Tu gardes ainsi tes fiches même après leur suppression de Gozly.")}
+                {t("Connecte ton {nom} pour que Gozly y dépose automatiquement tes fiches de température (un fichier Excel par semaine ou par mois, dans un dossier « Gozly »). Tu gardes ainsi tes fiches même après leur suppression de Gozly.", { nom })}
               </p>
-              <button type="button" className="submit-btn" onClick={handleConnecterOneDrive} disabled={odBusy}>
-                {odBusy ? "..." : t("Connecter OneDrive")}
+              <button type="button" className="submit-btn" onClick={() => handleConnecterStockage(fournisseur)} disabled={occupe}>
+                {occupe ? "..." : t("Connecter {nom}", { nom })}
               </button>
             </>
           )}
 
           {od.etat === "a_reconnecter" && (
             <>
-              <p className="section-hint">{od.erreur || t("La connexion à OneDrive a expiré : reconnecte ton compte.")}</p>
-              <button type="button" className="submit-btn" onClick={handleConnecterOneDrive} disabled={odBusy}>
-                {odBusy ? "..." : t("Reconnecter OneDrive")}
+              <p className="section-hint">{od.erreur || t("La connexion à {nom} a expiré : reconnecte ton compte.", { nom })}</p>
+              <button type="button" className="submit-btn" onClick={() => handleConnecterStockage(fournisseur)} disabled={occupe}>
+                {occupe ? "..." : t("Reconnecter {nom}", { nom })}
               </button>{" "}
-              <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecterOneDrive} disabled={odBusy}>
+              <button type="button" className="admin-icon-btn danger" onClick={() => handleDeconnecterStockage(fournisseur)} disabled={occupe}>
                 {t("Déconnecter")}
               </button>
             </>
@@ -538,30 +565,30 @@ export default function IntegrationsSection({ entrepriseId }) {
               <p className="section-hint" style={{ marginBottom: "6px" }}>{t("Export automatique des fiches de température")}</p>
               <div className="avatar-segment">
                 {FREQUENCES_EXPORT.map((f) => (
-                  <button key={f.id} type="button" className={od.frequence === f.id ? "actif" : ""} onClick={() => handleFrequenceOneDrive(f.id)}>
+                  <button key={f.id} type="button" className={od.frequence === f.id ? "actif" : ""} onClick={() => handleFrequenceStockage(fournisseur, f.id)}>
                     {t(f.label)}
                   </button>
                 ))}
               </div>
               <p className="section-hint" style={{ marginTop: "10px" }}>
-                {t("Les fiches de la semaine (ou du mois) passée sont déposées dans le dossier « Gozly » de ton OneDrive, avant leur suppression de Gozly.")}
+                {t("Les fiches de la semaine (ou du mois) passée sont déposées dans le dossier « Gozly » de ton {nom}, avant leur suppression de Gozly.", { nom })}
                 {od.dernierExport ? ` ${t("Dernier export : {date}", { date: od.dernierExport })}` : ""}
               </p>
               {od.erreur && <p className="settings-msg err">{od.erreur}</p>}
 
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "10px" }}>
-                <button type="button" className="admin-icon-btn" onClick={handleExporterMaintenant} disabled={odBusy}>
-                  {odBusy ? "..." : t("Exporter maintenant (30 derniers jours)")}
+                <button type="button" className="admin-icon-btn" onClick={() => handleExporterMaintenant(fournisseur)} disabled={occupe}>
+                  {occupe ? "..." : t("Exporter maintenant (30 derniers jours)")}
                 </button>
-                <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecterOneDrive} disabled={odBusy}>
+                <button type="button" className="admin-icon-btn danger" onClick={() => handleDeconnecterStockage(fournisseur)} disabled={occupe}>
                   {t("Déconnecter")}
                 </button>
               </div>
-              <p className="section-hint" style={{ marginTop: "8px" }}>{t("Les fichiers déjà déposés restent dans ton OneDrive si tu te déconnectes.")}</p>
+              <p className="section-hint" style={{ marginTop: "8px" }}>{t("Les fichiers déjà déposés restent dans ton {nom} si tu te déconnectes.", { nom })}</p>
             </>
           )}
 
-          {odMsg && <p className={`settings-msg ${odMsg.type}`}>{odMsg.text}</p>}
+          {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
         </div>
       </div>
     );
@@ -582,7 +609,8 @@ export default function IntegrationsSection({ entrepriseId }) {
     if (!service.disponible) return renderBientotDisponible(service);
     if (service.id === "wix") return <div key={service.id}>{renderWix()}</div>;
     if (service.id === "nethris") return <div key={service.id}>{renderNethris()}</div>;
-    if (service.id === "onedrive") return <div key={service.id}>{renderOneDrive()}</div>;
+    if (service.id === "onedrive") return <div key={service.id}>{renderStockage("microsoft")}</div>;
+    if (service.id === "google-drive") return <div key={service.id}>{renderStockage("google")}</div>;
     return renderBientotDisponible(service);
   }
 

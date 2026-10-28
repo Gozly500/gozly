@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { authentifierStockage } from "@/lib/stockageServer";
 import { exporterMaintenant } from "@/lib/exportsStockage";
 
-// Dépose tout de suite les fiches de température des 30 derniers jours dans le OneDrive connecté.
+// Dépose tout de suite les fiches de température des 30 derniers jours dans le stockage connecté (OneDrive ou Google Drive).
 export async function POST(request) {
   const { entrepriseId, fournisseur } = await request.json().catch(() => ({}));
   const { service, entreprise, erreur } = await authentifierStockage(request, entrepriseId);
@@ -15,7 +15,7 @@ export async function POST(request) {
     .eq("fournisseur", fournisseur || "microsoft")
     .maybeSingle();
   if (!connexion || connexion.statut !== "connecte") {
-    return NextResponse.json({ error: "OneDrive n'est pas connecté." }, { status: 400 });
+    return NextResponse.json({ error: "Le stockage n'est pas connecté." }, { status: 400 });
   }
 
   const resultat = await exporterMaintenant(service, connexion);
