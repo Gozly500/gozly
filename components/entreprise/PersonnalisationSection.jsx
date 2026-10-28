@@ -97,9 +97,9 @@ const OPTIONS_RETENTION_COMMANDES = [
 ];
 
 const OPTIONS_RETENTION_TEMPERATURE = [
+  { id: "1", label: "1 mois" },
   { id: "3", label: "3 mois" },
   { id: "6", label: "6 mois" },
-  { id: "12", label: "12 mois" },
 ];
 
 // Liste déroulante maison (voir .forfait-select-*) avec sa bulle d'aide "i".
@@ -694,7 +694,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
         <div className="param-grid">
             <ParametreSelect
               label={t("Conservation des fiches")}
-              info={t("Combien de temps garder les fiches de température avant leur suppression automatique. Pense à les exporter (Températures → Historique → Exporter) pour les garder en local.")}
+              info={t("Combien de temps garder les fiches de température avant leur suppression automatique. Une semaine avant, un avertissement apparaît dans Températures → Historique pour te rappeler de les exporter (Exporter) et les garder en local.")}
               options={OPTIONS_RETENTION_TEMPERATURE}
               value={retentionTemperature}
               onChange={handleChangeRetentionTemperature}

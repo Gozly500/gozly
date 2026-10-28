@@ -29,6 +29,7 @@ export default function TemperatureContent() {
   const [relevesDuJour, setRelevesDuJour] = useState([]);
   const [historique, setHistorique] = useState([]);
   const [loadingDonnees, setLoadingDonnees] = useState(true);
+  const [retentionMois, setRetentionMois] = useState(3);
 
   const [drafts, setDrafts] = useState({});
   const [saving, setSaving] = useState(false);
@@ -89,12 +90,14 @@ export default function TemperatureContent() {
 
   async function load() {
     setLoadingDonnees(true);
-    const [{ data: emps }, { data: eqs }, { data: relevesJour }, hist] = await Promise.all([
+    const [{ data: emps }, { data: eqs }, { data: relevesJour }, hist, { data: entRet }] = await Promise.all([
       supabase.from("emplacements").select("*").eq("entreprise_id", entrepriseId).order("created_at", { ascending: true }),
       chargerEquipements(supabase, entrepriseId).then((data) => ({ data })),
       supabase.from("releves_temperature").select("*").eq("entreprise_id", entrepriseId).eq("date_relevee", creneau.date),
       chargerTousLesReleves(),
+      supabase.from("entreprises").select("temperature_retention_mois").eq("id", entrepriseId).maybeSingle(),
     ]);
+    setRetentionMois(entRet?.temperature_retention_mois || 3);
     setEmplacements(emps || []);
     setEquipements(eqs || []);
     setRelevesDuJour(relevesJour || []);
@@ -201,6 +204,19 @@ export default function TemperatureContent() {
     : historique;
 
   const fiches = grouperParJour(historiqueFiltre);
+
+  // Fiches qui seront supprimées automatiquement dans 7 jours ou moins (voir /api/cron/nettoyer-temperatures) : on prévient d'exporter.
+  const fichesBientotArchivees = (() => {
+    const auj = new Date();
+    auj.setHours(0, 0, 0, 0);
+    const limite = new Date(auj);
+    limite.setDate(limite.getDate() + 7);
+    return fiches.filter((f) => {
+      const [a, m, j] = String(f.date).slice(0, 10).split("-").map(Number);
+      const finConservation = new Date(a, m - 1 + retentionMois, j);
+      return finConservation <= limite;
+    });
+  })();
 
   function exporter(releves, nomFichier) {
     telechargerFichier(nomFichier, relevesEnCsv(releves, equipements, emplacements));
@@ -324,6 +340,20 @@ export default function TemperatureContent() {
               </div>
 
               <div className="settings-divider">{t("Historique")}</div>
+
+              {fichesBientotArchivees.length > 0 && (
+                <div className="param-avertissement" role="alert" style={{ marginTop: 0, marginBottom: "14px" }}>
+                  <div className="param-avertissement-titre">
+                    <IconAttention className="gozly-icon" /> {t("Des fiches seront bientôt archivées")}
+                  </div>
+                  <p>
+                    {t("{n} fiche(s) seront supprimées automatiquement d'ici une semaine (conservation : {m} mois). Télécharge-les avec « Exporter » pour les garder.", {
+                      n: fichesBientotArchivees.length,
+                      m: retentionMois,
+                    })}
+                  </p>
+                </div>
+              )}
 
               {fiches.length > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
