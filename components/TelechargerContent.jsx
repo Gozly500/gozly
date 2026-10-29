@@ -8,7 +8,7 @@ import { LOGICIELS, forfaitPermetLogiciel } from "@/lib/logiciels";
 
 // Carte de téléchargement d'un logiciel (logiciel = texte, calky, kiosque...) : l'état du bouton dépend de la connexion et du forfait.
 export default function TelechargerContent({ logiciel }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [info, setInfo] = useState(null); // { disponible, version, taille }
   const [session, setSession] = useState(undefined); // undefined = en cours de lecture
   const [forfait, setForfait] = useState(null);
@@ -47,7 +47,9 @@ export default function TelechargerContent({ logiciel }) {
     setEnCours(false);
   }
 
-  const mo = info?.taille ? Math.max(1, Math.round(info.taille / 1024 / 1024)) : null;
+  // Taille en Mo : une décimale sous 10 Mo (l'app Android pèse ~0,1 Mo), sinon arrondie
+  const brut = info?.taille ? info.taille / 1024 / 1024 : null;
+  const mo = brut === null ? null : brut < 10 ? brut.toFixed(1).replace(".", lang === "fr" ? "," : ".") : Math.round(brut);
   const android = LOGICIELS[logiciel].plateforme === "android";
   const pourTous = LOGICIELS[logiciel].forfaits.includes("opale"); // inclus avec tous les forfaits
 
