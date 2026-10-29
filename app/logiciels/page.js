@@ -14,6 +14,7 @@ export function generateMetadata() {
 }
 
 // Une carte de logiciel : icône, nom, où il fonctionne, description, avec quels forfaits, puis le bouton (téléchargement ou lien).
+// Le bouton de téléchargement mène à la page d'installation (/telecharger/<slug>) : les étapes y sont affichées.
 function CarteLogiciel({ cle, t }) {
   const f = FICHES_LOGICIELS[cle];
   return (
@@ -48,16 +49,6 @@ function CarteLogiciel({ cle, t }) {
           </Link>
         )}
       </div>
-      {f.etapes && (
-        <details className="cata-etapes">
-          <summary>{t("cata.comment")}</summary>
-          <ol>
-            {f.etapes.map((e) => (
-              <li key={e}>{t(e)}</li>
-            ))}
-          </ol>
-        </details>
-      )}
     </TiltCard>
   );
 }

@@ -118,19 +118,6 @@ export default function TelechargerPage() {
         </div>
       </section>
 
-      <section className="suite-etapes">
-        <div className="wrap">
-          <div className="sec-head suite-centre">
-            <h2>{t("tele.etapesTitre")}</h2>
-          </div>
-          <ol className="suite-etapes-liste">
-            <li>{t("tele.e1")}</li>
-            <li>{t("tele.e2")}</li>
-            <li>{t("tele.e3")}</li>
-          </ol>
-        </div>
-      </section>
-
       <section id="contact-cta">
         <div className="wrap">
           <div className="cta-band">
