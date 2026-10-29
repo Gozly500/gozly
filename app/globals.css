@@ -3724,3 +3724,8 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .seo-faq summary::after{content:"+";float:right;font-weight:400;}
 .seo-faq details[open] summary::after{content:"−";}
 .seo-faq p{margin:10px 0 0;line-height:1.6;color:color-mix(in srgb,currentColor 78%,transparent);}
+
+/* Étapes d'installation propres à un logiciel (ex. Gozly Kiosque), sous sa carte de téléchargement. */
+.tele-etapes-bloc{margin:22px 0 0;max-width:520px;}
+.tele-etapes-bloc h3{margin:0 0 8px;font-size:16px;font-weight:600;}
+.tele-etapes-bloc ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.5;color:var(--text-dim);}

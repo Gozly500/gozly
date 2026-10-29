@@ -9,10 +9,21 @@ export function generateMetadata() {
   return metaPublic("telecharger");
 }
 
-// Un bloc par logiciel : clé du logiciel (voir lib/logiciels.js), clés de texte du titre, du sous-titre et des fonctions
+// Un bloc par logiciel : clé du logiciel (voir lib/logiciels.js), clés de texte du titre, du sous-titre et des fonctions.
+// Facultatif : dispo (phrase sur les forfaits), image (icône), etapes (étapes d'installation propres à ce logiciel).
 const LOGICIELS_PAGE = [
   { logiciel: "texte", titre: "tele.titre", sous: "tele.sous", fonctions: ["f1", "f2", "f3", "f4", "f5", "f6"] },
   { logiciel: "calky", titre: "tele.calky.titre", sous: "tele.calky.sous", fonctions: ["c1", "c2", "c3", "c4", "c5", "c6"] },
+  {
+    logiciel: "kiosque",
+    titre: "tele.kiosque.titre",
+    sous: "tele.kiosque.sous",
+    fonctions: ["k1", "k2", "k3", "k4", "k5"],
+    dispo: "tele.kiosque.dispo",
+    image: "/icone-kiosque-512.png",
+    etapesTitre: "tele.kiosque.etapesTitre",
+    etapes: ["tele.kiosque.e1", "tele.kiosque.e2", "tele.kiosque.e3", "tele.kiosque.e4"],
+  },
 ];
 
 export default function TelechargerPage() {
@@ -41,9 +52,26 @@ export default function TelechargerPage() {
                 ))}
               </ul>
               <TelechargerContent logiciel={l.logiciel} />
-              <p className="tele-dispo">{t("tele.dispo")}</p>
+              <p className="tele-dispo">{t(l.dispo || "tele.dispo")}</p>
+              {l.etapes && (
+                <div className="tele-etapes tele-etapes-bloc">
+                  <h3>{t(l.etapesTitre)}</h3>
+                  <ol>
+                    {l.etapes.map((e) => (
+                      <li key={e}>{t(e)}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </div>
-            <img className="tele-icone" src={`/logiciels/${l.logiciel}.svg`} alt="" width="280" height="280" />
+            <img
+              className="tele-icone"
+              src={l.image || `/logiciels/${l.logiciel}.svg`}
+              alt=""
+              width="280"
+              height="280"
+              style={l.image ? { borderRadius: "56px" } : undefined}
+            />
           </div>
         </section>
       ))}

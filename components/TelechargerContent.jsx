@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
 import { LOGICIELS, forfaitPermetLogiciel } from "@/lib/logiciels";
 
-// Carte de téléchargement d'un logiciel (logiciel = texte, calky...) : l'état du bouton dépend de la connexion et du forfait.
+// Carte de téléchargement d'un logiciel (logiciel = texte, calky, kiosque...) : l'état du bouton dépend de la connexion et du forfait.
 export default function TelechargerContent({ logiciel }) {
   const { t } = useT();
   const [info, setInfo] = useState(null); // { disponible, version, taille }
@@ -47,7 +47,9 @@ export default function TelechargerContent({ logiciel }) {
     setEnCours(false);
   }
 
-  const mo = info?.taille ? Math.round(info.taille / 1024 / 1024) : null;
+  const mo = info?.taille ? Math.max(1, Math.round(info.taille / 1024 / 1024)) : null;
+  const android = LOGICIELS[logiciel].plateforme === "android";
+  const pourTous = LOGICIELS[logiciel].forfaits.includes("opale"); // inclus avec tous les forfaits
 
   let action;
   if (!info || session === undefined) {
@@ -63,7 +65,7 @@ export default function TelechargerContent({ logiciel }) {
   } else if (!forfaitPermetLogiciel(forfait, logiciel)) {
     action = (
       <>
-        <p className="tele-statut">{t("tele.pasForfait", { nom: LOGICIELS[logiciel].nom })}</p>
+        <p className="tele-statut">{t(pourTous ? "tele.pasForfaitTous" : "tele.pasForfait", { nom: LOGICIELS[logiciel].nom })}</p>
         <Link href="/parametres?tab=abonnement" className="submit-btn">
           {t("tele.voirForfaits")}
         </Link>
@@ -72,7 +74,7 @@ export default function TelechargerContent({ logiciel }) {
   } else {
     action = (
       <button type="button" className="submit-btn" onClick={telecharger} disabled={enCours}>
-        {enCours ? t("tele.preparation") : t("tele.btn")}
+        {enCours ? t("tele.preparation") : t(android ? "tele.btn.android" : "tele.btn")}
       </button>
     );
   }
@@ -81,7 +83,7 @@ export default function TelechargerContent({ logiciel }) {
     <div className="tele-carte">
       <h2>{t("tele.carteTitre")}</h2>
       {info?.disponible && (
-        <p className="tele-version">{t("tele.version", { v: info.version, mo: mo ?? "?" })}</p>
+        <p className="tele-version">{t(android ? "tele.version.android" : "tele.version", { v: info.version, mo: mo ?? "?" })}</p>
       )}
       <div className="tele-action">{action}</div>
       {erreur && (

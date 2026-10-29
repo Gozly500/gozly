@@ -13,7 +13,7 @@ Courriel : info@gozly.net
 - **Inventaire** : produits et catégories, quantités, synchronisation avec Wix (Wix Stores).
 - **Suivi des ventes** : journal des ventes par source (Wix, Moneris, comptant) avec totaux par semaine.
 - **Températures** : relevés de températures de frigos et congélateurs pour le MAPAQ, rappels aux employés, export Excel et sauvegarde automatique vers OneDrive ou Google Drive.
-- **Commandes** : commandes en ligne et kiosque tablette pour le comptoir.
+- **Commandes** : commandes en ligne et kiosque tablette pour le comptoir (application Android Gozly Kiosque, incluse avec tous les forfaits).
 - **Tâches** : planification et liste de tâches de l'équipe.
 - **Musique** : musique d'ambiance pour commerces via Sonos (bêta).
 - **Application mobile pour les employés** : horaire, pointage, discussion d'équipe, demandes, tâches, installable comme une application.
@@ -30,7 +30,7 @@ Courriel : info@gozly.net
 - [Créer un compte](https://gozly.net/inscription) : inscription et choix du forfait.
 - [Contact](https://gozly.net/contact) : parler de son projet avec l'équipe.
 - [Centre d'aide](https://gozly.net/aide) : guides d'utilisation.
-- [Télécharger](https://gozly.net/telecharger) : applications Gozly.
+- [Télécharger](https://gozly.net/telecharger) : logiciels Gozly (Textas et Calky pour Windows, Gozly Kiosque pour tablette Android).
 - [Scattegories](https://gozly.net/scattegories) : jeu gratuit en ligne.
 - [Conditions d'utilisation](https://gozly.net/conditions)
 - [Politique de confidentialité](https://gozly.net/confidentialite)
