@@ -30,7 +30,8 @@ Courriel : info@gozly.net
 - [Créer un compte](https://gozly.net/inscription) : inscription et choix du forfait.
 - [Contact](https://gozly.net/contact) : parler de son projet avec l'équipe.
 - [Centre d'aide](https://gozly.net/aide) : guides d'utilisation.
-- [Télécharger](https://gozly.net/telecharger) : logiciels Gozly (Textas et Calky pour Windows, Gozly Kiosque pour tablette Android).
+- [Suite bureautique](https://gozly.net/telecharger) : Textas (traitement de texte) et Calky (tableur) pour Windows, avec enregistrement possible dans OneDrive ou Google Drive.
+- [Logiciels](https://gozly.net/logiciels) : catalogue de tous les logiciels Gozly par catégorie (bureautique, commerce et restauration, jeux), dont Gozly Kiosque pour tablette Android.
 - [Scattegories](https://gozly.net/scattegories) : jeu gratuit en ligne.
 - [Conditions d'utilisation](https://gozly.net/conditions)
 - [Politique de confidentialité](https://gozly.net/confidentialite)

@@ -57,6 +57,7 @@ export default function Footer() {
           </div>
           <div className="footer-col">
             <h4>{t("footer.plus")}</h4>
+            <Link href="/logiciels">{t("footer.logiciels")}</Link>
             <Link href="/scattegories">{t("footer.scat")}</Link>
             <LangFooterLink />
           </div>

@@ -7,7 +7,8 @@ import { useT } from "@/components/LangProvider";
 import { LOGICIELS, forfaitPermetLogiciel } from "@/lib/logiciels";
 
 // Carte de téléchargement d'un logiciel (logiciel = texte, calky, kiosque...) : l'état du bouton dépend de la connexion et du forfait.
-export default function TelechargerContent({ logiciel }) {
+// compact : sans le cadre « Télécharger » (version + bouton seulement), pour les cartes du catalogue /logiciels.
+export default function TelechargerContent({ logiciel, compact = false }) {
   const { t, lang } = useT();
   const [info, setInfo] = useState(null); // { disponible, version, taille }
   const [session, setSession] = useState(undefined); // undefined = en cours de lecture
@@ -78,6 +79,20 @@ export default function TelechargerContent({ logiciel }) {
       <button type="button" className="submit-btn" onClick={telecharger} disabled={enCours}>
         {enCours ? t("tele.preparation") : t(android ? "tele.btn.android" : "tele.btn")}
       </button>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div className="tele-compact">
+        {info?.disponible && <p className="tele-version">{t(android ? "tele.version.android" : "tele.version", { v: info.version, mo: mo ?? "?" })}</p>}
+        <div className="tele-action">{action}</div>
+        {erreur && (
+          <p className="tele-erreur">
+            {t("tele.erreur")} <span style={{ opacity: 0.7 }}>({erreur})</span>
+          </p>
+        )}
+      </div>
     );
   }
 

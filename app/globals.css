@@ -3729,3 +3729,113 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .tele-etapes-bloc{margin:22px 0 0;max-width:520px;}
 .tele-etapes-bloc h3{margin:0 0 8px;font-size:16px;font-weight:600;}
 .tele-etapes-bloc ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.5;color:var(--text-dim);}
+
+
+/* ============ Suite bureautique (/telecharger) et catalogue des logiciels (/logiciels) ============ */
+
+/* Cadre de fenêtre pour les captures d'écran des logiciels */
+.fenetre-app{border-radius:14px;overflow:hidden;background:#0a0d18;border:1px solid rgba(255,255,255,.16);box-shadow:0 40px 80px -24px rgba(0,0,0,.7),0 0 0 1px rgba(0,0,0,.35);}
+.fenetre-barre{display:flex;align-items:center;gap:7px;padding:9px 14px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));border-bottom:1px solid rgba(255,255,255,.1);}
+.fenetre-barre i{display:block;width:10px;height:10px;border-radius:50%;}
+.fenetre-barre i:nth-child(1){background:#ff5f57;}
+.fenetre-barre i:nth-child(2){background:#febc2e;}
+.fenetre-barre i:nth-child(3){background:#28c840;}
+.fenetre-barre b{flex:1;margin-right:44px;text-align:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.62);}
+.fenetre-app img{display:block;width:100%;height:auto;}
+
+/* En-tête de la suite */
+.suite-hero{padding:64px 0 10px;text-align:center;overflow:hidden;}
+.suite-hero h1{font-size:clamp(34px,6.2vw,66px);line-height:1.07;max-width:900px;margin:14px auto 18px;background:linear-gradient(100deg,#fff 28%,#c2b0ff 62%,#7fe3f5 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.suite-sous{max-width:660px;margin:0 auto 28px;color:var(--text-dim);font-size:18px;line-height:1.6;}
+.suite-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.suite-badges{list-style:none;padding:0;margin:26px 0 0;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.suite-badges li{padding:6px 14px;font-size:13px;color:var(--text-dim);background:var(--glass);border:1px solid var(--glass-border);border-radius:999px;}
+.suite-scene{position:relative;max-width:1100px;margin:48px auto 0;padding:0 24px;height:clamp(250px,45vw,570px);}
+.suite-scene::before{content:"";position:absolute;inset:-8% 2% -4%;background:radial-gradient(55% 60% at 28% 42%,rgba(138,86,254,.42),transparent 70%),radial-gradient(48% 52% at 76% 62%,rgba(12,192,223,.32),transparent 70%);filter:blur(34px);z-index:0;}
+.suite-scene .fenetre-app{position:absolute;z-index:1;animation:suiteFlotte 7s ease-in-out infinite;}
+.suite-scene .fenetre-textas{left:2%;top:0;width:62%;--rot:-3deg;}
+.suite-scene .fenetre-calky{right:2%;top:15%;width:60%;--rot:2.5deg;animation-delay:-3.5s;z-index:2;}
+@keyframes suiteFlotte{0%,100%{transform:rotate(var(--rot)) translateY(0);}50%{transform:rotate(var(--rot)) translateY(-10px);}}
+@media (prefers-reduced-motion:reduce){.suite-scene .fenetre-app{animation:none;transform:rotate(var(--rot));}}
+
+/* Un bloc par logiciel */
+.suite-produit{padding:96px 0 10px;scroll-margin-top:70px;}
+.suite-produit-rangee{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:56px;align-items:center;}
+.suite-produit-rangee.inverse{grid-template-columns:minmax(0,6fr) minmax(0,5fr);}
+.suite-produit-rangee.inverse .suite-produit-visuel{order:-1;}
+.suite-produit-icone{width:72px;height:72px;margin-bottom:10px;filter:drop-shadow(0 10px 22px rgba(0,0,0,.4));}
+.suite-produit-texte h2{font-size:clamp(36px,5vw,54px);margin:0 0 8px;}
+.suite-accroche{font-size:19px;line-height:1.5;color:var(--text-dim);margin:0 0 24px;}
+.suite-fonctions{list-style:none;padding:0;margin:0 0 26px;display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;}
+.suite-fonctions li{position:relative;display:flex;flex-direction:column;gap:2px;padding-left:22px;font-size:13.5px;line-height:1.45;color:var(--text-dim);}
+.suite-fonctions li::before{content:"";position:absolute;left:0;top:5px;width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--violet));}
+.suite-fonctions strong{font-size:14.5px;font-weight:600;color:var(--fg,#fff);}
+.suite-dispo{text-align:left;}
+.suite-produit-texte .tele-carte{max-width:none;margin:0;padding:20px 22px;text-align:left;}
+.suite-produit-texte .tele-carte h2{font-size:18px;margin:0 0 6px;}
+.suite-produit-texte .tele-action{align-items:flex-start;}
+.suite-produit-visuel{position:relative;}
+.suite-produit-visuel::before{content:"";position:absolute;inset:6% -4%;background:radial-gradient(60% 60% at 50% 50%,rgba(138,86,254,.34),transparent 72%);filter:blur(40px);z-index:0;}
+.suite-tilt{position:relative;z-index:1;}
+.suite-tilt .fenetre-app{transform:perspective(1400px) rotateY(-5deg) rotateX(1.5deg);transition:transform .5s ease;}
+.suite-produit-rangee.inverse .suite-tilt .fenetre-app{transform:perspective(1400px) rotateY(5deg) rotateX(1.5deg);}
+.suite-tilt:hover .fenetre-app{transform:perspective(1400px) rotateY(0) rotateX(0);}
+
+/* Avantages et étapes */
+.suite-pourquoi{padding:110px 0 10px;}
+.suite-centre{margin-left:auto;margin-right:auto;text-align:center;}
+.suite-avantages{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.suite-avantage{padding:26px 24px;border-radius:20px;background:var(--glass);border:1px solid var(--glass-border);}
+.suite-avantage h3{font-size:20px;margin:0 0 8px;}
+.suite-avantage p{margin:0;font-size:14.5px;line-height:1.6;color:var(--text-dim);}
+.suite-etapes{padding:80px 0 20px;}
+.suite-etapes-liste{counter-reset:etape;list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.suite-etapes-liste li{counter-increment:etape;position:relative;padding:22px 20px 22px 68px;border-radius:18px;background:var(--glass);border:1px solid var(--glass-border);font-size:14.5px;line-height:1.55;color:var(--text-dim);}
+.suite-etapes-liste li::before{content:counter(etape);position:absolute;left:18px;top:18px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--violet),var(--cyan));}
+
+/* Catalogue des logiciels */
+.cata-hero{padding:64px 0 6px;text-align:center;}
+.cata-hero h1{font-size:clamp(34px,6vw,60px);line-height:1.08;margin:14px 0 16px;}
+.cata-sous{max-width:640px;margin:0 auto;color:var(--text-dim);font-size:18px;line-height:1.6;}
+.cata-chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px;}
+.cata-chips a{padding:8px 18px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-border);font-size:14px;transition:background .2s ease,transform .2s ease;}
+.cata-chips a:hover{background:rgba(var(--w),0.16);transform:translateY(-2px);}
+.cata-section{padding:58px 0 6px;scroll-margin-top:84px;}
+.cata-section-tete h2{font-size:clamp(26px,4vw,38px);margin:0 0 6px;}
+.cata-section-tete p{margin:0 0 26px;color:var(--text-dim);}
+.cata-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:20px;}
+.cata-carte{display:flex;flex-direction:column;gap:12px;padding:24px;border-radius:22px;background:var(--glass);border:1px solid var(--glass-border);}
+.cata-carte-tete{display:flex;align-items:center;gap:14px;}
+.cata-icone{width:64px;height:64px;flex-shrink:0;border-radius:16px;object-fit:cover;}
+.cata-icone-lettre{display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-size:36px;font-weight:700;color:#fff;background:linear-gradient(135deg,#a259e6,#f98d57);}
+.cata-carte h3{font-size:21px;margin:0 0 6px;}
+.cata-badges{display:flex;gap:6px;flex-wrap:wrap;}
+.cata-badge{padding:3px 10px;font-size:12px;border-radius:999px;background:rgba(138,86,254,.22);border:1px solid rgba(138,86,254,.42);color:#e3d9ff;}
+.cata-desc{margin:0;flex:1;font-size:14.5px;line-height:1.6;color:var(--text-dim);}
+.cata-acces{margin:0;font-size:13px;font-weight:600;color:var(--cyan);}
+.cata-actions{margin-top:2px;}
+.cata-actions .submit-btn{display:inline-flex;align-items:center;gap:6px;}
+.tele-compact .tele-version{margin:0 0 10px;font-size:13px;color:var(--text-dim);}
+.tele-compact .tele-action{align-items:flex-start;}
+.cata-etapes{font-size:13.5px;color:var(--text-dim);}
+.cata-etapes summary{cursor:pointer;font-weight:600;color:var(--text);}
+.cata-etapes ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;line-height:1.5;}
+
+@media (max-width:900px){
+  .suite-produit{padding-top:70px;}
+  .suite-produit-rangee,.suite-produit-rangee.inverse{grid-template-columns:1fr;gap:34px;}
+  .suite-produit-rangee.inverse .suite-produit-visuel{order:0;}
+  .suite-produit-visuel{order:-1;}
+  .suite-tilt .fenetre-app,.suite-produit-rangee.inverse .suite-tilt .fenetre-app{transform:none;}
+  .suite-avantages,.suite-etapes-liste{grid-template-columns:1fr;}
+}
+@media (max-width:560px){
+  .suite-hero{padding-top:44px;}
+  .suite-sous,.cata-sous{font-size:16px;}
+  .suite-scene{margin-top:34px;padding:0 14px;}
+  .suite-fonctions{grid-template-columns:1fr;}
+  .fenetre-barre{padding:6px 10px;}
+  .fenetre-barre i{width:8px;height:8px;}
+  .fenetre-barre b{font-size:10px;margin-right:30px;}
+  .cata-grille{grid-template-columns:1fr;}
+}
