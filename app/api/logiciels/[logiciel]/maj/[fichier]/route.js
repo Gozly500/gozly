@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logicielExiste, lienTemporaire, trouverInstallateur, verifierAcces } from "@/lib/logicielsServer";
+import { LOGICIELS } from "@/lib/logiciels";
 
 export const dynamic = "force-dynamic";
 
@@ -7,14 +8,17 @@ export const dynamic = "force-dynamic";
 //   GET /api/logiciels/<logiciel>/maj/latest.yml                   -> décrit la dernière version
 //   GET /api/logiciels/<logiciel>/maj/<Nom>-Setup-X.Y.Z.exe        -> l'installateur de cette version
 // Chaque requête exige la session du compte (en-tête Authorization: Bearer ...) ET un forfait qui inclut le
-// logiciel. Seuls les fichiers de la dernière publication sont servis, via un lien temporaire GitHub.
+// logiciel, sauf pour les logiciels « majPublique » (ex. le kiosque Windows, qui n'a pas de compte : seule sa mise à jour est ouverte,
+// le téléchargement initial reste réservé aux comptes). Seuls les fichiers de la dernière publication sont servis, via un lien temporaire GitHub.
 // Les logiciels déjà installés (Textas, ex-Go-Page) utilisent /api/logiciels/texte/maj : cette adresse ne doit pas changer.
 export async function GET(request, { params }) {
   const logiciel = params.logiciel;
   if (!logicielExiste(logiciel)) return NextResponse.json({ error: "Logiciel inconnu." }, { status: 404 });
 
-  const acces = await verifierAcces(request, logiciel);
-  if (acces.reponse) return acces.reponse;
+  if (!LOGICIELS[logiciel]?.majPublique) {
+    const acces = await verifierAcces(request, logiciel);
+    if (acces.reponse) return acces.reponse;
+  }
 
   const installateur = await trouverInstallateur(logiciel);
   if (installateur.erreur) return NextResponse.json({ error: "Aucune version disponible." }, { status: 404 });

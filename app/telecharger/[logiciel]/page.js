@@ -16,7 +16,7 @@ export function generateStaticParams() {
   return Object.values(LOGICIELS).map((l) => ({ logiciel: l.slug }));
 }
 
-const ICONES = { texte: "/logiciels/texte.svg", calky: "/logiciels/calky.svg", kiosque: "/icone-kiosque-512.png" };
+const ICONES = { texte: "/logiciels/texte.svg", calky: "/logiciels/calky.svg", kiosque: "/icone-kiosque-512.png", "kiosque-pc": "/icone-kiosque-512.png" };
 
 // Page d'installation d'un logiciel : on y arrive en cliquant sur « Télécharger ». Le téléchargement démarre ici, et les étapes
 // pour l'installer s'affichent en même temps. Les étapes dépendent de la plateforme (Windows ou Android).
@@ -26,8 +26,13 @@ export default function InstallationPage({ params }) {
 
   const { t } = getT();
   const { nom, slug, plateforme } = LOGICIELS[cle];
+  const kiosque = cle === "kiosque" || cle === "kiosque-pc";
   const android = plateforme === "android";
-  const etapes = android ? ["tele.kiosque.e1", "tele.kiosque.e2", "tele.kiosque.e3", "tele.kiosque.e4"] : ["inst.win.e1", "tele.e2", "tele.e3"];
+  const etapes = android
+    ? ["tele.kiosque.e1", "tele.kiosque.e2", "tele.kiosque.e3", "tele.kiosque.e4"]
+    : cle === "kiosque-pc"
+    ? ["inst.win.e1", "tele.e2", "tele.e3", "inst.kiosquepc.e4"]
+    : ["inst.win.e1", "tele.e2", "tele.e3"];
 
   return (
     <div className="page page-default">
@@ -42,7 +47,7 @@ export default function InstallationPage({ params }) {
             alt=""
             width="96"
             height="96"
-            style={cle === "kiosque" ? { borderRadius: "24px" } : undefined}
+            style={kiosque ? { borderRadius: "24px" } : undefined}
           />
           <h1>{t("inst.titre", { nom })}</h1>
           <p className="inst-sous">{t(android ? "inst.sous.android" : "inst.sous")}</p>
@@ -62,7 +67,7 @@ export default function InstallationPage({ params }) {
             </ol>
           </div>
 
-          <Link href={android ? "/logiciels" : `/telecharger#${slug}`} className="inst-retour">
+          <Link href={kiosque ? "/logiciels" : `/telecharger#${slug}`} className="inst-retour">
             {t("inst.retour")}
           </Link>
         </div>

@@ -3857,3 +3857,5 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .inst-etapes li:last-child::after{display:none;}
 .inst-retour{display:block;margin:38px auto 0;text-align:center;font-size:14px;color:var(--text-dim);}
 .inst-retour:hover{color:var(--text);}
+
+.cata-actions .tele-compact + .tele-compact{margin-top:16px;padding-top:16px;border-top:1px solid var(--glass-border);}

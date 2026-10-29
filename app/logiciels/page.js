@@ -42,7 +42,7 @@ function CarteLogiciel({ cle, t }) {
       <p className="cata-acces">{t(f.acces)}</p>
       <div className="cata-actions">
         {f.telechargement ? (
-          <TelechargerContent logiciel={f.telechargement} compact />
+          [].concat(f.telechargement).map((cle) => <TelechargerContent key={cle} logiciel={cle} compact />)
         ) : (
           <Link href={f.lien} className="submit-btn">
             {t(f.cta)} <IconFlecheDroite className="gozly-icon-inline" />
