@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 // Curseur au style Gozly : volume (tableau de bord et kiosque Musique) et barre de progression de la chanson.
 // Il suit le doigt en local, et envoie la valeur :
@@ -18,6 +19,22 @@ export default function CurseurVolume({ valeur, onValider, muet = false, label, 
   const tient = useRef(false); // un doigt (ou la souris) est sur le curseur
   const dernier = useRef(valeur ?? 0);
   const minuteur = useRef(null);
+  const racine = useRef(null);
+  const [monte, setMonte] = useState(false);
+  const [pos, setPos] = useState(null); // centre de la poignée à l'écran : la bulle (portail, position fixe) s'y accroche
+
+  useEffect(() => setMonte(true), []);
+
+  function placerBulle() {
+    const r = racine.current?.getBoundingClientRect();
+    if (!r) return;
+    const poignee = window.matchMedia("(pointer: coarse)").matches ? 32 : 20;
+    const p = max > 0 ? local / max : 0;
+    setPos({ x: r.left + poignee / 2 + (r.width - poignee) * p, y: r.top + r.height / 2 });
+  }
+
+  // La bulle suit la poignée à chaque changement de valeur ; recalculée aussi au toucher (la page a pu défiler).
+  useLayoutEffect(placerBulle, [local, touche, max]);
 
   // Pendant qu'on touche le curseur, on ignore les mises à jour venues de Sonos (sinon il saute sous le doigt).
   useEffect(() => {
@@ -74,13 +91,15 @@ export default function CurseurVolume({ valeur, onValider, muet = false, label, 
   // monte au-dessus de la poignée et la suit pendant le glissement, puis rentre dans la poignée au relâchement.
   if (!couleur) {
     return (
-      <div className="gx-vol" style={{ "--p": max > 0 ? local / max : 0 }}>
+      <div className="gx-vol" ref={racine}>
         {champ}
-        {!lectureSeule && (
-          <span className={`gx-bulle${touche ? " ouverte" : ""}`} aria-hidden="true">
-            {local}
-          </span>
-        )}
+        {!lectureSeule && monte && pos &&
+          createPortal(
+            <span className={`gx-bulle${touche ? " ouverte" : ""}`} style={{ left: pos.x, top: pos.y }} aria-hidden="true">
+              {local}
+            </span>,
+            document.body
+          )}
       </div>
     );
   }

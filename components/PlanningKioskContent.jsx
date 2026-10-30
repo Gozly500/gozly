@@ -199,8 +199,8 @@ export default function PlanningKioskContent() {
         {calendrierOuvert && (
           <div className="modal-overlay" onClick={() => setCalendrierOuvert(false)}>
             {/* Le calendrier de Gozly (celui de la saisie des commandes), ici dans une fenêtre : on choisit un jour et ses tâches s'affichent. */}
-            <div className="sg-panneau" style={{ width: "auto", opacity: 1, overflow: "visible", margin: 0 }} onClick={(e) => e.stopPropagation()}>
-              <div className="sg-interne" style={{ width: "min(460px, 92vw)" }}>
+            <div className="sg-panneau sg-autonome" onClick={(e) => e.stopPropagation()}>
+              <div className="sg-interne">
                 <Calendrier
                   champ={{ id: "jour-taches", label: tr("kq.t.choisirJour"), value: date, onChange: setDate }}
                   onFermer={() => setCalendrierOuvert(false)}
