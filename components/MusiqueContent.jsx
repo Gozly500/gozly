@@ -11,7 +11,6 @@ import SimpleSelect from "@/components/SimpleSelect";
 import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconFlecheHaut, IconPlus } from "@/components/icons/Pictogrammes";
 import { IconMusique } from "@/components/icons/GozlyIcons";
 import { logoPlateforme } from "@/lib/plateformesMusique";
-import BetaBadge from "@/components/BetaBadge";
 import Curseur from "@/components/CurseurVolume";
 import { useT } from "@/components/LangProvider";
 
@@ -333,10 +332,7 @@ export default function MusiqueContent() {
         <div className="dash-main-inner musique-large">
           <header className="dash-hero-inline">
             <div>
-              <h1>
-                {t("Musique")}
-                <BetaBadge hauteur={26} />
-              </h1>
+              <h1>{t("Musique")}</h1>
               <p>{t("Contrôle ton système Sonos : lecture, volume, listes de lecture et haut-parleurs.")}</p>
             </div>
           </header>
