@@ -20,6 +20,7 @@ import TransitionTheme from "@/components/moi/TransitionTheme";
 import { useLangue } from "@/components/moi/LangueContext";
 import { LANGUES } from "@/lib/i18n/moi";
 import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import ImprimanteBluetooth from "@/components/ImprimanteBluetooth";
 
 // Réglages de la tablette : thème (+ accent) et langue, mémorisés sur la tablette seulement.
 export default function KiosqueReglages() {
@@ -103,6 +104,9 @@ export default function KiosqueReglages() {
           ))}
         </div>
       </div>
+
+      {/* Seulement dans l'app Android du kiosque (le pont Bluetooth n'existe pas dans un navigateur) */}
+      <ImprimanteBluetooth />
 
       <h3 style={{ marginBottom: "4px" }}>{t("apparence.titre")}</h3>
       <p className="panel-hint">{t("apparence.hint")}</p>

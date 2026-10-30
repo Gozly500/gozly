@@ -10,8 +10,7 @@ import { useAnimationCartes } from "@/lib/useAnimationCartes";
 import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
 import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle, modifierCommandeManuelle, retirerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
-import { imprimerBonsLocaux, pontImprimante } from "@/lib/impressionLocale";
-import ImprimanteBluetooth from "@/components/ImprimanteBluetooth";
+import { imprimerBonsLocaux } from "@/lib/impressionLocale";
 import {
   formatMontant,
   dateAujourdhui,
@@ -131,10 +130,6 @@ export default function CommandesKioskContent() {
   const dejaCharge = useRef(false); // le premier chargement n'est pas animé
   const [enCours, setEnCours] = useState(null);
   const [imprimanteActive, setImprimanteActive] = useState(false);
-  // App Android du kiosque : la tablette peut imprimer elle-même par Bluetooth (le pont n'existe pas dans un navigateur ordinaire).
-  const [pontBluetooth, setPontBluetooth] = useState(false);
-  const [reglageBluetooth, setReglageBluetooth] = useState(false);
-  useEffect(() => setPontBluetooth(!!pontImprimante()), []);
   const [message, setMessage] = useState(null);
   const [sonActif, setSonActif] = useState(false); // le son est voulu (mémorisé sur cet appareil)
   const [sonVerrouille, setSonVerrouille] = useState(false); // voulu, mais le navigateur attend un toucher pour l'autoriser (après un rechargement)
@@ -772,19 +767,11 @@ export default function CommandesKioskContent() {
           >
             {son ? <><IconCloche className="gozly-icon" /> {t("kq.c.sonOn")}</> : sonActif ? <><IconClocheBarree className="gozly-icon" /> {t("kq.c.sonReactiver")}</> : <><IconClocheBarree className="gozly-icon" /> {t("kq.c.sonOff")}</>}
           </button>
-          {pontBluetooth && (
-            <button className="admin-icon-btn" onClick={() => setReglageBluetooth(true)}>
-              <IconImprimante className="gozly-icon" /> {t("kq.imp.bouton")}
-            </button>
-          )}
           <button className="submit-btn" onClick={() => setModal(true)}>
             {t("kq.c.nouvelle")}
           </button>
         </div>
       </header>
-
-      {reglageBluetooth && <ImprimanteBluetooth entrepriseId={entrepriseId} onClose={() => setReglageBluetooth(false)} />}
-
       {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
 
       {sonActif && sonVerrouille && (
