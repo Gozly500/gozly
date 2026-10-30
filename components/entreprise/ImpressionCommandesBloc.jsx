@@ -167,7 +167,13 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
                 ) : (
                   <div
                     key={i}
-                    style={{ textAlign: l.align, fontWeight: l.gras ? 700 : 400, fontSize: l.grand ? "2em" : "1em", lineHeight: l.grand ? 1.15 : 1.3 }}
+                    style={{
+                      textAlign: l.align,
+                      fontWeight: l.gras ? 700 : 400,
+                      fontSize: l.grand ? "2em" : "1em",
+                      lineHeight: l.grand ? 1.15 : 1.3,
+                      ...(l.inverse ? { background: "#111", color: "#fff" } : null),
+                    }}
                   >
                     {l.texte || "\u00A0"}
                   </div>
