@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import { useGestion } from "@/components/gestion/GestionShell";
-import { dateAujourdhui, decalerJour, NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
+import { dateAujourdhui, decalerJour, NOM_CATEGORIE_COMMANDES, rangeesTaches } from "@/lib/commandes";
 import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
@@ -116,18 +116,21 @@ export default function TachesGestion() {
           <span className="planning-day-title">{cat.nom}</span>
           {geree && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11px" }}>{tr("Géré par un module")}</span>}
         </div>
-        {liste.map((t) => (
-          <div className="gestion-tache-ligne" key={t.id}>
-            <label className="planning-tache" style={{ flex: 1, margin: 0 }}>
-              <input type="checkbox" checked={!!t.terminee} onChange={() => basculer(t)} />
-              <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{t.texte}</span>
-            </label>
-            {t.source !== "commande" && (
-              <button type="button" className="admin-icon-btn danger gestion-tache-retirer" onClick={() => retirer(t)} aria-label={tr("Retirer la tâche")}>
-                <IconX className="gozly-icon" />
-              </button>
-            )}
-          </div>
+        {rangeesTaches(liste, cat.nom === NOM_CATEGORIE_COMMANDES).map(({ tache: t, titre, libelle, sous }) => (
+          <Fragment key={t.id}>
+            {titre && <div className="planning-tache-groupe">{titre}</div>}
+            <div className="gestion-tache-ligne">
+              <label className={`planning-tache${sous ? " sous" : ""}`} style={{ flex: 1, margin: 0 }}>
+                <input type="checkbox" checked={!!t.terminee} onChange={() => basculer(t)} />
+                <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{libelle}</span>
+              </label>
+              {t.source !== "commande" && (
+                <button type="button" className="admin-icon-btn danger gestion-tache-retirer" onClick={() => retirer(t)} aria-label={tr("Retirer la tâche")}>
+                  <IconX className="gozly-icon" />
+                </button>
+              )}
+            </div>
+          </Fragment>
         ))}
         {!geree &&
           (ajoutPour === cat.id ? (

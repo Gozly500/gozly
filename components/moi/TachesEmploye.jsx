@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { NOM_CATEGORIE_COMMANDES, rangeesTaches } from "@/lib/commandes";
 import Squelettes from "@/components/moi/Squelettes";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
@@ -219,11 +220,14 @@ export default function TachesEmploye() {
               <div className="planning-day-head">
                 <span className="planning-day-title">{cat.nom}</span>
               </div>
-              {parCategorie.get(cat.id).map((tache) => (
-                <label className="planning-tache" key={tache.id}>
-                  <input type="checkbox" checked={tache.terminee} onChange={() => toggle(tache)} />
-                  <span className={`planning-tache-texte${tache.terminee ? " done" : ""}`}>{tache.texte}</span>
-                </label>
+              {rangeesTaches(parCategorie.get(cat.id), cat.nom === NOM_CATEGORIE_COMMANDES).map(({ tache, titre, libelle, sous }) => (
+                <Fragment key={tache.id}>
+                  {titre && <div className="planning-tache-groupe">{titre}</div>}
+                  <label className={`planning-tache${sous ? " sous" : ""}`}>
+                    <input type="checkbox" checked={tache.terminee} onChange={() => toggle(tache)} />
+                    <span className={`planning-tache-texte${tache.terminee ? " done" : ""}`}>{libelle}</span>
+                  </label>
+                </Fragment>
               ))}
             </div>
           ))}

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
+import { NOM_CATEGORIE_COMMANDES, rangeesTaches } from "@/lib/commandes";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { IconCrochet, IconDocument } from "@/components/icons/Pictogrammes";
@@ -214,23 +214,26 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                   </div>
                 </div>
 
-                {catTaches.map((t) => (
-                  <label className="planning-tache" key={t.id}>
-                    <input type="checkbox" checked={t.terminee} onChange={() => handleToggle(t)} />
-                    <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{t.texte}</span>
-                    {t.source !== "commande" && (
-                      <button
-                        type="button"
-                        className="admin-icon-btn danger"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleDelete(t.id);
-                        }}
-                      >
-                        {tr("Retirer")}
-                      </button>
-                    )}
-                  </label>
+                {rangeesTaches(catTaches, cat.nom === NOM_CATEGORIE_COMMANDES).map(({ tache: t, titre, libelle, sous }) => (
+                  <Fragment key={t.id}>
+                    {titre && <div className="planning-tache-groupe">{titre}</div>}
+                    <label className={`planning-tache${sous ? " sous" : ""}`}>
+                      <input type="checkbox" checked={t.terminee} onChange={() => handleToggle(t)} />
+                      <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{libelle}</span>
+                      {t.source !== "commande" && (
+                        <button
+                          type="button"
+                          className="admin-icon-btn danger"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleDelete(t.id);
+                          }}
+                        >
+                          {tr("Retirer")}
+                        </button>
+                      )}
+                    </label>
+                  </Fragment>
                 ))}
 
                 {catTaches.length === 0 && addingFor !== cat.id && (

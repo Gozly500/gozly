@@ -1474,6 +1474,10 @@ input.planning-date-picker{
   }
 .planning-tache-texte{flex:1;font-size:14px;}
 .planning-tache-texte.done{color:var(--text-dim);text-decoration:line-through;}
+/* Réservations : un produit en en-tête, ses variantes (Complète, Demi...) en lignes décalées dessous */
+.planning-tache-groupe{font-weight:700;font-size:14.5px;margin:14px 2px 6px;}
+.planning-tache-groupe:first-of-type{margin-top:4px;}
+.planning-tache.sous{margin-left:14px;}
 
 /* ============ Pointage (clavier NIP) ============ */
 .pointage-kiosk{max-width:340px;margin:20px auto 0;text-align:center;}

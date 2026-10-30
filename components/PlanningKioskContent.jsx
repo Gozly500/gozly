@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useLangue } from "@/components/moi/LangueContext";
-import { NOM_CATEGORIE_COMMANDES } from "@/lib/commandes";
+import { NOM_CATEGORIE_COMMANDES, rangeesTaches } from "@/lib/commandes";
 import { IconLocalisation } from "@/components/icons/Pictogrammes";
 
 function todayISO() {
@@ -184,11 +184,14 @@ export default function PlanningKioskContent() {
                   <div className="planning-day-head">
                     <span className="planning-day-title">{cat.nom}</span>
                   </div>
-                  {catTaches.map((t) => (
-                    <label className="planning-tache" key={t.id}>
-                      <input type="checkbox" checked={t.terminee} onChange={() => handleToggle(t)} />
-                      <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{t.texte}</span>
-                    </label>
+                  {rangeesTaches(catTaches, cat.nom === NOM_CATEGORIE_COMMANDES).map(({ tache: t, titre, libelle, sous }) => (
+                    <Fragment key={t.id}>
+                      {titre && <div className="planning-tache-groupe">{titre}</div>}
+                      <label className={`planning-tache${sous ? " sous" : ""}`}>
+                        <input type="checkbox" checked={t.terminee} onChange={() => handleToggle(t)} />
+                        <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{libelle}</span>
+                      </label>
+                    </Fragment>
                   ))}
                 </div>
               );
