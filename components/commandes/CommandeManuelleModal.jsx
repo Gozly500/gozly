@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { formatMontant, bornesJour } from "@/lib/commandes";
 import { imprimerCommande, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { lireProduitsTries } from "@/lib/ordreProduits";
+import { formaterTelephone } from "@/lib/telephone";
 import { IconFlecheGauche, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { LangueProvider } from "@/components/moi/LangueContext";
@@ -304,7 +305,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
 
           <div className="field">
             <label>{t("Téléphone (optionnel)")}</label>
-            <input type="tel" value={telephone} onChange={(e) => setTelephone(e.target.value)} placeholder={t("Ex: 514 555-0123")} maxLength={40} />
+            <input type="tel" value={telephone} onChange={(e) => setTelephone(formaterTelephone(e.target.value))} placeholder={t("Ex: 514 555-0123")} maxLength={40} />
           </div>
 
           <div className="field">

@@ -145,7 +145,12 @@ export async function POST(request) {
   }
 
   if (lignes.length > 0) {
-    const { error } = await service.from("commandes_en_ligne").upsert(lignes, { onConflict: "entreprise_id,source,source_id" });
+    let { error } = await service.from("commandes_en_ligne").upsert(lignes, { onConflict: "entreprise_id,source,source_id" });
+    // Colonne du téléphone absente (commandes_telephone.sql pas exécuté) : on enregistre quand même les commandes, sans le numéro.
+    if (error && /client_telephone/.test(error.message)) {
+      for (const l of lignes) delete l.client_telephone;
+      ({ error } = await service.from("commandes_en_ligne").upsert(lignes, { onConflict: "entreprise_id,source,source_id" }));
+    }
     if (error) {
       console.error("Erreur synchronisation commandes Wix:", error.message);
       return NextResponse.json({ error: "La synchronisation a échoué.", detail: error.message }, { status: 500 });

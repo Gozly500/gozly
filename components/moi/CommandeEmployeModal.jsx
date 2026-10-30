@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
 import { formatMontant } from "@/lib/commandes";
+import { formaterTelephone } from "@/lib/telephone";
 import { separerVariante, produitIdWix, versIsoQuebec, dateHeureQuebec } from "@/lib/commandesManuelles";
 import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
@@ -263,7 +264,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
             </div>
 
             <div className="field">
-              <ChampGozly id="tel" type="tel" label={t("commandes.telephone")} value={telephone} onChange={setTelephone} placeholder={t("commandes.telephone")} maxLength={40} />
+              <ChampGozly id="tel" type="tel" label={t("commandes.telephone")} value={telephone} onChange={(v) => setTelephone(formaterTelephone(v))} placeholder={t("commandes.telephone")} maxLength={40} />
             </div>
 
             <div className="field">
