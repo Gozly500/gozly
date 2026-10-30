@@ -1,5 +1,5 @@
 import { getServiceClient } from "@/lib/adminServer";
-import { construireBonCommande, construireBonTest } from "@/lib/impressionCommandes";
+import { xmlDuBon } from "@/lib/impressionCommandes";
 
 // Point d'accès interrogé par l'imprimante Epson TM-m30III (Server Direct
 // Print) : elle envoie un POST toutes les quelques secondes à l'URL réglée
@@ -102,17 +102,8 @@ export async function POST(request, { params }) {
 
   if (!bon) return reponseVide();
 
-  let xml;
-  if (bon.type === "test") {
-    xml = construireBonTest(entreprise.nom);
-  } else {
-    const { data: commande } = await service.from("commandes_en_ligne").select("*").eq("id", bon.commande_id).maybeSingle();
-    if (!commande) {
-      await service.from("bons_impression").update({ statut: "echec", erreur: "Commande introuvable", updated_at: new Date().toISOString() }).eq("id", bon.id);
-      return reponseVide();
-    }
-    xml = construireBonCommande(commande, entreprise.nom);
-  }
+  const xml = await xmlDuBon(service, entreprise, bon);
+  if (!xml) return reponseVide();
 
   await service
     .from("bons_impression")
