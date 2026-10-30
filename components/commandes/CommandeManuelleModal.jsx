@@ -74,6 +74,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
   const [note, setNote] = useState(commande?.note || "");
   const [mode, setMode] = useState(commande?.mode || "ramassage");
   const [paye, setPaye] = useState(commande ? commande.statut_paiement === "PAID" : false);
+  const [methode, setMethode] = useState(commande?.methode_paiement || "");
   const [articles, setArticles] = useState(
     commande?.items?.length
       ? commande.items.map((it) => ({
@@ -238,6 +239,13 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
       setErreur(t("Impossible d'enregistrer la commande. As-tu exécuté commandes_manuelles.sql dans Supabase?"));
       return;
     }
+    // Mode de paiement : écrit à part (la commande s'enregistre même si commandes_methode_paiement.sql n'est pas exécuté).
+    if (methode || commande?.methode_paiement) {
+      await supabase
+        .from("commandes_en_ligne")
+        .update({ methode_paiement: paye ? methode || null : null })
+        .eq("id", commande ? commande.id : nouvelId);
+    }
     // Info supplémentaire : écrite à part (la commande s'enregistre même si commandes_note.sql n'est pas exécuté).
     if (note.trim() || commande?.note) {
       await supabase
@@ -349,6 +357,19 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
                 [false, "Non payée"],
               ]}
             />
+            {paye && (
+              <div style={{ marginTop: "8px" }}>
+                <BoutonsChoix
+                  valeur={methode}
+                  onChange={(m) => setMethode(methode === m ? "" : m)}
+                  choix={[
+                    ["Comptant", "Comptant"],
+                    ["Carte", "Carte"],
+                    ["Autre", "Autre"],
+                  ]}
+                />
+              </div>
+            )}
           </div>
 
           <p style={{ fontWeight: 700, margin: "12px 0" }}>{t("Total :")}{" "}{formatMontant(total)}</p>

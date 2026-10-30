@@ -161,6 +161,10 @@ export async function POST(request) {
   // Info supplémentaire : écrite à part, pour que la commande s'enregistre même si commandes_note.sql n'est pas encore exécuté.
   if (note) await service.from("commandes_en_ligne").update({ note }).eq("id", id);
 
+  // Mode de paiement (si payée) : écrit à part, comme la note.
+  const methode = ["Comptant", "Carte", "Autre"].includes(corps.methode_paiement) ? corps.methode_paiement : null;
+  if (corps.paye && methode) await service.from("commandes_en_ligne").update({ methode_paiement: methode }).eq("id", id);
+
   // Comme au dashboard : tâches "Réservations" mises à jour, et bon imprimé
   // si le réglage des commandes manuelles est sur "automatique".
   await synchroniserTachesCommandes(service, employe.entreprise_id).catch((err) => console.error("Erreur tâches:", err.message));

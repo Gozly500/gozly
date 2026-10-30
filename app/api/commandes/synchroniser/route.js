@@ -1,11 +1,36 @@
 import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
-import { obtenirCommandesWix, diagnostiquerPermissionsWix } from "@/lib/wixClient";
+import { obtenirCommandesWix, obtenirMethodesPaiementWix, diagnostiquerPermissionsWix } from "@/lib/wixClient";
 import { synchroniserTachesCommandes } from "@/lib/tachesCommandes";
 import { correspondAuLieu } from "@/lib/wixLieu";
 import { imprimerAutomatiquement } from "@/lib/impressionCommandes";
 import { bornesJour, dateAujourdhui, dateEffective, decalerJour } from "@/lib/commandes";
+
+// Lit chez Wix le mode de paiement des commandes payées qui ne l'ont pas encore (20 au plus par synchro).
+// Colonne absente (commandes_methode_paiement.sql pas exécuté) : on ne fait rien.
+async function completerMethodesPaiement(service, entrepriseId, instanceId, lignes) {
+  const payees = lignes.filter((l) => l.statut_paiement === "PAID").map((l) => l.source_id);
+  if (payees.length === 0) return;
+  const { data, error } = await service
+    .from("commandes_en_ligne")
+    .select("source_id, methode_paiement")
+    .eq("entreprise_id", entrepriseId)
+    .eq("source", "wix")
+    .in("source_id", payees);
+  if (error) return;
+  const manquantes = (data || []).filter((r) => !r.methode_paiement).map((r) => r.source_id).slice(0, 20);
+  if (manquantes.length === 0) return;
+  const methodes = await obtenirMethodesPaiementWix(instanceId, manquantes);
+  for (const [sourceId, methode] of Object.entries(methodes)) {
+    await service
+      .from("commandes_en_ligne")
+      .update({ methode_paiement: methode })
+      .eq("entreprise_id", entrepriseId)
+      .eq("source", "wix")
+      .eq("source_id", sourceId);
+  }
+}
 
 // Copie (lecture seule) les commandes Wix récentes de l'entreprise dans
 // commandes_en_ligne. Rejouable à volonté : chaque commande est mise à jour
@@ -126,6 +151,11 @@ export async function POST(request) {
       return NextResponse.json({ error: "La synchronisation a échoué.", detail: error.message }, { status: 500 });
     }
   }
+
+  // Mode de paiement des commandes payées (avant l'impression, pour qu'il figure sur le bon). Une erreur ici ne bloque rien.
+  await completerMethodesPaiement(service, entreprise.id, connexion.instance_id, lignes).catch((err) =>
+    console.error("Erreur mode de paiement Wix:", err.message)
+  );
 
   // Mode liste : les bons des nouvelles commandes sortent à leur arrivée (comme quand elles deviennent « Traitées »).
   if (aImprimer.length > 0) {

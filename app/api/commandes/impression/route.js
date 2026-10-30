@@ -72,7 +72,9 @@ export async function POST(request) {
         { nom: "Tiramisu", quantite: 1, prix: 8.5, options: [] },
       ],
       total: 37.5,
-      statut_paiement: "NOT_PAID",
+      source: "manuel",
+      statut_paiement: "PAID",
+      methode_paiement: "Carte",
       note: "Sans oignons svp",
     };
     return NextResponse.json({

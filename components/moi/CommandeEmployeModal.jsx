@@ -34,6 +34,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
   const [note, setNote] = useState(commande?.note || "");
   const [mode, setMode] = useState(commande?.mode || "ramassage");
   const [paye, setPaye] = useState(commande ? commande.statut_paiement === "PAID" : false);
+  const [methode, setMethode] = useState(commande?.methode_paiement || "");
   const [dateRamassage, setDateRamassage] = useState(commande ? ramassageInitial.date : dateParDefaut);
   const [heureRamassage, setHeureRamassage] = useState(ramassageInitial.heure || "12:00");
   const [plage, setPlage] = useState(!!commande?.date_ramassage_fin); // le client passera « entre telle heure et telle heure »
@@ -193,6 +194,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
       note,
       mode,
       paye,
+      methode_paiement: paye ? methode || null : null,
       date_ramassage: dateRamassage ? versIsoQuebec(dateRamassage, heureRamassage) : null,
       date_ramassage_fin: avecPlage ? versIsoQuebec(dateRamassage, heureFin) : null,
       items: articlesValides.map((a) => ({ ...a, prix: Number.isFinite(a.prix) ? a.prix : null })),
@@ -337,6 +339,25 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
                   {t("commandes.nonPayee")}
                 </button>
               </div>
+              {paye && (
+                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                  {[
+                    ["Comptant", "commandes.methode.comptant"],
+                    ["Carte", "commandes.methode.carte"],
+                    ["Autre", "commandes.methode.autre"],
+                  ].map(([id, cle]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className="admin-icon-btn"
+                      style={{ flex: 1, ...boutonChoix(methode === id) }}
+                      onClick={() => setMethode(methode === id ? "" : id)}
+                    >
+                      {t(cle)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {erreur && <p className="settings-msg err">{erreur}</p>}
