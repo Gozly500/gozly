@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { NOM_CATEGORIE_COMMANDES, rangeesTaches } from "@/lib/commandes";
+import { NOM_CATEGORIE_COMMANDES, blocsTaches } from "@/lib/commandes";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { IconCrochet, IconDocument } from "@/components/icons/Pictogrammes";
@@ -214,10 +214,9 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                   </div>
                 </div>
 
-                {rangeesTaches(catTaches, cat.nom === NOM_CATEGORIE_COMMANDES).map(({ tache: t, titre, libelle, sous }) => (
-                  <Fragment key={t.id}>
-                    {titre && <div className="planning-tache-groupe">{titre}</div>}
-                    <label className={`planning-tache${sous ? " sous" : ""}`}>
+                {blocsTaches(catTaches, cat.nom === NOM_CATEGORIE_COMMANDES).map((bloc) => {
+                  const lignes = bloc.rangees.map(({ tache: t, libelle }) => (
+                    <label className="planning-tache" key={t.id}>
                       <input type="checkbox" checked={t.terminee} onChange={() => handleToggle(t)} />
                       <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{libelle}</span>
                       {t.source !== "commande" && (
@@ -233,8 +232,16 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
                         </button>
                       )}
                     </label>
-                  </Fragment>
-                ))}
+                  ));
+                  return bloc.titre ? (
+                    <div className="planning-tache-boite" key={bloc.rangees[0].tache.id}>
+                      <div className="planning-tache-groupe">{bloc.titre}</div>
+                      {lignes}
+                    </div>
+                  ) : (
+                    <Fragment key={bloc.rangees[0].tache.id}>{lignes}</Fragment>
+                  );
+                })}
 
                 {catTaches.length === 0 && addingFor !== cat.id && (
                   <p style={{ color: "var(--text-dim)", fontSize: "13px" }}>{tr("Aucune tâche.")}</p>

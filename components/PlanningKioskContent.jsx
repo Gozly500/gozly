@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useLangue } from "@/components/moi/LangueContext";
-import { NOM_CATEGORIE_COMMANDES, rangeesTaches } from "@/lib/commandes";
+import { NOM_CATEGORIE_COMMANDES, blocsTaches } from "@/lib/commandes";
 import { IconLocalisation } from "@/components/icons/Pictogrammes";
 
 function todayISO() {
@@ -184,15 +184,22 @@ export default function PlanningKioskContent() {
                   <div className="planning-day-head">
                     <span className="planning-day-title">{cat.nom}</span>
                   </div>
-                  {rangeesTaches(catTaches, cat.nom === NOM_CATEGORIE_COMMANDES).map(({ tache: t, titre, libelle, sous }) => (
-                    <Fragment key={t.id}>
-                      {titre && <div className="planning-tache-groupe">{titre}</div>}
-                      <label className={`planning-tache${sous ? " sous" : ""}`}>
+                  {blocsTaches(catTaches, cat.nom === NOM_CATEGORIE_COMMANDES).map((bloc) => {
+                    const lignes = bloc.rangees.map(({ tache: t, libelle }) => (
+                      <label className="planning-tache" key={t.id}>
                         <input type="checkbox" checked={t.terminee} onChange={() => handleToggle(t)} />
                         <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{libelle}</span>
                       </label>
-                    </Fragment>
-                  ))}
+                    ));
+                    return bloc.titre ? (
+                      <div className="planning-tache-boite" key={bloc.rangees[0].tache.id}>
+                        <div className="planning-tache-groupe">{bloc.titre}</div>
+                        {lignes}
+                      </div>
+                    ) : (
+                      <Fragment key={bloc.rangees[0].tache.id}>{lignes}</Fragment>
+                    );
+                  })}
                 </div>
               );
             };

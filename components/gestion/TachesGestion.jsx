@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import { useGestion } from "@/components/gestion/GestionShell";
-import { dateAujourdhui, decalerJour, NOM_CATEGORIE_COMMANDES, rangeesTaches } from "@/lib/commandes";
+import { dateAujourdhui, decalerJour, NOM_CATEGORIE_COMMANDES, blocsTaches } from "@/lib/commandes";
 import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
@@ -116,11 +116,10 @@ export default function TachesGestion() {
           <span className="planning-day-title">{cat.nom}</span>
           {geree && <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11px" }}>{tr("Géré par un module")}</span>}
         </div>
-        {rangeesTaches(liste, cat.nom === NOM_CATEGORIE_COMMANDES).map(({ tache: t, titre, libelle, sous }) => (
-          <Fragment key={t.id}>
-            {titre && <div className="planning-tache-groupe">{titre}</div>}
-            <div className="gestion-tache-ligne">
-              <label className={`planning-tache${sous ? " sous" : ""}`} style={{ flex: 1, margin: 0 }}>
+        {blocsTaches(liste, cat.nom === NOM_CATEGORIE_COMMANDES).map((bloc) => {
+          const lignes = bloc.rangees.map(({ tache: t, libelle }) => (
+            <div className="gestion-tache-ligne" key={t.id}>
+              <label className="planning-tache" style={{ flex: 1, margin: 0 }}>
                 <input type="checkbox" checked={!!t.terminee} onChange={() => basculer(t)} />
                 <span className={`planning-tache-texte${t.terminee ? " done" : ""}`}>{libelle}</span>
               </label>
@@ -130,8 +129,16 @@ export default function TachesGestion() {
                 </button>
               )}
             </div>
-          </Fragment>
-        ))}
+          ));
+          return bloc.titre ? (
+            <div className="planning-tache-boite" key={bloc.rangees[0].tache.id}>
+              <div className="planning-tache-groupe">{bloc.titre}</div>
+              {lignes}
+            </div>
+          ) : (
+            <Fragment key={bloc.rangees[0].tache.id}>{lignes}</Fragment>
+          );
+        })}
         {!geree &&
           (ajoutPour === cat.id ? (
             <form className="gestion-tache-ajout" onSubmit={(e) => ajouter(e, cat.id)}>

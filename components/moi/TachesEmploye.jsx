@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
-import { NOM_CATEGORIE_COMMANDES, rangeesTaches } from "@/lib/commandes";
+import { NOM_CATEGORIE_COMMANDES, blocsTaches } from "@/lib/commandes";
 import Squelettes from "@/components/moi/Squelettes";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
@@ -220,15 +220,22 @@ export default function TachesEmploye() {
               <div className="planning-day-head">
                 <span className="planning-day-title">{cat.nom}</span>
               </div>
-              {rangeesTaches(parCategorie.get(cat.id), cat.nom === NOM_CATEGORIE_COMMANDES).map(({ tache, titre, libelle, sous }) => (
-                <Fragment key={tache.id}>
-                  {titre && <div className="planning-tache-groupe">{titre}</div>}
-                  <label className={`planning-tache${sous ? " sous" : ""}`}>
+              {blocsTaches(parCategorie.get(cat.id), cat.nom === NOM_CATEGORIE_COMMANDES).map((bloc) => {
+                const lignes = bloc.rangees.map(({ tache, libelle }) => (
+                  <label className="planning-tache" key={tache.id}>
                     <input type="checkbox" checked={tache.terminee} onChange={() => toggle(tache)} />
                     <span className={`planning-tache-texte${tache.terminee ? " done" : ""}`}>{libelle}</span>
                   </label>
-                </Fragment>
-              ))}
+                ));
+                return bloc.titre ? (
+                  <div className="planning-tache-boite" key={bloc.rangees[0].tache.id}>
+                    <div className="planning-tache-groupe">{bloc.titre}</div>
+                    {lignes}
+                  </div>
+                ) : (
+                  <Fragment key={bloc.rangees[0].tache.id}>{lignes}</Fragment>
+                );
+              })}
             </div>
           ))}
         </div>
