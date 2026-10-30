@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { formatMontant, bornesJour } from "@/lib/commandes";
-import { imprimerCommande, mettreAJourTachesCommandes } from "@/lib/commandesClient";
+import { imprimerCommande, mettreAJourTachesCommandes, modifierCommandeEnLigne } from "@/lib/commandesClient";
 import { lireProduitsTries } from "@/lib/ordreProduits";
 import { formaterTelephone } from "@/lib/telephone";
 import { IconFlecheGauche, IconFlecheDroite } from "@/components/icons/Pictogrammes";
@@ -76,6 +76,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
   const [mode, setMode] = useState(commande?.mode || "ramassage");
   const [paye, setPaye] = useState(commande ? commande.statut_paiement === "PAID" : false);
   const [methode, setMethode] = useState(commande?.methode_paiement || "");
+  const enLigne = !!commande && commande.source !== "manuel"; // commande Wix : le paiement vient de Wix, pas modifiable ici
   const [articles, setArticles] = useState(
     commande?.items?.length
       ? commande.items.map((it) => ({
@@ -205,6 +206,27 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
       })),
       updated_at: new Date().toISOString(),
     };
+
+    // Commande en ligne (Wix) : modifiée seulement dans Gozly, par le serveur (la table est en lecture seule ici).
+    if (enLigne) {
+      const inchange = dateRamassage === ramassageInitial.date && heureRamassage === ramassageInitial.heure;
+      const { ok, error: erreurServeur } = await modifierCommandeEnLigne(entrepriseId, commande.id, {
+        client_nom: clientNom,
+        client_telephone: telephone,
+        note,
+        mode,
+        date_ramassage: inchange ? commande.date_ramassage : champs.date_ramassage,
+        date_ramassage_fin: inchange ? commande.date_ramassage_fin : null,
+        items: champs.items,
+      });
+      setSaving(false);
+      if (!ok) {
+        setErreur(erreurServeur);
+        return;
+      }
+      onSaved();
+      return;
+    }
 
     let error;
     let nouvelId = null;
@@ -348,7 +370,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
             </button>
           </div>
 
-          <div className="field">
+          {!enLigne && <div className="field">
             <label>{t("Paiement")}</label>
             <BoutonsChoix
               valeur={paye}
@@ -371,7 +393,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
                 />
               </div>
             )}
-          </div>
+          </div>}
 
           <p style={{ fontWeight: 700, margin: "12px 0" }}>{t("Total :")}{" "}{formatMontant(total)}</p>
           {erreur && <p className="settings-msg err">{erreur}</p>}

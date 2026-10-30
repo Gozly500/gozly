@@ -331,7 +331,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
               </div>
             </div>
 
-            <div className="field">
+            {!(commande?.source && commande.source !== "manuel") && <div className="field">
               <div style={{ display: "flex", gap: "8px" }}>
                 <button type="button" className="admin-icon-btn" style={{ flex: 1, ...boutonChoix(paye) }} onClick={() => setPaye(true)}>
                   {t("commandes.payee")}
@@ -359,7 +359,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
                   ))}
                 </div>
               )}
-            </div>
+            </div>}
 
             {erreur && <p className="settings-msg err">{erreur}</p>}
 

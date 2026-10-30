@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
+import { annulerCommande, changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration, IconTableauDeBord, IconCommandes } from "@/components/icons/GozlyIcons";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
@@ -142,6 +142,14 @@ export default function CommandesSection({ entrepriseId }) {
 
   async function passerEtape(c, etape) {
     const { ok, error } = await changerEtapeCommande(entrepriseId, c.id, etape);
+    if (!ok) setSyncMsg({ type: "err", text: error });
+    charger();
+  }
+
+  // Commande en ligne : l'annulation n'existe que dans Gozly (Wix reste intact). Rétablir la remet comme avant.
+  async function annuler(c, annulee) {
+    if (annulee && !window.confirm(t("Annuler la commande #{n}? Elle n'est pas annulée chez Wix : si elle est payée, rembourse le client là-bas.", { n: c.numero }))) return;
+    const { ok, error } = await annulerCommande(entrepriseId, c.id, annulee);
     if (!ok) setSyncMsg({ type: "err", text: error });
     charger();
   }
@@ -394,6 +402,7 @@ export default function CommandesSection({ entrepriseId }) {
                       {c.lieu_nom && ` · ${c.lieu_nom}`}
                       {paiement && ` · ${paiement}`}
                       {c.source === "manuel" && t(" · Manuelle")}
+                      {c.modifiee_gozly && ` · ${t("Modifiée ici")}`}
                     </div>
                     {(c.items || []).map((it, i) => (
                       <div key={i} style={{ fontSize: "13.5px" }}>
@@ -428,13 +437,26 @@ export default function CommandesSection({ entrepriseId }) {
                           {t("Rouvrir")}
                         </button>
                       )}
-                      {c.source === "manuel" && (
+                      {c.source === "manuel" ? (
                         <>
                           <button className="admin-icon-btn" onClick={() => setModal({ commande: c })}>
                             {t("Modifier")}
                           </button>
                           <button className="admin-icon-btn danger" onClick={() => retirer(c)}>
                             {t("Retirer")}
+                          </button>
+                        </>
+                      ) : etat.id === "annulee" ? (
+                        <button className="admin-icon-btn" onClick={() => annuler(c, false)}>
+                          {t("Rétablir")}
+                        </button>
+                      ) : (
+                        <>
+                          <button className="admin-icon-btn" onClick={() => setModal({ commande: c })}>
+                            {t("Modifier")}
+                          </button>
+                          <button className="admin-icon-btn danger" onClick={() => annuler(c, true)}>
+                            {t("Annuler la commande")}
                           </button>
                         </>
                       )}

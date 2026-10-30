@@ -7,6 +7,9 @@ import { correspondAuLieu } from "@/lib/wixLieu";
 import { imprimerAutomatiquement } from "@/lib/impressionCommandes";
 import { bornesJour, dateAujourdhui, dateEffective, decalerJour } from "@/lib/commandes";
 
+// Champs qu'une modification faite dans Gozly protège contre l'écrasement par Wix.
+const CHAMPS_MODIFIES_GOZLY = ["items", "total", "sous_total", "taxes", "client_nom", "client_telephone", "mode", "date_ramassage", "date_ramassage_fin"];
+
 // Lit chez Wix le mode de paiement des commandes payées qui ne l'ont pas encore (20 au plus par synchro).
 // Colonne absente (commandes_methode_paiement.sql pas exécuté) : on ne fait rien.
 async function completerMethodesPaiement(service, entrepriseId, instanceId, lignes) {
@@ -145,15 +148,42 @@ export async function POST(request) {
   }
 
   if (lignes.length > 0) {
-    let { error } = await service.from("commandes_en_ligne").upsert(lignes, { onConflict: "entreprise_id,source,source_id" });
-    // Colonne du téléphone absente (commandes_telephone.sql pas exécuté) : on enregistre quand même les commandes, sans le numéro.
-    if (error && /client_telephone/.test(error.message)) {
-      for (const l of lignes) delete l.client_telephone;
-      ({ error } = await service.from("commandes_en_ligne").upsert(lignes, { onConflict: "entreprise_id,source,source_id" }));
+    // Commandes annulées ou modifiées dans Gozly (commandes_annulation_modif.sql) : la synchro ne remet pas
+    // le statut de Wix sur une commande annulée ici, ni les champs modifiés ici sur une commande modifiée.
+    const figees = new Map();
+    const { data: drapeaux, error: erreurDrapeaux } = await service
+      .from("commandes_en_ligne")
+      .select("source_id, annulee_gozly, modifiee_gozly")
+      .eq("entreprise_id", entreprise.id)
+      .eq("source", "wix")
+      .in("source_id", lignes.map((l) => l.source_id));
+    if (!erreurDrapeaux) for (const d of drapeaux || []) if (d.annulee_gozly || d.modifiee_gozly) figees.set(d.source_id, d);
+    for (const l of lignes) {
+      const f = figees.get(l.source_id);
+      if (!f) continue;
+      if (f.annulee_gozly) delete l.statut;
+      if (f.modifiee_gozly) for (const k of CHAMPS_MODIFIES_GOZLY) delete l[k];
     }
-    if (error) {
-      console.error("Erreur synchronisation commandes Wix:", error.message);
-      return NextResponse.json({ error: "La synchronisation a échoué.", detail: error.message }, { status: 500 });
+
+    // Un envoi par « forme » de lignes (mêmes colonnes) : sinon une colonne présente chez une seule ligne
+    // (ex: l'étape d'une nouvelle commande) viderait celle des autres.
+    const parForme = new Map();
+    for (const l of lignes) {
+      const forme = Object.keys(l).sort().join(",");
+      if (!parForme.has(forme)) parForme.set(forme, []);
+      parForme.get(forme).push(l);
+    }
+    for (const groupe of parForme.values()) {
+      let { error } = await service.from("commandes_en_ligne").upsert(groupe, { onConflict: "entreprise_id,source,source_id" });
+      // Colonne du téléphone absente (commandes_telephone.sql pas exécuté) : on enregistre quand même les commandes, sans le numéro.
+      if (error && /client_telephone/.test(error.message)) {
+        for (const l of groupe) delete l.client_telephone;
+        ({ error } = await service.from("commandes_en_ligne").upsert(groupe, { onConflict: "entreprise_id,source,source_id" }));
+      }
+      if (error) {
+        console.error("Erreur synchronisation commandes Wix:", error.message);
+        return NextResponse.json({ error: "La synchronisation a échoué.", detail: error.message }, { status: 500 });
+      }
     }
   }
 

@@ -70,7 +70,20 @@ export default function CurseurVolume({ valeur, onValider, muet = false, label, 
       onBlur={fin}
     />
   );
-  if (!couleur) return champ;
+  // Volume : une bulle avec la valeur en chiffres sort du curseur (de taille 0, pile sur la poignée) quand on le touche,
+  // monte au-dessus de la poignée et la suit pendant le glissement, puis rentre dans la poignée au relâchement.
+  if (!couleur) {
+    return (
+      <div className="gx-vol" style={{ "--p": max > 0 ? local / max : 0 }}>
+        {champ}
+        {!lectureSeule && (
+          <span className={`gx-bulle${touche ? " ouverte" : ""}`} aria-hidden="true">
+            {local}
+          </span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`gx-prog${mince ? " mince" : ""}${touche ? " touche" : ""}${lectureSeule ? " lecture" : ""}`}>

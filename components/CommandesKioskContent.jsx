@@ -9,7 +9,7 @@ import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
 import { useAnimationCartes } from "@/lib/useAnimationCartes";
 import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
 import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle, modifierCommandeManuelle, retirerCommandeManuelle } from "@/lib/commandesNouvelle";
-import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive } from "@/lib/commandesClient";
+import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive, annulerCommande, modifierCommandeEnLigne } from "@/lib/commandesClient";
 import { imprimerBonsLocaux } from "@/lib/impressionLocale";
 import {
   formatMontant,
@@ -58,7 +58,7 @@ function correspondRecherche(c, recherche) {
 }
 
 // Bouton rond « ⋯ » à droite du bouton Terminer : un toucher le déplie en pastille avec Modifier / Retirer (un toucher ailleurs le replie).
-export function MenuCommande({ onModifier, onRetirer, t }) {
+export function MenuCommande({ onModifier, onRetirer, t, cleRetirer = "kq.c.retirer" }) {
   const [ouvert, setOuvert] = useState(false);
   const racine = useRef(null);
   useEffect(() => {
@@ -76,7 +76,7 @@ export function MenuCommande({ onModifier, onRetirer, t }) {
           {t("kq.c.modifier")}
         </button>
         <button type="button" className="cmd-menu-option danger" tabIndex={ouvert ? 0 : -1} onClick={() => { setOuvert(false); onRetirer(); }}>
-          {t("kq.c.retirer")}
+          {t(cleRetirer)}
         </button>
         <button type="button" className="cmd-menu-points" aria-expanded={ouvert} aria-label={t("kq.c.plus")} onClick={() => setOuvert((o) => !o)}>
           <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
@@ -126,6 +126,7 @@ export default function CommandesKioskContent() {
   const [modal, setModal] = useState(false);
   const [aModifier, setAModifier] = useState(null); // commande saisie à la main en cours de modification
   const [aRetirer, setARetirer] = useState(null); // commande à retirer (confirmation)
+  const [aAnnuler, setAAnnuler] = useState(null); // commande en ligne à annuler (confirmation)
   const anim = useAnimationCartes(commandes); // les cartes se décalent et la nouvelle grandit
   const dejaCharge = useRef(false); // le premier chargement n'est pas animé
   const [enCours, setEnCours] = useState(null);
@@ -462,20 +463,46 @@ export default function CommandesKioskContent() {
     setEnCours(null);
   }
 
-  // Boutons Modifier / Retirer : seulement pour les commandes saisies à la main (celles du site se règlent chez Wix).
-  const boutonsManuelle = (c) =>
-    c.source === "manuel" && (
-      <>
-        <button className="admin-icon-btn" onClick={() => setAModifier(c)}>
-          {t("kq.c.modifier")}
-        </button>
+  // Annule une commande en ligne : seulement dans Gozly (Wix reste intact). Elle disparaît du kiosque et de la liste de préparation.
+  async function annuler(commande) {
+    setEnCours(commande.id);
+    setAAnnuler(null);
+    const { ok, error } = await annulerCommande(entrepriseId, commande.id, true);
+    if (!ok) {
+      setMessage({ type: "err", text: error });
+      setTimeout(() => setMessage(null), 8000);
+    }
+    await charger();
+    await chargerAvenir();
+    setEnCours(null);
+  }
+
+  // Boutons Modifier + Retirer (commande saisie à la main) ou Modifier + Annuler (commande en ligne : Wix reste intact, on ne retire que dans Gozly).
+  const boutonsManuelle = (c) => (
+    <>
+      <button className="admin-icon-btn" onClick={() => setAModifier(c)}>
+        {t("kq.c.modifier")}
+      </button>
+      {c.source === "manuel" ? (
         <button className="admin-icon-btn danger" onClick={() => setARetirer(c)}>
           {t("kq.c.retirer")}
         </button>
-      </>
-    );
+      ) : (
+        <button className="admin-icon-btn danger" onClick={() => setAAnnuler(c)}>
+          {t("kq.c.annulerCommande")}
+        </button>
+      )}
+    </>
+  );
 
-  const menuManuelle = (c) => c.source === "manuel" && <MenuCommande t={t} onModifier={() => setAModifier(c)} onRetirer={() => setARetirer(c)} />;
+  const menuManuelle = (c) => (
+    <MenuCommande
+      t={t}
+      onModifier={() => setAModifier(c)}
+      onRetirer={() => (c.source === "manuel" ? setARetirer(c) : setAAnnuler(c))}
+      cleRetirer={c.source === "manuel" ? "kq.c.retirer" : "kq.c.annulerCommande"}
+    />
+  );
 
   async function passer(commande, etape) {
     setEnCours(commande.id);
@@ -872,6 +899,23 @@ export default function CommandesKioskContent() {
         </div>
       )}
 
+      {aAnnuler && (
+        <div className="modal-overlay" onClick={() => setAAnnuler(null)}>
+          <div className="modal-card" style={{ maxWidth: "420px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t("kq.c.annulerTitre", { n: aAnnuler.numero })}</h3>
+            <p style={{ color: "var(--text-dim)" }}>{t("kq.c.annulerTexte")}</p>
+            <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+              <button type="button" className="admin-icon-btn" style={{ flex: 1, padding: "14px" }} onClick={() => setAAnnuler(null)}>
+                {t("kq.c.garder")}
+              </button>
+              <button type="button" className="submit-btn" style={{ flex: 1, padding: "14px" }} disabled={enCours === aAnnuler.id} onClick={() => annuler(aAnnuler)}>
+                {t("kq.c.annulerCommande")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {aModifier && (
         <LangueProvider>
           <CommandeEmployeModal
@@ -882,7 +926,9 @@ export default function CommandesKioskContent() {
             dateParDefaut={dateAujourdhui()}
             chargerProduits={() => chargerProduitsInventaire(entrepriseId)}
             chargerCategories={() => chargerCategoriesInventaire(entrepriseId)}
-            enregistrer={(c) => modifierCommandeManuelle(entrepriseId, aModifier.id, c)}
+            enregistrer={(c) =>
+              aModifier.source === "manuel" ? modifierCommandeManuelle(entrepriseId, aModifier.id, c) : modifierCommandeEnLigne(entrepriseId, aModifier.id, c)
+            }
             onClose={() => setAModifier(null)}
             onSaved={() => {
               setAModifier(null);

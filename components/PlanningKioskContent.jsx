@@ -1,11 +1,12 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useLangue } from "@/components/moi/LangueContext";
 import { NOM_CATEGORIE_COMMANDES, blocsTaches } from "@/lib/commandes";
-import { IconLocalisation } from "@/components/icons/Pictogrammes";
+import { IconCalendrier, IconLocalisation } from "@/components/icons/Pictogrammes";
+import { Calendrier } from "@/components/saisie/PanneauxSaisie";
 
 function todayISO() {
   const d = new Date();
@@ -27,6 +28,7 @@ export default function PlanningKioskContent() {
 
   const storageKeyBase = "gozly_emplacement_id_";
   const [date, setDate] = useState(todayISO());
+  const [calendrierOuvert, setCalendrierOuvert] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -77,11 +79,25 @@ export default function PlanningKioskContent() {
     };
   }, [router]);
 
-  // L'écran passe au jour suivant tout seul à minuit.
+  // L'écran passe au jour suivant tout seul à minuit (seulement s'il affichait « aujourd'hui » : un autre jour choisi au calendrier reste).
+  const aujourdhuiRef = useRef(todayISO());
   useEffect(() => {
-    const id = setInterval(() => setDate((d) => (d === todayISO() ? d : todayISO())), 30000);
+    const id = setInterval(() => {
+      const maintenant = todayISO();
+      if (maintenant === aujourdhuiRef.current) return;
+      const ancien = aujourdhuiRef.current;
+      aujourdhuiRef.current = maintenant;
+      setDate((d) => (d === ancien ? maintenant : d));
+    }, 30000);
     return () => clearInterval(id);
   }, []);
+
+  // Un autre jour que celui d'aujourd'hui est abandonné après 10 minutes : l'écran du kiosque revient à aujourd'hui.
+  useEffect(() => {
+    if (date === todayISO()) return;
+    const id = setTimeout(() => setDate(todayISO()), 10 * 60 * 1000);
+    return () => clearTimeout(id);
+  }, [date]);
 
   useEffect(() => {
     if (!entrepriseId) return;
@@ -168,7 +184,32 @@ export default function PlanningKioskContent() {
     <div className="kiosk-screen">
       <div className="kiosk-inner kiosk-taches-inner">
         {entrepriseNom && <p className="kiosk-entreprise">{entrepriseNom}</p>}
-        <h2 style={{ textTransform: "capitalize", marginBottom: "24px" }}>{dateLabel}</h2>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", flexWrap: "wrap", marginBottom: "24px" }}>
+          <h2 style={{ textTransform: "capitalize", margin: 0 }}>{dateLabel}</h2>
+          <button type="button" className="admin-icon-btn" onClick={() => setCalendrierOuvert(true)} aria-label={tr("kq.t.calendrier")}>
+            <IconCalendrier className="gozly-icon" /> {tr("kq.t.calendrier")}
+          </button>
+          {date !== todayISO() && (
+            <button type="button" className="admin-icon-btn" onClick={() => setDate(todayISO())}>
+              {tr("kq.t.retourAujourdhui")}
+            </button>
+          )}
+        </div>
+
+        {calendrierOuvert && (
+          <div className="modal-overlay" onClick={() => setCalendrierOuvert(false)}>
+            {/* Le calendrier de Gozly (celui de la saisie des commandes), ici dans une fenêtre : on choisit un jour et ses tâches s'affichent. */}
+            <div className="sg-panneau" style={{ width: "auto", opacity: 1, overflow: "visible", margin: 0 }} onClick={(e) => e.stopPropagation()}>
+              <div className="sg-interne" style={{ width: "min(460px, 92vw)" }}>
+                <Calendrier
+                  champ={{ id: "jour-taches", label: tr("kq.t.choisirJour"), value: date, onChange: setDate }}
+                  onFermer={() => setCalendrierOuvert(false)}
+                  langue={langue}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {loadingTaches ? (
           <p style={{ color: "var(--text-dim)" }}>{tr("kq.chargement")}</p>
@@ -215,7 +256,7 @@ export default function PlanningKioskContent() {
                   <div className="kiosk-taches-colonnes">{autres.map(boite)}</div>
                 </div>
                 {taches.length === 0 && (
-                  <p style={{ color: "var(--text-dim)", textAlign: "center" }}>{tr("kq.t.aucuneTache")}</p>
+                  <p style={{ color: "var(--text-dim)", textAlign: "center" }}>{tr(date === todayISO() ? "kq.t.aucuneTache" : "kq.t.aucuneTacheJour")}</p>
                 )}
               </>
             );
