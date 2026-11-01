@@ -269,6 +269,70 @@ export function Calendrier({ champ, onFermer, langue }) {
   );
 }
 
+// Calendrier à plage : un toucher = un jour ; un deuxième toucher = la plage entre les deux jours (colorée).
+// Rien n'est appliqué avant « Valider » : onValider(debut, fin) (fin = debut pour un seul jour).
+export function CalendrierPlage({ debut, fin, onValider, onFermer, langue, min }) {
+  const { t } = useLangue();
+  const ajd = new Date();
+  const [a0, m0] = (debut || "").split("-").map(Number);
+  const [vue, setVue] = useState(debut ? { a: a0, m: m0 - 1 } : { a: ajd.getFullYear(), m: ajd.getMonth() });
+  const [d, setD] = useState(debut || "");
+  const [f, setF] = useState(fin && fin !== debut ? fin : "");
+
+  const loc = langue === "en" ? "en-CA" : "fr-CA";
+  const premierJour = new Date(vue.a, vue.m, 1).getDay();
+  const nbJours = new Date(vue.a, vue.m + 1, 0).getDate();
+  const jours = [...Array(premierJour).fill(null), ...Array.from({ length: nbJours }, (_, i) => i + 1)];
+  const nomsJours = Array.from({ length: 7 }, (_, i) => new Date(2023, 0, 1 + i).toLocaleDateString(loc, { weekday: "narrow" }));
+  const aujourdhui = iso(ajd.getFullYear(), ajd.getMonth(), ajd.getDate());
+  const bouge = (n) => setVue((v) => { const x = new Date(v.a, v.m + n, 1); return { a: x.getFullYear(), m: x.getMonth() }; });
+  const lisible = (v) => new Date(...v.split("-").map((n, i) => (i === 1 ? n - 1 : Number(n)))).toLocaleDateString(loc, { weekday: "short", day: "numeric", month: "short" });
+
+  function toucher(v) {
+    if (!d || (d && f)) { setD(v); setF(""); return; } // nouvelle sélection
+    if (v === d) return; // même jour : un seul jour, on peut valider
+    if (v < d) { setF(d); setD(v); } else setF(v);
+  }
+
+  const resume = !d ? " " : f ? t("kq.c.duAuLabel", { a: lisible(d), b: lisible(f) }) : lisible(d);
+
+  return (
+    <div className="sg-cal">
+      <div className="sg-miroir">
+        <span className="sg-miroir-label">{t("kq.c.choisirDates")}</span>
+        <div className="sg-miroir-texte">{resume}</div>
+      </div>
+      <p className="panel-hint" style={{ margin: "0 0 8px", fontSize: "13px" }}>{t("kq.c.plageAide")}</p>
+      <div className="sg-cal-tete">
+        <button type="button" className="sg-fleche" onClick={() => bouge(-1)} aria-label={t("sg.moisPrecedent")}>‹</button>
+        <strong>{new Date(vue.a, vue.m, 1).toLocaleDateString(loc, { month: "long", year: "numeric" })}</strong>
+        <button type="button" className="sg-fleche" onClick={() => bouge(1)} aria-label={t("sg.moisSuivant")}>›</button>
+      </div>
+      <div className="sg-cal-grille">
+        {nomsJours.map((n, i) => <span className="sg-cal-jour-nom" key={i}>{n}</span>)}
+        {jours.map((j, i) => {
+          if (j === null) return <span key={i} />;
+          const v = iso(vue.a, vue.m, j);
+          const bout = v === d || v === f;
+          const dedans = d && f && v > d && v < f;
+          return (
+            <button key={i} type="button" className={`sg-cal-jour${bout ? " choisi" : ""}${dedans ? " plage" : ""}${v === aujourdhui ? " aujourdhui" : ""}`} onClick={() => toucher(v)}>
+              {j}
+            </button>
+          );
+        })}
+      </div>
+      <div className="sg-raccourcis">
+        <button type="button" className="sg-raccourci" onClick={() => { setD(""); setF(""); }}>{t("kq.c.effacerDates")}</button>
+        <button type="button" className="sg-raccourci" onClick={onFermer}>{t("sg.annuler")}</button>
+      </div>
+      <button type="button" className="sg-ok" disabled={!d} style={!d ? { opacity: 0.45 } : undefined} onClick={() => { onValider(d, f || d); onFermer(); }}>
+        {t("kq.c.valider")}
+      </button>
+    </div>
+  );
+}
+
 const deuxChiffres = (n) => String(n).padStart(2, "0");
 
 const Chevron = ({ bas }) => (

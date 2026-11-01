@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
+import { CalendrierPlage } from "@/components/saisie/PanneauxSaisie";
 import { useAnimationCartes } from "@/lib/useAnimationCartes";
 import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
 import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle, modifierCommandeManuelle, retirerCommandeManuelle } from "@/lib/commandesNouvelle";
@@ -119,6 +120,7 @@ export default function CommandesKioskContent() {
   const router = useRouter();
   const { t, langue } = useLangue();
   const locale = langue === "en" ? "en-CA" : "fr-CA";
+  const dateCourte = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" });
   const [checking, setChecking] = useState(true);
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [entrepriseNom, setEntrepriseNom] = useState("");
@@ -152,6 +154,7 @@ export default function CommandesKioskContent() {
   const [avenir, setAvenir] = useState([]); // commandes dont le ramassage est après aujourd'hui
   const [du, setDu] = useState("");
   const [au, setAu] = useState("");
+  const [calendrierPlage, setCalendrierPlage] = useState(false); // calendrier pour choisir un jour ou une plage de dates
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -653,12 +656,14 @@ export default function CommandesKioskContent() {
   const vueAvenir = (
         <div className="cmd-kiosk-avenir">
           <div className="cmd-kiosk-filtres">
-            <label>
-              {t("kq.c.du")} <input type="date" value={du} onChange={(e) => setDu(e.target.value)} />
-            </label>
-            <label>
-              {t("kq.c.au")} <input type="date" value={au} onChange={(e) => setAu(e.target.value)} />
-            </label>
+            <button className="admin-icon-btn" style={du || au ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined} onClick={() => setCalendrierPlage(true)}>
+              <IconCalendrier className="gozly-icon" />{" "}
+              {du || au
+                ? du === au || !au || !du
+                  ? dateCourte(du || au)
+                  : t("kq.c.duAuLabel", { a: dateCourte(du), b: dateCourte(au) })
+                : t("kq.c.choisirDates")}
+            </button>
             <button className="admin-icon-btn" onClick={() => { setDu(demain); setAu(demain); }}>
               {t("kq.c.demain")}
             </button>
@@ -867,6 +872,22 @@ export default function CommandesKioskContent() {
           );
         })}
       </div>
+      )}
+
+      {calendrierPlage && (
+        <div className="modal-overlay" onClick={() => setCalendrierPlage(false)}>
+          <div className="sg-panneau sg-autonome" onClick={(e) => e.stopPropagation()}>
+            <div className="sg-interne">
+              <CalendrierPlage
+                debut={du}
+                fin={au}
+                onValider={(a, b) => { setDu(a); setAu(b); }}
+                onFermer={() => setCalendrierPlage(false)}
+                langue={langue}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {rechercheOuverte && (

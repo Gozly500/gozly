@@ -3533,6 +3533,7 @@ button.cg-x{width:30px;height:30px;padding:0;flex-shrink:0;display:flex;align-it
 .sg-panneau button.sg-cal-jour{height:52px;padding:0;border-radius:12px;font-size:18px;font-weight:600;color:var(--fg);background:rgba(var(--w),0.08);border:2px solid transparent;box-shadow:none;cursor:pointer;}
 .sg-panneau button.sg-cal-jour.aujourdhui{border-color:var(--violet);}
 .sg-panneau button.sg-cal-jour.choisi{background:var(--violet);color:#fff;}
+.sg-panneau button.sg-cal-jour.plage{background:rgba(138,86,254,0.32);border-radius:4px;}
 .sg-raccourcis{display:flex;gap:8px;margin-top:12px;}
 .sg-panneau button.sg-raccourci{flex:1;height:48px;padding:0;border-radius:12px;font-size:16px;font-weight:600;color:var(--fg);background:rgba(var(--w),0.14);border:1px solid rgba(var(--w),0.2);box-shadow:none;cursor:pointer;}
 .sg-sous-titre{display:block;margin:12px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);font-weight:700;}
