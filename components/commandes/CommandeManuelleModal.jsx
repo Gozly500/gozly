@@ -64,7 +64,7 @@ function BoutonsChoix({ valeur, onChange, choix }) {
 
 // Création / modification d'une commande saisie à la main (source = 'manuel').
 // `commande` = la ligne à modifier, ou null pour une nouvelle commande.
-export default function CommandeManuelleModal({ entrepriseId, commande, onClose, onSaved }) {
+export default function CommandeManuelleModal({ entrepriseId, commande, lieuNom, onClose, onSaved }) {
   const { t, lang } = useT();
   const [vue, setVue] = useState("infos"); // "infos" | "articles" (catalogue)
   const [categories, setCategories] = useState([]);
@@ -254,6 +254,7 @@ export default function CommandeManuelleModal({ entrepriseId, commande, onClose,
         // Saisie par un employé : déjà prise en charge.
         etape: "traitee",
         date_commande: new Date().toISOString(),
+        ...(lieuNom ? { lieu_nom: lieuNom } : {}), // succursale où la commande est prise
       }));
     }
 

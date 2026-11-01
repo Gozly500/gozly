@@ -7,6 +7,9 @@ import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal"
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
 import { chargerProduitsInventaire, creerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { telechargerPdfCommandes } from "@/lib/exportPdf";
+import EmplacementSelect from "@/components/EmplacementSelect";
+import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
+import { commandeDeSuccursale } from "@/lib/commandesSuccursale";
 import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import {
   formatMontant,
@@ -50,6 +53,9 @@ export default function CommandesGestion() {
   const [nouvelle, setNouvelle] = useState(false); // formulaire de nouvelle commande
   const [imprimanteActive, setImprimanteActive] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  // Plusieurs succursales : on choisit celle dont on voit les commandes.
+  const [emplacements, setEmplacements] = useState([]);
+  const [emplacementId, setEmplacementId] = useState(null);
   const dateRef = useRef(date);
   dateRef.current = date;
 
@@ -60,8 +66,24 @@ export default function CommandesGestion() {
       debut,
       fin
     );
-    setCommandes((data || []).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b))));
+    setCommandes((data || []).filter((c) => commandeDeSuccursale(c, emplacementId, emplacements)).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b))));
     setLoading(false);
+  }, [entrepriseId, emplacementId, emplacements]);
+
+  useEffect(() => {
+    supabase
+      .from("emplacements")
+      .select("id, nom")
+      .eq("entreprise_id", entrepriseId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        const liste = data || [];
+        setEmplacements(liste);
+        if (liste.length > 1) {
+          const sauve = getEmplacementSelectionne(entrepriseId);
+          setEmplacementId(sauve && liste.some((e) => e.id === sauve) ? sauve : liste[0].id);
+        }
+      });
   }, [entrepriseId]);
 
   const synchroniser = useCallback(
@@ -188,6 +210,15 @@ export default function CommandesGestion() {
           </button>
         </div>
       )}
+
+      <EmplacementSelect
+        emplacements={emplacements}
+        value={emplacementId}
+        onChange={(id) => {
+          setEmplacementId(id);
+          setEmplacementSelectionne(entrepriseId, id);
+        }}
+      />
 
       {message && <p className={`settings-msg ${message.type}`}>{message.text}</p>}
 
@@ -321,7 +352,7 @@ export default function CommandesGestion() {
         <CommandeEmployeModal
           dateParDefaut={date}
           chargerProduits={() => chargerProduitsInventaire(entrepriseId)}
-          enregistrer={(c) => creerCommandeManuelle(entrepriseId, c)}
+          enregistrer={(c) => creerCommandeManuelle(entrepriseId, { ...c, lieu_nom: emplacements.length > 1 ? emplacements.find((e) => e.id === emplacementId)?.nom : undefined })}
           onClose={() => setNouvelle(false)}
           onSaved={() => {
             setNouvelle(false);
@@ -334,6 +365,7 @@ export default function CommandesGestion() {
         <CommandeManuelleModal
           entrepriseId={entrepriseId}
           commande={modal.commande}
+          lieuNom={emplacements.length > 1 ? emplacements.find((e) => e.id === emplacementId)?.nom : undefined}
           onClose={() => setModal(null)}
           onSaved={() => {
             setModal(null);

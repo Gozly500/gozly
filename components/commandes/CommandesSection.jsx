@@ -8,6 +8,9 @@ import { IconIntegration, IconTableauDeBord, IconCommandes } from "@/components/
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
 import PlanificationBoite from "@/components/commandes/PlanificationBoite";
 import { telechargerPdfCommandes } from "@/lib/exportPdf";
+import EmplacementSelect from "@/components/EmplacementSelect";
+import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
+import { commandeDeSuccursale } from "@/lib/commandesSuccursale";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import {
   formatMontant,
@@ -54,6 +57,9 @@ export default function CommandesSection({ entrepriseId }) {
   const [entrepriseNom, setEntrepriseNom] = useState("");
   const [exportEnCours, setExportEnCours] = useState(false);
   const [exportOuvert, setExportOuvert] = useState(false);
+  // Plusieurs succursales : on choisit celle dont on voit les commandes.
+  const [emplacements, setEmplacements] = useState([]);
+  const [emplacementId, setEmplacementId] = useState(null);
   const exportRef = useRef(null);
   useFermerAuClicExterieur(exportRef, exportOuvert, () => setExportOuvert(false));
   const dateRef = useRef(date);
@@ -67,9 +73,9 @@ export default function CommandesSection({ entrepriseId }) {
       fin
     );
     // Ordre chronologique du ramassage (ou de la commande s'il n'y a pas de ramassage).
-    setCommandes((data || []).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b))));
+    setCommandes((data || []).filter((c) => commandeDeSuccursale(c, emplacementId, emplacements)).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b))));
     setLoading(false);
-  }, [entrepriseId]);
+  }, [entrepriseId, emplacementId, emplacements]);
 
   const synchroniser = useCallback(
     async ({ silencieux = false } = {}) => {
@@ -117,6 +123,22 @@ export default function CommandesSection({ entrepriseId }) {
     }, INTERVALLE_SYNC_MS);
     return () => clearInterval(id);
   }, [synchroniser]);
+
+  useEffect(() => {
+    supabase
+      .from("emplacements")
+      .select("id, nom")
+      .eq("entreprise_id", entrepriseId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        const liste = data || [];
+        setEmplacements(liste);
+        if (liste.length > 1) {
+          const sauve = getEmplacementSelectionne(entrepriseId);
+          setEmplacementId(sauve && liste.some((e) => e.id === sauve) ? sauve : liste[0].id);
+        }
+      });
+  }, [entrepriseId]);
 
   useEffect(() => {
     impressionActive(entrepriseId).then(setImprimanteActive);
@@ -208,6 +230,14 @@ export default function CommandesSection({ entrepriseId }) {
   return (
     <div className={planifActive ? "cmd-avec-planif" : undefined}>
       <div className="cmd-principal">
+      <EmplacementSelect
+        emplacements={emplacements}
+        value={emplacementId}
+        onChange={(id) => {
+          setEmplacementId(id);
+          setEmplacementSelectionne(entrepriseId, id);
+        }}
+      />
       <div
         style={{
           display: "flex",
@@ -485,6 +515,7 @@ export default function CommandesSection({ entrepriseId }) {
         <CommandeManuelleModal
           entrepriseId={entrepriseId}
           commande={modal.commande}
+          lieuNom={emplacements.length > 1 ? emplacements.find((e) => e.id === emplacementId)?.nom : undefined}
           onClose={() => setModal(null)}
           onSaved={() => {
             setModal(null);

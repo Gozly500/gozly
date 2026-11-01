@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import CommandeEmployeModal from "@/components/moi/CommandeEmployeModal";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
+import { commandeDeSuccursale } from "@/lib/commandesSuccursale";
 import { CalendrierPlage } from "@/components/saisie/PanneauxSaisie";
 import { useAnimationCartes } from "@/lib/useAnimationCartes";
 import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
@@ -26,7 +27,7 @@ import {
   libelleRamassage,
   noteCommande,
 } from "@/lib/commandes";
-import { IconCalendrier, IconCloche, IconClocheBarree, IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconImprimante, IconX } from "@/components/icons/Pictogrammes";
+import { IconCalendrier, IconCloche, IconClocheBarree, IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconImprimante, IconLocalisation, IconX } from "@/components/icons/Pictogrammes";
 
 const INTERVALLE_SYNC_MS = 30000;
 
@@ -154,6 +155,9 @@ export default function CommandesKioskContent() {
   const [avenir, setAvenir] = useState([]); // commandes dont le ramassage est après aujourd'hui
   const [du, setDu] = useState("");
   const [au, setAu] = useState("");
+  // Succursales : un kiosque (tablette) est celui d'une succursale et n'affiche que ses commandes (choix mémorisé sur l'appareil).
+  const [emplacements, setEmplacements] = useState([]);
+  const [emplacementId, setEmplacementId] = useState(null);
   const [calendrierPlage, setCalendrierPlage] = useState(false); // calendrier pour choisir un jour ou une plage de dates
   const audioRef = useRef(null);
 
@@ -198,6 +202,15 @@ export default function CommandesKioskContent() {
           const ids = JSON.parse(window.localStorage.getItem(`gozly_cmd_masquees_${eid}`) || "[]");
           if (!ignore && Array.isArray(ids)) setMasquees(new Set(ids));
         } catch {}
+        const { data: empData } = await supabase.from("emplacements").select("id, nom").eq("entreprise_id", eid).order("created_at", { ascending: true });
+        const listeEmp = empData || [];
+        if (!ignore) {
+          setEmplacements(listeEmp);
+          try {
+            const sauve = window.localStorage.getItem(`gozly_emplacement_id_${eid}`);
+            if (sauve && listeEmp.some((e) => e.id === sauve)) setEmplacementId(sauve);
+          } catch {}
+        }
         // Seulement une fois le mode connu : sinon un premier chargement en mode liste pourrait écraser les données du mode 3 sections.
         if (!ignore) setEntrepriseId(eid);
       }
@@ -236,11 +249,11 @@ export default function CommandesKioskContent() {
     const { data } = await requete;
 
     // Ordre chronologique du ramassage (ou de la commande sans ramassage).
-    const liste = (data || []).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b)));
+    const liste = (data || []).filter((c) => commandeDeSuccursale(c, emplacementId, emplacements)).sort((a, b) => new Date(dateEffective(a)) - new Date(dateEffective(b)));
     if (dejaCharge.current) anim.preparer();
     dejaCharge.current = true;
     setCommandes(liste);
-  }, [entrepriseId, modeKiosque]);
+  }, [entrepriseId, modeKiosque, emplacementId, emplacements]);
 
   // Commandes à venir : ramassage à partir de demain (jusqu'à 500, les plus proches d'abord).
   const chargerAvenir = useCallback(async () => {
@@ -254,8 +267,8 @@ export default function CommandesKioskContent() {
       .gte("date_ramassage", debutDemain)
       .order("date_ramassage", { ascending: true })
       .limit(500);
-    setAvenir((data || []).filter((c) => c.statut !== "CANCELED"));
-  }, [entrepriseId, modeKiosque]);
+    setAvenir((data || []).filter((c) => c.statut !== "CANCELED" && commandeDeSuccursale(c, emplacementId, emplacements)));
+  }, [entrepriseId, modeKiosque, emplacementId, emplacements]);
 
   useEffect(() => {
     if (!entrepriseId) return;
@@ -263,7 +276,7 @@ export default function CommandesKioskContent() {
     async function cycle() {
       await synchroniserCommandes(entrepriseId); // muet si Wix n'est pas connecté
       // Tablette avec imprimante Bluetooth : les bons que la synchro vient de mettre en file sortent tout de suite.
-      imprimerBonsLocaux(entrepriseId).then(({ erreur }) => {
+      imprimerBonsLocaux(entrepriseId, emplacementId).then(({ erreur }) => {
         if (erreur && actif) {
           setMessage({ type: "err", text: t("kq.imp.erreur", { erreur }) });
           setTimeout(() => setMessage(null), 8000);
@@ -539,6 +552,36 @@ export default function CommandesKioskContent() {
     );
   }
 
+  function choisirEmplacement(id) {
+    setEmplacementId(id);
+    setCommandes([]);
+    setAvenir([]);
+    try {
+      window.localStorage.setItem(`gozly_emplacement_id_${entrepriseId}`, id);
+    } catch {}
+  }
+
+  // Plusieurs succursales : on choisit d'abord laquelle ce kiosque sert (les autres commandes n'y apparaissent pas).
+  if (emplacements.length > 1 && !emplacementId) {
+    return (
+      <div className="kiosk-screen">
+        <div className="kiosk-inner">
+          <h2>{t("kq.p.empl")}</h2>
+          <p className="panel-hint">{t("kq.p.emplHint")}</p>
+          <div className="modules-picker-grid" style={{ maxWidth: "360px", margin: "0 auto" }}>
+            {emplacements.map((e) => (
+              <button key={e.id} className="dashboard-picker-card" onClick={() => choisirEmplacement(e.id)} style={{ aspectRatio: "auto" }}>
+                <div className="dashboard-picker-logo"><IconLocalisation className="gozly-icon" style={{ width: "58%", height: "58%" }} /></div>
+                <div className="dashboard-picker-nom">{e.nom}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const emplacementActuel = emplacements.find((e) => e.id === emplacementId);
+
   const debutAujourdhui = bornesJour(dateAujourdhui()).debut;
   const visibles = commandes.filter((c) => etapeCommande(c) !== "annulee" && correspondRecherche(c, recherche));
 
@@ -762,6 +805,12 @@ export default function CommandesKioskContent() {
         <div>
           <div className="kiosk-entreprise">{entrepriseNom}</div>
           <h2>{t("kq.c.titre")}</h2>
+          {emplacements.length > 1 && emplacementActuel && (
+            // Succursale de ce kiosque ; un toucher ramène au choix des succursales.
+            <button type="button" className="admin-icon-btn" style={{ marginTop: "6px" }} onClick={() => { setEmplacementId(null); try { window.localStorage.removeItem(`gozly_emplacement_id_${entrepriseId}`); } catch {} }}>
+              <IconLocalisation className="gozly-icon" /> {emplacementActuel.nom}
+            </button>
+          )}
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <span className="cmd-kiosk-recherche-boite">
@@ -977,7 +1026,7 @@ export default function CommandesKioskContent() {
             dateParDefaut={dateAujourdhui()}
             chargerProduits={() => chargerProduitsInventaire(entrepriseId)}
             chargerCategories={() => chargerCategoriesInventaire(entrepriseId)}
-            enregistrer={(c) => creerCommandeManuelle(entrepriseId, c)}
+            enregistrer={(c) => creerCommandeManuelle(entrepriseId, { ...c, lieu_nom: emplacements.length > 1 ? emplacementActuel?.nom : undefined })}
             onClose={() => setModal(false)}
             onSaved={() => {
               setModal(false);

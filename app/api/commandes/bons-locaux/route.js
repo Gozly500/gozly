@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { xmlDuBon } from "@/lib/impressionCommandes";
+import { commandeDeSuccursale } from "@/lib/commandesSuccursale";
 
 // Impression par la tablette (app Android du kiosque, Bluetooth) : au lieu que l'imprimante interroge Gozly en
 // permanence (voir /api/impression/epson/[token]), le kiosque vient chercher les bons en attente, les envoie
@@ -15,7 +16,7 @@ const MAX_TENTATIVES = 3;
 const MAX_PAR_APPEL = 5;
 
 export async function POST(request) {
-  const { entrepriseId, action, bonId, succes, erreur } = await request.json().catch(() => ({}));
+  const { entrepriseId, action, bonId, succes, erreur, emplacementId } = await request.json().catch(() => ({}));
 
   const token = (request.headers.get("authorization") || "").replace("Bearer ", "");
   if (!token) {
@@ -83,13 +84,26 @@ export async function POST(request) {
       .eq("id", b.id);
   }
 
-  const { data: enAttente } = await service
+  let { data: enAttente } = await service
     .from("bons_impression")
     .select("id, commande_id, type, tentatives")
     .eq("entreprise_id", entreprise.id)
     .eq("statut", "en_attente")
     .order("created_at", { ascending: true })
-    .limit(MAX_PAR_APPEL);
+    .limit(emplacementId ? 60 : MAX_PAR_APPEL);
+
+  // Kiosque d'une succursale : on laisse en file les bons des commandes d'une AUTRE succursale (l'imprimante de
+  // celle-là les prendra). Un bon sans commande ou de lieu inconnu s'imprime partout.
+  if (emplacementId && enAttente?.length) {
+    const [{ data: emplacements }, { data: commandes }] = await Promise.all([
+      service.from("emplacements").select("id, nom").eq("entreprise_id", entreprise.id),
+      service.from("commandes_en_ligne").select("id, lieu_nom").in("id", enAttente.map((b) => b.commande_id).filter(Boolean)),
+    ]);
+    const parId = new Map((commandes || []).map((c) => [c.id, c]));
+    enAttente = enAttente
+      .filter((b) => !b.commande_id || !parId.has(b.commande_id) || commandeDeSuccursale(parId.get(b.commande_id), emplacementId, emplacements || []))
+      .slice(0, MAX_PAR_APPEL);
+  }
 
   const bons = [];
   for (const bon of enAttente || []) {
