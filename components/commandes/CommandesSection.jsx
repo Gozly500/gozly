@@ -127,7 +127,7 @@ export default function CommandesSection({ entrepriseId }) {
   useEffect(() => {
     supabase
       .from("emplacements")
-      .select("id, nom")
+      .select("*")
       .eq("entreprise_id", entrepriseId)
       .order("created_at", { ascending: true })
       .then(({ data }) => {

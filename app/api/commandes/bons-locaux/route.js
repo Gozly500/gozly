@@ -96,7 +96,7 @@ export async function POST(request) {
   // celle-là les prendra). Un bon sans commande ou de lieu inconnu s'imprime partout.
   if (emplacementId && enAttente?.length) {
     const [{ data: emplacements }, { data: commandes }] = await Promise.all([
-      service.from("emplacements").select("id, nom").eq("entreprise_id", entreprise.id),
+      service.from("emplacements").select("*").eq("entreprise_id", entreprise.id),
       service.from("commandes_en_ligne").select("id, lieu_nom").in("id", enAttente.map((b) => b.commande_id).filter(Boolean)),
     ]);
     const parId = new Map((commandes || []).map((c) => [c.id, c]));

@@ -3,7 +3,7 @@ import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer"
 import { getServiceClient } from "@/lib/adminServer";
 import { obtenirCommandesWix, obtenirMethodesPaiementWix, diagnostiquerPermissionsWix } from "@/lib/wixClient";
 import { synchroniserTachesCommandes } from "@/lib/tachesCommandes";
-import { correspondAuLieu } from "@/lib/wixLieu";
+import { correspondAuLieu, lieuFiltreDashboard } from "@/lib/wixLieu";
 import { imprimerAutomatiquement } from "@/lib/impressionCommandes";
 import { bornesJour, dateAujourdhui, dateEffective, decalerJour } from "@/lib/commandes";
 
@@ -81,10 +81,11 @@ export async function POST(request) {
     // Seulement les commandes en ligne (tout sauf le point de vente). Les
     // ventes du point de vente vont au Suivi des ventes, pas ici (voir
     // /api/ventes/synchroniser).
+    const lieuFiltre = await lieuFiltreDashboard(service, entreprise);
     commandes = await obtenirCommandesWix(connexion.instance_id, depuis, "en_ligne");
     // Un même site Wix peut alimenter plusieurs dashboards (un par succursale) :
     // on ne garde que les commandes de la succursale choisie pour celui-ci.
-    commandes = commandes.filter((c) => correspondAuLieu(c, entreprise.wix_lieu_nom));
+    commandes = commandes.filter((c) => correspondAuLieu(c, lieuFiltre));
     nbEnLigne = commandes.length;
   } catch (err) {
     console.error("Erreur lecture commandes Wix:", err.message);

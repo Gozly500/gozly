@@ -21,6 +21,11 @@ export default function EmplacementsSection({ entrepriseId }) {
   const { t } = useT();
   const [horairesModal, setHorairesModal] = useState(null); // { emp, draft: { "1": { ouvert, debut, fin }, ... } }
   const [horairesSaving, setHorairesSaving] = useState(false);
+  // Lien avec une succursale Wix : les commandes de ce lieu Wix vont à cette succursale (et à elle seule).
+  const [lieuxWix, setLieuxWix] = useState([]); // lieux Wix vus dans les commandes déjà reçues
+  const [lienModal, setLienModal] = useState(null); // { emp }
+  const [lienMsg, setLienMsg] = useState(null);
+  const [lienSaving, setLienSaving] = useState(false);
 
   const [emplacements, setEmplacements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +48,38 @@ export default function EmplacementsSection({ entrepriseId }) {
       .eq("entreprise_id", entrepriseId)
       .order("created_at", { ascending: true });
     setEmplacements(data || []);
+    const { data: lieux } = await supabase
+      .from("commandes_en_ligne")
+      .select("lieu_nom")
+      .eq("entreprise_id", entrepriseId)
+      .eq("source", "wix")
+      .not("lieu_nom", "is", null)
+      .limit(1000);
+    setLieuxWix([...new Set((lieux || []).map((l) => l.lieu_nom))].sort((a, b) => a.localeCompare(b, "fr")));
     setLoading(false);
+  }
+
+  async function lierLieu(emp, lieu) {
+    setLienSaving(true);
+    setLienMsg(null);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const res = await fetch("/api/wix/emplacement-lieu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.session?.access_token}` },
+        body: JSON.stringify({ entrepriseId, emplacementId: emp.id, lieu: lieu || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setLienMsg({ type: "err", text: data.error || t("L'enregistrement a échoué.") });
+      } else {
+        setLienModal(null);
+        await load();
+      }
+    } catch {
+      setLienMsg({ type: "err", text: t("L'enregistrement a échoué.") });
+    }
+    setLienSaving(false);
   }
 
   async function handleAdd(e) {
@@ -153,6 +189,7 @@ export default function EmplacementsSection({ entrepriseId }) {
             ) : (
               <div className="admin-row-main">
                 <div className="admin-row-title">{emp.nom}</div>
+                {emp.wix_lieu_nom && <div className="admin-row-sub">{t("Reçoit les commandes Wix de :")} {emp.wix_lieu_nom}</div>}
                 {emp.adresse && (
                   <div className="admin-row-sub">
                     {emp.adresse}
@@ -174,6 +211,11 @@ export default function EmplacementsSection({ entrepriseId }) {
                 </>
               ) : (
                 <>
+                  {(lieuxWix.length > 0 || emp.wix_lieu_nom) && (
+                    <button className="admin-icon-btn" onClick={() => { setLienMsg(null); setLienModal({ emp }); }}>
+                      {emp.wix_lieu_nom ? <>{t("Succursale Wix")}{" "}<IconCrochet className="gozly-icon" /></> : t("Succursale Wix")}
+                    </button>
+                  )}
                   <button className="admin-icon-btn" onClick={() => ouvrirHoraires(emp)}>
                     {emp.horaires_ouverture ? <>{t("Horaires")}{" "}<IconCrochet className="gozly-icon" /></> : t("Horaires")}
                   </button>
@@ -190,6 +232,37 @@ export default function EmplacementsSection({ entrepriseId }) {
         ))}
         {emplacements.length === 0 && <div className="admin-empty">{t("Un seul emplacement implicite pour l'instant.")}</div>}
       </div>
+
+      {lienModal && (
+        <div className="modal-overlay" onClick={() => setLienModal(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("Succursale Wix —")}{" "}{lienModal.emp.nom}</h3>
+              <button className="admin-icon-btn" onClick={() => setLienModal(null)}>
+                {t("Fermer")}
+              </button>
+            </div>
+            <p className="section-hint">
+              {t("Choisis la succursale Wix dont cet emplacement reçoit les commandes. Quand tous tes emplacements sont liés, chaque commande va à l'emplacement lié à son lieu, et un dashboard qui n'a qu'un emplacement lié ne reçoit que les commandes de ce lieu. Les lieux viennent des commandes déjà reçues.")}
+            </p>
+            {lienMsg && <p className={`settings-msg ${lienMsg.type}`}>{lienMsg.text}</p>}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {[{ id: "", nom: t("Aucun lien (reconnaissance par le nom)") }, ...[...new Set([...lieuxWix, ...(lienModal.emp.wix_lieu_nom ? [lienModal.emp.wix_lieu_nom] : [])])].map((n) => ({ id: n, nom: n }))].map((o) => (
+                <button
+                  key={o.id || "aucun"}
+                  type="button"
+                  className="admin-icon-btn"
+                  disabled={lienSaving}
+                  style={(lienModal.emp.wix_lieu_nom || "") === o.id ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)", textAlign: "left" } : { textAlign: "left" }}
+                  onClick={() => lierLieu(lienModal.emp, o.id)}
+                >
+                  {o.nom}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {horairesModal && (
         <div className="modal-overlay" onClick={() => setHorairesModal(null)}>

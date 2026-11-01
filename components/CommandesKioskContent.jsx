@@ -202,7 +202,7 @@ export default function CommandesKioskContent() {
           const ids = JSON.parse(window.localStorage.getItem(`gozly_cmd_masquees_${eid}`) || "[]");
           if (!ignore && Array.isArray(ids)) setMasquees(new Set(ids));
         } catch {}
-        const { data: empData } = await supabase.from("emplacements").select("id, nom").eq("entreprise_id", eid).order("created_at", { ascending: true });
+        const { data: empData } = await supabase.from("emplacements").select("*").eq("entreprise_id", eid).order("created_at", { ascending: true });
         const listeEmp = empData || [];
         if (!ignore) {
           setEmplacements(listeEmp);

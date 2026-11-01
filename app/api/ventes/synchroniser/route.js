@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { synchroniserVentesWix } from "@/lib/ventesWix";
+import { lieuFiltreDashboard } from "@/lib/wixLieu";
 
 // Importer 30 jours de point de vente peut demander plusieurs pages de
 // résultats chez Wix : on laisse plus de temps que le défaut.
@@ -43,7 +44,7 @@ export async function POST(request) {
   }
 
   try {
-    const resultat = await synchroniserVentesWix(service, entreprise.id, connexion.instance_id, jours, entreprise.wix_lieu_nom || null);
+    const resultat = await synchroniserVentesWix(service, entreprise.id, connexion.instance_id, jours, await lieuFiltreDashboard(service, entreprise));
     return NextResponse.json({ ok: true, ...resultat });
   } catch (err) {
     console.error("Erreur import des ventes Wix:", err.message);
