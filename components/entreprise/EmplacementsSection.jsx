@@ -23,6 +23,7 @@ export default function EmplacementsSection({ entrepriseId }) {
   const [horairesSaving, setHorairesSaving] = useState(false);
   // Lien avec une succursale Wix : les commandes de ce lieu Wix vont à cette succursale (et à elle seule).
   const [lieuxWix, setLieuxWix] = useState([]); // lieux Wix vus dans les commandes déjà reçues
+  const [wixConnecte, setWixConnecte] = useState(false); // le lien n'a de sens que si un site Wix est connecté à ce dashboard
   const [lienModal, setLienModal] = useState(null); // { emp }
   const [lienMsg, setLienMsg] = useState(null);
   const [lienSaving, setLienSaving] = useState(false);
@@ -48,6 +49,14 @@ export default function EmplacementsSection({ entrepriseId }) {
       .eq("entreprise_id", entrepriseId)
       .order("created_at", { ascending: true });
     setEmplacements(data || []);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const res = await fetch(`/api/wix/statut?entrepriseId=${entrepriseId}`, { headers: { Authorization: `Bearer ${session?.session?.access_token}` } });
+      const statut = await res.json().catch(() => ({}));
+      setWixConnecte(!!statut.connecte);
+    } catch {
+      setWixConnecte(false);
+    }
     const { data: lieux } = await supabase
       .from("commandes_en_ligne")
       .select("lieu_nom")
@@ -189,7 +198,7 @@ export default function EmplacementsSection({ entrepriseId }) {
             ) : (
               <div className="admin-row-main">
                 <div className="admin-row-title">{emp.nom}</div>
-                {emp.wix_lieu_nom && <div className="admin-row-sub">{t("Reçoit les commandes Wix de :")} {emp.wix_lieu_nom}</div>}
+                {wixConnecte && emp.wix_lieu_nom && <div className="admin-row-sub">{t("Reçoit les commandes Wix de :")} {emp.wix_lieu_nom}</div>}
                 {emp.adresse && (
                   <div className="admin-row-sub">
                     {emp.adresse}
@@ -211,7 +220,7 @@ export default function EmplacementsSection({ entrepriseId }) {
                 </>
               ) : (
                 <>
-                  {(lieuxWix.length > 0 || emp.wix_lieu_nom) && (
+                  {wixConnecte && (
                     <button className="admin-icon-btn" onClick={() => { setLienMsg(null); setLienModal({ emp }); }}>
                       {emp.wix_lieu_nom ? <>{t("Succursale Wix")}{" "}<IconCrochet className="gozly-icon" /></> : t("Succursale Wix")}
                     </button>
