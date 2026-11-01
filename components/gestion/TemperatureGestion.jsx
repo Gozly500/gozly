@@ -1,26 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import { useGestion } from "@/components/gestion/GestionShell";
 import { chargerEquipements } from "@/lib/equipementsTemperature";
-import { TYPES_EQUIPEMENT } from "@/lib/temperature";
+import { estConforme, creneauActuel } from "@/lib/temperature";
+import TemperatureInput from "@/components/TemperatureInput";
 import { dateAujourdhui, decalerJour } from "@/lib/commandes";
 import { telechargerPdfTemperatures } from "@/lib/exportPdf";
-import { IconAttention, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
+import { IconAttention, IconCrochet, IconPoint, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 
 const ROUGE = "#ff9494";
 
-// Températures pour le téléphone du gestionnaire : on change de jour avec ‹ ›, on voit pour chaque équipement le
-// relevé du matin et du soir (en rouge s'il n'est pas conforme, « manquant » s'il n'a pas été pris), et on
-// télécharge le rapport PDF de la journée.
+// Températures pour le téléphone du gestionnaire, comme dans l'app employé : une grille équipement / AM / PM où
+// l'on saisit les relevés du créneau en cours (aujourd'hui). On peut aussi changer de jour avec ‹ › pour revoir
+// les relevés passés (non conformes en rouge), et télécharger le rapport PDF de la journée.
 export default function TemperatureGestion() {
   const { t: tr } = useT();
-  const { entrepriseId } = useGestion();
+  const { entrepriseId, user } = useGestion();
+  const creneau = creneauActuel();
+  const [drafts, setDrafts] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const relevesRef = useRef([]);
+  const dateRef = useRef(null);
   const [date, setDate] = useState(dateAujourdhui);
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementId] = useState(null);
@@ -49,9 +56,25 @@ export default function TemperatureGestion() {
 
   const chargerReleves = useCallback(async () => {
     const { data } = await supabase.from("releves_temperature").select("*").eq("entreprise_id", entrepriseId).eq("date_relevee", date);
-    setReleves(data || []);
+    const nouveaux = data || [];
+    // Relevés des collègues rafraîchis sans écraser ce qui est en train d'être saisi (sauf si on vient de changer de jour).
+    const memeJour = dateRef.current === date;
+    const seed = {};
+    for (const r of nouveaux) if (r.periode === creneau.periode) seed[r.equipement_id] = String(r.temperature);
+    setDrafts((prev) => {
+      if (!memeJour) return seed;
+      const suivant = { ...seed };
+      for (const k of Object.keys(prev)) {
+        const vieux = relevesRef.current.find((r) => r.equipement_id === k && r.periode === creneau.periode);
+        if (prev[k] !== (vieux ? String(vieux.temperature) : "")) suivant[k] = prev[k];
+      }
+      return suivant;
+    });
+    dateRef.current = date;
+    relevesRef.current = nouveaux;
+    setReleves(nouveaux);
     setLoading(false);
-  }, [entrepriseId, date]);
+  }, [entrepriseId, date, creneau.periode]);
 
   useEffect(() => {
     if (!pret) return;
@@ -94,23 +117,60 @@ export default function TemperatureGestion() {
     }
   }
 
-  const cellule = (equipement, periode, libelle) => {
-    const r = releves.find((x) => x.equipement_id === equipement.id && x.periode === periode);
+  const saisieOuverte = date === creneau.date; // on ne saisit que le créneau en cours, aujourd'hui
+  const existant = (equipementId, periode) => releves.find((r) => r.equipement_id === equipementId && r.periode === periode);
+  const estModifie = () =>
+    saisieOuverte &&
+    visibles.some((e) => {
+      const r = existant(e.id, creneau.periode);
+      return (drafts[e.id] ?? "") !== (r ? String(r.temperature) : "");
+    });
+
+  async function enregistrer() {
+    setSaving(true);
+    setMsg(null);
+    const aEnvoyer = visibles.filter((e) => {
+      const r = existant(e.id, creneau.periode);
+      const v = drafts[e.id] ?? "";
+      return v !== "" && v !== (r ? String(r.temperature) : "");
+    });
+    const rows = aEnvoyer.map((e) => ({
+      entreprise_id: entrepriseId,
+      equipement_id: e.id,
+      releve_par: user?.user_metadata?.full_name || user?.email,
+      temperature: parseFloat(drafts[e.id]),
+      conforme: estConforme(e.type, parseFloat(drafts[e.id]), e.unite),
+      date_relevee: creneau.date,
+      periode: creneau.periode,
+    }));
+    const { error } = await supabase.from("releves_temperature").upsert(rows, { onConflict: "equipement_id,date_relevee,periode" });
+    setSaving(false);
+    if (error) {
+      setMsg({ type: "err", text: tr("L'enregistrement a échoué.") });
+      return;
+    }
+    setMsg({ type: "ok", text: tr("Relevés enregistrés !") });
+    setTimeout(() => setMsg(null), 3000);
+    chargerReleves();
+  }
+
+  // Sur téléphone la place est comptée : colonnes AM/PM étroites, nom qui peut passer à la ligne.
+  const grille = { display: "grid", gridTemplateColumns: "minmax(0, 1fr) 90px 90px", gap: "6px", alignItems: "center", padding: "8px 0" };
+
+  // Une case AM ou PM : champ de saisie pour le créneau actuel (aujourd'hui), sinon le relevé en lecture seule (ou un tiret).
+  function renderCase(e, periode) {
+    if (saisieOuverte && periode === creneau.periode) {
+      return (
+        <TemperatureInput placeholder={`°${e.unite === "F" ? "F" : "C"}`} value={drafts[e.id] ?? ""} onChange={(v) => setDrafts((prev) => ({ ...prev, [e.id]: v }))} />
+      );
+    }
+    const r = existant(e.id, periode);
     return (
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "12px", color: "var(--text-dim)" }}>{libelle}</div>
-        {r ? (
-          <div style={{ fontWeight: 700, fontSize: "18px", color: r.conforme ? undefined : ROUGE }}>
-            {String(r.temperature).replace(".", ",")} °{equipement.unite === "F" ? "F" : "C"}
-            {!r.conforme && <> <IconAttention className="gozly-icon" /></>}
-            {r.releve_par && <div style={{ fontWeight: 400, fontSize: "12px", color: "var(--text-dim)" }}>{r.releve_par}</div>}
-          </div>
-        ) : (
-          <div style={{ color: "var(--text-dim)", fontSize: "15px" }}>{tr("Pas de relevé")}</div>
-        )}
+      <div style={{ textAlign: "center", fontSize: "13px", color: r ? (r.conforme ? "var(--text)" : ROUGE) : "var(--text-dim)", fontWeight: r && !r.conforme ? 700 : undefined }}>
+        {r ? <>{r.conforme ? <IconCrochet className="gozly-icon" /> : <IconAttention className="gozly-icon" />} {String(r.temperature).replace(".", ",")}°{e.unite === "F" ? "F" : "C"}</> : "—"}
       </div>
     );
-  };
+  }
 
   return (
     <div>
@@ -166,20 +226,39 @@ export default function TemperatureGestion() {
             </button>
           </div>
 
-          <div className="gestion-cartes" style={{ marginTop: "12px" }}>
-            {visibles.map((e) => (
-              <div className="planning-day gestion-tache-categorie" key={e.id}>
-                <div className="gestion-tache-tete">
-                  <span className="planning-day-title">{e.nom}</span>
-                  <span style={{ fontSize: "12.5px", color: "var(--text-dim)" }}>{tr(TYPES_EQUIPEMENT.find((x) => x.id === e.type)?.label || "")}</span>
+          <div className="planning-day" style={{ margin: "12px 0 14px", padding: "12px 10px" }}>
+            <div style={{ ...grille, paddingBottom: "6px", fontSize: "12px", fontWeight: 700, color: "var(--text-dim)" }}>
+              <div>{tr("Équipement")}</div>
+              {["am", "pm"].map((p) => (
+                <div key={p} style={{ textAlign: "center", color: saisieOuverte && p === creneau.periode ? "var(--text)" : undefined }}>
+                  {p.toUpperCase()}
+                  {saisieOuverte && p === creneau.periode ? <> <IconPoint className="gozly-icon-inline" /></> : ""}
                 </div>
-                <div style={{ display: "flex", gap: "16px", padding: "4px 2px 2px" }}>
-                  {cellule(e, "am", tr("Matin"))}
-                  {cellule(e, "pm", tr("Soir"))}
+              ))}
+            </div>
+            {visibles.map((e) => {
+              const actuel = existant(e.id, saisieOuverte ? creneau.periode : "am") || existant(e.id, "pm");
+              return (
+                <div key={e.id} style={grille}>
+                  <div style={{ fontSize: "13.5px", fontWeight: 600, minWidth: 0, overflowWrap: "anywhere" }}>
+                    {e.nom}
+                    {actuel?.releve_par && <div style={{ fontSize: "11px", fontWeight: 400, color: "var(--text-dim)" }}>{tr("par")} {actuel.releve_par}</div>}
+                  </div>
+                  {renderCase(e, "am")}
+                  {renderCase(e, "pm")}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {saisieOuverte && (
+            <div className="submit-wrap" style={{ marginTop: "16px", position: "static" }}>
+              <button type="button" className="submit-btn" onClick={enregistrer} disabled={saving || !estModifie()}>
+                {saving ? tr("Enregistrement...") : tr("Enregistrer")}
+              </button>
+            </div>
+          )}
+          {msg && <p className={`settings-msg ${msg.type}`} style={{ textAlign: "center" }}>{msg.text}</p>}
         </>
       )}
     </div>
