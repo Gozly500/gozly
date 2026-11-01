@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
-import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu, IconMusique } from "@/components/icons/GozlyIcons";
+import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu, IconMusique, IconTemperature } from "@/components/icons/GozlyIcons";
 import { useT } from "@/components/LangProvider";
 import PastilleOnglets from "@/components/PastilleOnglets";
 
@@ -140,12 +140,14 @@ function GestionShellReel({ actif, children }) {
   const commandesActif = modulesActifs.includes("commandes");
   const tachesActif = modulesActifs.includes("planning");
   const musiqueActif = modulesActifs.includes("musique");
+  const temperatureActif = modulesActifs.includes("temperature");
 
   const onglets = [
     { id: "accueil", href: "/gestion", label: "Accueil", Icone: IconTableauDeBord, visible: true },
     { id: "taches", href: "/gestion/taches", label: "Tâches", Icone: IconPlanning, visible: tachesActif },
     { id: "horaire", href: "/gestion/horaire", label: "Horaire", Icone: IconHoraire, visible: horaireActif },
     { id: "commandes", href: "/gestion/commandes", label: "Commandes", Icone: IconCommandes, visible: commandesActif },
+    { id: "temperature", href: "/gestion/temperature", label: "Températures", Icone: IconTemperature, visible: temperatureActif },
     { id: "musique", href: "/gestion/musique", label: "Musique", Icone: IconMusique, visible: musiqueActif },
     { id: "demandes", href: "/gestion/demandes", label: "Demandes", Icone: IconDemande, visible: horaireActif },
     { id: "discussion", href: "/gestion/discussion", label: "Discussion", Icone: IconDiscussion, visible: true },
