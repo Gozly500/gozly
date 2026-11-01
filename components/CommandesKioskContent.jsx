@@ -25,7 +25,7 @@ import {
   libelleRamassage,
   noteCommande,
 } from "@/lib/commandes";
-import { IconCalendrier, IconCloche, IconClocheBarree, IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconImprimante } from "@/components/icons/Pictogrammes";
+import { IconCalendrier, IconCloche, IconClocheBarree, IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconImprimante, IconX } from "@/components/icons/Pictogrammes";
 
 const INTERVALLE_SYNC_MS = 30000;
 
@@ -759,27 +759,35 @@ export default function CommandesKioskContent() {
           <h2>{t("kq.c.titre")}</h2>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-          {tablette ? (
-            // Tablette : toucher la recherche ouvre une fenêtre avec le clavier de Gozly (pas celui du système).
-            <input
-              type="search"
-              className="cmd-kiosk-recherche"
-              value={recherche}
-              readOnly
-              inputMode="none"
-              onClick={() => setRechercheOuverte(true)}
-              onFocus={() => setRechercheOuverte(true)}
-              placeholder={t("kq.c.rechercher")}
-            />
-          ) : (
-            <input
-              type="search"
-              className="cmd-kiosk-recherche"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              placeholder={t("kq.c.rechercher")}
-            />
-          )}
+          <span className="cmd-kiosk-recherche-boite">
+            {tablette ? (
+              // Tablette : toucher la recherche ouvre une fenêtre avec le clavier de Gozly (pas celui du système).
+              <input
+                type="text"
+                className="cmd-kiosk-recherche"
+                value={recherche}
+                readOnly
+                inputMode="none"
+                onClick={() => setRechercheOuverte(true)}
+                onFocus={() => setRechercheOuverte(true)}
+                placeholder={t("kq.c.rechercher")}
+              />
+            ) : (
+              <input
+                type="text"
+                className="cmd-kiosk-recherche"
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+                placeholder={t("kq.c.rechercher")}
+              />
+            )}
+            {recherche && (
+              // Petit X : efface la recherche d'un coup et ramène toute la liste des commandes.
+              <button type="button" className="cmd-kiosk-recherche-x" onClick={() => setRecherche("")} aria-label={t("kq.c.effacerRecherche")}>
+                <IconX className="gozly-icon" />
+              </button>
+            )}
+          </span>
           <button
             className={`admin-icon-btn${vue === "avenir" ? " active" : ""}`}
             style={vue === "avenir" ? { background: "rgba(122,63,224,0.35)", borderColor: "rgba(122,63,224,0.6)" } : undefined}

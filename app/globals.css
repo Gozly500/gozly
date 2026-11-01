@@ -2388,7 +2388,10 @@ button.cmd-menu-option:active{background:rgba(var(--w),0.14);}
 .cmd-kiosk-note{font-size:14px;color:#ffd479;font-weight:600;}
 .gestion-commande-note{font-size:13.5px;color:#ffd479;}
 /* Kiosque des commandes : recherche, commandes à venir (tableau filtrable). */
-.cmd-kiosk-recherche{min-width:220px;max-width:280px;box-sizing:border-box;margin:0;}
+.cmd-kiosk-recherche-boite{position:relative;display:inline-flex;align-items:center;min-width:220px;max-width:280px;}
+.cmd-kiosk-recherche{width:100%;min-width:0;box-sizing:border-box;margin:0;padding-right:42px;}
+.cmd-kiosk-recherche-x{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:rgba(var(--w),0.14);color:var(--fg);cursor:pointer;padding:0;}
+.cmd-kiosk-recherche-x .gozly-icon{width:14px;height:14px;}
 .cmd-kiosk-avenir{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;}
 .cmd-kiosk-filtres{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .cmd-kiosk-filtres label{display:flex;align-items:center;gap:6px;font-size:14px;}
@@ -2404,7 +2407,7 @@ button.cmd-menu-option:active{background:rgba(var(--w),0.14);}
 @media (max-width:900px){
   .cmd-kiosk-avenir{overflow:visible;}
   .cmd-kiosk-avenir-liste{overflow-x:auto;}
-  .cmd-kiosk-recherche{min-width:0;flex:1;max-width:none;}
+  .cmd-kiosk-recherche-boite{min-width:0;flex:1;max-width:none;}
 }
 /* Kiosque des commandes en mode liste : une seule liste de cartes qui défile. */
 .cmd-kiosk-liste-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;}

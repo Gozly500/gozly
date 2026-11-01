@@ -25,6 +25,19 @@ export function SaisieGozly({ actif = true, children }) {
   const dernier = useRef(null);
   if (ouvertId) dernier.current = ouvertId;
 
+  // Le panneau se ferme aussi quand on touche n'importe où ailleurs sur l'écran (hors du panneau et des champs).
+  // On écoute le « click » (pas le toucher) : l'élément touché reçoit son clic normalement, à sa place d'origine,
+  // et la fenêtre ne se redimensionne qu'après (sinon le bouton bougerait sous le doigt et le clic le manquerait).
+  useEffect(() => {
+    if (!actif || !ouvertId) return;
+    const surClic = (e) => {
+      if (e.target?.closest?.(".sg-panneau, .sg-champ")) return;
+      setOuvertId(null);
+    };
+    document.addEventListener("click", surClic, true);
+    return () => document.removeEventListener("click", surClic, true);
+  }, [actif, ouvertId]);
+
   if (!actif) return children;
 
   const ctx = { registre, ouvertId, ouvrir: setOuvertId, fermer: () => setOuvertId(null) };

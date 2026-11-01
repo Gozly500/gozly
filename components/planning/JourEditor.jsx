@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { NOM_CATEGORIE_COMMANDES, blocsTaches } from "@/lib/commandes";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import EmplacementSelect from "@/components/EmplacementSelect";
-import { IconCrochet, IconDocument } from "@/components/icons/Pictogrammes";
+import { IconCrochet, IconDocument, IconTelecharger } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 
@@ -30,6 +30,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
   const [addingFor, setAddingFor] = useState(null);
   const [texte, setTexte] = useState("");
   const [modelesPourCategorie, setModelesPourCategorie] = useState(null); // categorie_id dont la popup de modèles est ouverte
+  const [exportEnCours, setExportEnCours] = useState(false);
 
   useEffect(() => {
     load();
@@ -137,6 +138,31 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
     year: "numeric",
   });
 
+  // Version papier des tâches du jour (de la succursale choisie, s'il y en a plusieurs).
+  async function exporterPdf() {
+    setExportEnCours(true);
+    try {
+      const { data: ent } = await supabase.from("entreprises").select("nom").eq("id", entrepriseId).maybeSingle();
+      const succursale = emplacements.length > 1 ? emplacements.find((e) => e.id === emplacementId)?.nom : "";
+      const { telechargerPdfTaches } = await import("@/lib/exportPdf");
+      await telechargerPdfTaches({
+        entrepriseNom: ent?.nom || "",
+        succursaleNom: succursale,
+        dateLabel: dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1),
+        dateIso: date,
+        categories,
+        taches,
+      });
+    } finally {
+      setExportEnCours(false);
+    }
+  }
+  const boutonPdf = (
+    <button type="button" className="admin-icon-btn" onClick={exporterPdf} disabled={exportEnCours}>
+      {exportEnCours ? tr("PDF...") : <><IconTelecharger className="gozly-icon" />{" "}{tr("Exporter en PDF")}</>}
+    </button>
+  );
+
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>{tr("Chargement...")}</p>;
   }
@@ -146,6 +172,7 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
       {integre ? (
         <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "6px 14px", margin: "4px 0 12px" }}>
           <span style={{ textTransform: "capitalize", fontWeight: 600 }}>{dateLabel}</span>
+          {boutonPdf}
           {suppressionJournee &&
             (confirmerSuppression ? (
               <span style={{ fontSize: "13px" }}>
@@ -174,9 +201,12 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
             <h2 style={{ textTransform: "capitalize" }}>{dateLabel}</h2>
             <p className="panel-hint">{tr("Les tâches à faire ce jour-là, par catégorie.")}</p>
           </div>
-          <Link href="/dashboard/planning" className="submit-btn" style={{ textDecoration: "none" }}>
-            <IconCrochet className="gozly-icon" />{" "}{tr("Terminé")}
-          </Link>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+            {boutonPdf}
+            <Link href="/dashboard/planning" className="submit-btn" style={{ textDecoration: "none" }}>
+              <IconCrochet className="gozly-icon" />{" "}{tr("Terminé")}
+            </Link>
+          </div>
         </div>
       )}
 
