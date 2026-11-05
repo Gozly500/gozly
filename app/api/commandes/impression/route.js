@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "crypto";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { construireBonCommande } from "@/lib/impressionCommandes";
 
-// Configuration de l'impression des bons de commande (Personnalisation >
-// Commandes en ligne) : active/désactive, génère l'URL secrète à copier dans
-// la configuration de l'imprimante Epson, et envoie un bon de test.
-// Le jeton ne sort jamais d'ici : l'interface ne le lit pas directement.
+// Configuration de l'impression des bons de commande (Personnalisation > Commandes > Impression) : active/désactive,
+// affiche l'aperçu du bon et met un bon de test en file (le kiosque Android l'imprime en Bluetooth).
 
 export async function POST(request) {
   const { entrepriseId, action } = await request.json().catch(() => ({}));
@@ -31,20 +28,14 @@ export async function POST(request) {
     return NextResponse.json({ error: "Configuration manquante." }, { status: 500 });
   }
 
-  const origine = new URL(request.url).origin;
-  const urlImprimante = (jeton) => `${origine}/api/impression/epson/${jeton}`;
-
   const { data: actuelle } = await service
     .from("entreprises")
-    .select("impression_actif, impression_token")
+    .select("impression_actif")
     .eq("id", entreprise.id)
     .maybeSingle();
 
   if (action === "etat") {
-    return NextResponse.json({
-      actif: !!actuelle?.impression_actif,
-      url: actuelle?.impression_actif && actuelle.impression_token ? urlImprimante(actuelle.impression_token) : null,
-    });
+    return NextResponse.json({ actif: !!actuelle?.impression_actif });
   }
 
   // Aperçu : le bon tel que l'imprimante le recevrait, avec une commande d'exemple et avec la dernière
@@ -83,13 +74,10 @@ export async function POST(request) {
     });
   }
 
-  if (action === "activer" || action === "regenerer") {
-    // Régénérer invalide l'ancienne URL : l'imprimante doit recevoir la nouvelle.
-    const jeton =
-      action === "activer" && actuelle?.impression_token ? actuelle.impression_token : randomBytes(24).toString("hex");
+  if (action === "activer") {
     const { error } = await service
       .from("entreprises")
-      .update({ impression_actif: true, impression_token: jeton })
+      .update({ impression_actif: true })
       .eq("id", entreprise.id);
     if (error) {
       console.error("Erreur activation impression:", error.message);
@@ -99,14 +87,14 @@ export async function POST(request) {
         { status: 500 }
       );
     }
-    return NextResponse.json({ actif: true, url: urlImprimante(jeton) });
+    return NextResponse.json({ actif: true });
   }
 
   if (action === "desactiver") {
-    await service.from("entreprises").update({ impression_actif: false, impression_token: null }).eq("id", entreprise.id);
+    await service.from("entreprises").update({ impression_actif: false }).eq("id", entreprise.id);
     // Les bons encore en file ne serviraient plus à rien.
     await service.from("bons_impression").delete().eq("entreprise_id", entreprise.id).in("statut", ["en_attente", "envoye"]);
-    return NextResponse.json({ actif: false, url: null });
+    return NextResponse.json({ actif: false });
   }
 
   if (action === "tester") {

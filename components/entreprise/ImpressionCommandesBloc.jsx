@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { xmlVersLignes } from "@/lib/apercuBon";
-import { IconCrochet, IconOeil } from "@/components/icons/Pictogrammes";
+import { IconOeil } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
 async function appelerImpression(entrepriseId, action) {
@@ -17,16 +17,14 @@ async function appelerImpression(entrepriseId, action) {
   return { ok: res.ok, ...json };
 }
 
-// Configuration de l'imprimante Epson (Personnalisation > Commandes en
-// ligne) : active l'impression, donne l'URL à coller dans la config de
-// l'imprimante et permet d'envoyer un bon de test.
+// Impression des bons de commande (Personnalisation > Commandes > Impression) : active l'impression (le kiosque Android
+// imprime en Bluetooth), aperçu du bon et bon de test.
 // selecteur : le menu « Impression des commandes manuelles », affiché à côté des boutons.
 export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
   const { t } = useT();
-  const [etat, setEtat] = useState(null); // { actif, url }
+  const [etat, setEtat] = useState(null); // { actif }
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
-  const [copie, setCopie] = useState(false);
   const [apercu, setApercu] = useState(null); // { exemple, derniere } : XML des bons
   const [apercuSource, setApercuSource] = useState("exemple");
   const [apercuOuvert, setApercuOuvert] = useState(false);
@@ -44,7 +42,7 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
   }
 
   useEffect(() => {
-    appelerImpression(entrepriseId, "etat").then((r) => setEtat({ actif: !!r.actif, url: r.url || null }));
+    appelerImpression(entrepriseId, "etat").then((r) => setEtat({ actif: !!r.actif }));
   }, [entrepriseId]);
 
   async function lancer(action, confirmation) {
@@ -58,28 +56,20 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
       return;
     }
     if (action === "tester") {
-      setMsg({ type: "ok", text: t("Bon de test envoyé. Il devrait sortir de l'imprimante dans quelques secondes.") });
+      setMsg({ type: "ok", text: t("Bon de test envoyé. Il devrait sortir de l'imprimante dans quelques secondes (le kiosque doit être ouvert).") });
       return;
     }
-    setEtat({ actif: !!r.actif, url: r.url || null });
-  }
-
-  async function copier() {
-    try {
-      await navigator.clipboard.writeText(etat.url);
-      setCopie(true);
-      setTimeout(() => setCopie(false), 2000);
-    } catch {}
+    setEtat({ actif: !!r.actif });
   }
 
   if (!etat) return <p className="section-hint">{t("Chargement...")}</p>;
 
   return (
-    <div className="param-subgroup">
-      <div className="param-subgroup-label">{t("Impression des bons de commande (Epson)")}</div>
+    <div>
+      {selecteur}
 
-      <div className="impression-ligne">
-        {selecteur && <div className="impression-selecteur">{selecteur}</div>}
+      <div className="param-ligne">
+        <div className="param-ligne-libelle">{t("Impression des bons de commande")}</div>
         <div className="impression-boutons">
           <button className="admin-icon-btn" disabled={busy} onClick={voirApercu}>
             <IconOeil className="gozly-icon" />{" "}{t("Aperçu du bon")}
@@ -94,15 +84,6 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
                 {t("Imprimer un bon de test")}
               </button>
               <button
-                className="admin-icon-btn"
-                disabled={busy}
-                onClick={() =>
-                  lancer("regenerer", t("Générer une nouvelle adresse? L'ancienne cessera de fonctionner : tu devras la remplacer dans l'imprimante."))
-                }
-              >
-                {t("Nouvelle adresse")}
-              </button>
-              <button
                 className="admin-icon-btn danger"
                 disabled={busy}
                 onClick={() => lancer("desactiver", t("Désactiver l'impression? Les bons en attente seront annulés."))}
@@ -114,20 +95,11 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
         </div>
       </div>
 
-      {etat.actif && (
-        <>
-          <p className="section-hint">
-            {t("Impression activée. Dans la configuration de l'imprimante (Epson Web Config : tape l'adresse IP de l'imprimante dans un navigateur), va dans")}{" "}<strong>{t("Server Direct Print")}</strong>{t(", active-le, et entre cette adresse comme URL du serveur 1. Mets l'intervalle à 5 secondes. Laisse l'ID et le mot de passe vides.")}
-          </p>
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", marginBottom: "12px" }}>
-            <input type="text" readOnly value={etat.url || ""} onFocus={(e) => e.target.select()} style={{ flex: 1, minWidth: "260px" }} />
-            <button className="admin-icon-btn" onClick={copier}>
-              {copie ? <>{t("Copié")}{" "}<IconCrochet className="gozly-icon" /></> : t("Copier")}
-            </button>
-          </div>
-          <p className="section-hint">{t("Garde cette adresse privée : quiconque la connaît peut interroger ton imprimante.")}</p>
-        </>
-      )}
+      <p className="section-hint">
+        {etat.actif
+          ? t("Impression activée. Les bons sont imprimés par le kiosque Android, en Bluetooth : choisis l'imprimante dans les réglages du kiosque.")
+          : t("Active l'impression, puis choisis l'imprimante Bluetooth dans les réglages du kiosque Android.")}
+      </p>
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 

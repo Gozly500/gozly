@@ -4,8 +4,7 @@ import { getServiceClient } from "@/lib/adminServer";
 import { xmlDuBon } from "@/lib/impressionCommandes";
 import { commandeDeSuccursale } from "@/lib/commandesSuccursale";
 
-// Impression par la tablette (app Android du kiosque, Bluetooth) : au lieu que l'imprimante interroge Gozly en
-// permanence (voir /api/impression/epson/[token]), le kiosque vient chercher les bons en attente, les envoie
+// Impression par la tablette (app Android du kiosque, Bluetooth) : le kiosque vient chercher les bons en attente, les envoie
 // lui-même à l'imprimante, puis confirme le résultat. Aucune requête quand il n'y a rien à imprimer, à part
 // la synchronisation que le kiosque fait déjà.
 // - action "prendre" : réserve jusqu'à 5 bons en attente et rend leur XML ;
