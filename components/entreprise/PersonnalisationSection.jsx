@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import InfoTooltip from "@/components/InfoTooltip";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
@@ -141,37 +141,53 @@ function AvertissementPointageMobile({ actif, lieux }) {
   );
 }
 
-// Texte de la recherche (en minuscules, sans accents) : chaque ligne de réglage et chaque bloc se masque s'il ne correspond pas.
-const RechercheCtx = createContext("");
-
-function normaliserRecherche(s) {
-  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+// Un réglage = une ligne : le nom (et sa bulle d'aide « i ») à gauche, le contrôle à droite. Le contrôle suit le type de choix :
+// activé/désactivé -> interrupteur ; 2 ou 3 choix courts -> boutons côte à côte ; sinon -> liste déroulante.
+function estOuiNon(options) {
+  const ids = options.map((o) => o.id).sort().join(",");
+  return options.length === 2 && ids === "active,desactive";
 }
 
-function useCorrespond(...textes) {
-  const q = useContext(RechercheCtx);
-  const { t } = useT();
-  if (!q) return true;
-  return normaliserRecherche(textes.map((x) => (x ? t(x) : "")).join(" ")).includes(q);
+function estCourt(options) {
+  return options.length <= 3 && options.every((o) => o.label.length <= 16);
 }
 
-// Un réglage = une ligne : le nom (et sa bulle d'aide « i ») à gauche, le choix à droite.
 function ParametreSelect({ label, info, options, value, onChange, disabled }) {
   const { t } = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  const visible = useCorrespond(label, info);
 
   useFermerAuClicExterieur(ref, open, () => setOpen(false));
 
-  if (!visible) return null;
-
-  return (
-    <div className="param-ligne" ref={ref}>
-      <div className="param-ligne-libelle">
-        {t(label)}
-        {info && <InfoTooltip>{info}</InfoTooltip>}
+  let controle;
+  if (estOuiNon(options)) {
+    controle = (
+      <label className="switch">
+        <input type="checkbox" checked={value === "active"} disabled={disabled} onChange={(e) => onChange(e.target.checked ? "active" : "desactive")} />
+        <span className="switch-track" />
+        <span className="switch-thumb" />
+      </label>
+    );
+  } else if (estCourt(options)) {
+    controle = (
+      <div className="param-segments" role="radiogroup">
+        {options.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            role="radio"
+            aria-checked={value === o.id}
+            disabled={disabled}
+            className={`param-segment${value === o.id ? " actif" : ""}`}
+            onClick={() => value !== o.id && onChange(o.id)}
+          >
+            {t(o.label)}
+          </button>
+        ))}
       </div>
+    );
+  } else {
+    controle = (
       <div className="forfait-select-wrap param-ligne-controle">
         <div className={`forfait-select-trigger${open ? " open" : ""}`} onClick={() => !disabled && setOpen((v) => !v)}>
           <div className="fs-label">{options.find((o) => o.id === value)?.label}</div>
@@ -194,44 +210,23 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
           </div>
         )}
       </div>
+    );
+  }
+
+  return (
+    <div className="param-ligne" ref={ref}>
+      <div className="param-ligne-libelle">
+        {t(label)}
+        {info && <InfoTooltip>{info}</InfoTooltip>}
+      </div>
+      {controle}
     </div>
   );
 }
 
-// Un bloc plus riche qu'une simple ligne (export vers le nuage, impression...) : visible sans recherche, ou si la recherche
-// correspond à ses mots-clés.
-function Bloc({ mots, children }) {
-  const visible = useCorrespond(mots);
-  if (!visible) return null;
-  return (
-    <div className="param-bloc">
-      <RechercheCtx.Provider value="">{children}</RechercheCtx.Provider>
-    </div>
-  );
-}
-
-// Une carte par module ; si la recherche correspond au nom du module, tous ses réglages restent affichés.
-function Carte({ module, children }) {
-  const { t } = useT();
-  const q = useContext(RechercheCtx);
-  const moduleCorrespond = !!q && normaliserRecherche(t(module.label)).includes(q);
-  return (
-    <section className="param-carte" id={`param-${module.id}`}>
-      <h3 className="param-carte-titre">{t(module.label)}</h3>
-      <RechercheCtx.Provider value={moduleCorrespond ? "" : q}>{children}</RechercheCtx.Provider>
-    </section>
-  );
-}
-
-// Sous-titre à l'intérieur d'une carte (ex: Horaire / Pointage / Demandes) ; disparaît si tous ses réglages sont masqués.
-function Groupe({ titre, children }) {
-  const { t } = useT();
-  return (
-    <div className="param-groupe">
-      {titre && <div className="param-groupe-titre">{t(titre)}</div>}
-      {children}
-    </div>
-  );
+// Sous-titre d'une catégorie avec plusieurs réglages groupés.
+function Bloc({ children }) {
+  return <div className="param-bloc">{children}</div>;
 }
 
 const FREQUENCES_EXPORT_NUAGE = [
@@ -396,7 +391,7 @@ export const MODULES_PERSONNALISATION = [
   { id: "inventaire", label: "Inventaire", categories: [{ id: "general", label: "Général" }] },
 ];
 
-export default function PersonnalisationSection({ entrepriseId }) {
+export default function PersonnalisationSection({ entrepriseId, module, categorie }) {
   const { t } = useT();
   const [modulesActifs, setModulesActifs] = useState([]);
   const [premierJourSemaine, setPremierJourSemaine] = useState("lundi");
@@ -421,9 +416,6 @@ export default function PersonnalisationSection({ entrepriseId }) {
   const [planifDansCommandes, setPlanifDansCommandes] = useState("desactive");
   const [lieuWix, setLieuWix] = useState(""); // "" = toutes les succursales
   const [lieuxWixDispo, setLieuxWixDispo] = useState([]);
-  const [recherche, setRecherche] = useState("");
-  const [aucunResultat, setAucunResultat] = useState(false);
-  const pageRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -769,33 +761,22 @@ export default function PersonnalisationSection({ entrepriseId }) {
     setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
 
-  // Recherche sans résultat : on le dit (les lignes se masquent elles-mêmes, on compte celles qui restent à l'écran).
-  useEffect(() => {
-    if (loading) return;
-    setAucunResultat(!!recherche && !pageRef.current?.querySelector(".param-ligne, .param-bloc"));
-  }, [recherche, loading, modulesActifs]);
-
   if (loading) {
     return <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>;
   }
 
-  const modules = MODULES_PERSONNALISATION.filter((x) => modulesActifs.includes(x.id));
-  const aucunModule = modules.length === 0;
-  const actif = (id) => modulesActifs.includes(id);
+  const moduleChoisi = MODULES_PERSONNALISATION.find((x) => x.id === module && modulesActifs.includes(x.id));
+  const categorieChoisie = moduleChoisi?.categories.find((c) => c.id === categorie);
+  const aucunModule = !MODULES_PERSONNALISATION.some((x) => modulesActifs.includes(x.id));
+  const dans = (moduleId, categorieId) => moduleChoisi?.id === moduleId && categorieChoisie?.id === categorieId;
 
   return (
-    <div className="param-page" ref={pageRef}>
-      <h2>{t("Personnalisation")}</h2>
-      <p className="panel-hint">{t("Ajuste le comportement de tes modules actifs.")}</p>
-
-      {!aucunModule && (
-        <input
-          type="search"
-          className="param-recherche"
-          placeholder={t("Chercher un réglage...")}
-          value={recherche}
-          onChange={(e) => setRecherche(e.target.value)}
-        />
+    <div className="param-page">
+      <h2>{moduleChoisi ? t(moduleChoisi.label) : t("Personnalisation")}</h2>
+      {categorieChoisie && moduleChoisi.categories.length > 1 ? (
+        <p className="panel-hint">{t(categorieChoisie.label)}</p>
+      ) : (
+        <p className="panel-hint">{t("Ajuste le comportement de tes modules actifs.")}</p>
       )}
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
@@ -805,12 +786,10 @@ export default function PersonnalisationSection({ entrepriseId }) {
           {t("Active un module (ex: Horaire & Pointage) pour voir apparaître ici ses options de personnalisation.")}
         </p>
       )}
-      {aucunResultat && <p className="section-hint">{t("Aucun réglage ne correspond à ta recherche.")}</p>}
+      {!aucunModule && !categorieChoisie && <p className="section-hint">{t("Choisis un module dans le menu de gauche pour ajuster ses réglages.")}</p>}
 
-      <RechercheCtx.Provider value={normaliserRecherche(recherche.trim())}>
-        {actif("horaire") && (
-          <Carte module={MODULES_PERSONNALISATION.find((x) => x.id === "horaire")}>
-            <Groupe titre="Horaire">
+        {dans("horaire", "horaire") && (
+          <div className="param-liste">
               <ParametreSelect
                 label={t("Premier jour de la semaine")}
                 info={t("Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps.")}
@@ -819,8 +798,10 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 onChange={handleChangePremierJour}
                 disabled={saving}
               />
-            </Groupe>
-            <Groupe titre="Pointage">
+          </div>
+        )}
+        {dans("horaire", "pointage") && (
+          <div className="param-liste">
               <ParametreSelect
                 label={t("Pointage mobile (GPS)")}
                 info={t("Permet de pointer depuis l'app mobile plutôt qu'au kiosque, en vérifiant la position GPS par rapport à l'adresse de la succursale (voir Emplacements). Le bouton n'apparaît que pour les employés assignés à une succursale avec une adresse valide, les jours où ils ont un quart prévu.")}
@@ -853,11 +834,13 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 onChange={handleChangeVisibiliteFeuilleTemps}
                 disabled={saving}
               />
-              <Bloc mots="pointage mobile gps adresse horaires ouverture">
+              <Bloc>
                 <AvertissementPointageMobile actif={pointageMobile === "active"} lieux={lieuxPointage} />
               </Bloc>
-            </Groupe>
-            <Groupe titre="Demandes">
+          </div>
+        )}
+        {dans("horaire", "demandes") && (
+          <div className="param-liste">
               <ParametreSelect
                 label={t("Approbation des congés")}
                 info={t("Quand un employé demande un congé : approuver toi-même (manuelle), valider tout de suite (automatique), ou désactiver complètement les demandes de congé.")}
@@ -882,13 +865,11 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 onChange={handleChangeRetentionDemandes}
                 disabled={saving}
               />
-            </Groupe>
-          </Carte>
+          </div>
         )}
 
-        {actif("temperature") && (
-          <Carte module={MODULES_PERSONNALISATION.find((x) => x.id === "temperature")}>
-            <Groupe>
+        {dans("temperature", "general") && (
+          <div className="param-liste">
               <ParametreSelect
                 label={t("Conservation des fiches")}
                 info={t("Combien de temps garder les fiches de température avant leur suppression automatique. Une semaine avant, un avertissement apparaît dans Températures → Historique pour te rappeler de les exporter (Exporter) et les garder en local.")}
@@ -905,16 +886,14 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 onChange={handleChangeRappelsTemperature}
                 disabled={saving}
               />
-              <Bloc mots="export nuage onedrive google drive fiches temperature">
+              <Bloc>
                 <ExportsNuageTemperature entrepriseId={entrepriseId} />
               </Bloc>
-            </Groupe>
-          </Carte>
+          </div>
         )}
 
-        {actif("commandes") && (
-          <Carte module={MODULES_PERSONNALISATION.find((x) => x.id === "commandes")}>
-            <Groupe titre="Général">
+        {dans("commandes", "general") && (
+          <div className="param-liste">
               <ParametreSelect
                 label={t("Conservation des commandes")}
                 info={t("Combien de temps garder la copie des commandes reçues de Wix avant sa suppression automatique. Ton registre officiel reste dans ton tableau de bord Wix. Les commandes que tu entres à la main dans Gozly ne sont jamais supprimées automatiquement.")}
@@ -950,8 +929,10 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 onChange={handleChangeCommandesVersTaches}
                 disabled={saving}
               />
-            </Groupe>
-            <Groupe titre="Kiosque">
+          </div>
+        )}
+        {dans("commandes", "kiosque") && (
+          <div className="param-liste">
               <ParametreSelect
                 label={t("Affichage du kiosque des commandes")}
                 info={t("Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »). 3 sections : toutes les commandes arrivent dans « En attente », puis passent à « Traitées » et « Terminées », peu importe leur date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées (bouton Vider, et celles d'avant hier disparaissent seules). Recharge le kiosque après un changement.")}
@@ -968,9 +949,11 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 onChange={handleChangeSonCommandes}
                 disabled={saving}
               />
-            </Groupe>
-            <Groupe titre="Impression">
-              <Bloc mots="impression imprimante bon de commande bluetooth apercu test">
+          </div>
+        )}
+        {dans("commandes", "impression") && (
+          <div className="param-liste">
+              <Bloc>
                 <ImpressionCommandesBloc
                   entrepriseId={entrepriseId}
                   selecteur={
@@ -985,13 +968,11 @@ export default function PersonnalisationSection({ entrepriseId }) {
                   }
                 />
               </Bloc>
-            </Groupe>
-          </Carte>
+          </div>
         )}
 
-        {actif("inventaire") && (
-          <Carte module={MODULES_PERSONNALISATION.find((x) => x.id === "inventaire")}>
-            <Groupe>
+        {dans("inventaire", "general") && (
+          <div className="param-liste">
               <ParametreSelect
                 label={t("Synchronisation vers Wix")}
                 info={t("Une fois Wix connecté (Entreprise → Intégrations) : pousser tes produits vers Wix automatiquement à chaque ajout/modification/suppression, ou seulement quand tu cliques « Synchroniser ».")}
@@ -1000,10 +981,9 @@ export default function PersonnalisationSection({ entrepriseId }) {
                 onChange={handleChangePushWix}
                 disabled={saving}
               />
-            </Groupe>
-          </Carte>
+          </div>
         )}
-      </RechercheCtx.Provider>
+
     </div>
   );
 }
