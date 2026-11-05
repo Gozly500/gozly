@@ -9,6 +9,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu, IconMusique, IconTemperature } from "@/components/icons/GozlyIcons";
 import { IconBouclier } from "@/components/icons/Pictogrammes";
 import { useGardeMfa } from "@/lib/useGardeMfa";
+import { lireSecretGozly } from "@/lib/codesGozly";
 import { useT } from "@/components/LangProvider";
 import PastilleOnglets from "@/components/PastilleOnglets";
 
@@ -51,6 +52,15 @@ function GestionShellReel({ actif, children }) {
   const router = useRouter();
   const [pret, setPret] = useState(false);
   const [user, setUser] = useState(null);
+  // « Mes codes » n'apparaît que sur l'appareil où la méthode « App Gozly » a été activée.
+  const [aCodes, setACodes] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    const maj = () => setACodes(!!lireSecretGozly(user.id));
+    maj();
+    window.addEventListener("gozly-codes", maj);
+    return () => window.removeEventListener("gozly-codes", maj);
+  }, [user]);
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [entrepriseNom, setEntrepriseNom] = useState("");
   const [plusieursEntreprises, setPlusieursEntreprises] = useState(false);
@@ -154,6 +164,7 @@ function GestionShellReel({ actif, children }) {
     { id: "musique", href: "/gestion/musique", label: "Musique", Icone: IconMusique, visible: musiqueActif },
     { id: "demandes", href: "/gestion/demandes", label: "Demandes", Icone: IconDemande, visible: horaireActif },
     { id: "discussion", href: "/gestion/discussion", label: "Discussion", Icone: IconDiscussion, visible: true },
+    { id: "codes", href: "/gestion/codes", label: "Mes codes", Icone: IconBouclier, visible: aCodes },
     { id: "securite", href: "/gestion/securite", label: "Sécurité", Icone: IconBouclier, visible: true },
   ].filter((o) => o.visible);
 
