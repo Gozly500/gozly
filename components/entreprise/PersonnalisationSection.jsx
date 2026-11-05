@@ -149,14 +149,13 @@ function estCourt(options) {
 // Boutons côte à côte avec une bulle qui glisse de l'un à l'autre quand on change de choix (position mesurée sur le bouton choisi).
 function Segments({ options, value, onChange, disabled }) {
   const { t } = useT();
-  const vertical = options.reduce((n, o) => n + t(o.label).length, 0) > 30;
   const refs = useRef({});
-  const [bulle, setBulle] = useState(null); // { left, width } (ou { top, height } en vertical)
+  const [bulle, setBulle] = useState(null); // { left, width }
   const [anime, setAnime] = useState(false); // pas d'animation au tout premier affichage
 
   function mesurer() {
     const el = refs.current[value];
-    if (el) setBulle(vertical ? { top: el.offsetTop, height: el.offsetHeight } : { left: el.offsetLeft, width: el.offsetWidth });
+    if (el) setBulle({ left: el.offsetLeft, width: el.offsetWidth });
   }
 
   useLayoutEffect(mesurer, [value, options.length]);
@@ -170,7 +169,7 @@ function Segments({ options, value, onChange, disabled }) {
   }, []);
 
   return (
-    <div className={`param-segments${vertical ? " vertical" : ""}`} role="radiogroup">
+    <div className="param-segments" role="radiogroup">
       {bulle && <span className={`param-segment-bulle${anime ? " anime" : ""}`} style={bulle} />}
       {options.map((o) => (
         <button
@@ -197,6 +196,8 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
 
   useFermerAuClicExterieur(ref, open, () => setOpen(false));
 
+  // Des libellés longs ne tiennent pas à côté du nom : la ligne passe en colonne et les boutons s'étalent en dessous.
+  const empile = estCourt(options) && !estOuiNon(options) && options.reduce((n, o) => n + t(o.label).length, 0) > 30;
   let controle;
   if (estOuiNon(options)) {
     controle = (
@@ -236,7 +237,7 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
   }
 
   return (
-    <div className="param-ligne" ref={ref}>
+    <div className={`param-ligne${empile ? " empile" : ""}`} ref={ref}>
       <div className="param-ligne-libelle">
         {t(label)}
         {info && <InfoTooltip>{info}</InfoTooltip>}
