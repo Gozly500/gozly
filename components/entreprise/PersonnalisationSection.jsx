@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import InfoTooltip from "@/components/InfoTooltip";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
@@ -152,6 +152,49 @@ function estCourt(options) {
   return options.length <= 3 && options.every((o) => o.label.length <= 16);
 }
 
+// Boutons côte à côte avec une bulle qui glisse de l'un à l'autre quand on change de choix (position mesurée sur le bouton choisi).
+function Segments({ options, value, onChange, disabled }) {
+  const { t } = useT();
+  const refs = useRef({});
+  const [bulle, setBulle] = useState(null); // { left, width }
+  const [anime, setAnime] = useState(false); // pas d'animation au tout premier affichage
+
+  function mesurer() {
+    const el = refs.current[value];
+    if (el) setBulle({ left: el.offsetLeft, width: el.offsetWidth });
+  }
+
+  useLayoutEffect(mesurer, [value, options.length]);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setAnime(true));
+    window.addEventListener("resize", mesurer);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener("resize", mesurer);
+    };
+  }, []);
+
+  return (
+    <div className="param-segments" role="radiogroup">
+      {bulle && <span className={`param-segment-bulle${anime ? " anime" : ""}`} style={{ left: bulle.left, width: bulle.width }} />}
+      {options.map((o) => (
+        <button
+          key={o.id}
+          ref={(el) => (refs.current[o.id] = el)}
+          type="button"
+          role="radio"
+          aria-checked={value === o.id}
+          disabled={disabled}
+          className={`param-segment${value === o.id ? " actif" : ""}`}
+          onClick={() => value !== o.id && onChange(o.id)}
+        >
+          {t(o.label)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ParametreSelect({ label, info, options, value, onChange, disabled }) {
   const { t } = useT();
   const [open, setOpen] = useState(false);
@@ -169,23 +212,7 @@ function ParametreSelect({ label, info, options, value, onChange, disabled }) {
       </label>
     );
   } else if (estCourt(options)) {
-    controle = (
-      <div className="param-segments" role="radiogroup">
-        {options.map((o) => (
-          <button
-            key={o.id}
-            type="button"
-            role="radio"
-            aria-checked={value === o.id}
-            disabled={disabled}
-            className={`param-segment${value === o.id ? " actif" : ""}`}
-            onClick={() => value !== o.id && onChange(o.id)}
-          >
-            {t(o.label)}
-          </button>
-        ))}
-      </div>
-    );
+    controle = <Segments options={options} value={value} onChange={onChange} disabled={disabled} />;
   } else {
     controle = (
       <div className="forfait-select-wrap param-ligne-controle">
