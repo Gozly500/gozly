@@ -39,7 +39,7 @@ export default function SecuriteGestion({ sansTitre = false }) {
     if (error) {
       // Fenêtre fermée / refusée : pas une vraie erreur ; sinon le plus souvent WebAuthn n'est pas activé dans Supabase.
       const annule = /NotAllowed|abort|cancel/i.test(`${error.name} ${error.message}`);
-      setMsg({ type: "err", text: annule ? t("Ajout annulé.") : t("Impossible d'ajouter cet appareil.") });
+      setMsg({ type: "err", text: annule ? t("Ajout annulé.") : `${t("Impossible d'ajouter cet appareil.")} [${error.name || ""} ${error.message || ""}]`.replace(" []", "") });
       return;
     }
     setMsg({ type: "ok", text: t("Appareil ajouté.") });
