@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
 import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu, IconMusique, IconTemperature } from "@/components/icons/GozlyIcons";
-import { IconBouclier } from "@/components/icons/Pictogrammes";
+import { IconEngrenage } from "@/components/icons/Pictogrammes";
 import { useGardeMfa } from "@/lib/useGardeMfa";
 import { lireSecretGozly } from "@/lib/codesGozly";
 import { useT } from "@/components/LangProvider";
@@ -134,11 +134,6 @@ function GestionShellReel({ actif, children }) {
     router.push("/admin");
   }
 
-  async function deconnexion() {
-    await supabase.auth.signOut();
-    router.replace("/login?retour=/gestion");
-  }
-
   if (!pret) {
     return (
       <div className="moi-shell">
@@ -164,8 +159,6 @@ function GestionShellReel({ actif, children }) {
     { id: "musique", href: "/gestion/musique", label: "Musique", Icone: IconMusique, visible: musiqueActif },
     { id: "demandes", href: "/gestion/demandes", label: "Demandes", Icone: IconDemande, visible: horaireActif },
     { id: "discussion", href: "/gestion/discussion", label: "Discussion", Icone: IconDiscussion, visible: true },
-    { id: "codes", href: "/gestion/codes", label: "Mes codes", Icone: IconBouclier, visible: aCodes },
-    { id: "securite", href: "/gestion/securite", label: "Sécurité", Icone: IconBouclier, visible: true },
   ].filter((o) => o.visible);
 
   // Barre du bas : Accueil, Demandes, Discussion + Menu (Tâches, Horaire, Commandes...).
@@ -178,7 +171,7 @@ function GestionShellReel({ actif, children }) {
   let indexActif = ongletsPrincipaux.findIndex((o) => o.id === actif);
   if (indexActif < 0 && menuActif) indexActif = ongletsPrincipaux.length;
 
-  const contexte = { user, entrepriseId, entrepriseNom, modulesActifs, mesPermissions, a, peutVoirFeuille, onglets };
+  const contexte = { user, entrepriseId, entrepriseNom, modulesActifs, mesPermissions, a, peutVoirFeuille, onglets, aCodes, plusieursEntreprises };
 
   return (
     <GestionContexte.Provider value={contexte}>
@@ -189,14 +182,9 @@ function GestionShellReel({ actif, children }) {
             <div className="moi-header-entreprise">{t("Gestion")}</div>
           </Link>
           <div className="moi-header-actions">
-            {plusieursEntreprises && (
-              <Link href="/dashboards?retour=/gestion" className="admin-icon-btn">
-                {t("Changer")}
-              </Link>
-            )}
-            <button type="button" className="admin-icon-btn" onClick={deconnexion}>
-              {t("Déconnexion")}
-            </button>
+            <Link href="/gestion/parametres" className="admin-icon-btn moi-header-icon-btn" aria-label={t("Paramètres")}>
+              <IconEngrenage className="gozly-icon" />
+            </Link>
           </div>
         </header>
 

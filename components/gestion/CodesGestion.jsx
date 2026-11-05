@@ -69,7 +69,10 @@ export default function CodesGestion() {
   if (etat === "aucun") {
     return (
       <div className="gestion-section">
-        <h2 style={{ marginBottom: "4px" }}>{t("Mes codes")}</h2>
+        <Link href="/gestion/parametres" className="retour-parametres">
+        ‹ {t("Paramètres")}
+      </Link>
+      <h2 style={{ marginBottom: "4px" }}>{t("Mes codes")}</h2>
         <p className="section-hint">{t("Aucune méthode « App Gozly » active sur cet appareil.")}</p>
         <p style={{ marginTop: "12px" }}>
           <Link href="/gestion/securite" className="admin-icon-btn da-lien">
@@ -82,6 +85,9 @@ export default function CodesGestion() {
 
   return (
     <div className="gestion-section">
+      <Link href="/gestion/parametres" className="retour-parametres">
+        ‹ {t("Paramètres")}
+      </Link>
       <h2 style={{ marginBottom: "4px" }}>{t("Mes codes")}</h2>
       <p className="section-hint">{t("Entre ce code sur l'écran de connexion de Gozly.")}</p>
       <div className="da-carte da-code-vivant">

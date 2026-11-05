@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import CodeDoubleAuth from "@/components/CodeDoubleAuth";
+import Link from "next/link";
 import { useT } from "@/components/LangProvider";
 import { genererCode, lireSecretGozly, stockerSecretGozly, effacerSecretGozly, NOM_FACTEUR_APP_GOZLY } from "@/lib/codesGozly";
 
@@ -180,6 +181,9 @@ export default function SecuriteGestion({ sansTitre = false, dansApp = false }) 
     <div className="gestion-section">
       {!sansTitre && (
         <>
+          <Link href="/gestion/parametres" className="retour-parametres">
+            ‹ {t("Paramètres")}
+          </Link>
           <h2 style={{ marginBottom: "4px" }}>{t("Sécurité")}</h2>
           <p className="section-hint">{t("Double authentification")}</p>
         </>
