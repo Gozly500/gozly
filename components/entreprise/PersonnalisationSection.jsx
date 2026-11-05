@@ -119,24 +119,18 @@ function AvertissementPointageMobile({ actif, lieux }) {
   const sansHoraires = sansSuccursale ? [] : succursales.filter((s) => !s.horaires_ouverture).map((s) => s.nom);
   if (sansPosition.length === 0 && sansHoraires.length === 0) return null;
 
+  const noms = (liste) => liste.join(", ");
   return (
     <div className="param-avertissement" role="alert">
       <div className="param-avertissement-titre">
-        <IconAttention className="gozly-icon" /> {t("Il manque des informations pour que le pointage mobile fonctionne")}
+        <IconAttention className="gozly-icon" /> {t("Pour que le pointage mobile fonctionne, il manque :")}
       </div>
       {sansPosition.length > 0 && (
-        <p>
-          {sansSuccursale
-            ? t("Gozly a besoin de l'adresse de l'entreprise pour vérifier la position GPS des employés. Ajoute-la dans Informations.")
-            : t("Gozly a besoin de l'adresse de chaque succursale pour vérifier la position GPS des employés. Sans adresse (position introuvable), l'employé ne peut pas pointer : {noms}. Ajoute-la dans Emplacements.", { noms: sansPosition.join(", ") })}
-        </p>
+        <p>{t("L'adresse (position GPS) de : {noms}. À ajouter dans Emplacements.", { noms: noms(sansPosition) })}</p>
       )}
       {sansHoraires.length > 0 && (
-        <p>
-          {t("Gozly a aussi besoin des horaires d'ouverture pour fermer automatiquement les pointages oubliés. Il en manque pour : {noms}. Ajoute-les dans Emplacements > Horaires.", { noms: sansHoraires.join(", ") })}
-        </p>
+        <p>{t("Les horaires d'ouverture de : {noms}. À ajouter dans Emplacements > Horaires.", { noms: noms(sansHoraires) })}</p>
       )}
-      {succursales.length > 1 && <p>{t("Si l'entreprise a plusieurs succursales, chaque employé doit aussi être assigné à la sienne (Employés).")}</p>}
     </div>
   );
 }
@@ -155,13 +149,14 @@ function estCourt(options) {
 // Boutons côte à côte avec une bulle qui glisse de l'un à l'autre quand on change de choix (position mesurée sur le bouton choisi).
 function Segments({ options, value, onChange, disabled }) {
   const { t } = useT();
+  const vertical = options.reduce((n, o) => n + t(o.label).length, 0) > 30;
   const refs = useRef({});
-  const [bulle, setBulle] = useState(null); // { left, width }
+  const [bulle, setBulle] = useState(null); // { left, width } (ou { top, height } en vertical)
   const [anime, setAnime] = useState(false); // pas d'animation au tout premier affichage
 
   function mesurer() {
     const el = refs.current[value];
-    if (el) setBulle({ left: el.offsetLeft, width: el.offsetWidth });
+    if (el) setBulle(vertical ? { top: el.offsetTop, height: el.offsetHeight } : { left: el.offsetLeft, width: el.offsetWidth });
   }
 
   useLayoutEffect(mesurer, [value, options.length]);
@@ -175,8 +170,8 @@ function Segments({ options, value, onChange, disabled }) {
   }, []);
 
   return (
-    <div className="param-segments" role="radiogroup">
-      {bulle && <span className={`param-segment-bulle${anime ? " anime" : ""}`} style={{ left: bulle.left, width: bulle.width }} />}
+    <div className={`param-segments${vertical ? " vertical" : ""}`} role="radiogroup">
+      {bulle && <span className={`param-segment-bulle${anime ? " anime" : ""}`} style={bulle} />}
       {options.map((o) => (
         <button
           key={o.id}
@@ -340,7 +335,7 @@ function ExportsNuageTemperature({ entrepriseId }) {
   if (fournisseurs.length === 0) {
     return (
       <p className="section-hint" style={{ marginTop: "14px" }}>
-        {t("Pour sauvegarder automatiquement tes fiches de température dans OneDrive ou Google Drive, connecte-le d'abord dans")}{" "}
+        {t("Export automatique : connecte OneDrive ou Google Drive dans")}{" "}
         <a href="/dashboard/entreprise/parametres?onglet=integrations">{t("Intégrations")}</a>.
       </p>
     );
@@ -348,7 +343,7 @@ function ExportsNuageTemperature({ entrepriseId }) {
 
   return (
     <>
-      <div className="param-grid">
+      <div>
         {fournisseurs.map((fournisseur) => {
           const c = connexions[fournisseur];
           const nom = NOMS_STOCKAGE[fournisseur];
@@ -357,7 +352,7 @@ function ExportsNuageTemperature({ entrepriseId }) {
             <ParametreSelect
               key={fournisseur}
               label={t("Export automatique vers {nom}", { nom })}
-              info={t("Chaque semaine ou chaque mois, Gozly dépose les fiches de la période passée en fichier Excel (CSV) dans le dossier « Gozly » de ton {nom}, avant leur suppression de Gozly.", { nom })}
+              info={t("Chaque semaine ou chaque mois, Gozly dépose les fiches de la période passée en fichier Excel (CSV) dans le dossier « Gozly » de ton {nom}, avant leur suppression de Gozly. Le bouton « Exporter maintenant » envoie les 30 derniers jours.", { nom })}
               options={FREQUENCES_EXPORT_NUAGE}
               value={c.exportTemperatures}
               onChange={(v) => changerFrequence(fournisseur, v)}
@@ -380,7 +375,7 @@ function ExportsNuageTemperature({ entrepriseId }) {
         return (
           <div key={fournisseur} style={{ marginTop: "12px" }}>
             <button type="button" className="admin-icon-btn" onClick={() => exporterMaintenant(fournisseur)} disabled={occupe === fournisseur}>
-              {occupe === fournisseur ? "..." : t("Exporter maintenant vers {nom} (30 derniers jours)", { nom })}
+              {occupe === fournisseur ? "..." : t("Exporter vers {nom} maintenant", { nom })}
             </button>
             {c.dernierExport && <span className="section-hint" style={{ marginLeft: "10px" }}>{t("Dernier export : {date}", { date: c.dernierExport })}</span>}
             {c.erreur && <p className="settings-msg err">{c.erreur}</p>}

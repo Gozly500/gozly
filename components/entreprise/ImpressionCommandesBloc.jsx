@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { xmlVersLignes } from "@/lib/apercuBon";
 import { IconOeil } from "@/components/icons/Pictogrammes";
+import InfoTooltip from "@/components/InfoTooltip";
 import { useT } from "@/components/LangProvider";
 
 async function appelerImpression(entrepriseId, action) {
@@ -69,7 +70,10 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
       {selecteur}
 
       <div className="param-ligne">
-        <div className="param-ligne-libelle">{t("Impression des bons de commande")}</div>
+        <div className="param-ligne-libelle">
+          {t("Impression des bons de commande")}
+          <InfoTooltip>{t("Les bons sont imprimés par le kiosque Android, en Bluetooth : active l'impression ici, puis choisis l'imprimante dans les réglages du kiosque.")}</InfoTooltip>
+        </div>
         <div className="impression-boutons">
           <button className="admin-icon-btn" disabled={busy} onClick={voirApercu}>
             <IconOeil className="gozly-icon" />{" "}{t("Aperçu du bon")}
@@ -94,12 +98,6 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
           )}
         </div>
       </div>
-
-      <p className="section-hint">
-        {etat.actif
-          ? t("Impression activée. Les bons sont imprimés par le kiosque Android, en Bluetooth : choisis l'imprimante dans les réglages du kiosque.")
-          : t("Active l'impression, puis choisis l'imprimante Bluetooth dans les réglages du kiosque Android.")}
-      </p>
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
