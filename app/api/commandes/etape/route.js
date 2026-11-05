@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { imprimerAutomatiquement } from "@/lib/impressionCommandes";
+import { marquerCommandePrepareeWix } from "@/lib/wixClient";
 
 const ETAPES = ["en_attente", "traitee", "terminee"];
 
@@ -35,7 +36,7 @@ export async function POST(request) {
 
   const { data: commande } = await service
     .from("commandes_en_ligne")
-    .select("id, source")
+    .select("id, source, source_id, statut_preparation, brut")
     .eq("id", commandeId)
     .eq("entreprise_id", entreprise.id)
     .maybeSingle();
@@ -64,5 +65,23 @@ export async function POST(request) {
     );
   }
 
-  return NextResponse.json({ ok: true });
+  // Commande Wix traitée/terminée : on la marque préparée chez Wix aussi (sinon elle sonne encore sur leur tableau de bord).
+  let wix = null;
+  if (commande.source === "wix" && etape !== "en_attente" && commande.statut_preparation !== "FULFILLED") {
+    const { data: connexion } = await service
+      .from("wix_connexions")
+      .select("instance_id, statut")
+      .eq("entreprise_id", entreprise.id)
+      .maybeSingle();
+    if (connexion?.statut === "connecte" && connexion.instance_id) {
+      wix = await marquerCommandePrepareeWix(connexion.instance_id, commande.source_id, commande.brut?.lineItems || []);
+      if (wix.ok) {
+        await service.from("commandes_en_ligne").update({ statut_preparation: "FULFILLED" }).eq("id", commande.id);
+      } else {
+        console.error("Marquer préparée chez Wix:", wix.status, wix.detail);
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true, wix });
 }
