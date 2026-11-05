@@ -3909,3 +3909,15 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 /* Calendrier du kiosque des tâches : le panneau de saisie utilisé seul, dans une fenêtre (sur mobile il restait caché sous l écran) */
 .sg-panneau.sg-autonome{position:relative;left:auto;right:auto;bottom:auto;transform:none;width:auto;height:auto;margin:0;opacity:1;overflow:visible;z-index:auto;transition:none;}
 .sg-autonome .sg-interne{width:min(460px,92vw);border-radius:24px;}
+
+/* Double authentification : code à 6 chiffres, carte de configuration (app gestion). */
+.da-code{width:100%;box-sizing:border-box;text-align:center;font-size:26px;font-weight:700;letter-spacing:.4em;padding:14px 10px;}
+.da-carte{margin-top:14px;max-width:460px;padding:20px 22px;border:1px solid rgba(var(--w),0.1);border-radius:18px;background:rgba(var(--w),0.03);display:flex;flex-direction:column;gap:12px;}
+.da-carte p{margin:0;}
+.da-etat{font-weight:700;}
+.da-etat.actif{color:#7ee787;}
+.da-qr{width:190px;height:190px;align-self:center;background:#fff;border-radius:14px;padding:8px;box-sizing:border-box;}
+.da-secret{font-size:13px;color:var(--text-dim);word-break:break-all;}
+.da-secret code{color:var(--fg);}
+.da-etiquette{font-weight:600;font-size:14px;}
+.da-actions{display:flex;gap:10px;flex-wrap:wrap;}

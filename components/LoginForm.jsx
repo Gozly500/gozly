@@ -7,6 +7,7 @@ import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import Gozyx from "@/components/Gozyx";
 import { useGozyxFormulaire } from "@/lib/useGozyxFormulaire";
+import CodeDoubleAuth from "@/components/CodeDoubleAuth";
 
 export default function LoginForm() {
   const { t } = useT();
@@ -16,6 +17,9 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // Double authentification : { factorId } quand le mot de passe est bon mais qu'il reste à entrer le code de l'app.
+  const [defi, setDefi] = useState(null);
+  const [codeDA, setCodeDA] = useState("");
 
   const [motDePasseOublie, setMotDePasseOublie] = useState(false);
   const [emailOubli, setEmailOubli] = useState("");
@@ -40,16 +44,56 @@ export default function LoginForm() {
       return;
     }
 
+    const { data: niveau } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (niveau?.nextLevel === "aal2" && niveau.currentLevel !== "aal2") {
+      const { data: facteurs } = await supabase.auth.mfa.listFactors();
+      const facteur = (facteurs?.totp || []).find((f) => f.status === "verified");
+      if (facteur) {
+        setLoading(false);
+        setCodeDA("");
+        setDefi({ factorId: facteur.id, userId: data.user.id });
+        return;
+      }
+    }
+
+    await terminerConnexion(data.user.id);
+  }
+
+  async function handleCode(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: defi.factorId, code: codeDA });
+    if (error) {
+      setLoading(false);
+      setCodeDA("");
+      setError(t("login.errCode"));
+      return;
+    }
+    await terminerConnexion(defi.userId);
+  }
+
+  async function annulerCode() {
+    await supabase.auth.signOut();
+    setDefi(null);
+    setCodeDA("");
+    setError("");
+    setPassword("");
+  }
+
+  async function terminerConnexion(userId) {
+    setLoading(true);
     const { data: profil } = await supabase
       .from("profils")
       .select("desactive")
-      .eq("id", data.user.id)
+      .eq("id", userId)
       .maybeSingle();
 
     setLoading(false);
 
     if (profil?.desactive) {
       await supabase.auth.signOut();
+      setDefi(null);
       setError(t("login.desactiveContact"));
       return;
     }
@@ -77,6 +121,40 @@ export default function LoginForm() {
     });
 
     setEnvoiStatut(error ? "erreur" : "envoye");
+  }
+
+  if (defi) {
+    return (
+      <div className="contact-card login-card">
+        <form onSubmit={handleCode}>
+          <p className="section-hint" style={{ textAlign: "center", marginBottom: "18px" }}>
+            {t("login.codeHint")}
+          </p>
+          <div className="field">
+            <label htmlFor="code-da-login">{t("login.code")}</label>
+            <CodeDoubleAuth id="code-da-login" value={codeDA} onChange={setCodeDA} disabled={loading} />
+          </div>
+          <div className="submit-wrap">
+            <button type="submit" className="submit-btn" disabled={loading || codeDA.length !== 6}>
+              {loading ? t("login.chargement") : t("login.codeBouton")}
+            </button>
+          </div>
+          {error && (
+            <p style={{ color: "#ff8a8a", textAlign: "center", marginTop: "14px", fontSize: "14px" }}>{error}</p>
+          )}
+          <p style={{ color: "var(--text-dim)", textAlign: "center", marginTop: "18px", fontSize: "13.5px" }}>
+            <button
+              type="button"
+              onClick={annulerCode}
+              style={{ background: "none", border: "none", padding: 0, textDecoration: "underline", color: "var(--fg)", cursor: "pointer", font: "inherit" }}
+            >
+              <IconFlecheGauche className="gozly-icon" /> {t("login.retour")}
+            </button>
+          </p>
+          <p className="section-hint" style={{ textAlign: "center", marginTop: "10px" }}>{t("login.codePerdu")}</p>
+        </form>
+      </div>
+    );
   }
 
   if (motDePasseOublie) {

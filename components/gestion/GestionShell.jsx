@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive, getImpersonation, arreterImpersonation } from "@/lib/entreprise";
 import { PERMISSIONS } from "@/lib/permissions";
 import { IconTableauDeBord, IconPlanning, IconHoraire, IconCommandes, IconDemande, IconDiscussion, IconMenu, IconMusique, IconTemperature } from "@/components/icons/GozlyIcons";
+import { IconBouclier } from "@/components/icons/Pictogrammes";
+import { useGardeMfa } from "@/lib/useGardeMfa";
 import { useT } from "@/components/LangProvider";
 import PastilleOnglets from "@/components/PastilleOnglets";
 
@@ -44,6 +46,7 @@ export default function GestionShell({ actif, children }) {
 }
 
 function GestionShellReel({ actif, children }) {
+  useGardeMfa();
   const { t } = useT();
   const router = useRouter();
   const [pret, setPret] = useState(false);
@@ -151,6 +154,7 @@ function GestionShellReel({ actif, children }) {
     { id: "musique", href: "/gestion/musique", label: "Musique", Icone: IconMusique, visible: musiqueActif },
     { id: "demandes", href: "/gestion/demandes", label: "Demandes", Icone: IconDemande, visible: horaireActif },
     { id: "discussion", href: "/gestion/discussion", label: "Discussion", Icone: IconDiscussion, visible: true },
+    { id: "securite", href: "/gestion/securite", label: "Sécurité", Icone: IconBouclier, visible: true },
   ].filter((o) => o.visible);
 
   // Barre du bas : Accueil, Demandes, Discussion + Menu (Tâches, Horaire, Commandes...).

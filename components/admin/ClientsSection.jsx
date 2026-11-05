@@ -19,6 +19,50 @@ const FORFAITS = [
   { id: "pilote", label: "Pilote (interne, gratuit)" },
 ];
 
+// Double authentification du compte : état + bouton pour la désactiver (le client a perdu l'accès à son app d'authentification).
+function DoubleAuthAdmin({ userId }) {
+  const [actif, setActif] = useState(null);
+  const [occupe, setOccupe] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+    authFetch("/api/admin/mfa", { method: "POST", body: JSON.stringify({ userId, action: "statut" }) }).then(({ ok, data }) => {
+      if (!ignore) setActif(ok ? !!data.actif : null);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [userId]);
+
+  async function desactiver() {
+    if (!window.confirm("Désactiver la double authentification de ce compte ? Le client pourra se connecter avec son mot de passe seulement.")) return;
+    setOccupe(true);
+    setMsg("");
+    const { ok, data } = await authFetch("/api/admin/mfa", { method: "POST", body: JSON.stringify({ userId, action: "desactiver" }) });
+    setOccupe(false);
+    if (ok) {
+      setActif(false);
+      setMsg("Désactivée.");
+    } else {
+      setMsg(data.error || "Échec");
+    }
+  }
+
+  if (actif === null) return null;
+  return (
+    <div className="admin-edit-actions" style={{ alignItems: "center" }}>
+      <span style={{ fontWeight: 600 }}>Double authentification : {actif ? "activée" : "désactivée"}</span>
+      {actif && (
+        <button className="admin-icon-btn danger" onClick={desactiver} disabled={occupe}>
+          {occupe ? "..." : "Désactiver"}
+        </button>
+      )}
+      {msg && <span className="section-hint">{msg}</span>}
+    </div>
+  );
+}
+
 async function authFetch(path, options = {}) {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
@@ -541,6 +585,8 @@ export default function ClientsSection() {
                     </button>
                   )}
                 </div>
+
+                {compte.profil && <DoubleAuthAdmin userId={compte.profil.id} />}
 
                 {resetResult[compte.userId] && (
                   <div className="admin-reset-result">
