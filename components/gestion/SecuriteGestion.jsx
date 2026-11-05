@@ -16,6 +16,7 @@ export default function SecuriteGestion({ sansTitre = false }) {
   const [occupe, setOccupe] = useState(false);
   const [msg, setMsg] = useState(null);
   const [confirmerRetrait, setConfirmerRetrait] = useState(false);
+  const [cleCopiee, setCleCopiee] = useState(false);
 
   async function charger() {
     const { data } = await supabase.auth.mfa.listFactors();
@@ -42,7 +43,7 @@ export default function SecuriteGestion({ sansTitre = false }) {
       return;
     }
     setCode("");
-    setInscription({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
+    setInscription({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret, uri: data.totp.uri });
   }
 
   async function confirmer(e) {
@@ -60,6 +61,14 @@ export default function SecuriteGestion({ sansTitre = false }) {
     setCode("");
     setMsg({ type: "ok", text: t("Double authentification activée.") });
     charger();
+  }
+
+  async function copierCle() {
+    try {
+      await navigator.clipboard.writeText(inscription.secret);
+      setCleCopiee(true);
+      setTimeout(() => setCleCopiee(false), 2000);
+    } catch {}
   }
 
   async function annuler() {
@@ -107,10 +116,18 @@ export default function SecuriteGestion({ sansTitre = false }) {
 
       {inscription ? (
         <form className="da-carte" onSubmit={confirmer}>
-          <p>{t("Ouvre ton app d'authentification (Google Authenticator, Microsoft Authenticator...) et scanne ce code.")}</p>
+          <p>{t("Dans ton app d'authentification (Google Authenticator, Microsoft Authenticator...), choisis « Scanner un code QR », pas l'appareil photo du téléphone.")}</p>
           <img className="da-qr" src={inscription.qr} alt="" />
+          <div className="da-actions">
+            <a className="admin-icon-btn da-lien" href={inscription.uri}>
+              {t("Ouvrir dans mon app d'authentification")}
+            </a>
+            <button type="button" className="admin-icon-btn" onClick={copierCle}>
+              {cleCopiee ? t("Clé copiée") : t("Copier la clé")}
+            </button>
+          </div>
           <p className="da-secret">
-            {t("Pas de caméra ? Entre cette clé :")} <code>{inscription.secret}</code>
+            {t("Sur le même téléphone ? Utilise le bouton ci-dessus ou entre cette clé :")} <code>{inscription.secret}</code>
           </p>
           <label htmlFor="code-da-activation" className="da-etiquette">
             {t("Code à 6 chiffres")}

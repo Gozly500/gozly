@@ -3921,3 +3921,4 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .da-secret code{color:var(--fg);}
 .da-etiquette{font-weight:600;font-size:14px;}
 .da-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.da-lien{display:inline-flex;align-items:center;text-decoration:none;}
