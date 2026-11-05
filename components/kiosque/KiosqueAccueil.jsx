@@ -93,7 +93,7 @@ export default function KiosqueAccueil() {
   }
 
   async function changerDeCompte() {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     setEtat("deconnecte");
   }
 

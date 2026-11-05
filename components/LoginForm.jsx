@@ -8,6 +8,8 @@ import { useT } from "@/components/LangProvider";
 import Gozyx from "@/components/Gozyx";
 import { useGozyxFormulaire } from "@/lib/useGozyxFormulaire";
 import CodeDoubleAuth from "@/components/CodeDoubleAuth";
+import CodeVivant from "@/components/CodeVivant";
+import { lireSecretGozly } from "@/lib/codesGozly";
 
 export default function LoginForm() {
   const { t } = useT();
@@ -89,7 +91,7 @@ export default function LoginForm() {
   }
 
   async function annulerCode() {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     setDefi(null);
     setCodeDA("");
     setError("");
@@ -107,7 +109,7 @@ export default function LoginForm() {
     setLoading(false);
 
     if (profil?.desactive) {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: "local" });
       setDefi(null);
       setError(t("login.desactiveContact"));
       return;
@@ -139,6 +141,10 @@ export default function LoginForm() {
   }
 
   if (defi) {
+    const secretLocal = (() => {
+      const l = lireSecretGozly(defi.userId);
+      return l && l.factorId === defi.appId ? l : null;
+    })();
     return (
       <div className="contact-card login-card">
         <form onSubmit={handleCode}>
@@ -154,6 +160,12 @@ export default function LoginForm() {
           )}
           {defi.appareilId && defi.appId && (
             <p className="section-hint" style={{ textAlign: "center", margin: "16px 0 6px" }}>{t("login.ou")}</p>
+          )}
+          {defi.appId && secretLocal && (
+            <div className="da-code-vivant da-carte" style={{ margin: "0 0 14px" }}>
+              <p className="section-hint">{t("login.codeAppareil")}</p>
+              <CodeVivant secret={secretLocal.secret} />
+            </div>
           )}
           {defi.appId && (
             <>

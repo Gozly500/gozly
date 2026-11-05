@@ -44,7 +44,7 @@ export default function Nav() {
   }, [user]);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
     setAccountOpen(false);
     setMobileOpen(false);
     router.push("/login");
