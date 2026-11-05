@@ -3922,3 +3922,5 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .da-etiquette{font-weight:600;font-size:14px;}
 .da-actions{display:flex;gap:10px;flex-wrap:wrap;}
 .da-lien{display:inline-flex;align-items:center;text-decoration:none;}
+.da-methode{display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:1px solid rgba(var(--w),0.08);}
+.da-methode-ligne{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:600;}

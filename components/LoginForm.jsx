@@ -47,11 +47,13 @@ export default function LoginForm() {
     const { data: niveau } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (niveau?.nextLevel === "aal2" && niveau.currentLevel !== "aal2") {
       const { data: facteurs } = await supabase.auth.mfa.listFactors();
-      const facteur = (facteurs?.totp || []).find((f) => f.status === "verified");
-      if (facteur) {
+      const verifies = (facteurs?.all || []).filter((f) => f.status === "verified");
+      const app = verifies.find((f) => f.factor_type === "totp");
+      const appareil = verifies.find((f) => f.factor_type === "webauthn");
+      if (app || appareil) {
         setLoading(false);
         setCodeDA("");
-        setDefi({ factorId: facteur.id, userId: data.user.id });
+        setDefi({ appId: app?.id || null, appareilId: appareil?.id || null, userId: data.user.id });
         return;
       }
     }
@@ -63,11 +65,24 @@ export default function LoginForm() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: defi.factorId, code: codeDA });
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: defi.appId, code: codeDA });
     if (error) {
       setLoading(false);
       setCodeDA("");
       setError(t("login.errCode"));
+      return;
+    }
+    await terminerConnexion(defi.userId);
+  }
+
+  async function handleAppareil() {
+    setError("");
+    setLoading(true);
+    const { error } = await supabase.auth.mfa.webauthn.authenticate({ factorId: defi.appareilId });
+    if (error) {
+      setLoading(false);
+      const annule = /NotAllowed|abort|cancel/i.test(`${error.name} ${error.message}`);
+      setError(annule ? t("login.errAppareilAnnule") : t("login.errAppareil"));
       return;
     }
     await terminerConnexion(defi.userId);
@@ -128,17 +143,31 @@ export default function LoginForm() {
       <div className="contact-card login-card">
         <form onSubmit={handleCode}>
           <p className="section-hint" style={{ textAlign: "center", marginBottom: "18px" }}>
-            {t("login.codeHint")}
+            {defi.appareilId ? t("login.verifHint") : t("login.codeHint")}
           </p>
-          <div className="field">
-            <label htmlFor="code-da-login">{t("login.code")}</label>
-            <CodeDoubleAuth id="code-da-login" value={codeDA} onChange={setCodeDA} disabled={loading} />
-          </div>
-          <div className="submit-wrap">
-            <button type="submit" className="submit-btn" disabled={loading || codeDA.length !== 6}>
-              {loading ? t("login.chargement") : t("login.codeBouton")}
-            </button>
-          </div>
+          {defi.appareilId && (
+            <div className="submit-wrap">
+              <button type="button" className="submit-btn" onClick={handleAppareil} disabled={loading}>
+                {t("login.appareilBouton")}
+              </button>
+            </div>
+          )}
+          {defi.appareilId && defi.appId && (
+            <p className="section-hint" style={{ textAlign: "center", margin: "16px 0 6px" }}>{t("login.ou")}</p>
+          )}
+          {defi.appId && (
+            <>
+              <div className="field">
+                <label htmlFor="code-da-login">{t("login.code")}</label>
+                <CodeDoubleAuth id="code-da-login" value={codeDA} onChange={setCodeDA} disabled={loading} autoFocus={!defi.appareilId} />
+              </div>
+              <div className="submit-wrap">
+                <button type="submit" className="submit-btn" disabled={loading || codeDA.length !== 6}>
+                  {loading ? t("login.chargement") : t("login.codeBouton")}
+                </button>
+              </div>
+            </>
+          )}
           {error && (
             <p style={{ color: "#ff8a8a", textAlign: "center", marginTop: "14px", fontSize: "14px" }}>{error}</p>
           )}
