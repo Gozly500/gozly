@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useT } from "@/components/LangProvider";
-import Gozyx from "@/components/Gozyx";
 
 const CLE_VUE = "gozly-annonce-vue";
 const JOURS_VISIBLE = 21;
@@ -46,7 +45,6 @@ export default function BandeauAnnonce() {
 
   return (
     <div className="dash-annonce-banner">
-      <Gozyx humeur="content" taille={44} />
       <div className="dash-annonce-texte">
         <small>{t("Nouveau sur Gozly")}</small>
         <strong>{annonce.titre}</strong>

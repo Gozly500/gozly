@@ -2,7 +2,6 @@ import Link from "next/link";
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import Gozyx from "@/components/Gozyx";
 import TexteAnnonce from "@/components/TexteAnnonce";
 import { annoncesPubliees } from "@/lib/annoncesSite";
 import { getLang } from "@/lib/i18n/siteServer";
@@ -14,7 +13,7 @@ const TXT = {
     meta: "Gozly - Annonces",
     titre: "Annonces",
     sous: "Les nouveautés et les nouvelles de Gozly, en un seul endroit.",
-    vide: "Aucune annonce pour l'instant. Gozyx te prévient dès qu'il y a du nouveau!",
+    vide: "Aucune annonce pour l'instant. Reviens bientôt, les nouveautés seront publiées ici!",
     langue: "Les annonces sont publiées en français.",
     aide: "Une question? Va au centre d'aide",
   },
@@ -22,7 +21,7 @@ const TXT = {
     meta: "Gozly - Announcements",
     titre: "Announcements",
     sous: "What's new at Gozly, all in one place.",
-    vide: "No announcements yet. Gozyx will let you know as soon as there's news!",
+    vide: "No announcements yet. Check back soon, news will be posted here!",
     langue: "Announcements are published in French.",
     aide: "Got a question? Visit the help center",
   },
@@ -45,8 +44,7 @@ export default async function AnnoncesPage() {
 
       <header className="page-hero">
         <div className="wrap">
-          <Gozyx humeur="content" taille={110} />
-          <h1 style={{ marginTop: "14px" }}>{T.titre}</h1>
+          <h1>{T.titre}</h1>
           <p>{T.sous}</p>
         </div>
       </header>
@@ -57,8 +55,7 @@ export default async function AnnoncesPage() {
 
           {annonces.length === 0 ? (
             <div className="aide-carte" style={{ textAlign: "center" }}>
-              <Gozyx humeur="dort" taille={100} />
-              <p style={{ marginTop: "14px", color: "var(--text-dim)" }}>{erreur ? T.vide : T.vide}</p>
+              <p style={{ color: "var(--text-dim)" }}>{erreur ? T.vide : T.vide}</p>
             </div>
           ) : (
             annonces.map((a) => (

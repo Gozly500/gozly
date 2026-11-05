@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
-import Gozyx from "@/components/Gozyx";
 import { IconEtatFonctionne, IconEtatProbleme, IconEtatNonFonctionnel } from "@/components/icons/GozlyIcons";
 
 const ETATS = {
@@ -113,11 +112,6 @@ export default function StatutContent() {
 
   return (
     <div className="wrap statut-wrap">
-      {/* Gozyx réagit à l'état global : tranquille, inquiet ou affolé. */}
-      <div className="statut-gozyx">
-        <Gozyx humeur={statut.global === "ok" ? "normal" : statut.global} taille={130} />
-      </div>
-
       <div className={`statut-banniere statut-${statut.global}`}>
         <IconeEtat etat={statut.global} className="statut-icone-grande" />
         <div>

@@ -5,15 +5,12 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
-import Gozyx from "@/components/Gozyx";
-import { useGozyxFormulaire } from "@/lib/useGozyxFormulaire";
 import CodeDoubleAuth from "@/components/CodeDoubleAuth";
 import CodeVivant from "@/components/CodeVivant";
 import { lireSecretGozly } from "@/lib/codesGozly";
 
 export default function LoginForm() {
   const { t } = useT();
-  const gozyx = useGozyxFormulaire();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -117,9 +114,6 @@ export default function LoginForm() {
 
     // ?retour=/gestion : revient là où on voulait aller (chemins internes seulement).
     const retour = new URLSearchParams(window.location.search).get("retour");
-    // Petit saut de joie de Gozyx avant de continuer.
-    gozyx.succes();
-    await new Promise((r) => setTimeout(r, 1100));
     router.push(retour && retour.startsWith("/") && !retour.startsWith("//") ? retour : "/dashboard");
   }
 
@@ -248,10 +242,7 @@ export default function LoginForm() {
 
   return (
     <div className="contact-card login-card">
-      <div className="form-gozyx">
-        <Gozyx humeur={gozyx.humeur} regard={gozyx.regard} taille={110} />
-      </div>
-      <form onSubmit={handleSubmit} {...gozyx.handlers}>
+      <form onSubmit={handleSubmit}>
         <div className="field">
           <label htmlFor="email">{t("login.courriel")}</label>
           <input
