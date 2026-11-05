@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
 import DiscordCompteSection from "@/components/settings/DiscordCompteSection";
+import SecuriteGestion from "@/components/gestion/SecuriteGestion";
 
 export default function GestionSection({ user, profil, setProfil, router }) {
   const { t } = useT();
@@ -92,6 +93,11 @@ export default function GestionSection({ user, profil, setProfil, router }) {
           </label>
         </div>
         {toggleMsg && <p className={`settings-msg ${toggleMsg.type}`}>{toggleMsg.text}</p>}
+      </div>
+
+      <div className="settings-section">
+        <h3>{t("Double authentification")}</h3>
+        <SecuriteGestion sansTitre />
       </div>
 
       <DiscordCompteSection profil={profil} setProfil={setProfil} />

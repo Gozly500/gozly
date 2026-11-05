@@ -8,7 +8,7 @@ import { useT } from "@/components/LangProvider";
 // Double authentification (app d'authentification : Google Authenticator, Microsoft Authenticator, etc.).
 // Activer : on scanne le code QR, on entre le code à 6 chiffres pour confirmer. Désactiver : demande un code valide.
 // Si le client perd son téléphone, l'équipe Gozly la désactive depuis l'administration (Clients).
-export default function SecuriteGestion() {
+export default function SecuriteGestion({ sansTitre = false }) {
   const { t } = useT();
   const [etat, setEtat] = useState(null); // null = chargement | { facteurId } (null si la double authentification est désactivée)
   const [inscription, setInscription] = useState(null); // { id, qr, secret } pendant l'activation
@@ -96,8 +96,12 @@ export default function SecuriteGestion() {
 
   return (
     <div className="gestion-section">
-      <h2 style={{ marginBottom: "4px" }}>{t("Sécurité")}</h2>
-      <p className="section-hint">{t("Double authentification")}</p>
+      {!sansTitre && (
+        <>
+          <h2 style={{ marginBottom: "4px" }}>{t("Sécurité")}</h2>
+          <p className="section-hint">{t("Double authentification")}</p>
+        </>
+      )}
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
