@@ -12,14 +12,14 @@ const FORFAITS = [
   {
     id: "opale",
     nom: "Opale",
-    prix: "25$",
+    prix: "35$",
     icone: "pi-1",
     points: ["3 modules", "1 entreprise", "Assistance standard", "Mises à jour essentielles"],
   },
   {
     id: "onyx",
     nom: "Onyx",
-    prix: "40$",
+    prix: "59$",
     icone: "pi-2",
     featured: true,
     points: ["5 modules", "3 entreprises", "Support prioritaire", "Mises à jour avancées"],
@@ -27,7 +27,7 @@ const FORFAITS = [
   {
     id: "crystal",
     nom: "Crystal",
-    prix: "50$",
+    prix: "85$",
     icone: "pi-3",
     points: [
       "Modules illimités",

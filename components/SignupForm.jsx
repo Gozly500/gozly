@@ -10,9 +10,9 @@ import { useT } from "@/components/LangProvider";
 // des forfaits). Le forfait n'est JAMAIS activé à l'inscription : il ne l'est
 // qu'après paiement Stripe (webhook) - voir /parametres?acheter=...
 const FORFAITS_ACHETABLES = {
-  opale: "Opale - 3 modules - 25$/mois",
-  onyx: "Onyx - 5 modules - 40$/mois",
-  crystal: "Crystal - modules illimités - 50$/mois",
+  opale: "Opale - 3 modules - 35$/mois",
+  onyx: "Onyx - 5 modules - 59$/mois",
+  crystal: "Crystal - modules illimités - 85$/mois",
 };
 
 export default function SignupForm() {

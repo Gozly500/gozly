@@ -20,9 +20,9 @@ Courriel : info@gozly.net
 
 ## Forfaits (par mois, en dollars canadiens)
 
-- **Opale** : 25 $ — 3 modules, 1 entreprise, assistance standard.
-- **Onyx** : 40 $ — 5 modules, 3 entreprises, support prioritaire.
-- **Crystal** : 50 $ — modules illimités, 5 entreprises, module personnalisé sur demande.
+- **Opale** : 35 $ — 3 modules, 1 entreprise, assistance standard.
+- **Onyx** : 59 $ — 5 modules, 3 entreprises, support prioritaire.
+- **Crystal** : 85 $ — modules illimités, 5 entreprises, module personnalisé sur demande.
 
 ## Pages importantes
 
@@ -42,4 +42,4 @@ Gozly offre aussi un jeu gratuit, Scattegories en ligne (https://gozly.net/scatt
 
 ## English summary
 
-Gozly is a modular management platform for small businesses in Québec: employee scheduling and time clock, inventory (connected to Wix), sales tracking, temperature logs for MAPAQ food-safety rules, online orders and background music. Businesses turn on only the modules they need. Plans: Opale (CAD 25/month, 3 modules), Onyx (CAD 40/month, 5 modules), Crystal (CAD 50/month, unlimited modules). The site works in French and English. Website: https://gozly.net — Contact: info@gozly.net.
+Gozly is a modular management platform for small businesses in Québec: employee scheduling and time clock, inventory (connected to Wix), sales tracking, temperature logs for MAPAQ food-safety rules, online orders and background music. Businesses turn on only the modules they need. Plans: Opale (CAD 35/month, 3 modules), Onyx (CAD 59/month, 5 modules), Crystal (CAD 85/month, unlimited modules). The site works in French and English. Website: https://gozly.net — Contact: info@gozly.net.
