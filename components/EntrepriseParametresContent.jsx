@@ -186,7 +186,7 @@ export default function EntrepriseParametresContent() {
       />
 
       <main className="dash-main">
-        <div className="dash-main-inner">
+        <div className={`dash-main-inner${activeTab === "integrations" ? " dash-main-wide" : ""}`}>
           {!entrepriseId ? (
             <p style={{ color: "var(--text-dim)" }}>{t("Aucune entreprise associée à ce compte.")}</p>
           ) : (

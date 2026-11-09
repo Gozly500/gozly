@@ -504,7 +504,7 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
   return (
     <div>
       {integration ? (
-        renderService({ id: integration.id, label: integration.nom, disponible: true })
+        <div style={{ maxWidth: "820px" }}>{renderService({ id: integration.id, label: integration.nom, disponible: true })}</div>
       ) : (
         <MagasinIntegrations installees={installees} onInstaller={onInstaller} onRetirer={onRetirer} onOuvrir={onOuvrir} />
       )}

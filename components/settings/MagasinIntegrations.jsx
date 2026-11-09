@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { IconLoupe } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
+import LogoIntegration from "@/components/settings/LogoIntegration";
 import { CATALOGUE_INTEGRATIONS, CATEGORIES_INTEGRATIONS, categorieDe, sansAccents } from "@/lib/integrationsCatalogue";
 
 // Le « magasin » : toutes les intégrations sous forme de cases, avec recherche et filtre par catégorie.
@@ -98,9 +99,7 @@ export default function MagasinIntegrations({ installees, onInstaller, onRetirer
                   </div>
                 )}
                 <div className="magasin-carte-tete">
-                  <span className="magasin-tuile" style={{ "--teinte": i.teinte }} aria-hidden="true">
-                    {i.nom.charAt(0)}
-                  </span>
+                  <LogoIntegration i={i} />
                   <div className="magasin-carte-titre">
                     <strong>{i.nom}</strong>
                     <span>{t(categorieDe(i.categorie)?.label)}</span>

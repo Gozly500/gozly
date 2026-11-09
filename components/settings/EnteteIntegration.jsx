@@ -1,6 +1,7 @@
 "use client";
 
 import { useT } from "@/components/LangProvider";
+import LogoIntegration from "@/components/settings/LogoIntegration";
 import { CATALOGUE_INTEGRATIONS, categorieDe } from "@/lib/integrationsCatalogue";
 
 const ETATS = {
@@ -18,9 +19,7 @@ export default function EnteteIntegration({ id, etat }) {
   const e = ETATS[etat];
   return (
     <div className="entete-integration">
-      <span className="magasin-tuile" style={{ "--teinte": i.teinte }} aria-hidden="true">
-        {i.nom.charAt(0)}
-      </span>
+      <LogoIntegration i={i} />
       <div className="entete-integration-texte">
         <h2>{t(i.nom)}</h2>
         <p>{t(i.description)}</p>
