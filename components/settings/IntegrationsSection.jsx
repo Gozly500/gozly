@@ -5,8 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import DiagnosticWixModal from "@/components/inventaire/DiagnosticWixModal";
-import ConnexionsIA from "@/components/settings/ConnexionsIA";
-import PermissionsIA from "@/components/settings/PermissionsIA";
+import PageIA from "@/components/settings/PageIA";
+import EnteteIntegration from "@/components/settings/EnteteIntegration";
 import MagasinIntegrations from "@/components/settings/MagasinIntegrations";
 import { CATALOGUE_INTEGRATIONS } from "@/lib/integrationsCatalogue";
 import { useT } from "@/components/LangProvider";
@@ -308,19 +308,10 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
 
   function renderWix() {
     return (
-      <div className="integration-item">
-        <div className="integration-header open">
-          <span className="ih-label">
-            {t("Wix — Inventaire")}
-            {statut === "connecte" && (
-              <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
-                <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} />{" "}{t("Connecté")}
-              </span>
-            )}
-          </span>
-        </div>
+      <div>
+        <EnteteIntegration id="wix" etat={statut === "chargement" ? null : statut} />
 
-        <div className="integration-body">
+        <div className="corps-integration">
           {statut === "chargement" && <p className="section-hint">{t("Vérification du statut...")}</p>}
 
           {statut === "deconnecte" && (
@@ -400,19 +391,10 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
 
   function renderNethris() {
     return (
-      <div className="integration-item">
-        <div className="integration-header open">
-          <span className="ih-label">
-            {t("Nethris")}
-            {nethrisStatut === "connecte" && (
-              <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
-                <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} />{" "}{t("Connecté")}
-              </span>
-            )}
-          </span>
-        </div>
+      <div>
+        <EnteteIntegration id="nethris" etat={nethrisStatut === "chargement" ? null : nethrisStatut} />
 
-        <div className="integration-body">
+        <div className="corps-integration">
           {nethrisStatut === "chargement" && <p className="section-hint">{t("Vérification du statut...")}</p>}
 
           {nethrisStatut === "deconnecte" && (
@@ -445,19 +427,10 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
     const occupe = !!stockBusy[fournisseur];
     const msg = stockMsg[fournisseur];
     return (
-      <div className="integration-item">
-        <div className="integration-header open">
-          <span className="ih-label">
-            {nom}
-            {od.etat === "connecte" && (
-              <span className="forfait-badge" style={{ padding: "3px 10px", fontSize: "11.5px" }}>
-                <IconIntegration className="gozly-icon" style={{ width: "13px", height: "13px" }} />{" "}{t("Connecté")}
-              </span>
-            )}
-          </span>
-        </div>
+      <div>
+        <EnteteIntegration id={fournisseur === "google" ? "google-drive" : "onedrive"} etat={od.etat === "chargement" ? null : od.etat} />
 
-        <div className="integration-body">
+        <div className="corps-integration">
           {od.etat === "chargement" && <p className="section-hint">{t("Vérification du statut...")}</p>}
 
           {od.etat === "deconnecte" && (
@@ -517,9 +490,9 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
     if (service.id === "google-drive") return <div key={service.id}>{renderStockage("google")}</div>;
     if (service.id === "ia-assistants") {
       return (
-        <div key={service.id} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <ConnexionsIA entrepriseId={entrepriseId} />
-          <PermissionsIA entrepriseId={entrepriseId} />
+        <div key={service.id}>
+          <EnteteIntegration id="ia-assistants" />
+          <PageIA entrepriseId={entrepriseId} />
         </div>
       );
     }

@@ -94,27 +94,34 @@ export default function ConnexionsIA({ entrepriseId }) {
   if (etat === "nonConfigure") return <p className="section-hint">{t("Cette fonction n'est pas encore activée sur ton compte. Contacte le support Gozly.")}</p>;
 
   return (
-    <div className="integration-item">
-      <div className="integration-header open">
-        <span className="ih-label">{t("Assistants IA (ChatGPT, Claude...)")}</span>
-      </div>
-      <div className="integration-body">
-        <p className="section-hint">
-          {t("Branche l'assistant IA de ton choix à ton entreprise. Ce qu'il peut faire (horaire, planning, inventaire, ventes...) se règle dans « Permissions de l'IA », juste en dessous. Il n'agit que sur ta demande.")}
-        </p>
-
-        <div className="abo-carte" style={{ marginTop: "12px" }}>
-          <strong>{t("Comment le connecter")}</strong>
-          <ol style={{ margin: "0 0 0 18px", display: "grid", gap: "4px" }}>
-            <li>{t("Copie l'adresse ci-dessous.")}</li>
-            <li>{t("Dans ton assistant (ChatGPT, Claude...), ajoute un connecteur personnalisé et colle l'adresse.")}</li>
-            <li>{t("Une fenêtre Gozly s'ouvre : clique « Autoriser ».")}</li>
-          </ol>
-          <code style={{ wordBreak: "break-all", userSelect: "all" }}>{adresse}</code>
-          <div className="abo-actions">
-            <button type="button" className="admin-icon-btn" onClick={() => copier(adresse, "adresse")}>
-              {copie === "adresse" ? t("Copié") : t("Copier l'adresse")}
-            </button>
+    <div>
+      <div>
+        <div className="ia-etapes">
+          <div className="ia-etape">
+            <span className="ia-etape-num">1</span>
+            <div className="ia-etape-corps">
+              <strong>{t("Copie l'adresse")}</strong>
+              <div className="ia-adresse">
+                <code>{adresse}</code>
+                <button type="button" className="admin-icon-btn" onClick={() => copier(adresse, "adresse")}>
+                  {copie === "adresse" ? t("Copié") : t("Copier")}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="ia-etape">
+            <span className="ia-etape-num">2</span>
+            <div className="ia-etape-corps">
+              <strong>{t("Ajoute-la dans ton assistant")}</strong>
+              <span className="section-hint" style={{ margin: 0 }}>{t("ChatGPT, Claude... : « connecteur personnalisé », puis colle l'adresse.")}</span>
+            </div>
+          </div>
+          <div className="ia-etape">
+            <span className="ia-etape-num">3</span>
+            <div className="ia-etape-corps">
+              <strong>{t("Autorise")}</strong>
+              <span className="section-hint" style={{ margin: 0 }}>{t("Une fenêtre Gozly s'ouvre : clique « Autoriser ». Ce que l'IA peut faire se règle dans l'onglet Permissions.")}</span>
+            </div>
           </div>
         </div>
 

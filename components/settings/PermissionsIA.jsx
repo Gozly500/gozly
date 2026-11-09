@@ -26,14 +26,15 @@ function Interrupteur({ coche, onChange, label }) {
   );
 }
 
-// Ce que les assistants IA ont le droit de faire dans l'entreprise : on ouvre ou on ferme chaque module, puis on règle les actions
-// permises dans chacun. S'applique à toutes les connexions, en direct. Seul le propriétaire y a accès.
+// Ce que les assistants IA ont le droit de faire : un module à la fois (onglets), avec un interrupteur pour l'ouvrir ou le fermer
+// et une liste courte d'actions. S'applique à toutes les connexions, en direct. Seul le propriétaire y a accès.
 export default function PermissionsIA({ entrepriseId }) {
   const { t } = useT();
   const [etat, setEtat] = useState("chargement"); // chargement | pret | refuse
   const [configure, setConfigure] = useState(true);
   const [permissions, setPermissions] = useState(permissionsParDefaut());
   const [enregistrees, setEnregistrees] = useState(null);
+  const [moduleOuvert, setModuleOuvert] = useState(MODULES_IA[0].id);
   const [occupe, setOccupe] = useState(false);
   const [msg, setMsg] = useState(null);
 
@@ -42,8 +43,7 @@ export default function PermissionsIA({ entrepriseId }) {
   }, [entrepriseId]);
 
   async function charger() {
-    const { ok, status, data } = await appeler({ action: "lire", entrepriseId });
-    if (status === 403) return setEtat("refuse");
+    const { ok, data } = await appeler({ action: "lire", entrepriseId });
     if (!ok) return setEtat("refuse");
     setPermissions(data.permissions);
     setEnregistrees(JSON.stringify(data.permissions));
@@ -78,83 +78,83 @@ export default function PermissionsIA({ entrepriseId }) {
     if (!ok) return setMsg({ type: "err", text: data.error || t("Échec") });
     setPermissions(data.permissions);
     setEnregistrees(JSON.stringify(data.permissions));
-    setMsg({ type: "ok", text: t("Permissions enregistrées. Elles s'appliquent tout de suite aux assistants connectés (dans une nouvelle conversation si l'assistant garde la liste de ses outils).") });
+    setMsg({ type: "ok", text: t("Enregistré. C'est actif tout de suite (dans une nouvelle conversation si ton assistant garde sa liste d'outils).") });
   }
 
   if (etat === "chargement") return <p className="section-hint">{t("Chargement...")}</p>;
   if (etat === "refuse") return <p className="section-hint">{t("Seul le propriétaire de l'entreprise peut gérer les permissions de l'IA.")}</p>;
 
   const modifie = JSON.stringify(permissions) !== enregistrees;
+  const m = MODULES_IA.find((x) => x.id === moduleOuvert);
+  const p = permissions[m.id];
 
   return (
-    <div className="integration-item">
-      <div className="integration-header open">
-        <span className="ih-label">{t("Permissions de l'IA")}</span>
-      </div>
-      <div className="integration-body">
-        <p className="section-hint">
-          {t("Choisis les modules que tes assistants IA peuvent utiliser, puis ce qu'ils ont le droit d'y faire. Ça vaut pour toutes les connexions de ton entreprise, sans avoir à les reconnecter. Les employés, eux, ne voient jamais l'IA : ils voient seulement ce qui est publié.")}
+    <div>
+      {!configure && (
+        <p className="settings-msg err">
+          {t("Les réglages ne peuvent pas encore être enregistrés (le SQL « ia_reglages » n'est pas exécuté). En attendant, tout est permis sauf la publication de l'horaire.")}
         </p>
+      )}
 
-        {!configure && (
-          <p className="settings-msg err">
-            {t("Les réglages ne peuvent pas encore être enregistrés (le SQL « ia_reglages » n'est pas exécuté). En attendant, les valeurs par défaut s'appliquent : tout est permis sauf la publication de l'horaire.")}
-          </p>
-        )}
-
-        <div className="ia-droits" style={{ marginTop: "12px" }}>
-          {MODULES_IA.map((m) => {
-            const p = permissions[m.id];
-            return (
-              <div key={m.id} className="ia-droit">
-                <div className="ia-droit-tete">
-                  <div>
-                    <strong>{t(m.label)}</strong>
-                    <p className="section-hint" style={{ margin: "2px 0 0" }}>{t(m.resume)}</p>
-                  </div>
-                  <Interrupteur coche={p.actif} onChange={(v) => changerModule(m.id, v)} label={t(m.label)} />
-                </div>
-                {p.actif && (
-                  <div className="ia-actions">
-                    {m.actions.map((a) => (
-                      <label key={a.id} className={`ia-action${a.sensible ? " sensible" : ""}`}>
-                        <Interrupteur coche={p[a.id]} onChange={(v) => changerAction(m.id, a.id, v)} label={t(a.label)} />
-                        <span>
-                          <span className="ia-action-nom">{t(a.label)}</span>
-                          {a.detail && <span className="section-hint" style={{ display: "block", margin: 0 }}>{t(a.detail)}</span>}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                {!p.actif && <p className="section-hint" style={{ margin: 0 }}>{t("Fermé : l'IA ne voit rien de ce module.")}</p>}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="abo-carte" style={{ margin: "14px 0" }}>
-          <strong>{t("Dans tous les cas, l'IA ne pourra jamais :")}</strong>
-          <ul style={{ margin: "6px 0 0 18px" }}>
-            <li>{t("agir de son propre chef : elle n'agit que quand quelqu'un le lui demande dans son assistant")}</li>
-            <li>{t("voir les salaires, les NIP ni les coordonnées de tes employés")}</li>
-            <li>{t("supprimer ce qu'une personne a créé, ni un quart déjà publié")}</li>
-          </ul>
-        </div>
-
-        {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
-
-        <div className="abo-actions">
-          <button type="button" className="submit-btn" onClick={enregistrer} disabled={occupe || !modifie}>
-            {occupe ? "..." : t("Enregistrer les permissions")}
+      <div className="page-onglets sous" role="tablist" aria-label={t("Modules")}>
+        {MODULES_IA.map((x) => (
+          <button key={x.id} type="button" role="tab" aria-selected={moduleOuvert === x.id} className={`page-onglet${moduleOuvert === x.id ? " actif" : ""}`} onClick={() => setModuleOuvert(x.id)}>
+            <span className={`ia-point${permissions[x.id].actif ? " on" : ""}`} aria-hidden="true" />
+            {t(x.label)}
           </button>
-          {modifie && (
-            <button type="button" className="admin-icon-btn" onClick={() => setPermissions(JSON.parse(enregistrees))} disabled={occupe}>
-              {t("Annuler les changements")}
-            </button>
+        ))}
+      </div>
+
+      <div className="ia-droit" style={{ marginTop: "14px" }}>
+        <div className="ia-droit-tete">
+          <div>
+            <strong>{p.actif ? t("Ouvert à l'IA") : t("Fermé à l'IA")}</strong>
+            <p className="section-hint" style={{ margin: "2px 0 0" }}>{t(m.resume)}</p>
+          </div>
+          <Interrupteur coche={p.actif} onChange={(v) => changerModule(m.id, v)} label={t(m.label)} />
+        </div>
+
+        {p.actif && (
+          <div className="ia-actions">
+            {m.actions.map((a) => (
+              <label key={a.id} className={`ia-action${a.sensible ? " sensible" : ""}`}>
+                <Interrupteur coche={p[a.id]} onChange={(v) => changerAction(m.id, a.id, v)} label={t(a.label)} />
+                <span>
+                  <span className="ia-action-nom">{t(a.label)}</span>
+                  {a.detail && <span className="section-hint" style={{ display: "block", margin: 0 }}>{t(a.detail)}</span>}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <details className="ia-jamais">
+        <summary>{t("Ce que l'IA ne fait jamais")}</summary>
+        <ul>
+          <li>{t("Agir de son propre chef : elle n'agit que sur demande dans son assistant.")}</li>
+          <li>{t("Voir les salaires, les NIP ni les coordonnées des employés.")}</li>
+          <li>{t("Supprimer ce qu'une personne a créé, ni un quart déjà publié.")}</li>
+        </ul>
+      </details>
+
+      {(modifie || msg) && (
+        <div className="ia-barre-enregistrer">
+          {msg && !modifie ? (
+            <span className={`settings-msg ${msg.type}`} style={{ margin: 0 }}>{msg.text}</span>
+          ) : (
+            <>
+              <span className="section-hint" style={{ margin: 0 }}>{t("Changements non enregistrés")}</span>
+              <button type="button" className="admin-icon-btn" onClick={() => setPermissions(JSON.parse(enregistrees))} disabled={occupe}>
+                {t("Annuler")}
+              </button>
+              <button type="button" className="submit-btn" onClick={enregistrer} disabled={occupe}>
+                {occupe ? "..." : t("Enregistrer")}
+              </button>
+            </>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
