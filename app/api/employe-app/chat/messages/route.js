@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
+import { waitUntil } from "@vercel/functions";
 import { notifierNouveauMessage } from "@/lib/pushServer";
 import { reactionsDe } from "@/lib/chatReactions";
 import { chargerRestrictions, conversationDirecteBloquee } from "@/lib/chatRestrictions";
@@ -179,12 +180,15 @@ export async function POST(request) {
       .select("*")
       .single();
     if (!essai.error) {
-      notifierNouveauMessage(service, {
-        conversationId,
-        expediteurNom: employe.nom,
-        contenu: essai.data.contenu,
-        exclureEmployeId: employe.id,
-      }).catch((err) => console.error("Erreur notification push:", err));
+      // waitUntil : sur Vercel la fonction est gelée dès que la réponse part ; sans ça, le push était coupé en plein envoi (notifications reçues au hasard).
+      waitUntil(
+        notifierNouveauMessage(service, {
+          conversationId,
+          expediteurNom: employe.nom,
+          contenu: essai.data.contenu,
+          exclureEmployeId: employe.id,
+        }).catch((err) => console.error("Erreur notification push:", err))
+      );
       return NextResponse.json({
         message: { id: essai.data.id, contenu: essai.data.contenu, createdAt: essai.data.created_at, expediteurNom: employe.nom, deMoi: true, reponse: null, reactions: [] },
       });
@@ -207,12 +211,15 @@ export async function POST(request) {
     return NextResponse.json({ error: "L'envoi a échoué." }, { status: 500 });
   }
 
-  notifierNouveauMessage(service, {
-    conversationId,
-    expediteurNom: employe.nom,
-    contenu: message.contenu,
-    exclureEmployeId: employe.id,
-  }).catch((err) => console.error("Erreur notification push:", err));
+  // waitUntil : sur Vercel la fonction est gelée dès que la réponse part ; sans ça, le push était coupé en plein envoi (notifications reçues au hasard).
+  waitUntil(
+    notifierNouveauMessage(service, {
+      conversationId,
+      expediteurNom: employe.nom,
+      contenu: message.contenu,
+      exclureEmployeId: employe.id,
+    }).catch((err) => console.error("Erreur notification push:", err))
+  );
 
   let reponse = null;
   if (parent) {

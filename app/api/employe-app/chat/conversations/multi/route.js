@@ -3,6 +3,7 @@ import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { getOrCreateDirecteConversation } from "@/lib/chatServer";
 import { chargerRestrictions } from "@/lib/chatRestrictions";
+import { waitUntil } from "@vercel/functions";
 import { notifierNouveauMessage } from "@/lib/pushServer";
 
 // Envoie le même message à plusieurs collègues, SÉPARÉMENT : chacun le reçoit dans sa propre
@@ -50,12 +51,15 @@ export async function POST(request) {
       const { error } = await service.from("messages").insert({ conversation_id: conversationId, employe_id: employe.id, contenu });
       if (error) throw error;
       envoyes++;
-      notifierNouveauMessage(service, {
-        conversationId,
-        expediteurNom: employe.nom,
-        contenu,
-        exclureEmployeId: employe.id,
-      }).catch((err) => console.error("Erreur notification push:", err));
+      // waitUntil : sur Vercel la fonction est gelée dès que la réponse part ; sans ça, le push était coupé en plein envoi (notifications reçues au hasard).
+      waitUntil(
+        notifierNouveauMessage(service, {
+          conversationId,
+          expediteurNom: employe.nom,
+          contenu,
+          exclureEmployeId: employe.id,
+        }).catch((err) => console.error("Erreur notification push:", err))
+      );
     } catch (err) {
       console.error("Erreur envoi à plusieurs:", err?.message || err);
       refuses++;
