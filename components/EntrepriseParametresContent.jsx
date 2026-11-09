@@ -8,6 +8,8 @@ import EquipeSection from "@/components/entreprise/EquipeSection";
 import EmplacementsSection from "@/components/entreprise/EmplacementsSection";
 import PersonnalisationSection, { MODULES_PERSONNALISATION } from "@/components/entreprise/PersonnalisationSection";
 import IntegrationsSection from "@/components/settings/IntegrationsSection";
+import NavIntegrations from "@/components/settings/NavIntegrations";
+import { CATALOGUE_INTEGRATIONS, categorieDe } from "@/lib/integrationsCatalogue";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconEquipe, IconEmplacement, IconIntegration } from "@/components/icons/GozlyIcons";
@@ -31,7 +33,10 @@ export default function EntrepriseParametresContent() {
   const [entrepriseId, setEntrepriseId] = useState(null);
   const [activeTab, setActiveTab] = useState("informations");
   // Personnalisation : la barre latérale glisse vers un second niveau (modules, puis catégories de réglages du module ouvert).
-  const [vue, setVue] = useState("principal"); // "principal" | "personnalisation"
+  const [vue, setVue] = useState("principal"); // "principal" | "personnalisation" | "integrations"
+  // Intégrations : « magasin » ou une catégorie ; liste des intégrations installées (le magasin).
+  const [integVue, setIntegVue] = useState("magasin");
+  const [installees, setInstallees] = useState([]);
   const [sens, setSens] = useState("avant"); // sens de l'animation de la barre latérale
   const [modulesActifs, setModulesActifs] = useState([]);
   const [moduleChoisi, setModuleChoisi] = useState(null);
@@ -41,6 +46,11 @@ export default function EntrepriseParametresContent() {
   useEffect(() => {
     const onglet = new URLSearchParams(window.location.search).get("onglet");
     if (TABS.some((tab) => tab.id === onglet)) setActiveTab(onglet);
+    if (onglet === "integrations") {
+      setVue("integrations");
+      // Retour de la connexion OneDrive/Google Drive : on rouvre la catégorie Stockage.
+      if (new URLSearchParams(window.location.search).get("stockage")) setIntegVue("stockage");
+    }
   }, []);
 
   useEffect(() => {
@@ -108,6 +118,25 @@ export default function EntrepriseParametresContent() {
     };
   }, [entrepriseId]);
 
+  async function appelerInstallees(action, integrationId) {
+    const { data } = await supabase.auth.getSession();
+    const res = await fetch("/api/integrations/installees", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${data?.session?.access_token}` },
+      body: JSON.stringify({ action, entrepriseId, integrationId }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (res.ok && Array.isArray(json.installees)) setInstallees(json.installees);
+    return { ok: res.ok, error: json.error };
+  }
+
+  useEffect(() => {
+    if (entrepriseId) appelerInstallees("lister");
+  }, [entrepriseId]);
+
+  // Une catégorie dont la dernière intégration vient d'être retirée n'existe plus dans le menu : on retombe sur le Magasin.
+  const installeeDansCategorie = (cat) => CATALOGUE_INTEGRATIONS.some((i) => i.categorie === cat && installees.includes(i.id));
+
   const modulesPerso = MODULES_PERSONNALISATION.filter((m) => modulesActifs.includes(m.id));
 
   // En entrant dans Personnalisation (ou si le module choisi n'existe plus), on ouvre le premier module et sa première catégorie.
@@ -165,7 +194,18 @@ export default function EntrepriseParametresContent() {
             <div className="settings-wrap" style={{ maxWidth: "none", padding: 0 }}>
               <nav className="settings-nav">
                 <div key={vue} className={`admin-nav-niveau ${sens}`}>
-                  {vue === "principal" ? (
+                  {vue === "integrations" ? (
+                    <NavIntegrations
+                      vue={integVue}
+                      installees={installees}
+                      onChoisir={setIntegVue}
+                      onRetour={() => {
+                        setSens("retour");
+                        setVue("principal");
+                        setActiveTab("informations");
+                      }}
+                    />
+                  ) : vue === "principal" ? (
                     TABS.map((tab) => (
                       <button
                         key={tab.id}
@@ -176,6 +216,11 @@ export default function EntrepriseParametresContent() {
                           if (tab.id === "personnalisation") {
                             setSens("avant");
                             setVue("personnalisation");
+                          }
+                          if (tab.id === "integrations") {
+                            setSens("avant");
+                            setIntegVue("magasin");
+                            setVue("integrations");
                           }
                         }}
                       >
@@ -255,7 +300,16 @@ export default function EntrepriseParametresContent() {
                 )}
                 {activeTab === "emplacements" && <EmplacementsSection entrepriseId={entrepriseId} />}
                 {activeTab === "personnalisation" && <PersonnalisationSection entrepriseId={entrepriseId} module={moduleChoisi} categorie={categorieChoisie} />}
-                {activeTab === "integrations" && <IntegrationsSection entrepriseId={entrepriseId} />}
+                {activeTab === "integrations" && (
+                  <IntegrationsSection
+                    entrepriseId={entrepriseId}
+                    vue={categorieDe(integVue) && !installeeDansCategorie(integVue) ? "magasin" : integVue}
+                    installees={installees}
+                    onInstaller={(i) => appelerInstallees("installer", i.id)}
+                    onRetirer={(i) => appelerInstallees("retirer", i.id)}
+                    onOuvrir={(i) => setIntegVue(i.categorie)}
+                  />
+                )}
               </div>
             </div>
           )}

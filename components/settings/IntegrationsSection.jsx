@@ -3,44 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
-import { SERVICES_PAIE } from "@/lib/servicesPaie";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import DiagnosticWixModal from "@/components/inventaire/DiagnosticWixModal";
 import ConnexionsIA from "@/components/settings/ConnexionsIA";
 import PermissionsIA from "@/components/settings/PermissionsIA";
+import MagasinIntegrations from "@/components/settings/MagasinIntegrations";
+import { CATALOGUE_INTEGRATIONS, categorieDe } from "@/lib/integrationsCatalogue";
 import { useT } from "@/components/LangProvider";
-
-// Regroupe les intégrations par catégorie pour les retrouver plus
-// facilement au fur et à mesure qu'on en ajoute (chaque catégorie est un
-// tiroir dépliable - voir CATEGORIES ci-dessous). "wix" et "nethris" sont
-// les seules branchées pour l'instant, le reste s'affiche en "bientôt
-// disponible" pour montrer ce qui s'en vient.
-const SERVICES_VENTES = [
-  { id: "wix", label: "Wix", disponible: true },
-  { id: "shopify", label: "Shopify", disponible: false },
-];
-
-const SERVICES_STOCKAGE = [
-  { id: "onedrive", label: "OneDrive", disponible: true },
-  { id: "google-drive", label: "Google Drive", disponible: true },
-];
-
-const SERVICES_IA = [
-  { id: "ia-assistants", label: "Assistants IA (ChatGPT, Claude...)", disponible: true },
-  { id: "ia-permissions", label: "Permissions de l'IA", disponible: true },
-];
 
 const STOCKAGES = {
   microsoft: { nom: "OneDrive" },
   google: { nom: "Google Drive" },
 };
-
-const CATEGORIES = [
-  { id: "ventes", label: "Ventes & Inventaire", services: SERVICES_VENTES },
-  { id: "stockage", label: "Stockage de fichiers", services: SERVICES_STOCKAGE },
-  { id: "paie", label: "Paie", services: SERVICES_PAIE },
-  { id: "ia", label: "Intelligence artificielle", services: SERVICES_IA },
-];
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession();
@@ -48,11 +22,11 @@ async function authHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 }
 
-export default function IntegrationsSection({ entrepriseId }) {
+// vue : "magasin" ou l'id d'une catégorie (ventes, stockage, paie, ia). Les intégrations installées d'une catégorie s'y affichent.
+export default function IntegrationsSection({ entrepriseId, vue = "magasin", installees = [], onInstaller, onRetirer, onOuvrir }) {
   const [supportWixOuvert, setSupportWixOuvert] = useState(false); // « Outils de support » de Wix (caché tant qu'on n'en a pas besoin)
   const [diagWixOuvert, setDiagWixOuvert] = useState(false);
   const { t } = useT();
-  const [categoriesOuvertes, setCategoriesOuvertes] = useState({});
 
   const [statut, setStatut] = useState("chargement"); // "chargement" | "deconnecte" | "en_attente" | "connecte"
   const [busy, setBusy] = useState(false);
@@ -87,7 +61,6 @@ export default function IntegrationsSection({ entrepriseId }) {
     if (!resultat) return;
     const fournisseur = STOCKAGES[params.get("fournisseur")] ? params.get("fournisseur") : "microsoft";
     const nom = STOCKAGES[fournisseur].nom;
-    setCategoriesOuvertes((cur) => ({ ...cur, stockage: true }));
     definirMsgStockage(
       fournisseur,
       resultat === "ok"
@@ -171,10 +144,6 @@ export default function IntegrationsSection({ entrepriseId }) {
       definirMsgStockage(fournisseur, { type: "err", text: t("La déconnexion a échoué.") });
     }
     definirOccupeStockage(fournisseur, false);
-  }
-
-  function toggleCategorie(id) {
-    setCategoriesOuvertes((cur) => ({ ...cur, [id]: !cur[id] }));
   }
 
   async function chargerNethris() {
@@ -546,37 +515,31 @@ export default function IntegrationsSection({ entrepriseId }) {
     if (service.id === "nethris") return <div key={service.id}>{renderNethris()}</div>;
     if (service.id === "onedrive") return <div key={service.id}>{renderStockage("microsoft")}</div>;
     if (service.id === "google-drive") return <div key={service.id}>{renderStockage("google")}</div>;
-    if (service.id === "ia-assistants") return <div key={service.id}><ConnexionsIA entrepriseId={entrepriseId} /></div>;
-    if (service.id === "ia-permissions") return <div key={service.id}><PermissionsIA entrepriseId={entrepriseId} /></div>;
+    if (service.id === "ia-assistants") {
+      return (
+        <div key={service.id} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <ConnexionsIA entrepriseId={entrepriseId} />
+          <PermissionsIA entrepriseId={entrepriseId} />
+        </div>
+      );
+    }
     return renderBientotDisponible(service);
   }
 
+  const categorie = categorieDe(vue);
+  const servicesInstalles = CATALOGUE_INTEGRATIONS.filter((i) => i.categorie === vue && i.disponible && installees.includes(i.id));
+
   return (
     <div>
-      <h2>{t("Intégrations")}</h2>
-      <p className="panel-hint">{t("Connecte des services externes pour synchroniser leurs données avec Gozly.")}</p>
-
-      <div className="integration-list">
-        {CATEGORIES.map((cat) => {
-          const ouverte = !!categoriesOuvertes[cat.id];
-          return (
-            <div className="integration-item" key={cat.id}>
-              <button type="button" className={`integration-header${ouverte ? " open" : ""}`} onClick={() => toggleCategorie(cat.id)}>
-                <span className="ih-label">{t(cat.label)}</span>
-                <span className="ih-arrow"><IconFlecheBas className="gozly-icon-inline" /></span>
-              </button>
-
-              {ouverte && (
-                <div className="integration-body">
-                  <div className="integration-list" style={{ marginTop: "14px" }}>
-                    {cat.services.map((service) => renderService(service))}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {vue === "magasin" || !categorie ? (
+        <MagasinIntegrations installees={installees} onInstaller={onInstaller} onRetirer={onRetirer} onOuvrir={onOuvrir} />
+      ) : (
+        <>
+          <h2>{t(categorie.label)}</h2>
+          <p className="panel-hint">{t("Tes intégrations installées dans cette catégorie. Pour en ajouter, va dans le Magasin.")}</p>
+          <div className="integration-list">{servicesInstalles.map((i) => renderService({ id: i.id, label: i.nom, disponible: true }))}</div>
+        </>
+      )}
 
       {nethrisModalOuvert && (
         <div className="modal-overlay" onClick={() => setNethrisModalOuvert(false)}>
