@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
+import PeriodeFacturation from "@/components/PeriodeFacturation";
+import { PRIX_FORFAITS } from "@/lib/forfaitsPrix";
 
 // Même contenu que /s-abonner. Le forfait n'est JAMAIS activé ici : le bouton
 // ouvre Stripe Checkout, et c'est le webhook qui active le forfait après paiement.
@@ -12,14 +14,12 @@ const FORFAITS = [
   {
     id: "opale",
     nom: "Opale",
-    prix: "35$",
     icone: "pi-1",
     points: ["3 modules", "1 entreprise", "Assistance standard", "Mises à jour essentielles"],
   },
   {
     id: "onyx",
     nom: "Onyx",
-    prix: "59$",
     icone: "pi-2",
     featured: true,
     points: ["5 modules", "3 entreprises", "Support prioritaire", "Mises à jour avancées"],
@@ -27,7 +27,6 @@ const FORFAITS = [
   {
     id: "crystal",
     nom: "Crystal",
-    prix: "85$",
     icone: "pi-3",
     points: [
       "Modules illimités",
@@ -45,6 +44,7 @@ export default function ChoisirForfaitContent() {
   const [checking, setChecking] = useState(true);
   const [choix, setChoix] = useState(null);
   const [error, setError] = useState("");
+  const [periode, setPeriode] = useState("mensuel");
 
   useEffect(() => {
     let ignore = false;
@@ -84,7 +84,7 @@ export default function ChoisirForfaitContent() {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ forfait: forfaitId }),
+        body: JSON.stringify({ forfait: forfaitId, periode }),
       });
       const data = await res.json();
 
@@ -107,6 +107,8 @@ export default function ChoisirForfaitContent() {
 
   return (
     <>
+      <PeriodeFacturation value={periode} onChange={setPeriode} disabled={choix !== null} />
+
       <div className="pricing">
         {FORFAITS.map((f) => (
           <div key={f.id} className={`price-card${f.featured ? " featured" : ""}`}>
@@ -115,8 +117,8 @@ export default function ChoisirForfaitContent() {
               <h3>{f.nom}</h3>
             </div>
             <div className="price">
-              {t(f.prix)}
-              <span>{t("/mois")}</span>
+              {t(`${PRIX_FORFAITS[f.id][periode]}$`)}
+              <span>{periode === "annuel" ? t("/an") : t("/mois")}</span>
             </div>
             <ul>
               {f.points.map((p) => (

@@ -3936,3 +3936,10 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .retour-parametres{display:inline-block;margin-bottom:10px;color:var(--text-dim);text-decoration:none;font-weight:600;font-size:14px;}
 .retour-parametres:hover{color:var(--fg);}
 .da-code-vivant-int{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;}
+/* Choix de facturation Mensuel / Annuel */
+.periode-toggle{display:inline-flex;gap:2px;padding:3px;border-radius:14px;background:rgba(var(--w),0.07);border:1px solid rgba(var(--w),0.1);margin:0 auto 22px;}
+.pricing + .periode-toggle,.periode-toggle{display:flex;width:max-content;max-width:100%;margin-left:auto;margin-right:auto;}
+.periode-option{border:none;background:transparent;color:var(--text-dim);font:inherit;font-size:14px;font-weight:600;padding:9px 22px;border-radius:11px;cursor:pointer;}
+.periode-option.actif{background:#3d3dcc;color:#fff;}
+.settings-section .periode-toggle{margin:0;}
+.price-annuel{margin:-6px 0 12px;font-size:13px;color:var(--text-dim);}

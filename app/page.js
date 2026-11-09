@@ -123,6 +123,7 @@ export default function HomePage() {
               <div className="price">
                 {t("plan.opale.prix")}<span>{t("plan.mois")}</span>
               </div>
+              <p className="price-annuel">{t("plan.annuel.opale")}</p>
               <ul>
                 <li>{t("plan.opale.l1")}</li>
                 <li>{t("plan.opale.l2")}</li>
@@ -141,6 +142,7 @@ export default function HomePage() {
               <div className="price">
                 {t("plan.onyx.prix")}<span>{t("plan.mois")}</span>
               </div>
+              <p className="price-annuel">{t("plan.annuel.onyx")}</p>
               <ul>
                 <li>{t("plan.onyx.l1")}</li>
                 <li>{t("plan.onyx.l2")}</li>
@@ -159,6 +161,7 @@ export default function HomePage() {
               <div className="price">
                 {t("plan.crystal.prix")}<span>{t("plan.mois")}</span>
               </div>
+              <p className="price-annuel">{t("plan.annuel.crystal")}</p>
               <ul>
                 <li>{t("plan.crystal.l1")}</li>
                 <li>{t("plan.crystal.l2")}</li>

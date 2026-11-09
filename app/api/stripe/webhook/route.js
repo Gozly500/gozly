@@ -1,3 +1,4 @@
+import { forfaitDepuisCle } from "@/lib/forfaitsPrix";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getStripe } from "@/lib/stripeServer";
@@ -58,7 +59,7 @@ export async function POST(request) {
     case "customer.subscription.updated": {
       const subscription = event.data.object;
       const price = subscription.items.data[0]?.price;
-      const forfait = FORFAITS_VALIDES.includes(price?.lookup_key) ? price.lookup_key : null;
+      const forfait = forfaitDepuisCle(price?.lookup_key) || null; // « onyx » ou « onyx_annuel » -> onyx
 
       if (subscription.status === "active" || subscription.status === "trialing") {
         if (forfait) {

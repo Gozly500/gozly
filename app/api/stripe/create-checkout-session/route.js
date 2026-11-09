@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStripe, getSupabaseForToken, getUserProfil, getOrCreateStripeCustomerCompte } from "@/lib/stripeServer";
+import { PERIODES, cleStripe } from "@/lib/forfaitsPrix";
 
 const FORFAITS_VALIDES = ["opale", "onyx", "crystal"];
 
@@ -12,7 +13,8 @@ export async function POST(request) {
     );
   }
 
-  const { forfait } = await request.json().catch(() => ({}));
+  const { forfait, periode: periodeDemandee } = await request.json().catch(() => ({}));
+  const periode = PERIODES.includes(periodeDemandee) ? periodeDemandee : "mensuel";
   if (!FORFAITS_VALIDES.includes(forfait)) {
     return NextResponse.json({ error: "Forfait invalide." }, { status: 400 });
   }
@@ -34,7 +36,7 @@ export async function POST(request) {
   }
 
   try {
-    const prices = await stripe.prices.list({ lookup_keys: [forfait], limit: 1 });
+    const prices = await stripe.prices.list({ lookup_keys: [cleStripe(forfait, periode)], active: true, limit: 1 });
     const price = prices.data[0];
     if (!price) {
       return NextResponse.json({ error: "Ce forfait n'est pas disponible pour le moment." }, { status: 404 });
@@ -58,10 +60,11 @@ export async function POST(request) {
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: price.id, quantity: 1 }],
+      allow_promotion_codes: true, // champ « code promo » sur la page de paiement
       success_url: `${origin}/parametres?checkout=success`,
       cancel_url: `${origin}/parametres?checkout=cancel`,
-      metadata: { user_id: user.id, forfait },
-      subscription_data: { metadata: { user_id: user.id, forfait } },
+      metadata: { user_id: user.id, forfait, periode },
+      subscription_data: { metadata: { user_id: user.id, forfait, periode } },
     });
 
     return NextResponse.json({ url: checkoutSession.url });

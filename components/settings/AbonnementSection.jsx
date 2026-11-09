@@ -5,6 +5,8 @@ import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
+import PeriodeFacturation from "@/components/PeriodeFacturation";
+import { PRIX_FORFAITS } from "@/lib/forfaitsPrix";
 
 const FORFAITS = [
   { id: "opale", label: "Opale", detail: "3 modules, 1 entreprise - 35$/mois" },
@@ -23,6 +25,8 @@ export default function AbonnementSection({ profil }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [checkoutMsg, setCheckoutMsg] = useState(null);
+  const [aPayer, setAPayer] = useState(null); // forfait choisi, en attente du choix Mensuel / Annuel
+  const [periode, setPeriode] = useState("mensuel");
   const [factures, setFactures] = useState([]); // factures sur mesure envoyées par Gozly
 
   useEffect(() => {
@@ -64,11 +68,11 @@ export default function AbonnementSection({ profil }) {
     achatAutoLance.current = true;
     window.history.replaceState({}, "", "/parametres");
     if (!profil.forfait && FORFAITS.some((f) => f.id === voulu)) {
-      startCheckout(voulu);
+      setAPayer(voulu);
     }
   }, [profil?.id]);
 
-  async function startCheckout(forfaitId) {
+  async function startCheckout(forfaitId, periodeChoisie = "mensuel") {
     setForfaitOpen(false);
     setLoading(true);
     setError(null);
@@ -80,7 +84,7 @@ export default function AbonnementSection({ profil }) {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ forfait: forfaitId }),
+        body: JSON.stringify({ forfait: forfaitId, periode: periodeChoisie }),
       });
       const data = await res.json();
 
@@ -163,7 +167,14 @@ export default function AbonnementSection({ profil }) {
             {forfaitOpen && (
               <div className="forfait-select-options open">
                 {FORFAITS.map((f) => (
-                  <div key={f.id} className="forfait-option" onClick={() => startCheckout(f.id)}>
+                  <div
+                    key={f.id}
+                    className="forfait-option"
+                    onClick={() => {
+                      setForfaitOpen(false);
+                      setAPayer(f.id);
+                    }}
+                  >
                     <div className="fo-label">{t(f.label)}</div>
                     <div className="fo-detail">{t(f.detail)}</div>
                   </div>
@@ -172,6 +183,24 @@ export default function AbonnementSection({ profil }) {
             )}
           </div>
         </div>
+
+        {aPayer && FORFAITS.find((f) => f.id === aPayer) && (
+          <div style={{ marginTop: "18px" }}>
+            <p className="section-hint" style={{ marginBottom: "10px" }}>
+              {t(FORFAITS.find((f) => f.id === aPayer).label)} : {t(`${PRIX_FORFAITS[aPayer][periode]}$`)}
+              {periode === "annuel" ? t("/an") : t("/mois")}
+            </p>
+            <PeriodeFacturation value={periode} onChange={setPeriode} disabled={loading} />
+            <div style={{ display: "flex", gap: "10px", marginTop: "12px", flexWrap: "wrap" }}>
+              <button type="button" className="submit-btn" disabled={loading} onClick={() => startCheckout(aPayer, periode)}>
+                {loading ? t("Redirection vers le paiement...") : t("Continuer vers le paiement")}
+              </button>
+              <button type="button" className="admin-icon-btn" disabled={loading} onClick={() => setAPayer(null)}>
+                {t("Annuler")}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {factures.length > 0 && (
