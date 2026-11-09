@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
+import SelecteurDroitsIA from "@/components/SelecteurDroitsIA";
+import { aAuMoinsUnDroit, DROITS_PAR_DEFAUT, droitsDe, resumeDroits } from "@/lib/iaModules";
 
 async function appeler(corps) {
   const { data } = await supabase.auth.getSession();
@@ -29,7 +31,7 @@ export default function ConnexionsIA({ entrepriseId }) {
   const [etat, setEtat] = useState("chargement"); // chargement | pret | refuse | nonConfigure
   const [cles, setCles] = useState([]);
   const [nom, setNom] = useState("");
-  const [ecriture, setEcriture] = useState(false);
+  const [droits, setDroits] = useState(DROITS_PAR_DEFAUT);
   const [occupe, setOccupe] = useState(false);
   const [msg, setMsg] = useState(null);
   const [nouvelleCle, setNouvelleCle] = useState(null);
@@ -56,12 +58,12 @@ export default function ConnexionsIA({ entrepriseId }) {
     e.preventDefault();
     setOccupe(true);
     setMsg(null);
-    const { ok, data } = await appeler({ action: "creer", entrepriseId, nom, ecriture });
+    const { ok, data } = await appeler({ action: "creer", entrepriseId, nom, droits });
     setOccupe(false);
     if (!ok) return setMsg({ type: "err", text: data.error || t("Échec") });
     setNouvelleCle(data.cle);
     setNom("");
-    setEcriture(false);
+    setDroits(DROITS_PAR_DEFAUT);
     charger();
   }
 
@@ -128,7 +130,11 @@ export default function ConnexionsIA({ entrepriseId }) {
                 <div className="abo-tete">
                   <strong>{c.oauth ? c.client_nom || c.nom : c.nom}</strong>
                   {c.oauth ? <span className="admin-status-pill">{t("Autorisée")}</span> : <code className="abo-id">{c.prefixe}…</code>}
-                  <span className="admin-status-pill">{c.ecriture ? t("Peut créer des brouillons") : t("Lecture seule")}</span>
+                  {resumeDroits(droitsDe(c)).map((d) => (
+                    <span key={d.id} className="admin-status-pill">
+                      {t(d.label)} : {d.niveau === "ecriture" ? t("écriture") : t("lecture")}
+                    </span>
+                  ))}
                 </div>
                 <div className="section-hint" style={{ margin: 0 }}>
                   {c.derniere_utilisation ? t("Dernière utilisation : {date}", { date: formatDate(c.derniere_utilisation) }) : t("Jamais utilisée")}
@@ -193,11 +199,10 @@ export default function ConnexionsIA({ entrepriseId }) {
                   <label>{t("Nom de la clé")}</label>
                   <input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder={t("ex: ChatGPT de Marie")} maxLength={60} />
                 </div>
-                <label className="abo-case" style={{ margin: "8px 0 12px" }}>
-                  <input type="checkbox" checked={ecriture} onChange={(e) => setEcriture(e.target.checked)} />
-                  {t("Permettre de créer des brouillons d'horaire (jamais de publication)")}
-                </label>
-                <button type="submit" className="submit-btn" disabled={occupe || !nom.trim()}>
+                <div style={{ margin: "8px 0 12px" }}>
+                  <SelecteurDroitsIA droits={droits} onChange={setDroits} />
+                </div>
+                <button type="submit" className="submit-btn" disabled={occupe || !nom.trim() || !aAuMoinsUnDroit(droits)}>
                   {occupe ? "..." : t("Créer une clé")}
                 </button>
               </form>

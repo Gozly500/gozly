@@ -12,10 +12,10 @@ export const dynamic = "force-dynamic";
 const VERSION_PROTOCOLE = "2025-03-26";
 
 const INSTRUCTIONS =
-  "Tu es branché sur une entreprise Gozly. Tu peux lire les employés, l'horaire et les heures pointées. " +
-  "Si ta clé le permet, tu peux créer des quarts en BROUILLON : ils restent invisibles aux employés tant qu'un humain ne les a pas relus et publiés dans Gozly. " +
-  "Tu ne publies jamais rien et tu n'envoies aucune notification. Agis seulement sur demande de la personne qui te parle, " +
-  "vérifie l'horaire existant avant de créer des quarts, et dis clairement à la personne que les quarts créés sont des brouillons à publier.";
+  "Tu es branché sur une entreprise Gozly. Les outils offerts dépendent des modules que le propriétaire t'a ouverts (Horaire, Planning, Inventaire, Ventes), en lecture ou en écriture. " +
+  "Tu ne publies jamais rien et tu n'envoies aucune notification. Les quarts d'horaire que tu crées sont des BROUILLONS : invisibles des employés tant qu'un humain ne les a pas relus et publiés dans Gozly. " +
+  "Les tâches de Planning n'ont pas de brouillon : elles sont visibles des employés tout de suite, alors confirme avec la personne avant d'en ajouter. " +
+  "Agis seulement sur demande de la personne qui te parle, lis l'existant avant d'écrire pour éviter les doublons, et dis clairement ce qui a été créé et ce qui reste à valider.";
 
 function reponse(id, result) {
   return { jsonrpc: "2.0", id, result };

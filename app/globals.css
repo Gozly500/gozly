@@ -3961,3 +3961,12 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .abo-cle-ajout{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;}
 .abo-cle-ajout input{flex:1;min-width:160px;margin:0;}
 .abo-actions{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* Connexions IA : droits par module */
+.ia-droits{display:flex;flex-direction:column;gap:10px;}
+.ia-droit{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid rgba(var(--w),0.1);border-radius:14px;background:rgba(var(--w),0.03);}
+.ia-droit-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.ia-niveaux{display:inline-flex;gap:4px;padding:3px;border-radius:999px;border:1px solid rgba(var(--w),0.12);background:rgba(var(--w),0.04);}
+.ia-niveau{border:0;background:transparent;color:var(--text-dim);font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;cursor:pointer;transition:background .18s,color .18s;}
+.ia-niveau:hover{color:var(--text);}
+.ia-niveau.actif{background:var(--cyan);color:#04142a;font-weight:700;}

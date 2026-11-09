@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import SimpleSelect from "@/components/SimpleSelect";
+import SelecteurDroitsIA from "@/components/SelecteurDroitsIA";
+import { aAuMoinsUnDroit, DROITS_PAR_DEFAUT } from "@/lib/iaModules";
 
 async function appeler(corps) {
   const { data } = await supabase.auth.getSession();
@@ -24,7 +26,7 @@ export default function AutorisationIA() {
   const [etat, setEtat] = useState("chargement"); // chargement | pret | invalide | aucuneEntreprise | termine
   const [infos, setInfos] = useState(null);
   const [entrepriseId, setEntrepriseId] = useState("");
-  const [ecriture, setEcriture] = useState(false);
+  const [droits, setDroits] = useState(DROITS_PAR_DEFAUT);
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState("");
 
@@ -69,7 +71,7 @@ export default function AutorisationIA() {
     setOccupe(true);
     setErreur("");
     const { ok, data } = await appeler(
-      autoriser ? { action: "autoriser", ...params, entrepriseId, ecriture } : { action: "refuser", ...params }
+      autoriser ? { action: "autoriser", ...params, entrepriseId, droits } : { action: "refuser", ...params }
     );
     if (!ok || !data.redirect) {
       setOccupe(false);
@@ -124,32 +126,24 @@ export default function AutorisationIA() {
         </p>
       )}
 
-      <div className="abo-carte" style={{ margin: "14px 0" }}>
-        <div>
-          <strong>L'assistant pourra :</strong>
-          <ul style={{ margin: "6px 0 0 18px" }}>
-            <li>lire tes employés (noms seulement), tes succursales, ton horaire et tes heures pointées</li>
-            {ecriture && <li>préparer des quarts en <strong>brouillon</strong> (invisibles des employés)</li>}
-          </ul>
-        </div>
-        <div>
-          <strong>Il ne pourra jamais :</strong>
-          <ul style={{ margin: "6px 0 0 18px" }}>
-            <li>publier un horaire ni envoyer de notification</li>
-            <li>voir les salaires, les NIP ni les coordonnées de tes employés</li>
-          </ul>
-        </div>
-      </div>
+      <p style={{ margin: "14px 0 8px" }}>
+        <strong>Choisis ce que l'assistant peut faire, module par module :</strong>
+      </p>
+      <SelecteurDroitsIA droits={droits} onChange={setDroits} />
 
-      <label className="abo-case" style={{ marginBottom: "14px" }}>
-        <input type="checkbox" checked={ecriture} onChange={(e) => setEcriture(e.target.checked)} />
-        Permettre de créer des brouillons d'horaire
-      </label>
+      <div className="abo-carte" style={{ margin: "14px 0" }}>
+        <strong>Dans tous les cas, il ne pourra jamais :</strong>
+        <ul style={{ margin: "6px 0 0 18px" }}>
+          <li>publier un horaire ni envoyer de notification</li>
+          <li>voir les salaires, les NIP ni les coordonnées de tes employés</li>
+          <li>supprimer ce qu'un humain a créé</li>
+        </ul>
+      </div>
 
       {erreur && <p className="settings-msg err">{erreur}</p>}
 
       <div className="abo-actions">
-        <button type="button" className="submit-btn" onClick={() => decider(true)} disabled={occupe || !entrepriseId}>
+        <button type="button" className="submit-btn" onClick={() => decider(true)} disabled={occupe || !entrepriseId || !aAuMoinsUnDroit(droits)}>
           {occupe ? "..." : "Autoriser"}
         </button>
         <button type="button" className="admin-icon-btn" onClick={() => decider(false)} disabled={occupe}>

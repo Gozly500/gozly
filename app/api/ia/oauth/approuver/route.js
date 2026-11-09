@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getSupabaseForToken } from "@/lib/stripeServer";
+import { aAuMoinsUnDroit, normaliserDroits } from "@/lib/iaModules";
 import { challengeValide, chargerClient, construireRedirection, creerCode } from "@/lib/iaOAuth";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export async function POST(request) {
   if (!token) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
   const corps = await request.json().catch(() => ({}));
-  const { action, client_id, redirect_uri, code_challenge, code_challenge_method, state, entrepriseId, ecriture } = corps;
+  const { action, client_id, redirect_uri, code_challenge, code_challenge_method, state, entrepriseId } = corps;
 
   const supabase = getSupabaseForToken(token);
   const {
@@ -50,6 +51,10 @@ export async function POST(request) {
     if (!challengeValide(code_challenge) || code_challenge_method !== "S256") {
       return NextResponse.json({ error: "Cet assistant n'envoie pas la protection PKCE (S256) requise." }, { status: 400 });
     }
+    const droits = normaliserDroits(corps.droits);
+    if (!aAuMoinsUnDroit(droits)) {
+      return NextResponse.json({ error: "Choisis au moins un module auquel l'assistant aura accès." }, { status: 400 });
+    }
     if (!(entreprises || []).some((e) => e.id === entrepriseId)) {
       return NextResponse.json({ error: "Seul le propriétaire de l'entreprise peut y brancher un assistant." }, { status: 403 });
     }
@@ -59,7 +64,7 @@ export async function POST(request) {
       codeChallenge: code_challenge,
       entrepriseId,
       userId: user.id,
-      ecriture: !!ecriture,
+      droits,
     });
     if (!code) return NextResponse.json({ error: "Impossible de créer l'autorisation. Le SQL des connexions IA (OAuth) a-t-il été exécuté?" }, { status: 500 });
     return NextResponse.json({ redirect: construireRedirection(redirect_uri, { code, state }) });
