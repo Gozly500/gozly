@@ -37,22 +37,31 @@ export async function POST(request) {
   if (action === "lister") {
     const { data, error } = await service
       .from("ia_cles")
-      .select("id, nom, prefixe, ecriture, derniere_utilisation, revoquee, created_at")
+      .select("id, nom, prefixe, ecriture, derniere_utilisation, revoquee, created_at, oauth, client_nom, refresh_expire_le")
       .eq("entreprise_id", entreprise.id)
       .eq("revoquee", false)
       .order("created_at", { ascending: false });
     if (error) {
-      // Table absente : le SQL ia_connexions.sql n'a pas encore été exécuté.
-      return NextResponse.json({ cles: [], configure: false });
+      // Colonnes OAuth absentes (ia_oauth.sql pas encore exécuté) : on relit sans elles. Table absente : ia_connexions.sql pas exécuté.
+      const base = await service
+        .from("ia_cles")
+        .select("id, nom, prefixe, ecriture, derniere_utilisation, revoquee, created_at")
+        .eq("entreprise_id", entreprise.id)
+        .eq("revoquee", false)
+        .order("created_at", { ascending: false });
+      if (base.error) return NextResponse.json({ cles: [], configure: false });
+      return NextResponse.json({ cles: base.data || [], configure: true });
     }
-    return NextResponse.json({ cles: data || [], configure: true });
+    // Une connexion OAuth dont le jeton de renouvellement est expiré n'est plus utilisable : on ne l'affiche plus.
+    const actives = (data || []).filter((c) => !c.oauth || !c.refresh_expire_le || new Date(c.refresh_expire_le) > new Date());
+    return NextResponse.json({ cles: actives, configure: true });
   }
 
   if (action === "creer") {
     const nomPropre = String(nom || "").trim().slice(0, 60);
     if (!nomPropre) return NextResponse.json({ error: "Donne un nom à cette connexion (ex: « ChatGPT de Marie »)." }, { status: 400 });
 
-    const { count } = await service.from("ia_cles").select("id", { count: "exact", head: true }).eq("entreprise_id", entreprise.id).eq("revoquee", false);
+    const { count } = await service.from("ia_cles").select("id", { count: "exact", head: true }).eq("entreprise_id", entreprise.id).eq("revoquee", false).eq("oauth", false);
     if ((count || 0) >= MAX_CLES) return NextResponse.json({ error: `Maximum ${MAX_CLES} connexions actives : révoque-en une d'abord.` }, { status: 400 });
 
     const { cle, hash, prefixe } = genererCle();

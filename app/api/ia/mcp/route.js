@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { authentifierCle, appelerOutil, outilsPour } from "@/lib/iaServer";
+import { CORS, origineDe } from "@/lib/iaOAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,12 @@ export async function POST(request) {
   const jeton = entete || new URL(request.url).searchParams.get("cle") || "";
 
   const { cle, erreur } = await authentifierCle(service, jeton);
-  if (erreur) return NextResponse.json(erreurRpc(null, -32001, erreur.message), { status: erreur.status });
+  if (erreur) {
+    // 401 + WWW-Authenticate : c'est ce qui indique à l'assistant (ChatGPT, Claude...) où se connecter avec OAuth.
+    const entetes = { ...CORS };
+    if (erreur.status === 401) entetes["WWW-Authenticate"] = `Bearer resource_metadata="${origineDe(request)}/.well-known/oauth-protected-resource"`;
+    return NextResponse.json(erreurRpc(null, -32001, erreur.message), { status: erreur.status, headers: entetes });
+  }
 
   const corps = await request.json().catch(() => null);
   if (!corps) return NextResponse.json(erreurRpc(null, -32700, "JSON invalide."), { status: 400 });
@@ -73,6 +79,10 @@ export async function POST(request) {
 
   const rep = await traiter(service, cle, corps);
   return rep ? NextResponse.json(rep) : new NextResponse(null, { status: 202 });
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
 }
 
 // Pas de flux serveur -> client : GET n'est pas supporté (les clients MCP le comprennent via le 405).

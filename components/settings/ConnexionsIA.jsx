@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
 async function appeler(corps) {
@@ -20,8 +21,9 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString("fr-CA", { dateStyle: "medium", timeStyle: "short" });
 }
 
-// Connexion d'un assistant IA (ChatGPT, Claude...) à l'entreprise : le propriétaire génère une clé, la colle dans son assistant,
-// qui peut alors lire l'horaire et (si permis) créer des BROUILLONS. Jamais de publication par l'IA.
+// Connexion d'un assistant IA (ChatGPT, Claude...) à l'entreprise. Le plus simple : le client ajoute l'adresse du connecteur dans
+// son assistant et clique « Autoriser » dans la fenêtre Gozly (OAuth). Une clé manuelle reste possible (section « Avancé »).
+// Dans tous les cas, l'IA lit et au plus crée des BROUILLONS : elle ne publie jamais.
 export default function ConnexionsIA({ entrepriseId }) {
   const { t } = useT();
   const [etat, setEtat] = useState("chargement"); // chargement | pret | refuse | nonConfigure
@@ -34,6 +36,7 @@ export default function ConnexionsIA({ entrepriseId }) {
   const [copie, setCopie] = useState("");
   const [journalOuvert, setJournalOuvert] = useState(null);
   const [journal, setJournal] = useState([]);
+  const [avance, setAvance] = useState(false);
 
   const adresse = typeof window !== "undefined" ? `${window.location.origin}/api/ia/mcp` : "/api/ia/mcp";
 
@@ -102,40 +105,29 @@ export default function ConnexionsIA({ entrepriseId }) {
           {t("Branche l'assistant IA de ton choix à ton entreprise. Il peut lire ton horaire et tes heures pointées, et — si tu le permets — préparer des quarts en brouillon. Il ne publie jamais rien : tu relis et tu publies toi-même.")}
         </p>
 
-        {nouvelleCle && (
-          <div className="abo-carte" style={{ marginTop: "12px" }}>
-            <strong>{t("Ta clé (affichée une seule fois)")}</strong>
-            <code style={{ wordBreak: "break-all", userSelect: "all" }}>{nouvelleCle}</code>
-            <div className="abo-actions">
-              <button type="button" className="admin-icon-btn" onClick={() => copier(nouvelleCle, "cle")}>
-                {copie === "cle" ? t("Copié") : t("Copier la clé")}
-              </button>
-            </div>
-            <p className="section-hint" style={{ margin: 0 }}>
-              {t("Dans ton assistant, ajoute un connecteur MCP personnalisé avec cette adresse, et la clé en en-tête « Authorization: Bearer ta-clé ».")}
-            </p>
-            <code style={{ wordBreak: "break-all", userSelect: "all" }}>{adresse}</code>
-            <div className="abo-actions">
-              <button type="button" className="admin-icon-btn" onClick={() => copier(adresse, "adresse")}>
-                {copie === "adresse" ? t("Copié") : t("Copier l'adresse")}
-              </button>
-              <button type="button" className="admin-icon-btn" onClick={() => setNouvelleCle(null)}>
-                {t("J'ai copié ma clé")}
-              </button>
-            </div>
-            <p className="section-hint" style={{ margin: 0 }}>
-              {t("Si ton assistant ne permet pas d'envoyer un en-tête, ajoute la clé à la fin de l'adresse : …/api/ia/mcp?cle=ta-clé. C'est moins sûr (une adresse peut se retrouver dans des journaux) : révoque la clé si tu as un doute.")}
-            </p>
+        <div className="abo-carte" style={{ marginTop: "12px" }}>
+          <strong>{t("Comment le connecter")}</strong>
+          <ol style={{ margin: "0 0 0 18px", display: "grid", gap: "4px" }}>
+            <li>{t("Copie l'adresse ci-dessous.")}</li>
+            <li>{t("Dans ton assistant (ChatGPT, Claude...), ajoute un connecteur personnalisé et colle l'adresse.")}</li>
+            <li>{t("Une fenêtre Gozly s'ouvre : choisis ce que l'assistant peut faire et clique « Autoriser ».")}</li>
+          </ol>
+          <code style={{ wordBreak: "break-all", userSelect: "all" }}>{adresse}</code>
+          <div className="abo-actions">
+            <button type="button" className="admin-icon-btn" onClick={() => copier(adresse, "adresse")}>
+              {copie === "adresse" ? t("Copié") : t("Copier l'adresse")}
+            </button>
           </div>
-        )}
+        </div>
 
         {cles.length > 0 && (
           <div style={{ marginTop: "14px" }}>
+            <strong>{t("Connexions actives")}</strong>
             {cles.map((c) => (
               <div key={c.id} className="abo-carte" style={{ marginTop: "8px", padding: "12px 16px" }}>
                 <div className="abo-tete">
-                  <strong>{c.nom}</strong>
-                  <code className="abo-id">{c.prefixe}…</code>
+                  <strong>{c.oauth ? c.client_nom || c.nom : c.nom}</strong>
+                  {c.oauth ? <span className="admin-status-pill">{t("Autorisée")}</span> : <code className="abo-id">{c.prefixe}…</code>}
                   <span className="admin-status-pill">{c.ecriture ? t("Peut créer des brouillons") : t("Lecture seule")}</span>
                 </div>
                 <div className="section-hint" style={{ margin: 0 }}>
@@ -166,21 +158,52 @@ export default function ConnexionsIA({ entrepriseId }) {
           </div>
         )}
 
-        <form onSubmit={creer} style={{ marginTop: "16px" }}>
-          <div className="field">
-            <label>{t("Nom de la connexion")}</label>
-            <input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder={t("ex: ChatGPT de Marie")} maxLength={60} />
-          </div>
-          <label className="abo-case" style={{ margin: "8px 0 12px" }}>
-            <input type="checkbox" checked={ecriture} onChange={(e) => setEcriture(e.target.checked)} />
-            {t("Permettre de créer des brouillons d'horaire (jamais de publication)")}
-          </label>
-          <button type="submit" className="submit-btn" disabled={occupe || !nom.trim()}>
-            {occupe ? "..." : t("Créer une connexion")}
-          </button>
-        </form>
-
         {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
+
+        <div style={{ marginTop: "18px" }}>
+          <button type="button" className="outils-support-toggle" aria-expanded={avance} onClick={() => setAvance((v) => !v)}>
+            {t("Avancé : clé d'accès manuelle")}
+            <span className={`param-nav-fleche${avance ? " ouvert" : ""}`}>
+              <IconFlecheBas className="gozly-icon-inline" />
+            </span>
+          </button>
+          {avance && (
+            <div className="outils-support-corps">
+              <p className="section-hint">
+                {t("Pour un assistant qui ne gère pas le bouton « Autoriser » : une clé à coller dans le connecteur, en en-tête « Authorization: Bearer ta-clé ». Si l'assistant ne permet pas d'en-tête, ajoute la clé à la fin de l'adresse : …/api/ia/mcp?cle=ta-clé (moins sûr : une adresse peut se retrouver dans des journaux).")}
+              </p>
+
+              {nouvelleCle && (
+                <div className="abo-carte" style={{ marginBottom: "12px" }}>
+                  <strong>{t("Ta clé (affichée une seule fois)")}</strong>
+                  <code style={{ wordBreak: "break-all", userSelect: "all" }}>{nouvelleCle}</code>
+                  <div className="abo-actions">
+                    <button type="button" className="admin-icon-btn" onClick={() => copier(nouvelleCle, "cle")}>
+                      {copie === "cle" ? t("Copié") : t("Copier la clé")}
+                    </button>
+                    <button type="button" className="admin-icon-btn" onClick={() => setNouvelleCle(null)}>
+                      {t("J'ai copié ma clé")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={creer}>
+                <div className="field">
+                  <label>{t("Nom de la clé")}</label>
+                  <input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder={t("ex: ChatGPT de Marie")} maxLength={60} />
+                </div>
+                <label className="abo-case" style={{ margin: "8px 0 12px" }}>
+                  <input type="checkbox" checked={ecriture} onChange={(e) => setEcriture(e.target.checked)} />
+                  {t("Permettre de créer des brouillons d'horaire (jamais de publication)")}
+                </label>
+                <button type="submit" className="submit-btn" disabled={occupe || !nom.trim()}>
+                  {occupe ? "..." : t("Créer une clé")}
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
