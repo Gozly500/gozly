@@ -68,7 +68,8 @@ export default function DemandesEmploye() {
     setOnglet((cur) => (cur === "conges" && !congesEstActif && echangesEstActif ? "echanges" : cur === "echanges" && !echangesEstActif && congesEstActif ? "conges" : cur));
     setConges((await congesRes.json()).demandes || []);
     setEchanges((await echangesRes.json()).demandes || []);
-    setCollegues((await colleguesRes.json()).collegues || []);
+    // `tous` = tous les collègues (l'autre liste, `collegues`, exclut ceux avec qui on a déjà une discussion : pour « Démarrer avec... »).
+    setCollegues(((await colleguesRes.json()).tous || []).map((c) => ({ id: c.id, nom: c.nom })));
     setMesQuarts((await quartsRes.json()).quarts || []);
     setLoading(false);
   }

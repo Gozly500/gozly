@@ -12,8 +12,9 @@ export async function GET(request) {
   const service = getServiceClient();
   const { bloques } = await chargerRestrictions(service, employe.id);
 
-  // Exclut les collègues avec qui une conversation directe existe déjà -
-  // "Démarrer avec..." ne doit proposer que des gens pas encore contactés.
+  // « Déjà en discussion » = une conversation DIRECTE visible avec cette personne. Avant, on comptait toutes les conversations :
+  // quelqu'un qui partageait seulement un GROUPE avec moi (ou une conversation directe supprimée « pour moi ») disparaissait de
+  // « Démarrer avec... » et de la recherche, des deux côtés, sans qu'aucune discussion directe n'existe.
   const { data: mesParticipations } = await service
     .from("conversation_participants")
     .select("conversation_id")
@@ -22,13 +23,24 @@ export async function GET(request) {
 
   let dejaEnDiscussionAvec = new Set();
   if (conversationIds.length > 0) {
-    const { data: autresParticipants } = await service
-      .from("conversation_participants")
-      .select("conversation_id, employe_id")
-      .in("conversation_id", conversationIds);
-    dejaEnDiscussionAvec = new Set(
-      (autresParticipants || []).filter((p) => p.employe_id && p.employe_id !== employe.id).map((p) => p.employe_id)
-    );
+    const { data: conversations } = await service.from("conversations").select("id, type").in("id", conversationIds);
+    const directes = (conversations || []).filter((c) => c.type === "directe").map((c) => c.id);
+
+    // Conversations supprimées « pour moi » (supabase/chat_masquer.sql) : elles n'apparaissent plus dans ma liste, donc la personne
+    // doit pouvoir être recontactée (la conversation existante est alors rouverte, voir getOrCreateDirecteConversation).
+    const { data: masquees, error: erreurMasquees } = await service.from("conversations_masquees").select("conversation_id").eq("employe_id", employe.id);
+    const cachees = new Set(erreurMasquees ? [] : (masquees || []).map((m) => m.conversation_id));
+    const visibles = directes.filter((id) => !cachees.has(id));
+
+    if (visibles.length > 0) {
+      const { data: autresParticipants } = await service
+        .from("conversation_participants")
+        .select("conversation_id, employe_id")
+        .in("conversation_id", visibles);
+      dejaEnDiscussionAvec = new Set(
+        (autresParticipants || []).filter((p) => p.employe_id && p.employe_id !== employe.id).map((p) => p.employe_id)
+      );
+    }
   }
 
   const { data: tousLesCollegues } = await service
