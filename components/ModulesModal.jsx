@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES, limiteModules } from "@/lib/modules";
+import { useForfaits } from "@/lib/useForfaits";
 import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { IconCrochet } from "@/components/icons/Pictogrammes";
 import BetaBadge from "@/components/BetaBadge";
@@ -60,6 +61,7 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
     setDemandeVitrineStatut(error ? "erreur" : "envoye");
   }
 
+  useForfaits();
   const limite = limiteModules(forfait);
   const compte = actifs.length;
 

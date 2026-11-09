@@ -15,9 +15,6 @@ export async function POST(request) {
 
   const { forfait, periode: periodeDemandee } = await request.json().catch(() => ({}));
   const periode = PERIODES.includes(periodeDemandee) ? periodeDemandee : "mensuel";
-  if (!FORFAITS_VALIDES.includes(forfait)) {
-    return NextResponse.json({ error: "Forfait invalide." }, { status: 400 });
-  }
 
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "");
@@ -26,6 +23,20 @@ export async function POST(request) {
   }
 
   const supabase = getSupabaseForToken(token);
+
+  // Forfait offert + clé de recherche Stripe de la période, lus dans la base (Admin > Abonnements). Si la table n'existe pas
+  // encore (SQL pas exécuté), on retombe sur les noms d'origine (opale / opale_annuel...).
+  let cleRecherche = null;
+  const { data: forfaitDb, error: erreurForfaits } = await supabase.from("forfaits").select("id, publique, actif").eq("id", forfait || "").maybeSingle();
+  if (erreurForfaits) {
+    if (!FORFAITS_VALIDES.includes(forfait)) return NextResponse.json({ error: "Forfait invalide." }, { status: 400 });
+    cleRecherche = cleStripe(forfait, periode);
+  } else {
+    if (!forfaitDb || !forfaitDb.publique || !forfaitDb.actif) return NextResponse.json({ error: "Forfait invalide." }, { status: 400 });
+    const { data: cleDb } = await supabase.from("forfaits_cles").select("cle").eq("forfait_id", forfait).eq("periode", periode).limit(1).maybeSingle();
+    cleRecherche = cleDb?.cle || cleStripe(forfait, periode);
+  }
+
   const { user, profil } = await getUserProfil(supabase, token);
 
   if (!user) {
@@ -36,7 +47,7 @@ export async function POST(request) {
   }
 
   try {
-    const prices = await stripe.prices.list({ lookup_keys: [cleStripe(forfait, periode)], active: true, limit: 1 });
+    const prices = await stripe.prices.list({ lookup_keys: [cleRecherche], active: true, limit: 1 });
     const price = prices.data[0];
     if (!price) {
       return NextResponse.json({ error: "Ce forfait n'est pas disponible pour le moment." }, { status: 404 });

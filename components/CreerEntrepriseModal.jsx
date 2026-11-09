@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { setEntrepriseSelectionnee } from "@/lib/entreprise";
 import { limiteEntreprises } from "@/lib/modules";
+import { rechargerForfaits } from "@/lib/useForfaits";
 import { useT } from "@/components/LangProvider";
 
 // Un même compte peut posséder plusieurs entreprises distinctes (ex: deux
@@ -41,6 +42,7 @@ export default function CreerEntrepriseModal({ onClose }) {
       supabase.from("membres").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("role", "proprietaire"),
     ]);
 
+    await rechargerForfaits(); // limites à jour (forfaits modifiés dans l'admin)
     setLimite(limiteEntreprises(profil?.forfait));
     setNbActuel(count || 0);
     setChargement(false);

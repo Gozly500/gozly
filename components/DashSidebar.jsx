@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useGardeMfa } from "@/lib/useGardeMfa";
 import { supabase } from "@/lib/supabaseClient";
 import { MODULES, limiteModules } from "@/lib/modules";
+import { useForfaits } from "@/lib/useForfaits";
 import ModulesModal from "@/components/ModulesModal";
 import BetaBadge from "@/components/BetaBadge";
 import ForfaitBloqueModal from "@/components/ForfaitBloqueModal";
@@ -39,6 +40,7 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
   const { t } = useT();
   const router = useRouter();
   useGardeMfa();
+  useForfaits();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [actifs, setActifs] = useState([]);
   const [forfait, setForfait] = useState(null);

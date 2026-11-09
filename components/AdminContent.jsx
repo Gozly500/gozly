@@ -10,10 +10,12 @@ import DiscordSection from "@/components/admin/DiscordSection";
 import SupportSection from "@/components/admin/SupportSection";
 import AnnoncesSiteSection from "@/components/admin/AnnoncesSiteSection";
 import PopupsAppSection from "@/components/admin/PopupsAppSection";
-import { IconBouclier, IconDiscord, IconFlecheGauche, IconMegaphone, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
+import AbonnementsSection from "@/components/admin/AbonnementsSection";
+import { IconBouclier, IconCarte, IconDiscord, IconFlecheGauche, IconMegaphone, IconMessage, IconProfils } from "@/components/icons/Pictogrammes";
 
 const TABS = [
   { id: "clients", label: "Clients", Icone: IconProfils },
+  { id: "abonnements", label: "Abonnements", Icone: IconCarte },
   { id: "support", label: "Support", Icone: IconMessage },
   { id: "annonces", label: "Annonces", Icone: IconMegaphone },
   { id: "discord", label: "Discord", Icone: IconDiscord },
@@ -174,6 +176,7 @@ export default function AdminContent() {
 
       <div className="settings-panel">
         {activeTab === "clients" && <ClientsSection />}
+        {activeTab === "abonnements" && <AbonnementsSection />}
         {activeTab === "support" && <SupportSection sous={sous} />}
         {activeTab === "annonces" && (sous === "popups" ? <PopupsAppSection /> : <AnnoncesSiteSection />)}
         {activeTab === "discord" && <DiscordSection sous={sous} />}

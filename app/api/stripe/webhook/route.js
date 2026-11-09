@@ -44,6 +44,13 @@ export async function POST(request) {
     if (error) console.error("Échec de synchronisation du compte:", error.message);
   }
 
+  // Forfait d'une clé de recherche Stripe : table forfaits_cles (Admin > Abonnements), sinon les noms d'origine.
+  async function forfaitDeLaCle(cle) {
+    if (!cle) return null;
+    const { data } = await supabase.from("forfaits_cles").select("forfait_id").eq("cle", cle).maybeSingle();
+    return data?.forfait_id || forfaitDepuisCle(cle) || null;
+  }
+
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;
@@ -59,7 +66,7 @@ export async function POST(request) {
     case "customer.subscription.updated": {
       const subscription = event.data.object;
       const price = subscription.items.data[0]?.price;
-      const forfait = forfaitDepuisCle(price?.lookup_key) || null; // « onyx » ou « onyx_annuel » -> onyx
+      const forfait = await forfaitDeLaCle(price?.lookup_key);
 
       if (subscription.status === "active" || subscription.status === "trialing") {
         if (forfait) {

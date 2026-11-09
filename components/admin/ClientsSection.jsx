@@ -9,6 +9,7 @@ import FactureCompte from "@/components/admin/FactureCompte";
 import InfoTooltip from "@/components/InfoTooltip";
 import { geocoderAdresse } from "@/lib/geocode";
 import { limiteEntreprises } from "@/lib/modules";
+import { useForfaits, rechargerForfaits } from "@/lib/useForfaits";
 import { IconAttention, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 const FORFAITS = [
@@ -18,6 +19,88 @@ const FORFAITS = [
   { id: "crystal", label: "Crystal" },
   { id: "pilote", label: "Pilote (interne, gratuit)" },
 ];
+
+// Options du menu des forfaits : la table `forfaits` (sans les personnalisés des AUTRES clients), sinon la liste d'origine.
+function optionsForfaits(forfaitsDb, forfaitDuCompte) {
+  if (!forfaitsDb) return FORFAITS;
+  return [
+    { id: "", label: "Aucun forfait" },
+    ...forfaitsDb
+      .filter((f) => (!f.personnalise && f.actif) || f.id === forfaitDuCompte)
+      .map((f) => ({ id: f.id, label: f.personnalise ? `${f.label} (personnalisé)` : f.id === "pilote" ? "Pilote (interne, gratuit)" : f.label })),
+  ];
+}
+
+// Formulaire « Abonnement personnalisé » d'un compte : nom + limites (vide = illimité). Crée un forfait réservé à ce compte et le lui assigne.
+function AbonnementPersonnalise({ profilId, onCree }) {
+  const [ouvert, setOuvert] = useState(false);
+  const [label, setLabel] = useState("");
+  const [modules, setModules] = useState("");
+  const [entreprises, setEntreprises] = useState("");
+  const [occupe, setOccupe] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  async function creer() {
+    setOccupe(true);
+    setMsg("");
+    const { ok, data } = await authFetch("/api/admin/forfaits", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "creerPersonnalise",
+        profilId,
+        label,
+        limite_modules: modules.trim() === "" ? null : Number(modules),
+        limite_entreprises: entreprises.trim() === "" ? null : Number(entreprises),
+      }),
+    });
+    setOccupe(false);
+    if (!ok) {
+      setMsg(data.error || "Échec");
+      return;
+    }
+    setOuvert(false);
+    setLabel("");
+    setModules("");
+    setEntreprises("");
+    rechargerForfaits();
+    onCree();
+  }
+
+  if (!ouvert) {
+    return (
+      <button type="button" className="admin-icon-btn" style={{ marginTop: "8px" }} onClick={() => setOuvert(true)}>
+        + Abonnement personnalisé
+      </button>
+    );
+  }
+  return (
+    <div className="abo-carte" style={{ marginTop: "10px", minWidth: "260px" }}>
+      <div className="field" style={{ marginBottom: 0 }}>
+        <label>Nom</label>
+        <input type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="ex: Sur mesure - Restaurant X" />
+      </div>
+      <div className="abo-champs">
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label>Modules (vide = illimité)</label>
+          <input type="number" min="0" value={modules} onChange={(e) => setModules(e.target.value)} placeholder="illimité" />
+        </div>
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label>Entreprises (vide = illimité)</label>
+          <input type="number" min="0" value={entreprises} onChange={(e) => setEntreprises(e.target.value)} placeholder="illimité" />
+        </div>
+      </div>
+      {msg && <p className="settings-msg err">{msg}</p>}
+      <div className="abo-actions">
+        <button type="button" className="submit-btn" disabled={occupe || !label.trim()} onClick={creer}>
+          {occupe ? "..." : "Créer et assigner"}
+        </button>
+        <button type="button" className="admin-icon-btn" disabled={occupe} onClick={() => setOuvert(false)}>
+          Annuler
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // Double authentification du compte : état + bouton pour la désactiver (le client a perdu l'accès à son app d'authentification).
 function DoubleAuthAdmin({ userId }) {
@@ -83,7 +166,7 @@ async function authFetch(path, options = {}) {
 // SEULE : il appartient au compte, voir supabase/forfait_par_compte.sql) et
 // pour les entreprises orphelines (sans aucun membre, donc sans compte pour
 // porter un forfait - "forfaitEditable" y est alors modifiable directement).
-function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange, onDeleted, onSaved }) {
+function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange, onDeleted, onSaved, forfaits = FORFAITS }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
@@ -168,14 +251,14 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
           {forfaitEditable ? (
             <div style={{ minWidth: "200px" }}>
               <SimpleSelect
-                options={FORFAITS}
+                options={forfaits}
                 value={entreprise.forfait || ""}
                 onChange={(id) => onForfaitChange(entreprise.id, id)}
               />
             </div>
           ) : (
             <span className="admin-status-pill" title="Le forfait appartient au compte, pas à cette entreprise - voir l'onglet du compte.">
-              {FORFAITS.find((f) => f.id === entreprise.forfait)?.label || "Aucun forfait"}
+              {forfaits.find((f) => f.id === entreprise.forfait)?.label || "Aucun forfait"}
             </span>
           )}
 
@@ -295,6 +378,8 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
 }
 
 export default function ClientsSection() {
+  useForfaits();
+  const [forfaitsDb, setForfaitsDb] = useState(null); // null tant que la table n'est pas lue (ou absente) : liste d'origine
   const [loading, setLoading] = useState(true);
   const [comptes, setComptes] = useState([]);
   const [entreprisesOrphelines, setEntreprisesOrphelines] = useState([]);
@@ -312,7 +397,19 @@ export default function ClientsSection() {
 
   useEffect(() => {
     load();
+    supabase
+      .from("forfaits")
+      .select("*")
+      .order("ordre")
+      .then(({ data, error }) => {
+        if (!error && data) setForfaitsDb(data);
+      });
   }, []);
+
+  async function rechargerListeForfaits() {
+    const { data, error } = await supabase.from("forfaits").select("*").order("ordre");
+    if (!error && data) setForfaitsDb(data);
+  }
 
   async function load() {
     setLoading(true);
@@ -440,7 +537,7 @@ export default function ClientsSection() {
         <p className="panel-hint">
           {compteOuvert.email} · {compteOuvert.entreprises.length} entreprise
           {compteOuvert.entreprises.length > 1 ? "s" : ""} · Forfait :{" "}
-          {FORFAITS.find((f) => f.id === compteOuvert.profil?.forfait)?.label || "Aucun"} (change dans « Retour aux
+          {optionsForfaits(forfaitsDb, compteOuvert.profil?.forfait).find((f) => f.id === compteOuvert.profil?.forfait)?.label || "Aucun"} (change dans « Retour aux
           comptes »)
         </p>
         {error && <p className="settings-msg err">{error}</p>}
@@ -452,6 +549,7 @@ export default function ClientsSection() {
               entreprise={entreprise}
               profilId={compteOuvert.profil?.id}
               forfaitEditable={false}
+              forfaits={optionsForfaits(forfaitsDb, compteOuvert.profil?.forfait)}
               onSaved={load}
               onDeleted={load}
             />
@@ -493,10 +591,19 @@ export default function ClientsSection() {
                 {compte.profil && (
                   <div style={{ minWidth: "190px" }}>
                     <SimpleSelect
-                      options={FORFAITS}
+                      options={optionsForfaits(forfaitsDb, compte.profil.forfait)}
                       value={compte.profil.forfait || ""}
                       onChange={(id) => handleForfaitChangeCompte(compte.profil.id, id)}
                     />
+                    {forfaitsDb && (
+                      <AbonnementPersonnalise
+                        profilId={compte.profil.id}
+                        onCree={() => {
+                          rechargerListeForfaits();
+                          load();
+                        }}
+                      />
+                    )}
                     {compte.profil.stripe_subscription_id && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", fontSize: "11.5px", color: "var(--text-dim)" }}>
                         <InfoTooltip symbole="!" alerte>
@@ -670,6 +777,7 @@ export default function ClientsSection() {
                 entreprise={entreprise}
                 profilId={null}
                 forfaitEditable
+                forfaits={optionsForfaits(forfaitsDb, entreprise.forfait)}
                 onForfaitChange={handleForfaitChangeOrphelin}
                 onSaved={load}
                 onDeleted={load}

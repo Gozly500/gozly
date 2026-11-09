@@ -3943,3 +3943,21 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .periode-option.actif{background:#3d3dcc;color:#fff;}
 .settings-section .periode-toggle{margin:0;}
 .price-annuel{margin:-6px 0 12px;font-size:13px;color:var(--text-dim);}
+/* Admin > Abonnements */
+.abo-carte{margin-top:16px;padding:18px 20px;border:1px solid rgba(var(--w),0.1);border-radius:16px;background:rgba(var(--w),0.03);display:flex;flex-direction:column;gap:14px;}
+.abo-tete{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:16px;}
+.abo-id{font-size:12px;color:var(--text-dim);}
+.abo-comptes{margin-left:auto;font-size:13px;color:var(--text-dim);}
+.abo-champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+.abo-champs .field{margin-bottom:0;}
+.abo-interrupteurs{display:flex;gap:22px;flex-wrap:wrap;}
+.abo-case{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;}
+.abo-case input{width:auto;margin:0;}
+.abo-cles-titre{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px;}
+.abo-cle{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 0;border-top:1px solid rgba(var(--w),0.07);}
+.abo-periode{font-size:12px;color:var(--text-dim);}
+.abo-prix{flex:1;font-size:13px;}
+.abo-prix.manquant{color:#ffb4b4;}
+.abo-cle-ajout{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;}
+.abo-cle-ajout input{flex:1;min-width:160px;margin:0;}
+.abo-actions{display:flex;gap:10px;flex-wrap:wrap;}

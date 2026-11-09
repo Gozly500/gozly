@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { MODULES, LABELS_FORFAIT } from "@/lib/modules";
+import { MODULES, labelForfait } from "@/lib/modules";
+import { useForfaits } from "@/lib/useForfaits";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { IconeModule } from "@/components/icons/iconesModules";
 import { useT } from "@/components/LangProvider";
@@ -17,11 +18,12 @@ import { useT } from "@/components/LangProvider";
 // de forfait.
 export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limite, onChange }) {
   const { t } = useT();
+  useForfaits();
   const [busyId, setBusyId] = useState(null);
 
   const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
   const enTrop = actifs.length - limite;
-  const forfaitLabel = forfait ? LABELS_FORFAIT[forfait] || forfait : t("aucun forfait actif");
+  const forfaitLabel = forfait ? labelForfait(forfait) : t("aucun forfait actif");
 
   async function desactiver(moduleId) {
     setBusyId(moduleId);
