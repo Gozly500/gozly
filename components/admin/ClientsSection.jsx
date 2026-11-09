@@ -256,11 +256,7 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
                 onChange={(id) => onForfaitChange(entreprise.id, id)}
               />
             </div>
-          ) : (
-            <span className="admin-status-pill" title="Le forfait appartient au compte, pas à cette entreprise - voir l'onglet du compte.">
-              {forfaits.find((f) => f.id === entreprise.forfait)?.label || "Aucun forfait"}
-            </span>
-          )}
+          ) : null}
 
           <button className="admin-icon-btn" onClick={() => setEditing((v) => !v)}>
             {editing ? "Fermer" : "Modifier"}
@@ -522,254 +518,232 @@ export default function ClientsSection() {
       )
     : comptes;
 
+  const labelForfait = (forfait) => optionsForfaits(forfaitsDb, forfait).find((f) => f.id === (forfait || ""))?.label || "Aucun forfait";
+
+  function ouvrirCompte(compte) {
+    startEditCompte(compte); // le formulaire de contact de la page client est prérempli
+    setFactureCompteId(null);
+    setError(null);
+    setCompteOuvertId(compte.userId);
+  }
+
+  // ---------- Page d'un client : tout ce qui le concerne au même endroit ----------
   if (compteOuvert) {
+    const c = compteOuvert;
+    const nbEntreprises = c.entreprises.length;
+    const limite = limiteEntreprises(c.profil?.forfait);
     return (
       <div>
-        <button
-          type="button"
-          className="admin-icon-btn"
-          style={{ marginBottom: "14px" }}
-          onClick={() => setCompteOuvertId(null)}
-        >
-          <IconFlecheGauche className="gozly-icon" /> Retour aux comptes
+        <button type="button" className="admin-icon-btn" style={{ marginBottom: "14px" }} onClick={() => setCompteOuvertId(null)}>
+          <IconFlecheGauche className="gozly-icon" /> Retour aux clients
         </button>
-        <h2>{compteOuvert.profil?.full_name || compteOuvert.email || "Compte"}</h2>
-        <p className="panel-hint">
-          {compteOuvert.email} · {compteOuvert.entreprises.length} entreprise
-          {compteOuvert.entreprises.length > 1 ? "s" : ""} · Forfait :{" "}
-          {optionsForfaits(forfaitsDb, compteOuvert.profil?.forfait).find((f) => f.id === compteOuvert.profil?.forfait)?.label || "Aucun"} (change dans « Retour aux
-          comptes »)
-        </p>
+
+        <div className="client-entete">
+          <div>
+            <h2 style={{ marginBottom: "2px" }}>{c.profil?.full_name || c.email || "Compte"}</h2>
+            <p className="panel-hint" style={{ margin: 0 }}>{c.email || "Courriel inconnu"}</p>
+          </div>
+          <div className="client-entete-pastilles">
+            <span className="admin-status-pill">{labelForfait(c.profil?.forfait)}</span>
+            {c.profil?.desactive && <span className="admin-status-pill inactive">Compte désactivé</span>}
+          </div>
+        </div>
+
         {error && <p className="settings-msg err">{error}</p>}
 
-        <div className="admin-list">
-          {compteOuvert.entreprises.map(({ entreprise }) => (
-            <EntrepriseRow
-              key={entreprise.id}
-              entreprise={entreprise}
-              profilId={compteOuvert.profil?.id}
-              forfaitEditable={false}
-              forfaits={optionsForfaits(forfaitsDb, compteOuvert.profil?.forfait)}
-              onSaved={load}
-              onDeleted={load}
-            />
-          ))}
+        <div className="client-cartes">
+          <section className="abo-carte">
+            <strong>Contact</strong>
+            <div className="field-row">
+              <div className="field">
+                <label>Nom du client</label>
+                <input type="text" value={editForm.fullName ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, fullName: e.target.value }))} />
+              </div>
+              <div className="field">
+                <label>Téléphone personnel</label>
+                <input type="tel" value={editForm.telephonePerso ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, telephonePerso: e.target.value }))} />
+              </div>
+            </div>
+            <div className="field" style={{ marginBottom: 0 }}>
+              <label>Courriel de connexion</label>
+              <input type="email" value={editForm.email ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} disabled={!c.profil} />
+            </div>
+            <div className="abo-actions">
+              <button className="submit-btn" onClick={() => handleSaveCompte(c)} disabled={saving}>
+                {saving ? "Enregistrement..." : "Enregistrer le contact"}
+              </button>
+            </div>
+          </section>
+
+          {c.profil && (
+            <section className="abo-carte">
+              <strong>Abonnement</strong>
+              <div style={{ maxWidth: "280px" }}>
+                <SimpleSelect
+                  options={optionsForfaits(forfaitsDb, c.profil.forfait)}
+                  value={c.profil.forfait || ""}
+                  onChange={(id) => handleForfaitChangeCompte(c.profil.id, id)}
+                />
+              </div>
+              <p className="section-hint" style={{ margin: 0 }}>
+                {nbEntreprises}/{limite === Infinity ? "∞" : limite} entreprise{nbEntreprises > 1 ? "s" : ""} utilisée{nbEntreprises > 1 ? "s" : ""}
+              </p>
+              {c.profil.stripe_subscription_id && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12.5px", color: "var(--text-dim)" }}>
+                  <InfoTooltip symbole="!" alerte>
+                    Si le forfait est changé depuis ici, il reviendra à celui payé au prochain paiement (renouvellement, etc.). Pour un changement durable,
+                    modifie l'abonnement dans Stripe.
+                  </InfoTooltip>
+                  Abonnement Stripe actif
+                </div>
+              )}
+              {forfaitsDb && (
+                <div>
+                  <AbonnementPersonnalise
+                    profilId={c.profil.id}
+                    onCree={() => {
+                      rechargerListeForfaits();
+                      load();
+                    }}
+                  />
+                </div>
+              )}
+            </section>
+          )}
+
+          <section className="abo-carte">
+            <strong>Entreprises ({nbEntreprises})</strong>
+            <div className="admin-list" style={{ marginTop: 0 }}>
+              {c.entreprises.map(({ entreprise }) => (
+                <EntrepriseRow
+                  key={entreprise.id}
+                  entreprise={entreprise}
+                  profilId={c.profil?.id}
+                  forfaitEditable={false}
+                  forfaits={optionsForfaits(forfaitsDb, c.profil?.forfait)}
+                  onSaved={load}
+                  onDeleted={load}
+                />
+              ))}
+              {nbEntreprises === 0 && <div className="admin-empty">Aucune entreprise.</div>}
+            </div>
+          </section>
+
+          <section className="abo-carte">
+            <strong>Compte</strong>
+            {c.profil ? (
+              <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}>
+                <span className="switch">
+                  <input type="checkbox" checked={!c.profil.desactive} onChange={(e) => handleToggleActif(c.profil.id, !e.target.checked)} />
+                  <span className="switch-track"></span>
+                  <span className="switch-thumb"></span>
+                </span>
+                <span>{c.profil.desactive ? "Compte désactivé" : "Compte actif"}</span>
+              </label>
+            ) : (
+              <span className="admin-status-pill inactive">Profil introuvable</span>
+            )}
+            <div className="abo-actions">
+              {c.profil && (
+                <button className="admin-icon-btn" onClick={() => handleResetPassword(c)}>
+                  Réinitialiser le mot de passe
+                </button>
+              )}
+              {c.profil && (
+                <button className="admin-icon-btn" onClick={() => setFactureCompteId(factureCompteId === c.userId ? null : c.userId)}>
+                  {factureCompteId === c.userId ? "Fermer la facture" : "Créer une facture"}
+                </button>
+              )}
+            </div>
+            {resetResult[c.userId] && (
+              <div className="admin-reset-result">
+                Nouveau mot de passe temporaire : <strong>{resetResult[c.userId]}</strong>
+                <br />
+                Transmets-le au client de vive voix — il ne sera plus affiché une fois cette page quittée.
+              </div>
+            )}
+            {factureCompteId === c.userId && <FactureCompte compte={c} />}
+            {c.profil && <DoubleAuthAdmin userId={c.profil.id} />}
+          </section>
+
+          <section className="abo-carte">
+            <strong>Zone dangereuse</strong>
+            {confirmingDeleteCompte !== c.userId ? (
+              <div className="danger-zone">
+                <div>
+                  <h4>Supprimer ce compte</h4>
+                  <p>Efface le compte de connexion et toutes les entreprises dont il est l'unique membre. Les entreprises partagées avec d'autres membres ne sont pas touchées.</p>
+                </div>
+                <button className="btn-danger" onClick={() => setConfirmingDeleteCompte(c.userId)}>
+                  Supprimer le compte
+                </button>
+              </div>
+            ) : (
+              <div className="danger-zone" style={{ flexDirection: "column", alignItems: "stretch", gap: "12px" }}>
+                <div>
+                  <h4>Confirmer la suppression</h4>
+                  <p>
+                    Tape le courriel du compte (<strong>{c.email}</strong>) pour confirmer. Cette action est irréversible.
+                  </p>
+                </div>
+                <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder={c.email || ""} />
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button className="btn-danger" disabled={deleteConfirmText !== c.email || deleting} onClick={() => handleDeleteCompte(c)}>
+                    {deleting ? "Suppression..." : "Confirmer la suppression définitive"}
+                  </button>
+                  <button
+                    className="admin-icon-btn"
+                    onClick={() => {
+                      setConfirmingDeleteCompte(null);
+                      setDeleteConfirmText("");
+                    }}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     );
   }
 
+  // ---------- Liste : une ligne simple par client, un clic ouvre sa page ----------
   return (
     <div>
       <h2>Clients</h2>
-      <p className="panel-hint">Tous les comptes inscrits sur Gozly ({comptes.length}).</p>
+      <p className="panel-hint">Tous les comptes inscrits sur Gozly ({comptes.length}). Clique sur un client pour voir sa page.</p>
       {error && <p className="settings-msg err">{error}</p>}
 
-      <div className="field" style={{ maxWidth: "320px" }}>
-        <input
-          type="text"
-          value={rechercheClient}
-          onChange={(e) => setRechercheClient(e.target.value)}
-          placeholder="Rechercher un client ou une entreprise..."
-        />
+      <div className="field" style={{ maxWidth: "360px" }}>
+        <input type="text" value={rechercheClient} onChange={(e) => setRechercheClient(e.target.value)} placeholder="Rechercher un client ou une entreprise..." />
       </div>
 
       <div className="admin-list">
         {comptesFiltres.map((compte) => (
-          <div className="admin-row" key={compte.userId} style={{ flexDirection: "column", alignItems: "stretch" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
-              <div className="admin-row-main">
-                <div className="admin-row-title">{compte.profil?.full_name || compte.email || "(sans nom)"}</div>
-                <div className="admin-row-sub">
-                  {compte.email || "Courriel inconnu"} · {compte.entreprises.length}/
-                  {limiteEntreprises(compte.profil?.forfait) === Infinity ? "∞" : limiteEntreprises(compte.profil?.forfait)}{" "}
-                  entreprise{compte.entreprises.length > 1 ? "s" : ""}
-                </div>
-              </div>
-
-              <div className="admin-row-controls">
-                {compte.profil && (
-                  <div style={{ minWidth: "190px" }}>
-                    <SimpleSelect
-                      options={optionsForfaits(forfaitsDb, compte.profil.forfait)}
-                      value={compte.profil.forfait || ""}
-                      onChange={(id) => handleForfaitChangeCompte(compte.profil.id, id)}
-                    />
-                    {forfaitsDb && (
-                      <AbonnementPersonnalise
-                        profilId={compte.profil.id}
-                        onCree={() => {
-                          rechargerListeForfaits();
-                          load();
-                        }}
-                      />
-                    )}
-                    {compte.profil.stripe_subscription_id && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", fontSize: "11.5px", color: "var(--text-dim)" }}>
-                        <InfoTooltip symbole="!" alerte>
-                          Si le forfait est changé depuis ici, il reviendra à celui payé au prochain paiement
-                          (renouvellement, etc.). Pour un changement durable, modifie l'abonnement dans Stripe.
-                        </InfoTooltip>
-                        Abonnement Stripe actif
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {compte.profil ? (
-                  <label className="switch" title={compte.profil.desactive ? "Compte désactivé" : "Compte actif"}>
-                    <input
-                      type="checkbox"
-                      checked={!compte.profil.desactive}
-                      onChange={(e) => handleToggleActif(compte.profil.id, !e.target.checked)}
-                    />
-                    <span className="switch-track"></span>
-                    <span className="switch-thumb"></span>
-                  </label>
-                ) : (
-                  <span className="admin-status-pill inactive">Profil introuvable</span>
-                )}
-
-                <button
-                  className="admin-icon-btn"
-                  onClick={() => (editingCompteId === compte.userId ? setEditingCompteId(null) : startEditCompte(compte))}
-                >
-                  {editingCompteId === compte.userId ? "Fermer" : "Modifier"}
-                </button>
-                {compte.profil && (
-                  <button
-                    className="admin-icon-btn"
-                    onClick={() => setFactureCompteId(factureCompteId === compte.userId ? null : compte.userId)}
-                  >
-                    {factureCompteId === compte.userId ? "Fermer la facture" : "Créer une facture"}
-                  </button>
-                )}
-                <button className="submit-btn" style={{ padding: "8px 18px" }} onClick={() => setCompteOuvertId(compte.userId)}>
-                  Voir les entreprises <IconFlecheDroite className="gozly-icon-inline" />
-                </button>
-              </div>
+          <button type="button" className="admin-row client-ligne" key={compte.userId} onClick={() => ouvrirCompte(compte)}>
+            <div className="admin-row-main">
+              <div className="admin-row-title">{compte.profil?.full_name || compte.email || "(sans nom)"}</div>
+              <div className="admin-row-sub">{compte.email || "Courriel inconnu"}</div>
             </div>
-
-            {factureCompteId === compte.userId && <FactureCompte compte={compte} />}
-
-            {editingCompteId === compte.userId && (
-              <div className="admin-edit-panel">
-                <div className="field-row">
-                  <div className="field">
-                    <label>Nom du client</label>
-                    <input
-                      type="text"
-                      value={editForm.fullName}
-                      onChange={(e) => setEditForm((f) => ({ ...f, fullName: e.target.value }))}
-                    />
-                  </div>
-                  <div className="field">
-                    <label>Téléphone personnel</label>
-                    <input
-                      type="tel"
-                      value={editForm.telephonePerso}
-                      onChange={(e) => setEditForm((f) => ({ ...f, telephonePerso: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="field">
-                  <label>Courriel de connexion</label>
-                  <input
-                    type="email"
-                    value={editForm.email}
-                    onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                    disabled={!compte.profil}
-                  />
-                </div>
-
-                <div className="admin-edit-actions">
-                  <button className="submit-btn" onClick={() => handleSaveCompte(compte)} disabled={saving}>
-                    {saving ? "Enregistrement..." : "Enregistrer"}
-                  </button>
-                  {compte.profil && (
-                    <button className="admin-icon-btn" onClick={() => handleResetPassword(compte)}>
-                      Réinitialiser le mot de passe
-                    </button>
-                  )}
-                </div>
-
-                {compte.profil && <DoubleAuthAdmin userId={compte.profil.id} />}
-
-                {resetResult[compte.userId] && (
-                  <div className="admin-reset-result">
-                    Nouveau mot de passe temporaire : <strong>{resetResult[compte.userId]}</strong>
-                    <br />
-                    Transmets-le au client de vive voix — il ne sera plus affiché une fois cette page quittée.
-                  </div>
-                )}
-
-                <div className="settings-divider">Zone dangereuse</div>
-
-                {confirmingDeleteCompte !== compte.userId ? (
-                  <div className="danger-zone">
-                    <div>
-                      <h4>Supprimer ce compte</h4>
-                      <p>
-                        Efface le compte de connexion et toutes les entreprises dont il est l'unique membre. Les
-                        entreprises partagées avec d'autres membres ne sont pas touchées.
-                      </p>
-                    </div>
-                    <button className="btn-danger" onClick={() => setConfirmingDeleteCompte(compte.userId)}>
-                      Supprimer le compte
-                    </button>
-                  </div>
-                ) : (
-                  <div className="danger-zone" style={{ flexDirection: "column", alignItems: "stretch", gap: "12px" }}>
-                    <div>
-                      <h4>Confirmer la suppression</h4>
-                      <p>
-                        Tape le courriel du compte (<strong>{compte.email}</strong>) pour confirmer. Cette action est
-                        irréversible.
-                      </p>
-                    </div>
-                    <input
-                      type="text"
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder={compte.email || ""}
-                    />
-                    <div style={{ display: "flex", gap: "10px" }}>
-                      <button
-                        className="btn-danger"
-                        disabled={deleteConfirmText !== compte.email || deleting}
-                        onClick={() => handleDeleteCompte(compte)}
-                      >
-                        {deleting ? "Suppression..." : "Confirmer la suppression définitive"}
-                      </button>
-                      <button
-                        className="admin-icon-btn"
-                        onClick={() => {
-                          setConfirmingDeleteCompte(null);
-                          setDeleteConfirmText("");
-                        }}
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+            <div className="client-ligne-meta">
+              {compte.profil?.desactive && <span className="admin-status-pill inactive">Désactivé</span>}
+              {!compte.profil && <span className="admin-status-pill inactive">Profil introuvable</span>}
+              <span className="admin-status-pill">{labelForfait(compte.profil?.forfait)}</span>
+              <IconFlecheDroite className="gozly-icon-inline" />
+            </div>
+          </button>
         ))}
 
         {comptes.length === 0 && <div className="admin-empty">Aucun client pour l'instant.</div>}
-        {comptes.length > 0 && comptesFiltres.length === 0 && (
-          <div className="admin-empty">Aucun client ne correspond à "{rechercheClient}".</div>
-        )}
+        {comptes.length > 0 && comptesFiltres.length === 0 && <div className="admin-empty">Aucun client ne correspond à "{rechercheClient}".</div>}
       </div>
 
       {entreprisesOrphelines.length > 0 && (
         <>
           <div className="settings-divider">Entreprises sans compte lié</div>
-          <p className="panel-hint">
-            Ne devrait normalement pas arriver - ces entreprises n'ont aucun membre associé.
-          </p>
+          <p className="panel-hint">Ne devrait normalement pas arriver - ces entreprises n'ont aucun membre associé.</p>
           <div className="admin-list">
             {entreprisesOrphelines.map((entreprise) => (
               <EntrepriseRow
