@@ -6,6 +6,7 @@ import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { SERVICES_PAIE } from "@/lib/servicesPaie";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import DiagnosticWixModal from "@/components/inventaire/DiagnosticWixModal";
+import ConnexionsIA from "@/components/settings/ConnexionsIA";
 import { useT } from "@/components/LangProvider";
 
 // Regroupe les intégrations par catégorie pour les retrouver plus
@@ -23,6 +24,8 @@ const SERVICES_STOCKAGE = [
   { id: "google-drive", label: "Google Drive", disponible: true },
 ];
 
+const SERVICES_IA = [{ id: "ia-assistants", label: "Assistants IA (ChatGPT, Claude...)", disponible: true }];
+
 const STOCKAGES = {
   microsoft: { nom: "OneDrive" },
   google: { nom: "Google Drive" },
@@ -32,6 +35,7 @@ const CATEGORIES = [
   { id: "ventes", label: "Ventes & Inventaire", services: SERVICES_VENTES },
   { id: "stockage", label: "Stockage de fichiers", services: SERVICES_STOCKAGE },
   { id: "paie", label: "Paie", services: SERVICES_PAIE },
+  { id: "ia", label: "Intelligence artificielle", services: SERVICES_IA },
 ];
 
 async function authHeaders() {
@@ -538,6 +542,7 @@ export default function IntegrationsSection({ entrepriseId }) {
     if (service.id === "nethris") return <div key={service.id}>{renderNethris()}</div>;
     if (service.id === "onedrive") return <div key={service.id}>{renderStockage("microsoft")}</div>;
     if (service.id === "google-drive") return <div key={service.id}>{renderStockage("google")}</div>;
+    if (service.id === "ia-assistants") return <div key={service.id}><ConnexionsIA entrepriseId={entrepriseId} /></div>;
     return renderBientotDisponible(service);
   }
 

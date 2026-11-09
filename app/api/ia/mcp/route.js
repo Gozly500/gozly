@@ -1,0 +1,81 @@
+import { NextResponse } from "next/server";
+import { getServiceClient } from "@/lib/adminServer";
+import { authentifierCle, appelerOutil, outilsPour } from "@/lib/iaServer";
+
+export const dynamic = "force-dynamic";
+
+// Serveur MCP (Model Context Protocol) de Gozly, en HTTP sans état : un assistant IA (ChatGPT, Claude...) s'y connecte avec
+// la clé générée dans Paramètres > Intégrations > Intelligence artificielle, et peut alors lire l'horaire et créer des
+// BROUILLONS. Il ne peut jamais publier : voir lib/iaServer.js.
+
+const VERSION_PROTOCOLE = "2025-03-26";
+
+const INSTRUCTIONS =
+  "Tu es branché sur une entreprise Gozly. Tu peux lire les employés, l'horaire et les heures pointées. " +
+  "Si ta clé le permet, tu peux créer des quarts en BROUILLON : ils restent invisibles aux employés tant qu'un humain ne les a pas relus et publiés dans Gozly. " +
+  "Tu ne publies jamais rien et tu n'envoies aucune notification. Agis seulement sur demande de la personne qui te parle, " +
+  "vérifie l'horaire existant avant de créer des quarts, et dis clairement à la personne que les quarts créés sont des brouillons à publier.";
+
+function reponse(id, result) {
+  return { jsonrpc: "2.0", id, result };
+}
+
+function erreurRpc(id, code, message) {
+  return { jsonrpc: "2.0", id: id ?? null, error: { code, message } };
+}
+
+async function traiter(service, cle, msg) {
+  const { id, method, params } = msg || {};
+  // Notification (pas d'id) : rien à répondre.
+  if (id === undefined || id === null) return null;
+
+  switch (method) {
+    case "initialize":
+      return reponse(id, {
+        protocolVersion: VERSION_PROTOCOLE,
+        capabilities: { tools: {} },
+        serverInfo: { name: "gozly", version: "1.0.0" },
+        instructions: INSTRUCTIONS,
+      });
+    case "ping":
+      return reponse(id, {});
+    case "tools/list":
+      return reponse(id, { tools: outilsPour(cle) });
+    case "tools/call": {
+      const { contenu, erreur } = await appelerOutil(service, cle, params?.name, params?.arguments);
+      if (erreur) return reponse(id, { content: [{ type: "text", text: erreur }], isError: true });
+      return reponse(id, { content: [{ type: "text", text: JSON.stringify(contenu) }] });
+    }
+    default:
+      return erreurRpc(id, -32601, "Méthode inconnue.");
+  }
+}
+
+export async function POST(request) {
+  const service = getServiceClient();
+  if (!service) return NextResponse.json(erreurRpc(null, -32000, "Service indisponible."), { status: 503 });
+
+  // La clé vient de l'en-tête Authorization (à préférer). Certains assistants ne savent pas envoyer d'en-tête :
+  // on accepte alors ?cle=... dans l'adresse (moins sûr : une adresse peut se retrouver dans des journaux).
+  const entete = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  const jeton = entete || new URL(request.url).searchParams.get("cle") || "";
+
+  const { cle, erreur } = await authentifierCle(service, jeton);
+  if (erreur) return NextResponse.json(erreurRpc(null, -32001, erreur.message), { status: erreur.status });
+
+  const corps = await request.json().catch(() => null);
+  if (!corps) return NextResponse.json(erreurRpc(null, -32700, "JSON invalide."), { status: 400 });
+
+  if (Array.isArray(corps)) {
+    const reponses = (await Promise.all(corps.map((m) => traiter(service, cle, m)))).filter(Boolean);
+    return reponses.length ? NextResponse.json(reponses) : new NextResponse(null, { status: 202 });
+  }
+
+  const rep = await traiter(service, cle, corps);
+  return rep ? NextResponse.json(rep) : new NextResponse(null, { status: 202 });
+}
+
+// Pas de flux serveur -> client : GET n'est pas supporté (les clients MCP le comprennent via le 405).
+export async function GET() {
+  return new NextResponse(null, { status: 405, headers: { Allow: "POST" } });
+}
