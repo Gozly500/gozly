@@ -3970,3 +3970,8 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .ia-niveau{border:0;background:transparent;color:var(--text-dim);font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;cursor:pointer;transition:background .18s,color .18s;}
 .ia-niveau:hover{color:var(--text);}
 .ia-niveau.actif{background:var(--cyan);color:#04142a;font-weight:700;}
+.ia-actions{display:flex;flex-direction:column;gap:10px;margin-top:6px;padding-top:10px;border-top:1px solid rgba(var(--w),0.08);}
+.ia-action{display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-size:14px;}
+.ia-action .switch{margin-top:1px;}
+.ia-action-nom{display:block;font-weight:600;}
+.ia-action.sensible .ia-action-nom::after{content:"  ·  sensible";font-weight:500;font-size:12px;color:#ffb36b;}

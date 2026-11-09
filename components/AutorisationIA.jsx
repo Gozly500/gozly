@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import SimpleSelect from "@/components/SimpleSelect";
-import SelecteurDroitsIA from "@/components/SelecteurDroitsIA";
-import { aAuMoinsUnDroit, DROITS_PAR_DEFAUT } from "@/lib/iaModules";
 
 async function appeler(corps) {
   const { data } = await supabase.auth.getSession();
@@ -26,7 +24,6 @@ export default function AutorisationIA() {
   const [etat, setEtat] = useState("chargement"); // chargement | pret | invalide | aucuneEntreprise | termine
   const [infos, setInfos] = useState(null);
   const [entrepriseId, setEntrepriseId] = useState("");
-  const [droits, setDroits] = useState(DROITS_PAR_DEFAUT);
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState("");
 
@@ -71,7 +68,7 @@ export default function AutorisationIA() {
     setOccupe(true);
     setErreur("");
     const { ok, data } = await appeler(
-      autoriser ? { action: "autoriser", ...params, entrepriseId, droits } : { action: "refuser", ...params }
+      autoriser ? { action: "autoriser", ...params, entrepriseId } : { action: "refuser", ...params }
     );
     if (!ok || !data.redirect) {
       setOccupe(false);
@@ -126,24 +123,22 @@ export default function AutorisationIA() {
         </p>
       )}
 
-      <p style={{ margin: "14px 0 8px" }}>
-        <strong>Choisis ce que l'assistant peut faire, module par module :</strong>
-      </p>
-      <SelecteurDroitsIA droits={droits} onChange={setDroits} />
-
       <div className="abo-carte" style={{ margin: "14px 0" }}>
-        <strong>Dans tous les cas, il ne pourra jamais :</strong>
+        <strong>Ce que l'assistant pourra faire</strong>
+        <p className="section-hint" style={{ margin: 0 }}>
+          Ça dépend des permissions de ton entreprise, que tu règles dans Gozly (Paramètres › Intégrations › Intelligence artificielle › Permissions de l'IA). Tu peux les changer en tout temps, sans reconnecter l'assistant.
+        </p>
         <ul style={{ margin: "6px 0 0 18px" }}>
-          <li>publier un horaire ni envoyer de notification</li>
-          <li>voir les salaires, les NIP ni les coordonnées de tes employés</li>
-          <li>supprimer ce qu'un humain a créé</li>
+          <li>Il n'agit que quand tu le lui demandes dans ton assistant.</li>
+          <li>La publication de l'horaire est désactivée tant que tu ne l'actives pas.</li>
+          <li>Il ne voit jamais les salaires, les NIP ni les coordonnées de tes employés.</li>
         </ul>
       </div>
 
       {erreur && <p className="settings-msg err">{erreur}</p>}
 
       <div className="abo-actions">
-        <button type="button" className="submit-btn" onClick={() => decider(true)} disabled={occupe || !entrepriseId || !aAuMoinsUnDroit(droits)}>
+        <button type="button" className="submit-btn" onClick={() => decider(true)} disabled={occupe || !entrepriseId}>
           {occupe ? "..." : "Autoriser"}
         </button>
         <button type="button" className="admin-icon-btn" onClick={() => decider(false)} disabled={occupe}>

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { genererCle } from "@/lib/iaServer";
-import { aAuMoinsUnDroit, normaliserDroits } from "@/lib/iaModules";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +14,7 @@ export async function POST(request) {
   const token = (request.headers.get("authorization") || "").replace("Bearer ", "");
   if (!token) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { action, entrepriseId, nom, ecriture, cleId, droits: droitsBruts } = await request.json().catch(() => ({}));
+  const { action, entrepriseId, nom, cleId } = await request.json().catch(() => ({}));
 
   const supabase = getSupabaseForToken(token);
   const { user, entreprise } = await getUserEntrepriseParId(supabase, token, entrepriseId);
@@ -38,7 +37,7 @@ export async function POST(request) {
   if (action === "lister") {
     const { data, error } = await service
       .from("ia_cles")
-      .select("id, nom, prefixe, ecriture, derniere_utilisation, revoquee, created_at, oauth, client_nom, refresh_expire_le, droits")
+      .select("id, nom, prefixe, derniere_utilisation, revoquee, created_at, oauth, client_nom, refresh_expire_le")
       .eq("entreprise_id", entreprise.id)
       .eq("revoquee", false)
       .order("created_at", { ascending: false });
@@ -46,7 +45,7 @@ export async function POST(request) {
       // Colonnes OAuth absentes (ia_oauth.sql pas encore exécuté) : on relit sans elles. Table absente : ia_connexions.sql pas exécuté.
       const base = await service
         .from("ia_cles")
-        .select("id, nom, prefixe, ecriture, derniere_utilisation, revoquee, created_at")
+        .select("id, nom, prefixe, derniere_utilisation, revoquee, created_at")
         .eq("entreprise_id", entreprise.id)
         .eq("revoquee", false)
         .order("created_at", { ascending: false });
@@ -65,18 +64,12 @@ export async function POST(request) {
     const { count } = await service.from("ia_cles").select("id", { count: "exact", head: true }).eq("entreprise_id", entreprise.id).eq("revoquee", false).eq("oauth", false);
     if ((count || 0) >= MAX_CLES) return NextResponse.json({ error: `Maximum ${MAX_CLES} connexions actives : révoque-en une d'abord.` }, { status: 400 });
 
-    // Droits par module (sinon l'ancien réglage : horaire en lecture, ou en écriture si la case était cochée).
-    const droits = normaliserDroits(droitsBruts ?? { horaire: ecriture ? "ecriture" : "lecture" });
-    if (!aAuMoinsUnDroit(droits)) return NextResponse.json({ error: "Choisis au moins un module." }, { status: 400 });
-
     const { cle, hash, prefixe } = genererCle();
     const { error } = await service.from("ia_cles").insert({
       entreprise_id: entreprise.id,
       nom: nomPropre,
       prefixe,
       cle_hash: hash,
-      ecriture: droits.horaire === "ecriture",
-      droits,
       cree_par: user.id,
     });
     if (error) {

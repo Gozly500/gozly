@@ -6,16 +6,16 @@ import { CORS, origineDe } from "@/lib/iaOAuth";
 export const dynamic = "force-dynamic";
 
 // Serveur MCP (Model Context Protocol) de Gozly, en HTTP sans état : un assistant IA (ChatGPT, Claude...) s'y connecte avec
-// la clé générée dans Paramètres > Intégrations > Intelligence artificielle, et peut alors lire l'horaire et créer des
-// BROUILLONS. Il ne peut jamais publier : voir lib/iaServer.js.
+// la clé générée dans Paramètres > Intégrations > Intelligence artificielle (ou OAuth). Ce qu'il peut faire dépend des permissions
+// de l'entreprise (ia_reglages) : voir lib/iaServer.js. La publication de l'horaire est désactivée par défaut.
 
 const VERSION_PROTOCOLE = "2025-03-26";
 
 const INSTRUCTIONS =
-  "Tu es branché sur une entreprise Gozly. Les outils offerts dépendent des modules que le propriétaire t'a ouverts (Horaire, Planning, Inventaire, Ventes), en lecture ou en écriture. " +
-  "Tu ne publies jamais rien et tu n'envoies aucune notification. Les quarts d'horaire que tu crées sont des BROUILLONS : invisibles des employés tant qu'un humain ne les a pas relus et publiés dans Gozly. " +
+  "Tu es branché sur une entreprise Gozly. Les outils offerts dépendent des permissions que le propriétaire a réglées dans Gozly (modules ouverts et actions permises). Si un outil manque ou est refusé, dis-le à la personne : elle peut l'activer dans Gozly (Paramètres > Intégrations > Intelligence artificielle > Permissions de l'IA). " +
+  "Agis seulement sur demande de la personne qui te parle, jamais de ton propre chef. Les quarts d'horaire que tu crées sont des BROUILLONS, invisibles des employés. Ne publie l'horaire (publier_horaire, qui notifie les employés) que si la personne te l'a clairement demandé, après lui avoir montré ce qui sera publié. " +
   "Les tâches de Planning n'ont pas de brouillon : elles sont visibles des employés tout de suite, alors confirme avec la personne avant d'en ajouter. " +
-  "Agis seulement sur demande de la personne qui te parle, lis l'existant avant d'écrire pour éviter les doublons, et dis clairement ce qui a été créé et ce qui reste à valider.";
+  "Lis l'existant avant d'écrire pour éviter les doublons, et dis clairement ce qui a été fait.";
 
 function reponse(id, result) {
   return { jsonrpc: "2.0", id, result };

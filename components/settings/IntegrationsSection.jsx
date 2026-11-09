@@ -7,6 +7,7 @@ import { SERVICES_PAIE } from "@/lib/servicesPaie";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import DiagnosticWixModal from "@/components/inventaire/DiagnosticWixModal";
 import ConnexionsIA from "@/components/settings/ConnexionsIA";
+import PermissionsIA from "@/components/settings/PermissionsIA";
 import { useT } from "@/components/LangProvider";
 
 // Regroupe les intégrations par catégorie pour les retrouver plus
@@ -24,7 +25,10 @@ const SERVICES_STOCKAGE = [
   { id: "google-drive", label: "Google Drive", disponible: true },
 ];
 
-const SERVICES_IA = [{ id: "ia-assistants", label: "Assistants IA (ChatGPT, Claude...)", disponible: true }];
+const SERVICES_IA = [
+  { id: "ia-assistants", label: "Assistants IA (ChatGPT, Claude...)", disponible: true },
+  { id: "ia-permissions", label: "Permissions de l'IA", disponible: true },
+];
 
 const STOCKAGES = {
   microsoft: { nom: "OneDrive" },
@@ -543,6 +547,7 @@ export default function IntegrationsSection({ entrepriseId }) {
     if (service.id === "onedrive") return <div key={service.id}>{renderStockage("microsoft")}</div>;
     if (service.id === "google-drive") return <div key={service.id}>{renderStockage("google")}</div>;
     if (service.id === "ia-assistants") return <div key={service.id}><ConnexionsIA entrepriseId={entrepriseId} /></div>;
+    if (service.id === "ia-permissions") return <div key={service.id}><PermissionsIA entrepriseId={entrepriseId} /></div>;
     return renderBientotDisponible(service);
   }
 

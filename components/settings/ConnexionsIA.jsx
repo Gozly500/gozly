@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
-import SelecteurDroitsIA from "@/components/SelecteurDroitsIA";
-import { aAuMoinsUnDroit, DROITS_PAR_DEFAUT, droitsDe, resumeDroits } from "@/lib/iaModules";
 
 async function appeler(corps) {
   const { data } = await supabase.auth.getSession();
@@ -25,13 +23,12 @@ function formatDate(iso) {
 
 // Connexion d'un assistant IA (ChatGPT, Claude...) à l'entreprise. Le plus simple : le client ajoute l'adresse du connecteur dans
 // son assistant et clique « Autoriser » dans la fenêtre Gozly (OAuth). Une clé manuelle reste possible (section « Avancé »).
-// Dans tous les cas, l'IA lit et au plus crée des BROUILLONS : elle ne publie jamais.
+// Ce que l'IA peut faire est réglé dans PermissionsIA (permissions de l'entreprise, valables pour toutes les connexions).
 export default function ConnexionsIA({ entrepriseId }) {
   const { t } = useT();
   const [etat, setEtat] = useState("chargement"); // chargement | pret | refuse | nonConfigure
   const [cles, setCles] = useState([]);
   const [nom, setNom] = useState("");
-  const [droits, setDroits] = useState(DROITS_PAR_DEFAUT);
   const [occupe, setOccupe] = useState(false);
   const [msg, setMsg] = useState(null);
   const [nouvelleCle, setNouvelleCle] = useState(null);
@@ -58,12 +55,11 @@ export default function ConnexionsIA({ entrepriseId }) {
     e.preventDefault();
     setOccupe(true);
     setMsg(null);
-    const { ok, data } = await appeler({ action: "creer", entrepriseId, nom, droits });
+    const { ok, data } = await appeler({ action: "creer", entrepriseId, nom });
     setOccupe(false);
     if (!ok) return setMsg({ type: "err", text: data.error || t("Échec") });
     setNouvelleCle(data.cle);
     setNom("");
-    setDroits(DROITS_PAR_DEFAUT);
     charger();
   }
 
@@ -104,7 +100,7 @@ export default function ConnexionsIA({ entrepriseId }) {
       </div>
       <div className="integration-body">
         <p className="section-hint">
-          {t("Branche l'assistant IA de ton choix à ton entreprise. Il peut lire ton horaire et tes heures pointées, et — si tu le permets — préparer des quarts en brouillon. Il ne publie jamais rien : tu relis et tu publies toi-même.")}
+          {t("Branche l'assistant IA de ton choix à ton entreprise. Ce qu'il peut faire (horaire, planning, inventaire, ventes...) se règle dans « Permissions de l'IA », juste en dessous. Il n'agit que sur ta demande.")}
         </p>
 
         <div className="abo-carte" style={{ marginTop: "12px" }}>
@@ -112,7 +108,7 @@ export default function ConnexionsIA({ entrepriseId }) {
           <ol style={{ margin: "0 0 0 18px", display: "grid", gap: "4px" }}>
             <li>{t("Copie l'adresse ci-dessous.")}</li>
             <li>{t("Dans ton assistant (ChatGPT, Claude...), ajoute un connecteur personnalisé et colle l'adresse.")}</li>
-            <li>{t("Une fenêtre Gozly s'ouvre : choisis ce que l'assistant peut faire et clique « Autoriser ».")}</li>
+            <li>{t("Une fenêtre Gozly s'ouvre : clique « Autoriser ».")}</li>
           </ol>
           <code style={{ wordBreak: "break-all", userSelect: "all" }}>{adresse}</code>
           <div className="abo-actions">
@@ -130,11 +126,6 @@ export default function ConnexionsIA({ entrepriseId }) {
                 <div className="abo-tete">
                   <strong>{c.oauth ? c.client_nom || c.nom : c.nom}</strong>
                   {c.oauth ? <span className="admin-status-pill">{t("Autorisée")}</span> : <code className="abo-id">{c.prefixe}…</code>}
-                  {resumeDroits(droitsDe(c)).map((d) => (
-                    <span key={d.id} className="admin-status-pill">
-                      {t(d.label)} : {d.niveau === "ecriture" ? t("écriture") : t("lecture")}
-                    </span>
-                  ))}
                 </div>
                 <div className="section-hint" style={{ margin: 0 }}>
                   {c.derniere_utilisation ? t("Dernière utilisation : {date}", { date: formatDate(c.derniere_utilisation) }) : t("Jamais utilisée")}
@@ -199,10 +190,7 @@ export default function ConnexionsIA({ entrepriseId }) {
                   <label>{t("Nom de la clé")}</label>
                   <input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder={t("ex: ChatGPT de Marie")} maxLength={60} />
                 </div>
-                <div style={{ margin: "8px 0 12px" }}>
-                  <SelecteurDroitsIA droits={droits} onChange={setDroits} />
-                </div>
-                <button type="submit" className="submit-btn" disabled={occupe || !nom.trim() || !aAuMoinsUnDroit(droits)}>
+                <button type="submit" className="submit-btn" disabled={occupe || !nom.trim()}>
                   {occupe ? "..." : t("Créer une clé")}
                 </button>
               </form>
