@@ -9,7 +9,6 @@ import EmplacementsSection from "@/components/entreprise/EmplacementsSection";
 import PersonnalisationSection, { MODULES_PERSONNALISATION } from "@/components/entreprise/PersonnalisationSection";
 import IntegrationsSection from "@/components/settings/IntegrationsSection";
 import NavIntegrations from "@/components/settings/NavIntegrations";
-import { CATALOGUE_INTEGRATIONS, categorieDe } from "@/lib/integrationsCatalogue";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { IconEquipe, IconEmplacement, IconIntegration } from "@/components/icons/GozlyIcons";
@@ -34,7 +33,7 @@ export default function EntrepriseParametresContent() {
   const [activeTab, setActiveTab] = useState("informations");
   // Personnalisation : la barre latérale glisse vers un second niveau (modules, puis catégories de réglages du module ouvert).
   const [vue, setVue] = useState("principal"); // "principal" | "personnalisation" | "integrations"
-  // Intégrations : « magasin » ou une catégorie ; liste des intégrations installées (le magasin).
+  // Intégrations : « magasin » ou l'id d'une intégration (chacune a sa page) ; liste des intégrations installées.
   const [integVue, setIntegVue] = useState("magasin");
   const [installees, setInstallees] = useState([]);
   const [sens, setSens] = useState("avant"); // sens de l'animation de la barre latérale
@@ -48,8 +47,11 @@ export default function EntrepriseParametresContent() {
     if (TABS.some((tab) => tab.id === onglet)) setActiveTab(onglet);
     if (onglet === "integrations") {
       setVue("integrations");
-      // Retour de la connexion OneDrive/Google Drive : on rouvre la catégorie Stockage.
-      if (new URLSearchParams(window.location.search).get("stockage")) setIntegVue("stockage");
+      // Retour de la connexion OneDrive/Google Drive : on rouvre la page du bon service.
+      {
+        const q = new URLSearchParams(window.location.search);
+        if (q.get("stockage")) setIntegVue(q.get("fournisseur") === "google" ? "google-drive" : "onedrive");
+      }
     }
   }, []);
 
@@ -133,9 +135,6 @@ export default function EntrepriseParametresContent() {
   useEffect(() => {
     if (entrepriseId) appelerInstallees("lister");
   }, [entrepriseId]);
-
-  // Une catégorie dont la dernière intégration vient d'être retirée n'existe plus dans le menu : on retombe sur le Magasin.
-  const installeeDansCategorie = (cat) => CATALOGUE_INTEGRATIONS.some((i) => i.categorie === cat && installees.includes(i.id));
 
   const modulesPerso = MODULES_PERSONNALISATION.filter((m) => modulesActifs.includes(m.id));
 
@@ -303,11 +302,11 @@ export default function EntrepriseParametresContent() {
                 {activeTab === "integrations" && (
                   <IntegrationsSection
                     entrepriseId={entrepriseId}
-                    vue={categorieDe(integVue) && !installeeDansCategorie(integVue) ? "magasin" : integVue}
+                    vue={integVue !== "magasin" && !installees.includes(integVue) ? "magasin" : integVue}
                     installees={installees}
                     onInstaller={(i) => appelerInstallees("installer", i.id)}
                     onRetirer={(i) => appelerInstallees("retirer", i.id)}
-                    onOuvrir={(i) => setIntegVue(i.categorie)}
+                    onOuvrir={(i) => setIntegVue(i.id)}
                   />
                 )}
               </div>

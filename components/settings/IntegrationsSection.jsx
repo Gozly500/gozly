@@ -8,7 +8,7 @@ import DiagnosticWixModal from "@/components/inventaire/DiagnosticWixModal";
 import ConnexionsIA from "@/components/settings/ConnexionsIA";
 import PermissionsIA from "@/components/settings/PermissionsIA";
 import MagasinIntegrations from "@/components/settings/MagasinIntegrations";
-import { CATALOGUE_INTEGRATIONS, categorieDe } from "@/lib/integrationsCatalogue";
+import { CATALOGUE_INTEGRATIONS } from "@/lib/integrationsCatalogue";
 import { useT } from "@/components/LangProvider";
 
 const STOCKAGES = {
@@ -22,7 +22,7 @@ async function authHeaders() {
   return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 }
 
-// vue : "magasin" ou l'id d'une catégorie (ventes, stockage, paie, ia). Les intégrations installées d'une catégorie s'y affichent.
+// vue : "magasin" ou l'id d'une intégration installée (wix, onedrive, google-drive, nethris, ia-assistants) : chacune a sa page.
 export default function IntegrationsSection({ entrepriseId, vue = "magasin", installees = [], onInstaller, onRetirer, onOuvrir }) {
   const [supportWixOuvert, setSupportWixOuvert] = useState(false); // « Outils de support » de Wix (caché tant qu'on n'en a pas besoin)
   const [diagWixOuvert, setDiagWixOuvert] = useState(false);
@@ -526,19 +526,14 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
     return renderBientotDisponible(service);
   }
 
-  const categorie = categorieDe(vue);
-  const servicesInstalles = CATALOGUE_INTEGRATIONS.filter((i) => i.categorie === vue && i.disponible && installees.includes(i.id));
+  const integration = CATALOGUE_INTEGRATIONS.find((i) => i.id === vue && i.disponible && installees.includes(i.id));
 
   return (
     <div>
-      {vue === "magasin" || !categorie ? (
-        <MagasinIntegrations installees={installees} onInstaller={onInstaller} onRetirer={onRetirer} onOuvrir={onOuvrir} />
+      {integration ? (
+        renderService({ id: integration.id, label: integration.nom, disponible: true })
       ) : (
-        <>
-          <h2>{t(categorie.label)}</h2>
-          <p className="panel-hint">{t("Tes intégrations installées dans cette catégorie. Pour en ajouter, va dans le Magasin.")}</p>
-          <div className="integration-list">{servicesInstalles.map((i) => renderService({ id: i.id, label: i.nom, disponible: true }))}</div>
-        </>
+        <MagasinIntegrations installees={installees} onInstaller={onInstaller} onRetirer={onRetirer} onOuvrir={onOuvrir} />
       )}
 
       {nethrisModalOuvert && (
