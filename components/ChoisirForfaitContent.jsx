@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
 import PeriodeFacturation from "@/components/PeriodeFacturation";
 import { PRIX_FORFAITS } from "@/lib/forfaitsPrix";
+import BlocsEmployes from "@/components/BlocsEmployes";
 
 // Même contenu que /s-abonner. Le forfait n'est JAMAIS activé ici : le bouton
 // ouvre Stripe Checkout, et c'est le webhook qui active le forfait après paiement.
@@ -45,6 +46,7 @@ export default function ChoisirForfaitContent() {
   const [choix, setChoix] = useState(null);
   const [error, setError] = useState("");
   const [periode, setPeriode] = useState("mensuel");
+  const [blocs, setBlocs] = useState(0);
 
   useEffect(() => {
     let ignore = false;
@@ -84,7 +86,7 @@ export default function ChoisirForfaitContent() {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ forfait: forfaitId, periode }),
+        body: JSON.stringify({ forfait: forfaitId, periode, blocs }),
       });
       const data = await res.json();
 
@@ -108,6 +110,8 @@ export default function ChoisirForfaitContent() {
   return (
     <>
       <PeriodeFacturation value={periode} onChange={setPeriode} disabled={choix !== null} />
+
+      <BlocsEmployes valeur={blocs} onChange={setBlocs} periode={periode} disabled={choix !== null} />
 
       <div className="pricing">
         {FORFAITS.map((f) => (

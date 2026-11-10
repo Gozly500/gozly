@@ -4091,3 +4091,10 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .abo-compte{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid rgba(var(--w),0.07);}
 .abo-compte-texte{display:flex;flex-direction:column;min-width:0;}
 .abo-compte-texte span{font-size:12.5px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;}
+
+/* ---- Employés en extra (blocs de 5) ---- */
+.blocs-employes{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:16px auto;max-width:560px;padding:14px 18px;border:1px solid rgba(var(--w),0.14);border-radius:16px;background:rgba(var(--w),0.04);}
+.blocs-employes-texte{display:flex;flex-direction:column;gap:2px;font-size:13.5px;color:var(--text-dim);}
+.blocs-employes-texte strong{color:var(--fg);font-size:14.5px;}
+.blocs-employes-choix{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.blocs-employes-valeur{min-width:44px;text-align:center;font-weight:700;}

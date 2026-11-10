@@ -2,6 +2,7 @@ import { forfaitDepuisCle } from "@/lib/forfaitsPrix";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getStripe } from "@/lib/stripeServer";
+import { estCleExtra, reconcilier } from "@/lib/employesExtraServer";
 
 const FORFAITS_VALIDES = ["opale", "onyx", "crystal"];
 
@@ -44,6 +45,12 @@ export async function POST(request) {
     if (error) console.error("Échec de synchronisation du compte:", error.message);
   }
 
+  // Aligne les employés en extra des entreprises du compte sur le nombre de blocs facturé.
+  async function syncExtras(customerId, blocs) {
+    const { data: profil } = await supabase.from("profils").select("id").eq("stripe_customer_id", customerId).maybeSingle();
+    if (profil) await reconcilier(supabase, profil.id, blocs);
+  }
+
   // Forfait d'une clé de recherche Stripe : table forfaits_cles (Admin > Abonnements), sinon les noms d'origine.
   async function forfaitDeLaCle(cle) {
     if (!cle) return null;
@@ -59,21 +66,31 @@ export async function POST(request) {
           forfait: session.metadata.forfait,
           stripe_subscription_id: session.subscription,
         });
+        const blocs = Number(session.metadata?.employes_blocs || 0);
+        if (blocs > 0) await syncExtras(session.customer, blocs);
       }
       break;
     }
 
     case "customer.subscription.updated": {
       const subscription = event.data.object;
-      const price = subscription.items.data[0]?.price;
-      const forfait = await forfaitDeLaCle(price?.lookup_key);
+      // Le prix du forfait n'est pas forcément la première ligne : l'abonnement peut aussi porter la ligne des employés en extra.
+      const lignes = subscription.items.data;
+      const ligneForfait = lignes.find((i) => !estCleExtra(i.price?.lookup_key)) || lignes[0];
+      const ligneExtra = lignes.find((i) => estCleExtra(i.price?.lookup_key));
+      const forfait = await forfaitDeLaCle(ligneForfait?.price?.lookup_key);
 
       if (subscription.status === "active" || subscription.status === "trialing") {
         if (forfait) {
           await syncCompte(subscription.customer, { forfait, stripe_subscription_id: subscription.id });
         }
+        // Les extras donnés à la main (admin) ne sont touchés que si l'abonnement porte une ligne d'extras ou vient d'en perdre une.
+        if (ligneExtra || event.data.previous_attributes?.items) {
+          await syncExtras(subscription.customer, ligneExtra?.quantity || 0);
+        }
       } else if (subscription.status === "canceled" || subscription.status === "unpaid") {
         await syncCompte(subscription.customer, { forfait: null, stripe_subscription_id: null });
+        await syncExtras(subscription.customer, 0);
       }
       break;
     }
@@ -81,6 +98,7 @@ export async function POST(request) {
     case "customer.subscription.deleted": {
       const subscription = event.data.object;
       await syncCompte(subscription.customer, { forfait: null, stripe_subscription_id: null });
+      await syncExtras(subscription.customer, 0);
       break;
     }
 

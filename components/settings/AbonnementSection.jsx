@@ -7,6 +7,8 @@ import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import PeriodeFacturation from "@/components/PeriodeFacturation";
 import { PRIX_FORFAITS } from "@/lib/forfaitsPrix";
+import BlocsEmployes from "@/components/BlocsEmployes";
+import EmployesExtraAbonnement from "@/components/settings/EmployesExtraAbonnement";
 
 const FORFAITS = [
   { id: "opale", label: "Opale", detail: "3 modules, 1 entreprise - 35$/mois" },
@@ -27,6 +29,7 @@ export default function AbonnementSection({ profil }) {
   const [checkoutMsg, setCheckoutMsg] = useState(null);
   const [aPayer, setAPayer] = useState(null); // forfait choisi, en attente du choix Mensuel / Annuel
   const [periode, setPeriode] = useState("mensuel");
+  const [blocs, setBlocs] = useState(0); // employés en extra choisis avant le paiement (blocs de 5)
   const [factures, setFactures] = useState([]); // factures sur mesure envoyées par Gozly
 
   useEffect(() => {
@@ -84,7 +87,7 @@ export default function AbonnementSection({ profil }) {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ forfait: forfaitId, periode: periodeChoisie }),
+        body: JSON.stringify({ forfait: forfaitId, periode: periodeChoisie, blocs }),
       });
       const data = await res.json();
 
@@ -191,6 +194,7 @@ export default function AbonnementSection({ profil }) {
               {periode === "annuel" ? t("/an") : t("/mois")}
             </p>
             <PeriodeFacturation value={periode} onChange={setPeriode} disabled={loading} />
+            <BlocsEmployes valeur={blocs} onChange={setBlocs} periode={periode} disabled={loading} />
             <div style={{ display: "flex", gap: "10px", marginTop: "12px", flexWrap: "wrap" }}>
               <button type="button" className="submit-btn" disabled={loading} onClick={() => startCheckout(aPayer, periode)}>
                 {loading ? t("Redirection vers le paiement...") : t("Continuer vers le paiement")}
@@ -202,6 +206,8 @@ export default function AbonnementSection({ profil }) {
           </div>
         )}
       </div>
+
+      {profil?.stripe_subscription_id && <EmployesExtraAbonnement />}
 
       {factures.length > 0 && (
         <>
