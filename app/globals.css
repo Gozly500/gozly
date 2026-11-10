@@ -4098,3 +4098,5 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .blocs-employes-texte strong{color:var(--fg);font-size:14.5px;}
 .blocs-employes-choix{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .blocs-employes-valeur{min-width:44px;text-align:center;font-weight:700;}
+.blocs-employes.compact{margin:4px 0 14px;max-width:none;padding:10px 12px;border-radius:12px;flex-direction:column;align-items:stretch;gap:8px;}
+.blocs-employes.compact .blocs-employes-choix{justify-content:center;}

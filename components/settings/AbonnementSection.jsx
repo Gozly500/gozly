@@ -9,6 +9,8 @@ import PeriodeFacturation from "@/components/PeriodeFacturation";
 import { PRIX_FORFAITS } from "@/lib/forfaitsPrix";
 import BlocsEmployes from "@/components/BlocsEmployes";
 import EmployesExtraAbonnement from "@/components/settings/EmployesExtraAbonnement";
+import { limiteEmployes } from "@/lib/modules";
+import { useForfaits } from "@/lib/useForfaits";
 
 const FORFAITS = [
   { id: "opale", label: "Opale", detail: "3 modules, 1 entreprise - 35$/mois" },
@@ -21,6 +23,7 @@ const FORFAITS = [
 // que ce compte possède, pas à une seule en particulier.
 export default function AbonnementSection({ profil }) {
   const { t } = useT();
+  useForfaits();
   const [forfaitOpen, setForfaitOpen] = useState(false);
   const forfaitRef = useRef(null);
   useFermerAuClicExterieur(forfaitRef, forfaitOpen, () => setForfaitOpen(false));
@@ -87,7 +90,7 @@ export default function AbonnementSection({ profil }) {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ forfait: forfaitId, periode: periodeChoisie, blocs }),
+        body: JSON.stringify({ forfait: forfaitId, periode: periodeChoisie, blocs: Number.isFinite(limiteEmployes(forfaitId)) ? blocs : 0 }),
       });
       const data = await res.json();
 
@@ -194,7 +197,7 @@ export default function AbonnementSection({ profil }) {
               {periode === "annuel" ? t("/an") : t("/mois")}
             </p>
             <PeriodeFacturation value={periode} onChange={setPeriode} disabled={loading} />
-            <BlocsEmployes valeur={blocs} onChange={setBlocs} periode={periode} disabled={loading} />
+            {Number.isFinite(limiteEmployes(aPayer)) && <BlocsEmployes valeur={blocs} onChange={setBlocs} periode={periode} disabled={loading} />}
             <div style={{ display: "flex", gap: "10px", marginTop: "12px", flexWrap: "wrap" }}>
               <button type="button" className="submit-btn" disabled={loading} onClick={() => startCheckout(aPayer, periode)}>
                 {loading ? t("Redirection vers le paiement...") : t("Continuer vers le paiement")}

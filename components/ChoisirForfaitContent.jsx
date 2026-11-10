@@ -8,6 +8,8 @@ import { useT } from "@/components/LangProvider";
 import PeriodeFacturation from "@/components/PeriodeFacturation";
 import { PRIX_FORFAITS } from "@/lib/forfaitsPrix";
 import BlocsEmployes from "@/components/BlocsEmployes";
+import { limiteEmployes } from "@/lib/modules";
+import { useForfaits } from "@/lib/useForfaits";
 
 // Même contenu que /s-abonner. Le forfait n'est JAMAIS activé ici : le bouton
 // ouvre Stripe Checkout, et c'est le webhook qui active le forfait après paiement.
@@ -41,12 +43,13 @@ const FORFAITS = [
 
 export default function ChoisirForfaitContent() {
   const { t } = useT();
+  useForfaits(); // limites d'employés des forfaits (un forfait illimité n'a pas besoin d'employés en extra)
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [choix, setChoix] = useState(null);
   const [error, setError] = useState("");
   const [periode, setPeriode] = useState("mensuel");
-  const [blocs, setBlocs] = useState(0);
+  const [blocs, setBlocs] = useState({}); // blocs de 5 employés choisis, par forfait
 
   useEffect(() => {
     let ignore = false;
@@ -86,7 +89,7 @@ export default function ChoisirForfaitContent() {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ forfait: forfaitId, periode, blocs }),
+        body: JSON.stringify({ forfait: forfaitId, periode, blocs: Number.isFinite(limiteEmployes(forfaitId)) ? blocs[forfaitId] || 0 : 0 }),
       });
       const data = await res.json();
 
@@ -111,8 +114,6 @@ export default function ChoisirForfaitContent() {
     <>
       <PeriodeFacturation value={periode} onChange={setPeriode} disabled={choix !== null} />
 
-      <BlocsEmployes valeur={blocs} onChange={setBlocs} periode={periode} disabled={choix !== null} />
-
       <div className="pricing">
         {FORFAITS.map((f) => (
           <div key={f.id} className={`price-card${f.featured ? " featured" : ""}`}>
@@ -129,6 +130,9 @@ export default function ChoisirForfaitContent() {
                 <li key={p}>{t(p)}</li>
               ))}
             </ul>
+            {Number.isFinite(limiteEmployes(f.id)) && (
+              <BlocsEmployes compact valeur={blocs[f.id] || 0} onChange={(n) => setBlocs((b) => ({ ...b, [f.id]: n }))} periode={periode} disabled={choix !== null} />
+            )}
             <button
               type="button"
               className="price-btn"

@@ -5,7 +5,7 @@ import { useT } from "@/components/LangProvider";
 
 // Choix d'employés en extra (blocs de 5) avant le paiement. N'apparaît que si le prix « employe_extra » existe dans Stripe
 // pour la période choisie : sans lui, il ne se passe rien.
-export default function BlocsEmployes({ valeur, onChange, periode, disabled }) {
+export default function BlocsEmployes({ valeur, onChange, periode, disabled, compact }) {
   const { t } = useT();
   const [prix, setPrix] = useState(null);
 
@@ -28,7 +28,7 @@ export default function BlocsEmployes({ valeur, onChange, periode, disabled }) {
 
   const unite = periode === "annuel" ? t("/an") : t("/mois");
   return (
-    <div className="blocs-employes">
+    <div className={`blocs-employes${compact ? " compact" : ""}`}>
       <div className="blocs-employes-texte">
         <strong>{t("Plus de 5 employés?")}</strong>
         <span>
