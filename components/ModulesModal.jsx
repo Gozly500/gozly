@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { MODULES, limiteModules } from "@/lib/modules";
+import { MODULES, limiteModules, moduleAutorise } from "@/lib/modules";
 import { useForfaits } from "@/lib/useForfaits";
 import { mettreAJourTachesCommandes } from "@/lib/commandesClient";
 import { IconCrochet } from "@/components/icons/Pictogrammes";
@@ -113,14 +113,15 @@ export default function ModulesModal({ entrepriseId, onClose, onChange }) {
             <div className="modules-picker-grid">
               {MODULES.map((mod) => {
                 const estActif = actifs.includes(mod.id);
-                const bloque = !estActif && compte >= limite;
+                const nonInclus = !moduleAutorise(forfait, mod.id);
+                const bloque = !estActif && (compte >= limite || nonInclus);
                 return (
                   <button
                     key={mod.id}
                     className={`modules-picker-tile${estActif ? " active" : ""}${bloque ? " disabled" : ""}`}
                     onClick={() => !bloque && handleToggle(mod.id)}
                     disabled={busyId === mod.id || bloque}
-                    title={bloque ? t("Limite de modules atteinte pour ton forfait") : t(mod.nom)}
+                    title={nonInclus ? t("Ce module n'est pas inclus dans ton forfait") : bloque ? t("Limite de modules atteinte pour ton forfait") : t(mod.nom)}
                   >
                     {mod.image ? (
                       <img src={mod.image} alt={t(mod.nom)} />

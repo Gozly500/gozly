@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useGardeMfa } from "@/lib/useGardeMfa";
 import { supabase } from "@/lib/supabaseClient";
-import { MODULES, limiteModules } from "@/lib/modules";
+import { MODULES, limiteModules, moduleAutorise } from "@/lib/modules";
 import { useForfaits } from "@/lib/useForfaits";
 import ModulesModal from "@/components/ModulesModal";
 import BetaBadge from "@/components/BetaBadge";
@@ -99,7 +99,8 @@ export default function DashSidebar({ active, displayName, userEmail, isAdmin, o
 
   const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
   const limite = limiteModules(forfait);
-  const forfaitDepasse = actifs.length > limite;
+  const nonInclus = actifs.filter((id) => !moduleAutorise(forfait, id));
+  const forfaitDepasse = actifs.length > limite || nonInclus.length > 0;
 
   return (
     <>

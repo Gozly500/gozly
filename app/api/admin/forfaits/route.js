@@ -12,12 +12,42 @@ import { getStripe } from "@/lib/stripeServer";
 //   retirerCle        -> retire une clé
 //   creerPersonnalise -> crée un forfait pour UN compte et le lui assigne
 
+const MESSAGE_SQL_AVANTAGES = "Les nouveaux avantages ne sont pas encore installés : exécute supabase/forfaits_avantages.sql dans Supabase (SQL Editor).";
 const MESSAGE_SQL = "La table des forfaits est absente : exécute supabase/forfaits_gerables.sql dans Supabase (SQL Editor).";
 
 function entierOuNull(v) {
   if (v === null || v === undefined || v === "") return null;
   const n = Number(v);
   return Number.isInteger(n) && n >= 0 ? n : undefined; // undefined = invalide
+}
+
+const MODULES_VALIDES = ["planning", "horaire", "inventaire", "ventes", "temperature", "commandes", "musique"];
+
+// Avantages d'un forfait reçus du formulaire : limites (vide = illimité) et modules autorisés (vide/absent = tous).
+function avantages(corps) {
+  const limiteModules = entierOuNull(corps.limite_modules);
+  const limiteEntreprises = entierOuNull(corps.limite_entreprises);
+  const limiteEmployes = entierOuNull(corps.limite_employes);
+  if (limiteModules === undefined || limiteEntreprises === undefined || limiteEmployes === undefined) {
+    return { erreur: "Les limites doivent être des nombres entiers (ou vides pour illimité)." };
+  }
+  let modulesAutorises = null;
+  if (Array.isArray(corps.modules_autorises)) {
+    modulesAutorises = corps.modules_autorises.filter((m) => MODULES_VALIDES.includes(m));
+    if (modulesAutorises.length === MODULES_VALIDES.length) modulesAutorises = null; // tous cochés = aucune restriction
+  }
+  return {
+    champs: { limite_modules: limiteModules, limite_entreprises: limiteEntreprises, limite_employes: limiteEmployes, modules_autorises: modulesAutorises },
+  };
+}
+
+// Numéro de forfait au hasard, ex: GZ-482913.
+function numeroAleatoire() {
+  return "GZ-" + String(100000 + (randomBytes(4).readUInt32BE(0) % 900000));
+}
+
+function colonneAbsente(error) {
+  return /column|numero|limite_employes|modules_autorises/i.test(error?.message || "") && /exist|schema cache|find/i.test(error?.message || "");
 }
 
 function slug(texte) {
@@ -78,27 +108,25 @@ export async function POST(request) {
 
   if (action === "enregistrer") {
     const label = String(corps.label || "").trim();
-    const limiteModules = entierOuNull(corps.limite_modules);
-    const limiteEntreprises = entierOuNull(corps.limite_entreprises);
+    const av = avantages(corps);
     if (!label) return NextResponse.json({ error: "Donne un nom au forfait." }, { status: 400 });
-    if (limiteModules === undefined || limiteEntreprises === undefined) {
-      return NextResponse.json({ error: "Les limites doivent être des nombres entiers (ou vides pour illimité)." }, { status: 400 });
-    }
+    if (av.erreur) return NextResponse.json({ error: av.erreur }, { status: 400 });
     const champs = {
       label,
-      limite_modules: limiteModules,
-      limite_entreprises: limiteEntreprises,
+      ...av.champs,
       publique: !!corps.publique,
       actif: corps.actif !== false,
       ordre: Number.isInteger(corps.ordre) ? corps.ordre : 100,
     };
     if (corps.id) {
       const { error } = await service.from("forfaits").update(champs).eq("id", corps.id);
+      if (error && colonneAbsente(error)) return NextResponse.json({ error: MESSAGE_SQL_AVANTAGES }, { status: 500 });
       if (error) return NextResponse.json({ error: "Enregistrement impossible : " + error.message }, { status: 500 });
       return NextResponse.json({ ok: true, id: corps.id });
     }
     const id = slug(label) || "forfait-" + randomBytes(3).toString("hex");
-    const { error } = await service.from("forfaits").insert({ id, ...champs });
+    const { error } = await service.from("forfaits").insert({ id, numero: numeroAleatoire(), ...champs });
+    if (error && colonneAbsente(error)) return NextResponse.json({ error: MESSAGE_SQL_AVANTAGES }, { status: 500 });
     if (error) {
       const existe = /duplicate|unique/i.test(error.message);
       return NextResponse.json({ error: existe ? `Un forfait « ${id} » existe déjà : change le nom.` : "Création impossible : " + error.message }, { status: existe ? 409 : 500 });
@@ -141,24 +169,23 @@ export async function POST(request) {
 
   if (action === "creerPersonnalise") {
     const label = String(corps.label || "").trim();
-    const limiteModules = entierOuNull(corps.limite_modules);
-    const limiteEntreprises = entierOuNull(corps.limite_entreprises);
-    if (!corps.profilId || !label) return NextResponse.json({ error: "Compte ou nom manquant." }, { status: 400 });
-    if (limiteModules === undefined || limiteEntreprises === undefined) {
-      return NextResponse.json({ error: "Les limites doivent être des nombres entiers (ou vides pour illimité)." }, { status: 400 });
-    }
+    const av = avantages(corps);
+    if (!label) return NextResponse.json({ error: "Donne un nom au forfait." }, { status: 400 });
+    if (av.erreur) return NextResponse.json({ error: av.erreur }, { status: 400 });
     const id = `perso-${slug(label) || "client"}-${randomBytes(2).toString("hex")}`;
     const { error } = await service.from("forfaits").insert({
       id,
       label,
-      limite_modules: limiteModules,
-      limite_entreprises: limiteEntreprises,
+      numero: numeroAleatoire(),
+      ...av.champs,
       publique: false,
       personnalise: true,
       actif: true,
       ordre: 200,
     });
+    if (error && colonneAbsente(error)) return NextResponse.json({ error: MESSAGE_SQL_AVANTAGES }, { status: 500 });
     if (error) return NextResponse.json({ error: error.message.includes("relation") ? MESSAGE_SQL : "Création impossible : " + error.message }, { status: 500 });
+    if (!corps.profilId) return NextResponse.json({ ok: true, id }); // créé sans l'assigner : à assigner plus tard
     // Le forfait du compte se propage ensuite aux entreprises qu'il possède (déclencheur forfait_par_compte.sql).
     const { error: erreurAssign } = await service.from("profils").update({ forfait: id }).eq("id", corps.profilId);
     if (erreurAssign) return NextResponse.json({ error: "Forfait créé mais non assigné : " + erreurAssign.message }, { status: 500 });

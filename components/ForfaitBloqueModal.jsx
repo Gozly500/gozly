@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { MODULES, labelForfait } from "@/lib/modules";
+import { MODULES, labelForfait, moduleAutorise } from "@/lib/modules";
 import { useForfaits } from "@/lib/useForfaits";
 import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import { IconeModule } from "@/components/icons/iconesModules";
@@ -23,6 +23,7 @@ export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limi
 
   const modulesActifs = MODULES.filter((m) => actifs.includes(m.id));
   const enTrop = actifs.length - limite;
+  const nonInclus = modulesActifs.filter((m) => !moduleAutorise(forfait, m.id));
   const forfaitLabel = forfait ? labelForfait(forfait) : t("aucun forfait actif");
 
   async function desactiver(moduleId) {
@@ -39,7 +40,15 @@ export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limi
           <h3>{t("Trop de modules actifs")}</h3>
         </div>
 
-        <p className="panel-hint">
+        {nonInclus.length > 0 && (
+          <p className="panel-hint">
+            {t("Ton forfait actuel ({forfait}) n'inclut pas : {modules}. Désactive-les pour continuer, ou choisis un forfait qui les couvre.", {
+              forfait: forfaitLabel,
+              modules: nonInclus.map((m) => t(m.nom)).join(", "),
+            })}
+          </p>
+        )}
+        {enTrop > 0 && <p className="panel-hint">
           {t("Ton forfait actuel ({forfait}) permet {limite}, mais {actifs} sont actifs. Désactive-en {enTrop} pour continuer, ou choisis un forfait qui les couvre tous.", {
             forfait: forfaitLabel,
             limite: Number.isFinite(limite)
@@ -48,7 +57,7 @@ export default function ForfaitBloqueModal({ entrepriseId, actifs, forfait, limi
             actifs: actifs.length,
             enTrop,
           })}
-        </p>
+        </p>}
 
         <div className="admin-list" style={{ marginBottom: "18px" }}>
           {modulesActifs.map((mod) => (

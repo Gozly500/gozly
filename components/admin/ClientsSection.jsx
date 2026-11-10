@@ -10,7 +10,10 @@ import InfoTooltip from "@/components/InfoTooltip";
 import { geocoderAdresse } from "@/lib/geocode";
 import { limiteEntreprises } from "@/lib/modules";
 import { useForfaits, rechargerForfaits } from "@/lib/useForfaits";
+import { resume as resumeForfait } from "@/components/admin/AbonnementsSection";
 import { IconAttention, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
+
+const CHOIX_PERSO = "__perso__"; // entrée du menu qui ouvre la liste des forfaits personnalisés
 
 const FORFAITS = [
   { id: "", label: "Aucun forfait" },
@@ -28,7 +31,53 @@ function optionsForfaits(forfaitsDb, forfaitDuCompte) {
     ...forfaitsDb
       .filter((f) => (!f.personnalise && f.actif) || f.id === forfaitDuCompte)
       .map((f) => ({ id: f.id, label: f.personnalise ? `${f.label} (personnalisé)` : f.id === "pilote" ? "Pilote (interne, gratuit)" : f.label })),
+    { id: CHOIX_PERSO, label: "Forfait personnalisé..." },
   ];
+}
+
+// Fenêtre de choix d'un forfait personnalisé (barre de recherche) pour l'assigner à un compte.
+function ChoixForfaitPersonnalise({ forfaits, courant, onChoisir, onClose }) {
+  const [recherche, setRecherche] = useState("");
+  const q = recherche.trim().toLowerCase();
+  const liste = forfaits.filter((f) => f.personnalise && f.actif && (!q || `${f.label} ${f.numero || ""}`.toLowerCase().includes(q)));
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card abo-fenetre" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-head">
+          <h3>Forfait personnalisé</h3>
+          <button type="button" className="admin-icon-btn" onClick={onClose}>
+            Fermer
+          </button>
+        </div>
+        <p className="panel-hint" style={{ marginTop: 0 }}>Choisis le forfait à assigner à ce client.</p>
+        <div className="field">
+          <input type="text" value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder="Rechercher par nom ou numéro..." autoFocus />
+        </div>
+        <div className="abo-comptes-liste">
+          {liste.map((f) => (
+            <div className="abo-compte" key={f.id}>
+              <div className="abo-compte-texte">
+                <strong>
+                  {f.label} {f.numero && <code className="abo-numero">{f.numero}</code>}
+                </strong>
+                <span>{resumeForfait(f)}</span>
+              </div>
+              {f.id === courant ? (
+                <span className="admin-status-pill active">Actuel</span>
+              ) : (
+                <button type="button" className="admin-icon-btn" onClick={() => onChoisir(f.id)}>
+                  Assigner
+                </button>
+              )}
+            </div>
+          ))}
+          {liste.length === 0 && (
+            <div className="admin-empty">{forfaits.some((f) => f.personnalise) ? "Aucun forfait ne correspond." : "Aucun forfait personnalisé : crée-en un dans Abonnements."}</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // Formulaire « Abonnement personnalisé » d'un compte : nom + limites (vide = illimité). Crée un forfait réservé à ce compte et le lui assigne.
@@ -375,6 +424,7 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
 
 export default function ClientsSection() {
   useForfaits();
+  const [choixPersoPour, setChoixPersoPour] = useState(null); // profil pour lequel on choisit un forfait personnalisé
   const [forfaitsDb, setForfaitsDb] = useState(null); // null tant que la table n'est pas lue (ou absente) : liste d'origine
   const [loading, setLoading] = useState(true);
   const [comptes, setComptes] = useState([]);
@@ -582,7 +632,7 @@ export default function ClientsSection() {
                 <SimpleSelect
                   options={optionsForfaits(forfaitsDb, c.profil.forfait)}
                   value={c.profil.forfait || ""}
-                  onChange={(id) => handleForfaitChangeCompte(c.profil.id, id)}
+                  onChange={(id) => (id === CHOIX_PERSO ? setChoixPersoPour(c.profil.id) : handleForfaitChangeCompte(c.profil.id, id))}
                 />
               </div>
               <p className="section-hint" style={{ margin: 0 }}>
@@ -705,6 +755,18 @@ export default function ClientsSection() {
             )}
           </section>
         </div>
+
+        {choixPersoPour && forfaitsDb && (
+          <ChoixForfaitPersonnalise
+            forfaits={forfaitsDb}
+            courant={c.profil?.forfait}
+            onClose={() => setChoixPersoPour(null)}
+            onChoisir={(id) => {
+              handleForfaitChangeCompte(choixPersoPour, id);
+              setChoixPersoPour(null);
+            }}
+          />
+        )}
       </div>
     );
   }

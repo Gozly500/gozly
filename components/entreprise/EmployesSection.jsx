@@ -164,7 +164,13 @@ export default function EmployesSection({ entrepriseId }) {
         .single();
       if (error) {
         setSaving(false);
-        setError(error.code === "23505" ? t("Ce NIP est déjà utilisé par un autre employé.") : t("L'ajout a échoué."));
+        setError(
+          error.code === "23505"
+            ? t("Ce NIP est déjà utilisé par un autre employé.")
+            : /LIMITE_EMPLOYES/.test(error.message || "")
+            ? t("Ton forfait a atteint sa limite d'employés. Change de forfait pour en ajouter.")
+            : t("L'ajout a échoué.")
+        );
         return;
       }
       employeId = data.id;
