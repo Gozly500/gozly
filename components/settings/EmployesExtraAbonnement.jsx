@@ -66,7 +66,7 @@ export default function EmployesExtraAbonnement() {
         </p>
         {etat.entreprises.map((e) => {
           const voulu = choix[e.id] ?? e.extra;
-          const limite = etat.base + e.extra * etat.bloc;
+          const limite = etat.base + e.offerts + e.extra * etat.bloc;
           const changement = voulu !== e.extra;
           const diff = (voulu - e.extra) * etat.prix.montant;
           return (
@@ -75,7 +75,7 @@ export default function EmployesExtraAbonnement() {
                 <div className="admin-row-title">{e.nom}</div>
                 <div className="admin-row-sub">
                   {t("{n} employés sur {limite}", { n: e.employes, limite })}
-                  {e.extra > 0 ? ` (${etat.base} + ${e.extra * etat.bloc})` : ""}
+                  {e.extra + e.offerts > 0 ? ` (${t("{base} du forfait + {extra} en extra", { base: etat.base, extra: e.offerts + e.extra * etat.bloc })})` : ""}
                 </div>
               </div>
               <div className="blocs-employes-choix">

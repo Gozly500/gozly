@@ -232,7 +232,8 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
   const [adresseIntrouvable, setAdresseIntrouvable] = useState(false);
 
   // Employés en extra : blocs de 5 qui s'ajoutent à la limite du forfait (un membre ne peut pas les modifier : voir employes_extra.sql).
-  const extra = entreprise.employes_extra || 0;
+  const extra = entreprise.employes_extra || 0; // offerts (admin)
+  const achetes = entreprise.employes_extra_achetes || 0; // facturés par Stripe : lecture seule ici
   const baseEmployes = limiteEmployes(entreprise.forfait);
   async function changerExtra(delta) {
     const valeur = Math.max(0, extra + delta);
@@ -310,8 +311,8 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
           </div>
           {Number.isFinite(baseEmployes) && (
             <div className="admin-row-sub">
-              Limite d'employés : {baseEmployes + extra}
-              {extra > 0 ? ` (${baseEmployes} + ${extra} en extra)` : ""}
+              Limite d'employés : {baseEmployes + extra + achetes}
+              {extra + achetes > 0 ? ` (${baseEmployes} + ${extra} offerts${achetes > 0 ? ` + ${achetes} achetés` : ""})` : ""}
             </div>
           )}
         </div>

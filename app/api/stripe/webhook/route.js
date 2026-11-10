@@ -84,10 +84,8 @@ export async function POST(request) {
         if (forfait) {
           await syncCompte(subscription.customer, { forfait, stripe_subscription_id: subscription.id });
         }
-        // Les extras donnés à la main (admin) ne sont touchés que si l'abonnement porte une ligne d'extras ou vient d'en perdre une.
-        if (ligneExtra || event.data.previous_attributes?.items) {
-          await syncExtras(subscription.customer, ligneExtra?.quantity || 0);
-        }
+        // Seuls les extras ACHETÉS suivent Stripe ; ceux offerts par l'admin sont dans une autre colonne.
+        await syncExtras(subscription.customer, ligneExtra?.quantity || 0);
       } else if (subscription.status === "canceled" || subscription.status === "unpaid") {
         await syncCompte(subscription.customer, { forfait: null, stripe_subscription_id: null });
         await syncExtras(subscription.customer, 0);

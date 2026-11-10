@@ -45,7 +45,7 @@ export async function POST(request) {
     const lignes = [];
     for (const e of entreprises) {
       const { count } = await service.from("employes").select("id", { count: "exact", head: true }).eq("entreprise_id", e.id);
-      lignes.push({ id: e.id, nom: e.nom, extra: Math.round((e.employes_extra || 0) / BLOC), employes: count || 0 });
+      lignes.push({ id: e.id, nom: e.nom, extra: Math.round((e.employes_extra_achetes || 0) / BLOC), offerts: e.employes_extra || 0, employes: count || 0 });
     }
     let periode = "mensuel";
     try {
@@ -67,8 +67,8 @@ export async function POST(request) {
     const entreprises = await entreprisesProprietes(service, profil.id);
     const cible = entreprises.find((e) => e.id === corps.entrepriseId);
     if (!cible) return NextResponse.json({ error: "Entreprise introuvable." }, { status: 404 });
-    const ancien = cible.employes_extra || 0;
-    const autres = entreprises.filter((e) => e.id !== cible.id).reduce((n, e) => n + (e.employes_extra || 0), 0);
+    const ancien = cible.employes_extra_achetes || 0;
+    const autres = entreprises.filter((e) => e.id !== cible.id).reduce((n, e) => n + (e.employes_extra_achetes || 0), 0);
     const totalBlocs = Math.round(autres / BLOC) + blocs;
 
     try {
@@ -84,7 +84,7 @@ export async function POST(request) {
       }
 
       // Gozly d'abord (pour que le webhook trouve déjà le bon total), puis Stripe ; on annule si Stripe refuse.
-      const { error: erreurBase } = await service.from("entreprises").update({ employes_extra: blocs * BLOC }).eq("id", cible.id);
+      const { error: erreurBase } = await service.from("entreprises").update({ employes_extra_achetes: blocs * BLOC }).eq("id", cible.id);
       if (erreurBase) {
         console.error("Mise à jour des employés en extra:", erreurBase.message);
         return NextResponse.json({ error: "Impossible de modifier pour le moment." }, { status: 500 });
@@ -98,7 +98,7 @@ export async function POST(request) {
           await stripe.subscriptionItems.create({ subscription: sub.id, price: prix.id, quantity: totalBlocs, proration_behavior: "create_prorations" });
         }
       } catch (err) {
-        await service.from("entreprises").update({ employes_extra: ancien }).eq("id", cible.id);
+        await service.from("entreprises").update({ employes_extra_achetes: ancien }).eq("id", cible.id);
         throw err;
       }
       return NextResponse.json({ ok: true, blocs });
