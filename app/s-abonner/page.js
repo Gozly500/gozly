@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
+import BoutonForfait from "@/components/BoutonForfait";
 import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
 import { IconPlanning, IconHoraire, IconInventaire, IconVentes, IconTemperature } from "@/components/icons/GozlyIcons";
@@ -43,9 +44,9 @@ export default function SubscribePage() {
                 <li>{t("plan.opale.l3")}</li>
                 <li>{t("plan.opale.l4")}</li>
               </ul>
-              <Link href="/inscription?forfait=opale" className="price-btn">
+              <BoutonForfait forfait="opale" nom="Opale" className="price-btn">
                 {t("plan.choisir")}
-              </Link>
+              </BoutonForfait>
             </TiltCard>
             <TiltCard className="price-card featured tilt-card">
               <div className="price-head">
@@ -62,9 +63,9 @@ export default function SubscribePage() {
                 <li>{t("plan.onyx.l3")}</li>
                 <li>{t("plan.onyx.l4")}</li>
               </ul>
-              <Link href="/inscription?forfait=onyx" className="price-btn">
+              <BoutonForfait forfait="onyx" nom="Onyx" className="price-btn">
                 {t("plan.choisir")}
-              </Link>
+              </BoutonForfait>
             </TiltCard>
             <TiltCard className="price-card tilt-card">
               <div className="price-head">
@@ -82,9 +83,9 @@ export default function SubscribePage() {
                 <li>{t("plan.crystal.l4")}</li>
                 <li>{t("plan.crystal.l5")}</li>
               </ul>
-              <Link href="/inscription?forfait=crystal" className="price-btn">
+              <BoutonForfait forfait="crystal" nom="Crystal" className="price-btn">
                 {t("plan.choisir")}
-              </Link>
+              </BoutonForfait>
             </TiltCard>
           </div>
         </div>
