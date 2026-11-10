@@ -13,9 +13,9 @@ import { limiteEmployes } from "@/lib/modules";
 import { useForfaits } from "@/lib/useForfaits";
 
 const FORFAITS = [
-  { id: "opale", label: "Opale", detail: "3 modules, 1 entreprise - 35$/mois" },
-  { id: "onyx", label: "Onyx", detail: "5 modules, 3 entreprises - 59$/mois" },
-  { id: "crystal", label: "Crystal", detail: "Modules illimités, 5 entreprises - 85$/mois" },
+  { id: "opale", label: "Opale", detail: "3 modules, 1 entreprise, 15 employés - 35$/mois" },
+  { id: "onyx", label: "Onyx", detail: "5 modules, 3 entreprises, 30 employés - 59$/mois" },
+  { id: "crystal", label: "Crystal", detail: "Modules et employés illimités, 5 entreprises - 85$/mois" },
 ];
 
 // Le forfait appartient au COMPTE (une seule facture, voir

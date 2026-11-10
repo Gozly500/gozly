@@ -18,14 +18,14 @@ const FORFAITS = [
     id: "opale",
     nom: "Opale",
     icone: "pi-1",
-    points: ["3 modules", "1 entreprise", "Assistance standard", "Mises à jour essentielles"],
+    points: ["3 modules", "1 entreprise", "Jusqu'à 15 employés par entreprise", "Assistance standard", "Mises à jour essentielles"],
   },
   {
     id: "onyx",
     nom: "Onyx",
     icone: "pi-2",
     featured: true,
-    points: ["5 modules", "3 entreprises", "Support prioritaire", "Mises à jour avancées"],
+    points: ["5 modules", "3 entreprises", "Jusqu'à 30 employés par entreprise", "Support prioritaire", "Mises à jour avancées"],
   },
   {
     id: "crystal",
@@ -34,6 +34,7 @@ const FORFAITS = [
     points: [
       "Modules illimités",
       "5 entreprises",
+      "Employés illimités",
       "Module personnalisé sur demande",
       "Assistance prioritaire",
       "Mises à jour avancées",

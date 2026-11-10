@@ -41,6 +41,7 @@ export default function SubscribePage() {
               <ul>
                 <li>{t("plan.opale.l1")}</li>
                 <li>{t("plan.opale.l2")}</li>
+                <li>{t("plan.opale.emp")}</li>
                 <li>{t("plan.opale.l3")}</li>
                 <li>{t("plan.opale.l4")}</li>
               </ul>
@@ -60,6 +61,7 @@ export default function SubscribePage() {
               <ul>
                 <li>{t("plan.onyx.l1")}</li>
                 <li>{t("plan.onyx.l2")}</li>
+                <li>{t("plan.onyx.emp")}</li>
                 <li>{t("plan.onyx.l3")}</li>
                 <li>{t("plan.onyx.l4")}</li>
               </ul>
@@ -79,6 +81,7 @@ export default function SubscribePage() {
               <ul>
                 <li>{t("plan.crystal.l1")}</li>
                 <li>{t("plan.crystal.l2")}</li>
+                <li>{t("plan.crystal.emp")}</li>
                 <li>{t("plan.crystal.l3")}</li>
                 <li>{t("plan.crystal.l4")}</li>
                 <li>{t("plan.crystal.l5")}</li>

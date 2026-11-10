@@ -20,9 +20,10 @@ Courriel : info@gozly.net
 
 ## Forfaits (par mois, en dollars canadiens)
 
-- **Opale** : 35 $ par mois (ou 420 $ par année) — 3 modules, 1 entreprise, assistance standard.
-- **Onyx** : 59 $ par mois (ou 708 $ par année) — 5 modules, 3 entreprises, support prioritaire.
-- **Crystal** : 85 $ par mois (ou 1 020 $ par année) — modules illimités, 5 entreprises, module personnalisé sur demande.
+- **Opale** : 35 $ par mois (ou 420 $ par année) — 3 modules, 1 entreprise, jusqu'à 15 employés par entreprise, assistance standard.
+- **Onyx** : 59 $ par mois (ou 708 $ par année) — 5 modules, 3 entreprises, jusqu'à 30 employés par entreprise, support prioritaire.
+- **Crystal** : 85 $ par mois (ou 1 020 $ par année) — modules illimités, 5 entreprises, employés illimités, module personnalisé sur demande.
+- **Employés en extra** : avec Opale ou Onyx, on peut ajouter des blocs de 5 employés par entreprise (facturés sur le même abonnement).
 
 ## Pages importantes
 
