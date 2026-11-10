@@ -8,7 +8,7 @@ import SimpleSelect from "@/components/SimpleSelect";
 import FactureCompte from "@/components/admin/FactureCompte";
 import InfoTooltip from "@/components/InfoTooltip";
 import { geocoderAdresse } from "@/lib/geocode";
-import { limiteEntreprises } from "@/lib/modules";
+import { limiteEntreprises, limiteEmployes } from "@/lib/modules";
 import { useForfaits, rechargerForfaits } from "@/lib/useForfaits";
 import { resume as resumeForfait } from "@/components/admin/AbonnementsSection";
 import { IconAttention, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
@@ -231,6 +231,20 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
   const [error, setError] = useState(null);
   const [adresseIntrouvable, setAdresseIntrouvable] = useState(false);
 
+  // Employés en extra : blocs de 5 qui s'ajoutent à la limite du forfait (un membre ne peut pas les modifier : voir employes_extra.sql).
+  const extra = entreprise.employes_extra || 0;
+  const baseEmployes = limiteEmployes(entreprise.forfait);
+  async function changerExtra(delta) {
+    const valeur = Math.max(0, extra + delta);
+    const { error: err } = await supabase.from("entreprises").update({ employes_extra: valeur }).eq("id", entreprise.id);
+    if (err) {
+      setError(/employes_extra/.test(err.message || "") ? "Exécute supabase/employes_extra.sql dans Supabase pour activer les employés en extra." : "La mise à jour a échoué.");
+      setEditing(true);
+      return;
+    }
+    onSaved();
+  }
+
   async function handleSave() {
     setSaving(true);
     setAdresseIntrouvable(false);
@@ -294,6 +308,12 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
           <div className="admin-row-sub">
             {entreprise.adresse || `inscrit le ${new Date(entreprise.created_at).toLocaleDateString("fr-CA")}`}
           </div>
+          {Number.isFinite(baseEmployes) && (
+            <div className="admin-row-sub">
+              Limite d'employés : {baseEmployes + extra}
+              {extra > 0 ? ` (${baseEmployes} + ${extra} en extra)` : ""}
+            </div>
+          )}
         </div>
 
         <div className="admin-row-controls">
@@ -307,6 +327,16 @@ function EntrepriseRow({ entreprise, profilId, forfaitEditable, onForfaitChange,
             </div>
           ) : null}
 
+          {Number.isFinite(baseEmployes) && (
+            <>
+              <button className="admin-icon-btn" disabled={extra === 0} onClick={() => changerExtra(-5)} title="Retirer un bloc de 5 employés">
+                −5
+              </button>
+              <button className="admin-icon-btn" onClick={() => changerExtra(5)} title="Ajouter un bloc de 5 employés">
+                +5
+              </button>
+            </>
+          )}
           <button className="admin-icon-btn" onClick={() => setEditing((v) => !v)}>
             {editing ? "Fermer" : "Modifier"}
           </button>
