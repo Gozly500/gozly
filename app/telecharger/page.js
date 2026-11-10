@@ -13,7 +13,7 @@ export function generateMetadata() {
   return metaPublic("telecharger");
 }
 
-// Page « Suite bureautique » (Textas + Calky). Les autres logiciels (kiosque, applications, jeux) sont dans /logiciels.
+// Page « Conex », la suite bureautique (Textas + Calky). Les autres logiciels (kiosque, applications, jeux) sont dans /logiciels.
 // Un bloc par logiciel : clé du logiciel (voir lib/logiciels.js), icône, capture d'écran, accroche et fonctions (clés « tele.* »).
 const PRODUITS = [
   {
