@@ -69,7 +69,6 @@ export default function GestionSection({ user, profil, setProfil, router }) {
   return (
     <div>
       <h2>{t("Gestion du compte")}</h2>
-      <p className="panel-hint">{t("Désactive ou supprime ton compte Gozly.")}</p>
 
       <div className="settings-section">
         <h3>{t("Désactiver mon compte")}</h3>

@@ -102,7 +102,6 @@ export default function AnnoncesModal({ entrepriseId, onClose }) {
           </button>
         </div>
 
-        <p className="panel-hint">{t("Un message mis en évidence en haut de l'app de tous tes employés, pendant la durée que tu choisis.")}</p>
 
         <form onSubmit={publier}>
           <div className="field">

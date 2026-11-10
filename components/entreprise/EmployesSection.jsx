@@ -222,9 +222,6 @@ export default function EmployesSection({ entrepriseId }) {
       >
         <div>
           <h2>{t("Employés")}</h2>
-          <p className="panel-hint" style={{ marginBottom: 0 }}>
-            {t("La fiche de tes employés, partagée par tous les modules qui en ont besoin.")}
-          </p>
         </div>
         <button className="submit-btn" onClick={openAdd}>
           {t("+ Ajouter un employé")}

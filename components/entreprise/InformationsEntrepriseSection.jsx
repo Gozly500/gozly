@@ -171,7 +171,6 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
   return (
     <div>
       <h2>{t("Informations")}</h2>
-      <p className="panel-hint">{t("Le logo, le nom et les coordonnées de cette entreprise.")}</p>
 
       <form onSubmit={handleSave}>
         <div className="settings-section">

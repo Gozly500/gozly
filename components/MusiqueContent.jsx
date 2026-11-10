@@ -364,7 +364,6 @@ export default function MusiqueContent() {
               {groupes.length === 0 && !demo && !etat.enErreur && (
                 <div className="settings-section">
                   <h3>{t("Ton compte Sonos est lié, mais aucun haut-parleur n'a été trouvé")}</h3>
-                  <p className="panel-hint">{t("Les haut-parleurs Sonos du compte apparaîtront ici dès qu'il y en aura. Si tu en as, relie ton compte de nouveau et, dans la fenêtre de Sonos, choisis bien ton système. Tu peux aussi voir à quoi ressemble la page avec de faux haut-parleurs.")}</p>
                   <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                     <button type="button" className="submit-btn" disabled={occupe} onClick={lier}>
                       {occupe ? t("Ouverture...") : t("Relier mon compte Sonos")}
@@ -429,7 +428,6 @@ export default function MusiqueContent() {
                     {plateforme === null ? (
                       <>
                         <h3>{t("Musique de ton Sonos")}</h3>
-                        <p className="panel-hint" style={{ marginTop: 0 }}>{t("Choisis une plateforme pour voir ses favoris et ses listes de lecture.")}</p>
                         {plateformes.length === 0 && contenu.playlists.length === 0 ? (
                           <p className="chat-empty">{t("Aucun favori Sonos pour l'instant. Ajoute des favoris dans l'application Sonos et ils apparaîtront ici.")}</p>
                         ) : (
@@ -486,9 +484,6 @@ export default function MusiqueContent() {
                       </>
                     )}
                     </div>
-                    <p className="panel-hint" style={{ marginTop: "14px" }}>
-                      {t("Gozly affiche les favoris et les listes de lecture de ton Sonos. Pour en ajouter ou en créer, utilise l'application Sonos ou ta plateforme musicale : elles apparaîtront ici.")}
-                    </p>
                   </section>
                 </div>
 

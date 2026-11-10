@@ -356,9 +356,6 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
 
           {statut === "connecte" && (
             <>
-              <p className="section-hint">
-                {t("Ton site Wix est connecté. Si le même site alimente plusieurs dashboards (une succursale chacun), choisis la succursale de celui-ci dans Personnalisation → Commandes en ligne.")}
-              </p>
               <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
                 {busy ? "..." : t("Déconnecter")}
               </button>

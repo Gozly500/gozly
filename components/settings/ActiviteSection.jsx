@@ -22,7 +22,6 @@ export default function ActiviteSection({ user }) {
   return (
     <div>
       <h2>{t("Activité du compte")}</h2>
-      <p className="panel-hint">{t("Un aperçu de l'activité récente de ton compte.")}</p>
 
       <div className="settings-card">
         <div className="activity-list">

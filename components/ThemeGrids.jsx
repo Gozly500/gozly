@@ -49,9 +49,6 @@ export default function ThemeGrids({ theme, onSelect, disabled, accent, onSelect
       </div>
 
       <h4 style={{ fontSize: "14.5px", fontWeight: 600 }}>{t("Couleur d'accent")}</h4>
-      <p className="panel-hint" style={{ margin: "2px 0 0" }}>
-        {t("Colore le bouton principal et la barre latérale. Le reste garde un fond neutre.")}
-      </p>
       <div className="accent-row">
         {ACCENTS.map((a) => (
           <button

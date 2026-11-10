@@ -178,9 +178,6 @@ export default function EmplacementsSection({ entrepriseId }) {
   return (
     <div>
       <h2>{t("Emplacements")}</h2>
-      <p className="panel-hint">
-        {t("Tes succursales. Dès qu'il y en a plus d'une, l'Horaire et le Pointage se gèrent séparément pour chacune. Ajoute une adresse pour activer le pointage mobile (GPS) pour les employés qui y sont assignés (à activer dans Personnalisation > Horaire & Pointage).")}
-      </p>
 
       <div className="admin-list" style={{ marginBottom: "20px", maxWidth: "500px" }}>
         {emplacements.map((emp) => (

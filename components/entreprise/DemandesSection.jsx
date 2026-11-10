@@ -126,7 +126,6 @@ export default function DemandesSection({ entrepriseId }) {
   return (
     <div>
       <h2>{tr("Demandes")}</h2>
-      <p className="panel-hint">{tr("Congés et échanges de quarts proposés par tes employés.")}</p>
 
       <div className="settings-section">
         <h3>{tr("Congés")}</h3>

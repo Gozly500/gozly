@@ -199,7 +199,6 @@ export default function JourEditor({ entrepriseId, date, integre = false, sansEm
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
           <div>
             <h2 style={{ textTransform: "capitalize" }}>{dateLabel}</h2>
-            <p className="panel-hint">{tr("Les tâches à faire ce jour-là, par catégorie.")}</p>
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
             {boutonPdf}

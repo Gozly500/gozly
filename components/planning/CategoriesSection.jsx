@@ -177,7 +177,6 @@ export default function CategoriesSection({ entrepriseId }) {
   return (
     <div>
       <h2>{t("Catégories")}</h2>
-      <p className="panel-hint">{t("Les catégories dans lesquelles tes tâches sont classées (ex: Cuisine, Ménage).")}</p>
 
       <ListeReordonnable
         className="admin-list"

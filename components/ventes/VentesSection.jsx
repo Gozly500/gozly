@@ -177,9 +177,6 @@ export default function VentesSection({ entrepriseId }) {
       >
         <div>
           <h2>{t("Suivi des ventes")}</h2>
-          <p className="panel-hint" style={{ marginBottom: 0 }}>
-            {t("Toutes tes ventes, peu importe la source, au même endroit.")}
-          </p>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button className="admin-icon-btn" onClick={() => synchroniserWix({ jours: 30, silencieux: false })} disabled={syncing}>

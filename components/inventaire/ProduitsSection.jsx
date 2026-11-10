@@ -506,9 +506,6 @@ export default function ProduitsSection({ entrepriseId }) {
       >
         <div>
           <h2>{t("Produits")}</h2>
-          <p className="panel-hint" style={{ marginBottom: 0 }}>
-            {t("Tes produits, leurs quantités en stock et leur seuil d'alerte.")}
-          </p>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           {(wixConnecte || nbWix > 0) && (

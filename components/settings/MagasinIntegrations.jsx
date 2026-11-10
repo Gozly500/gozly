@@ -57,7 +57,6 @@ export default function MagasinIntegrations({ installees, onInstaller, onRetirer
   return (
     <div>
       <h2>{t("Magasin d'intégrations")}</h2>
-      <p className="panel-hint">{t("Installe les services que tu utilises. Chacun apparaît ensuite dans le menu de gauche, sous sa catégorie.")}</p>
 
       {erreur && <p className="settings-msg err">{erreur}</p>}
 

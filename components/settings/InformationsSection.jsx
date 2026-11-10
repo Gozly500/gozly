@@ -116,7 +116,6 @@ export default function InformationsSection({ user, profil, setProfil }) {
   return (
     <div>
       <h2>{t("Informations")}</h2>
-      <p className="panel-hint">{t("Ta photo, ton nom et tes coordonnées personnelles.")}</p>
 
       <form onSubmit={handleSave}>
         <div className="settings-section">

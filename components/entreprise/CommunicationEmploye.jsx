@@ -77,7 +77,6 @@ export default function CommunicationEmploye({ emp, employes, entrepriseId, onCl
           </button>
         </div>
 
-        <p className="panel-hint">{t("Ce que cet employé peut faire dans la messagerie de l'app. Les changements s'appliquent tout de suite.")}</p>
 
         <div className="switch-row" style={{ marginBottom: "12px" }}>
           <div className="switch-row-text">

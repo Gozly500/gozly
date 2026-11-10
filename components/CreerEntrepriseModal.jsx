@@ -114,7 +114,7 @@ export default function CreerEntrepriseModal({ onClose }) {
           </button>
         </div>
         <p className="section-hint" style={{ marginBottom: "16px" }}>
-          {t("Une entreprise séparée, avec ses propres modules et ses propres données - utile si tu gères deux entreprises immatriculées différemment (par exemple deux succursales avec leur propre paie). Elle partage le forfait de ton compte, une seule facture pour toutes tes entreprises.")}
+          {t("Une entreprise séparée, avec ses propres modules et ses propres données.")}
         </p>
 
         {!chargement && limiteAtteinte ? (

@@ -90,7 +90,6 @@ export default function AppearanceSection({ profil, setProfil }) {
   return (
     <div>
       <h2>{t("Apparence")}</h2>
-      <p className="panel-hint">{t("Choisis le thème visuel de ton tableau de bord.")}</p>
 
       <div className="switch-row" style={{ marginBottom: "18px" }}>
         <div className="switch-row-text">

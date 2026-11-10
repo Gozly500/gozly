@@ -236,7 +236,6 @@ export default function EquipeSection({ entrepriseId, userId, onLeft }) {
   return (
     <div>
       <h2>{t("Équipe")}</h2>
-      <p className="panel-hint">{t("Les comptes qui ont accès à ce dashboard.")}</p>
       {error && <p className="settings-msg err">{error}</p>}
 
       <div className="admin-list" style={{ marginBottom: "24px", maxWidth: "560px" }}>

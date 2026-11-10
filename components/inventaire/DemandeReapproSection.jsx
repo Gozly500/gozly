@@ -125,9 +125,6 @@ export default function DemandeReapproSection({ entrepriseId }) {
   return (
     <div>
       <h2>{t("Liste à préparer")}</h2>
-      <p className="panel-hint">
-        {t("Coche les produits à aller chercher (avec la quantité), ou ajoute un item qui n'est pas dans l'Inventaire. Ça s'affiche en direct sur l'écran en mode kiosk.")}
-      </p>
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 

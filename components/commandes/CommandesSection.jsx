@@ -250,9 +250,6 @@ export default function CommandesSection({ entrepriseId }) {
       >
         <div>
           <h2>{t("Commandes")}</h2>
-          <p className="panel-hint" style={{ marginBottom: 0 }}>
-            {t("Les commandes reçues sur ton site Wix, mises à jour automatiquement.")}
-          </p>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button className="submit-btn" onClick={() => setModal({ commande: null })}>

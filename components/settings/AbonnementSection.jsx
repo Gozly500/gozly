@@ -137,9 +137,6 @@ export default function AbonnementSection({ profil }) {
   return (
     <div>
       <h2>{t("Abonnement")}</h2>
-      <p className="panel-hint">
-        {t("Ton forfait, ton moyen de paiement et tes factures - une seule facture pour toutes les entreprises de ton compte.")}
-      </p>
 
       {checkoutMsg && <p className={`settings-msg ${checkoutMsg.type}`}>{checkoutMsg.text}</p>}
 

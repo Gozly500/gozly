@@ -100,7 +100,6 @@ export default function RappelsModal({ entrepriseId, onClose }) {
           </button>
         </div>
 
-        <p className="panel-hint">{t("Un rappel mis en évidence en haut de l'app des personnes choisies, pendant la durée que tu veux (1 semaine au maximum).")}</p>
 
         <form onSubmit={creer}>
           <div className="field">

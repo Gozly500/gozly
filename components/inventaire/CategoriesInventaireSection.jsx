@@ -101,7 +101,6 @@ export default function CategoriesInventaireSection({ entrepriseId }) {
   return (
     <div>
       <h2>{t("Catégories")}</h2>
-      <p className="panel-hint">{t("Classe tes produits par catégorie (ex: Boissons, Desserts). Tu choisis la catégorie de chaque produit dans l'onglet Produits.")}</p>
 
       <form onSubmit={ajouter} style={{ display: "flex", gap: "8px", marginBottom: "16px", maxWidth: "520px" }}>
         <input

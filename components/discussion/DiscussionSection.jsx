@@ -424,7 +424,6 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
   return (
     <div>
       {!mobile && <h2>{tr("Discussion")}</h2>}
-      {!mobile && <p className="panel-hint">{tr("Le fil d'équipe, une conversation avec chacun de tes employés, et tes groupes.")}</p>}
       {erreur && <p className="settings-msg err">{erreur}</p>}
       {confirmation && <p className="settings-msg ok">{confirmation}</p>}
 
