@@ -50,7 +50,8 @@ export async function POST(request) {
     const prices = await stripe.prices.list({ lookup_keys: [cleRecherche], active: true, limit: 1 });
     const price = prices.data[0];
     if (!price) {
-      return NextResponse.json({ error: "Ce forfait n'est pas disponible pour le moment." }, { status: 404 });
+      console.error(`[checkout] Aucun prix Stripe actif avec la clé de recherche « ${cleRecherche} ».`);
+      return NextResponse.json({ error: `Ce forfait n'est pas disponible pour le moment. (clé : ${cleRecherche})` }, { status: 404 });
     }
 
     const customerId = await getOrCreateStripeCustomerCompte(stripe, supabase, profil, user);
