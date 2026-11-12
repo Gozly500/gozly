@@ -1,7 +1,6 @@
 import Loader from "@/components/Loader";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
-import Link from "next/link";
 import SignupForm from "@/components/SignupForm";
 import { getT } from "@/lib/i18n/siteServer";
 import { metaPublic } from "@/lib/seoPages";
@@ -27,9 +26,6 @@ export default function SignupPage() {
       <section id="signup-form">
         <div className="wrap signup-wrap">
           <SignupForm />
-          <p className="signup-deja">
-            {t("signup.deja")} <Link href="/login">{t("signup.seConnecter")}</Link>
-          </p>
         </div>
       </section>
 
