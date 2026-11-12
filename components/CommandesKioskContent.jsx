@@ -583,6 +583,8 @@ export default function CommandesKioskContent() {
   const emplacementActuel = emplacements.find((e) => e.id === emplacementId);
 
   const debutAujourdhui = bornesJour(dateAujourdhui()).debut;
+  // Mode liste : une commande à venir encore « En attente » (nouvelle) s'affiche dans la liste du jour avec le bouton « Traitée ».
+  const estAvenirAConfirmer = (c) => etapeCommande(c) === "en_attente" && !!c.date_ramassage && jourQuebec(c.date_ramassage) > dateAujourdhui();
   const visibles = commandes.filter((c) => etapeCommande(c) !== "annulee" && correspondRecherche(c, recherche));
 
   // Commandes à venir filtrées (dates + recherche) et regroupées par jour de ramassage.
@@ -616,7 +618,8 @@ export default function CommandesKioskContent() {
   // Mode liste : toutes les commandes du jour dans une seule liste. Les commandes à faire d'abord (par heure de
   // ramassage), puis les terminées. Pas d'étape « En attente » : une commande à faire est une commande « Traitée ».
   const parHeure = (x, y) => new Date(dateEffective(x)) - new Date(dateEffective(y));
-  const aFaireListe = visibles.filter((c) => etapeCommande(c) !== "terminee").sort(parHeure);
+  const nouvellesAvenir = modeKiosque === "liste" ? avenir.filter((c) => estAvenirAConfirmer(c) && correspondRecherche(c, recherche)).sort(parHeure) : [];
+  const aFaireListe = [...nouvellesAvenir, ...visibles.filter((c) => etapeCommande(c) !== "terminee").sort(parHeure)];
   const terminesListe = visibles.filter(terminesAffichees).sort(parHeure);
   const aAfficherListe = [...aFaireListe, ...terminesListe];
 
@@ -666,10 +669,16 @@ export default function CommandesKioskContent() {
             </button>
           )}
           {liste ? (
-            etapeCommande(c) !== "terminee" && (
-              <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "terminee")}>
-                {t("kq.c.terminer")} <IconCrochet className="gozly-icon" />
+            estAvenirAConfirmer(c) ? (
+              <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
+                {t("kq.c.traitee")} <IconCrochet className="gozly-icon" />
               </button>
+            ) : (
+              etapeCommande(c) !== "terminee" && (
+                <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "terminee")}>
+                  {t("kq.c.terminer")} <IconCrochet className="gozly-icon" />
+                </button>
+              )
             )
           ) : (
             <>
@@ -754,7 +763,7 @@ export default function CommandesKioskContent() {
                       {g.commandes.map((c) => {
                         const etat = etatCommande(c);
                         // Pas d'étape « En attente » en mode liste : c'est une commande « Traitée ».
-                        const etatTexte = modeKiosque === "liste" && etat.id === "en_attente" ? { id: "traitee", couleur: "#8ab4ff" } : etat;
+                        const etatTexte = modeKiosque === "liste" && etat.id === "en_attente" && !estAvenirAConfirmer(c) ? { id: "traitee", couleur: "#8ab4ff" } : etat;
                         return (
                           <tr key={c.id}>
                             <td style={{ whiteSpace: "nowrap" }}>{libelleRamassage(c, locale) || "—"}</td>
@@ -777,6 +786,11 @@ export default function CommandesKioskContent() {
                                 {modeKiosque === "sections" && etat.id === "en_attente" && (
                                   <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
                                     {t("kq.c.traiter")} <IconFlecheDroite className="gozly-icon-inline" />
+                                  </button>
+                                )}
+                                {modeKiosque === "liste" && estAvenirAConfirmer(c) && (
+                                  <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
+                                    {t("kq.c.traitee")} <IconCrochet className="gozly-icon" />
                                   </button>
                                 )}
                                 {imprimanteActive && (
