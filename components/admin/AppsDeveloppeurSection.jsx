@@ -127,7 +127,7 @@ function Ligne({ titre, children }) {
 
 function Lien({ url }) {
   // Une fiche vient d'un tiers : seuls les liens https:// deviennent cliquables.
-  if (!/^https:///i.test(url || "")) return <span>{url}</span>;
+  if (!String(url || "").toLowerCase().startsWith("https://")) return <span>{url}</span>;
   return (
     <a href={url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline", wordBreak: "break-all" }}>
       {url}
