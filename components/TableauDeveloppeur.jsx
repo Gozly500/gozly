@@ -106,6 +106,12 @@ export default function TableauDeveloppeur() {
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
 
+      <p style={{ margin: "14px 0 0" }}>
+        <a href="/guide-developpeur-gozly.pdf" download className="admin-icon-btn" style={{ textDecoration: "none", display: "inline-block" }}>
+          {t("Télécharger le guide du développeur (PDF)")}
+        </a>
+      </p>
+
       <section style={{ marginTop: "24px" }}>
         <h3>{t("Mes apps")}</h3>
         {apps === null ? (
