@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import LangSwitch from "@/components/LangSwitch";
+import { lireDemandeDeveloppeur } from "@/lib/developpeur";
 
 export default function Nav() {
   const { t } = useT();
@@ -15,6 +16,7 @@ export default function Nav() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [estDeveloppeur, setEstDeveloppeur] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const accountRef = useRef(null);
@@ -29,6 +31,14 @@ export default function Nav() {
     });
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setEstDeveloppeur(false);
+      return;
+    }
+    lireDemandeDeveloppeur(user.id).then((d) => setEstDeveloppeur(d?.statut === "approuvee"));
+  }, [user]);
 
   useEffect(() => {
     if (!user?.email) {
@@ -109,6 +119,11 @@ export default function Nav() {
                   <Link href="/dashboard" onClick={() => setAccountOpen(false)}>
                     {t("nav.dashboard")}
                   </Link>
+                  {estDeveloppeur && (
+                    <Link href="/developpeur" onClick={() => setAccountOpen(false)}>
+                      {t("Espace développeur")}
+                    </Link>
+                  )}
                   <Link href="/parametres" onClick={() => setAccountOpen(false)}>
                     {t("nav.parametres")}
                   </Link>
@@ -161,6 +176,11 @@ export default function Nav() {
             <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
               {t("nav.dashboard")}
             </Link>
+            {estDeveloppeur && (
+              <Link href="/developpeur" onClick={() => setMobileOpen(false)}>
+                {t("Espace développeur")}
+              </Link>
+            )}
             <Link href="/parametres" onClick={() => setMobileOpen(false)}>
               {t("nav.parametres")}
             </Link>

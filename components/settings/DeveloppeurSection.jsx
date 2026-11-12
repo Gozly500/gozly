@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { lireDemandeDeveloppeur, envoyerDemandeDeveloppeur } from "@/lib/developpeur";
 import { useT } from "@/components/LangProvider";
 
@@ -34,6 +35,10 @@ export default function DeveloppeurSection({ user }) {
         <button type="button" className="submit-btn" disabled={occupe} onClick={demander}>
           {occupe ? t("Envoi...") : t("Demander un compte développeur")}
         </button>
+      ) : demande.statut === "approuvee" ? (
+        <Link href="/developpeur" className="submit-btn" style={{ display: "inline-block" }}>
+          {t("Ouvrir l'espace développeur")}
+        </Link>
       ) : (
         <p className="panel-hint">
           {demande.statut === "approuvee"

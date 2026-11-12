@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { envoyerDemandeDeveloppeur } from "@/lib/developpeur";
 import { useT } from "@/components/LangProvider";
+import TableauDeveloppeur from "@/components/TableauDeveloppeur";
 
 // Page « Gozly pour développeurs » (lien du pied de page).
 //  - pas connecté : créer un compte (marqué développeur) ou se connecter ;
@@ -31,6 +32,8 @@ export default function DeveloppeurContent() {
       setEtat(res.nouvelle ? "envoye" : "existe");
     });
   }, []);
+
+  if (etat === "existe" && statut === "approuvee") return <TableauDeveloppeur />;
 
   if (etat === "chargement") return <p style={{ color: "var(--text-dim)", textAlign: "center" }}>{t("Chargement...")}</p>;
 
