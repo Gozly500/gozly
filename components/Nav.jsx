@@ -1,24 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import LangSwitch from "@/components/LangSwitch";
 
 export default function Nav() {
   const { t } = useT();
   const pathname = usePathname();
-  const router = useRouter();
   const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const accountRef = useRef(null);
-  useFermerAuClicExterieur(accountRef, accountOpen, () => setAccountOpen(false));
+  const [bientot, setBientot] = useState(false);
+
+  function autreService() {
+    setMobileOpen(false);
+    setBientot(true);
+    setTimeout(() => setBientot(false), 3500);
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -29,26 +29,6 @@ export default function Nav() {
     });
     return () => listener.subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (!user?.email) {
-      setIsAdmin(false);
-      return;
-    }
-    supabase
-      .from("admins")
-      .select("id")
-      .eq("email", user.email)
-      .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data));
-  }, [user]);
-
-  async function handleLogout() {
-    await supabase.auth.signOut({ scope: "local" });
-    setAccountOpen(false);
-    setMobileOpen(false);
-    router.push("/login");
-  }
 
   return (
     <div className="navbar">
@@ -98,36 +78,20 @@ export default function Nav() {
           </Link>
         </div>
 
-        <div className="desktop-only">
+        <div className="desktop-only nav-actions">
           {user ? (
-            <div className="account-wrap" ref={accountRef}>
-              <button className="account-btn" onClick={() => setAccountOpen((v) => !v)}>
-                {t("nav.compte")} <IconFlecheBas className="gozly-icon-inline" />
-              </button>
-              {accountOpen && (
-                <div className="account-dropdown open">
-                  <Link href="/dashboard" onClick={() => setAccountOpen(false)}>
-                    {t("nav.dashboard")}
-                  </Link>
-                  <Link href="/parametres" onClick={() => setAccountOpen(false)}>
-                    {t("nav.parametres")}
-                  </Link>
-                  {isAdmin && (
-                    <Link href="/admin" onClick={() => setAccountOpen(false)}>
-                      {t("nav.admin")}
-                    </Link>
-                  )}
-                  <div className="divider"></div>
-                  <button className="logout" onClick={handleLogout}>
-                    {t("nav.deconnexion")}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link href="/login" className="btn-navy">
-              {t("nav.connexion")}
+            <Link href="/dashboard" className="btn-navy">
+              {t("nav.dashboard")}
             </Link>
+          ) : (
+            <>
+              <Link href="/inscription" className="btn-navy">
+                {t("nav.demarrer")}
+              </Link>
+              <button type="button" className="btn-nav-secondaire" onClick={autreService}>
+                {t("nav.autre")}
+              </button>
+            </>
           )}
         </div>
 
@@ -157,28 +121,26 @@ export default function Nav() {
           {t("nav.contact")}
         </Link>
         {user ? (
+          <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
+            {t("nav.dashboard")}
+          </Link>
+        ) : (
           <>
-            <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
-              {t("nav.dashboard")}
+            <Link href="/inscription" onClick={() => setMobileOpen(false)}>
+              {t("nav.demarrer")}
             </Link>
-            <Link href="/parametres" onClick={() => setMobileOpen(false)}>
-              {t("nav.parametres")}
-            </Link>
-            {isAdmin && (
-              <Link href="/admin" onClick={() => setMobileOpen(false)}>
-                {t("nav.admin")}
-              </Link>
-            )}
-            <button onClick={handleLogout} className="mobile-logout">
-              {t("nav.deconnexion")}
+            <button type="button" className="mobile-logout" onClick={autreService}>
+              {t("nav.autre")}
             </button>
           </>
-        ) : (
-          <Link href="/login" onClick={() => setMobileOpen(false)}>
-            {t("nav.connexion")}
-          </Link>
         )}
       </div>
+
+      {bientot && (
+        <div className="nav-toast" role="status">
+          {t("nav.bientot")}
+        </div>
+      )}
     </div>
   );
 }
