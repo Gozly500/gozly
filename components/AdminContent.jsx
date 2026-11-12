@@ -28,6 +28,7 @@ const SOUS_MENUS = {
     { id: "tickets", label: "Tickets" },
     { id: "contact", label: "Formulaire de contact" },
     { id: "developpeurs", label: "Demandes développeur" },
+    { id: "apps", label: "Apps développeur" },
   ],
   annonces: [
     { id: "site", label: "Annonces du site" },

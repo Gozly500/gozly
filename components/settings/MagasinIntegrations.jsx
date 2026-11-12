@@ -101,7 +101,9 @@ export default function MagasinIntegrations({ installees, onInstaller, onRetirer
                   <LogoIntegration i={i} />
                   <div className="magasin-carte-titre">
                     <strong>{i.nom}</strong>
-                    <span>{t(categorieDe(i.categorie)?.label)}</span>
+                    <span>
+                      {t(categorieDe(i.categorie)?.label)} · {t("Par {nom}", { nom: i.developpeur || "Gozly" })}
+                    </span>
                   </div>
                 </div>
                 <p className="magasin-carte-desc">{t(i.description)}</p>
