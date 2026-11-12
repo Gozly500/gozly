@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
+import { urlPageApp } from "@/lib/jetonApp";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,14 @@ export async function POST(request) {
   } = await service.auth.getUser(token);
   if (!user) return NextResponse.json({ error: "Non authentifié." }, { status: 401 });
 
-  const { action, id } = await request.json().catch(() => ({}));
+  const { action, id, theme, accent, lang } = await request.json().catch(() => ({}));
+
+  // Aperçu de sa page, avec une entreprise de test (le jeton porte « apercu: true »).
+  if (action === "apercu") {
+    const { data: app } = await service.from("apps_developpeur").select("*").eq("id", id).maybeSingle();
+    if (!app || app.proprietaire_id !== user.id || !app.url_page) return NextResponse.json({ error: "Page introuvable." }, { status: 404 });
+    return NextResponse.json({ url: urlPageApp(app, { entrepriseId: "apercu", entrepriseNom: "Entreprise de test", apercu: true, theme, accent, lang }) });
+  }
 
   if (action === "laisser") {
     const { error } = await service

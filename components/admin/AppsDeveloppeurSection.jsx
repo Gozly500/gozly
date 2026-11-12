@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { ETIQUETTES_STATUT } from "@/lib/appsDeveloppeur";
 import { categorieDe } from "@/lib/integrationsCatalogue";
+import ApercuPageApp from "@/components/ApercuPageApp";
 
 export default function AppsDeveloppeurSection() {
   const [loading, setLoading] = useState(true);
@@ -11,6 +12,7 @@ export default function AppsDeveloppeurSection() {
   const [erreur, setErreur] = useState("");
   const [ouverte, setOuverte] = useState(null);
   const [refus, setRefus] = useState(null); // { app, message }
+  const [apercu, setApercu] = useState(null); // app dont on regarde la page
 
   async function appeler(methode, corps) {
     const { data: { session } } = await supabase.auth.getSession();
@@ -112,6 +114,19 @@ export default function AppsDeveloppeurSection() {
                   {a.description_longue && <Ligne titre="Description longue"><span style={{ whiteSpace: "pre-wrap" }}>{a.description_longue}</span></Ligne>}
                   <Ligne titre="Adresse du service"><Lien url={a.url_service} /></Ligne>
                   <Ligne titre="Retour de connexion"><Lien url={a.url_retour} /></Ligne>
+                  <Ligne titre="Page de gestion">
+                    {a.url_page ? (
+                      <>
+                        <Lien url={a.url_page} />{" "}
+                        <button className="admin-icon-btn" onClick={() => setApercu(a)}>
+                          Voir la page
+                        </button>
+                        {a.regles_page_le ? <span> · règles confirmées le {new Date(a.regles_page_le).toLocaleDateString("fr-CA")}</span> : null}
+                      </>
+                    ) : (
+                      "Aucune"
+                    )}
+                  </Ligne>
                   <Ligne titre="Permissions">{a.permissions?.length ? a.permissions.join(", ") : "Aucune"}</Ligne>
                   <Ligne titre="Courriel de support">{a.courriel_support}</Ligne>
                   <Ligne titre="Confidentialité"><Lien url={a.url_confidentialite} /></Ligne>
@@ -122,6 +137,21 @@ export default function AppsDeveloppeurSection() {
             </div>
           ))}
         </div>
+      )}
+
+      {apercu && (
+        <ApercuPageApp
+          titre={apercu.nom}
+          onFermer={() => setApercu(null)}
+          charger={async (theme, accent, lang) => {
+            try {
+              const data = await appeler("POST", { id: apercu.id, apercu: true, theme, accent, lang });
+              return data.url;
+            } catch {
+              return null;
+            }
+          }}
+        />
       )}
 
       {refus && (

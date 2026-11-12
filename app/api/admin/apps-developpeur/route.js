@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, getServiceClient } from "@/lib/adminServer";
+import { urlPageApp } from "@/lib/jetonApp";
 
 // Fiches d'apps des développeurs : liste et décision (approuver / refuser). Réservé aux admins.
 export async function GET(request) {
@@ -17,7 +18,7 @@ export async function GET(request) {
   const courriels = new Map((usersPage?.users || []).map((u) => [u.id, u.email]));
 
   return NextResponse.json({
-    apps: (apps || []).map((a) => ({
+    apps: (apps || []).map(({ secret_page, ...a }) => ({
       ...a,
       developpeur: a.proprietaire_id ? noms.get(a.proprietaire_id) || courriels.get(a.proprietaire_id) || "" : "",
     })),
@@ -30,7 +31,12 @@ export async function POST(request) {
   const service = getServiceClient();
   if (!service) return NextResponse.json({ error: "Configuration serveur incomplète." }, { status: 500 });
 
-  const { id, statut, note, supprimer } = await request.json().catch(() => ({}));
+  const { id, statut, note, supprimer, apercu, theme, accent, lang } = await request.json().catch(() => ({}));
+  if (apercu && id) {
+    const { data: app } = await service.from("apps_developpeur").select("*").eq("id", id).maybeSingle();
+    if (!app || !app.url_page) return NextResponse.json({ error: "Cette app n'a pas de page." }, { status: 404 });
+    return NextResponse.json({ url: urlPageApp(app, { entrepriseId: "apercu", entrepriseNom: "Entreprise de test", apercu: true, theme, accent, lang }) });
+  }
   if (supprimer && id) {
     await service.from("integrations_installees").delete().eq("integration_id", `app:${id}`);
     const { error: erreurSuppr } = await service.from("apps_developpeur").delete().eq("id", id);

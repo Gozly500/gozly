@@ -5,7 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
 import SimpleSelect from "@/components/SimpleSelect";
 import { CATEGORIES_INTEGRATIONS } from "@/lib/integrationsCatalogue";
-import { ETIQUETTES_STATUT, FICHE_VIDE, PERMISSIONS_APP, lireIcone, verifierFiche } from "@/lib/appsDeveloppeur";
+import { ETIQUETTES_STATUT, FICHE_VIDE, PERMISSIONS_APP, REGLES_PAGE, lireIcone, verifierFiche } from "@/lib/appsDeveloppeur";
+import ApercuPageApp from "@/components/ApercuPageApp";
 
 const CHAMPS = [
   "nom",
@@ -15,6 +16,7 @@ const CHAMPS = [
   "categorie",
   "url_service",
   "url_retour",
+  "url_page",
   "permissions",
   "courriel_support",
   "url_confidentialite",
@@ -48,7 +50,8 @@ export default function TableauDeveloppeur() {
     if (!app) return setEdition({ fiche: { ...FICHE_VIDE } });
     const fiche = {};
     for (const c of CHAMPS) fiche[c] = app[c] ?? FICHE_VIDE[c];
-    setEdition({ id: app.id, fiche, statut: app.statut, note_refus: app.note_refus });
+    fiche.regles_page = !!app.regles_page_le;
+    setEdition({ id: app.id, fiche, statut: app.statut, note_refus: app.note_refus, secret: app.secret_page, aPage: !!app.url_page });
   }
 
   const [retrait, setRetrait] = useState(null); // { app, installations }
@@ -162,6 +165,8 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
   const [msg, setMsg] = useState(null);
   const [occupe, setOccupe] = useState(false);
   const fichierRef = useRef(null);
+  const [apercu, setApercu] = useState(false);
+  const [secretVisible, setSecretVisible] = useState(false);
   const maj = (cle, valeur) => setF((x) => ({ ...x, [cle]: valeur }));
 
   async function choisirIcone(e) {
@@ -187,8 +192,11 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
       return setMsg({ type: "err", text: t("Le nom est requis.") });
     }
     setOccupe(true);
+    const { regles_page, ...reste } = f;
     const ligne = {
-      ...f,
+      ...reste,
+      url_page: f.url_page.trim() || null,
+      regles_page_le: f.url_page.trim() && regles_page ? new Date().toISOString() : null,
       prix: f.payant ? f.prix.trim() : null,
       statut: soumettre ? "soumise" : "brouillon",
       note_refus: null,
@@ -249,6 +257,40 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
       </div>
 
       <div className="field">
+        <label>{t("Page de gestion de l'app (facultatif)")}</label>
+        <input type="url" value={f.url_page} onChange={(e) => maj("url_page", e.target.value)} placeholder="https://" />
+        {f.url_page.trim() && (
+          <div style={{ marginTop: "10px", fontSize: "13.5px" }}>
+            <strong>{t("Règles de la page")}</strong>
+            <ul style={{ margin: "6px 0 10px 18px", display: "grid", gap: "4px" }}>
+              {REGLES_PAGE.map((r) => (
+                <li key={r}>{t(r)}</li>
+              ))}
+            </ul>
+            <label style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+              <input type="checkbox" checked={f.regles_page} onChange={(e) => maj("regles_page", e.target.checked)} style={{ marginTop: "3px" }} />
+              {t("Ma page respecte ces règles. Je comprends qu'elle sera vérifiée avant l'approbation.")}
+            </label>
+            {edition.id && edition.aPage && (
+              <button type="button" className="admin-icon-btn" style={{ marginTop: "10px" }} onClick={() => setApercu(true)}>
+                {t("Aperçu de ma page")}
+              </button>
+            )}
+            {edition.secret && (
+              <p style={{ marginTop: "12px" }}>
+                {t("Chaque ouverture reçoit un paramètre « jeton » (JWT HS256, valide 5 minutes) signé avec cette clé. Vérifie-le avant d'afficher quoi que ce soit.")}
+                <br />
+                <button type="button" className="admin-icon-btn" onClick={() => setSecretVisible((v) => !v)} style={{ marginTop: "6px" }}>
+                  {secretVisible ? t("Masquer la clé") : t("Afficher la clé de signature")}
+                </button>
+                {secretVisible && <code style={{ display: "block", marginTop: "6px", wordBreak: "break-all" }}>{edition.secret}</code>}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="field">
         <label>{t("Permissions demandées")}</label>
         {PERMISSIONS_APP.map((m) => (
           <div key={m.module} style={{ margin: "8px 0" }}>
@@ -289,6 +331,24 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
           {t("Enregistrer le brouillon")}
         </button>
       </div>
+
+      {apercu && (
+        <ApercuPageApp
+          titre={f.nom || t("Aperçu de ma page")}
+          t={t}
+          onFermer={() => setApercu(false)}
+          charger={async (theme, accent, lang) => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch("/api/developpeur/apps", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+              body: JSON.stringify({ action: "apercu", id: edition.id, theme, accent, lang }),
+            });
+            const json = await res.json().catch(() => ({}));
+            return res.ok ? json.url : null;
+          }}
+        />
+      )}
     </div>
   );
 }

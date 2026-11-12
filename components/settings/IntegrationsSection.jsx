@@ -482,7 +482,7 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
 
   function renderService(service) {
     if (!service.disponible) return renderBientotDisponible(service);
-    if (service.id.startsWith("app:")) return <PageAppTierce key={service.id} id={service.id} />;
+    if (service.id.startsWith("app:")) return <PageAppTierce key={service.id} id={service.id} entrepriseId={entrepriseId} />;
     if (service.id === "wix") return <div key={service.id}>{renderWix()}</div>;
     if (service.id === "nethris") return <div key={service.id}>{renderNethris()}</div>;
     if (service.id === "onedrive") return <div key={service.id}>{renderStockage("microsoft")}</div>;
