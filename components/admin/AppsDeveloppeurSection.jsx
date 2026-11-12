@@ -114,6 +114,7 @@ export default function AppsDeveloppeurSection() {
                   {a.description_longue && <Ligne titre="Description longue"><span style={{ whiteSpace: "pre-wrap" }}>{a.description_longue}</span></Ligne>}
                   <Ligne titre="Adresse du service"><Lien url={a.url_service} /></Ligne>
                   <Ligne titre="Retour de connexion"><Lien url={a.url_retour} /></Ligne>
+                  <Ligne titre="Tableau de bord externe (bouton « Ouvrir »)">{a.url_externe ? <Lien url={a.url_externe} /> : "Aucun"}</Ligne>
                   <Ligne titre="Page de gestion">
                     {a.url_page ? (
                       <>

@@ -64,7 +64,7 @@ export default function ApercuPageApp({ titre, charger, onFermer, t = (x) => x }
               <iframe
                 src={url}
                 title={titre}
-                sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+                sandbox="allow-scripts allow-forms allow-same-origin"
                 referrerPolicy="no-referrer"
                 style={{ width: mobile ? "375px" : "100%", maxWidth: "100%", height: "560px", border: 0, background: "transparent" }}
               />

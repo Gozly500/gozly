@@ -17,6 +17,7 @@ const CHAMPS = [
   "url_service",
   "url_retour",
   "url_page",
+  "url_externe",
   "permissions",
   "courriel_support",
   "url_confidentialite",
@@ -196,6 +197,7 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
     const ligne = {
       ...reste,
       url_page: f.url_page.trim() || null,
+      url_externe: f.url_externe.trim() || null,
       regles_page_le: f.url_page.trim() && regles_page ? new Date().toISOString() : null,
       prix: f.payant ? f.prix.trim() : null,
       statut: soumettre ? "soumise" : "brouillon",
@@ -288,6 +290,12 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
             )}
           </div>
         )}
+      </div>
+
+      <div className="field">
+        <label>{t("Lien vers ton tableau de bord (facultatif)")}</label>
+        <input type="url" value={f.url_externe} onChange={(e) => maj("url_externe", e.target.value)} placeholder="https://" />
+        <p className="panel-hint" style={{ margin: "4px 0 0" }}>{t("Un bouton « Ouvrir » apparaît dans l'app. Il s'ouvre dans un nouvel onglet.")}</p>
       </div>
 
       <div className="field">

@@ -90,6 +90,7 @@ export async function POST(request) {
     prix: a.prix,
     permissions: a.permissions || [],
     a_page: !!a.url_page,
+    url_externe: a.url_externe || null,
     developpeur: a.proprietaire_id ? noms.get(a.proprietaire_id) || "" : "",
   }));
 

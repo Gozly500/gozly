@@ -77,15 +77,22 @@ export default function PageAppTierce({ id, entrepriseId }) {
             </>
           )}
         </div>
+        {lienSur(d.url_externe) && (
+          <div>
+            <a href={d.url_externe} target="_blank" rel="noopener noreferrer" className="submit-btn" style={{ display: "inline-block", textDecoration: "none" }}>
+              {t("Ouvrir {nom}", { nom: app.nom })}
+            </a>
+          </div>
+        )}
         {urlPage ? (
           <iframe
             src={urlPage}
             title={app.nom}
-            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+            sandbox="allow-scripts allow-forms allow-same-origin"
             referrerPolicy="no-referrer"
             style={{ width: "100%", height: "640px", border: 0, background: "transparent" }}
           />
-        ) : (
+        ) : lienSur(d.url_externe) ? null : (
           <p className="panel-hint" style={{ margin: 0 }}>{t("Connexion bientôt disponible.")}</p>
         )}
       </div>
