@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { ETIQUETTES_STATUT } from "@/lib/appsDeveloppeur";
+import { categorieDe } from "@/lib/integrationsCatalogue";
 
 export default function AppsDeveloppeurSection() {
   const [loading, setLoading] = useState(true);
@@ -72,6 +73,9 @@ export default function AppsDeveloppeurSection() {
                   </div>
                 </div>
                 <div className="admin-row-controls" onClick={(e) => e.stopPropagation()}>
+                  <button className="admin-icon-btn" onClick={() => setOuverte(ouverte === a.id ? null : a.id)}>
+                    {ouverte === a.id ? "Masquer" : "Détails"}
+                  </button>
                   {a.statut !== "approuvee" && (
                     <button className="admin-icon-btn" onClick={() => decider(a, "approuvee")}>
                       Approuver
@@ -85,15 +89,23 @@ export default function AppsDeveloppeurSection() {
                 </div>
               </div>
               {ouverte === a.id && (
-                <div style={{ padding: "6px 16px 16px", fontSize: "13.5px", color: "var(--text-dim)", display: "grid", gap: "4px" }}>
-                  <div>{a.description_courte}</div>
-                  {a.description_longue && <div style={{ whiteSpace: "pre-wrap" }}>{a.description_longue}</div>}
-                  <div>Service : {a.url_service}</div>
-                  <div>Retour de connexion : {a.url_retour}</div>
-                  <div>Permissions : {a.permissions?.length ? a.permissions.join(", ") : "aucune"}</div>
-                  <div>Support : {a.courriel_support}</div>
-                  <div>Confidentialité : {a.url_confidentialite}</div>
-                  <div>Prix : {a.payant ? a.prix : "gratuit"}</div>
+                <div style={{ padding: "8px 16px 18px", fontSize: "13.5px", display: "grid", gap: "8px" }}>
+                  <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                    {a.icone ? <img src={a.icone} alt="" width={56} height={56} style={{ borderRadius: "12px" }} /> : null}
+                    <div>
+                      <strong style={{ fontSize: "15px" }}>{a.nom}</strong>
+                      <div style={{ color: "var(--text-dim)" }}>{categorieDe(a.categorie)?.label || a.categorie}</div>
+                    </div>
+                  </div>
+                  <Ligne titre="Description courte">{a.description_courte}</Ligne>
+                  {a.description_longue && <Ligne titre="Description longue"><span style={{ whiteSpace: "pre-wrap" }}>{a.description_longue}</span></Ligne>}
+                  <Ligne titre="Adresse du service"><Lien url={a.url_service} /></Ligne>
+                  <Ligne titre="Retour de connexion"><Lien url={a.url_retour} /></Ligne>
+                  <Ligne titre="Permissions">{a.permissions?.length ? a.permissions.join(", ") : "Aucune"}</Ligne>
+                  <Ligne titre="Courriel de support">{a.courriel_support}</Ligne>
+                  <Ligne titre="Confidentialité"><Lien url={a.url_confidentialite} /></Ligne>
+                  <Ligne titre="Prix">{a.payant ? a.prix : "Gratuit"}</Ligne>
+                  {a.note_refus && <Ligne titre="Raison du refus">{a.note_refus}</Ligne>}
                 </div>
               )}
             </div>
@@ -101,5 +113,24 @@ export default function AppsDeveloppeurSection() {
         </div>
       )}
     </div>
+  );
+}
+
+function Ligne({ titre, children }) {
+  return (
+    <div>
+      <div style={{ color: "var(--text-dim)", fontSize: "12px" }}>{titre}</div>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function Lien({ url }) {
+  // Une fiche vient d'un tiers : seuls les liens https:// deviennent cliquables.
+  if (!/^https:///i.test(url || "")) return <span>{url}</span>;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline", wordBreak: "break-all" }}>
+      {url}
+    </a>
   );
 }
