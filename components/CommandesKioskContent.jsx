@@ -629,7 +629,7 @@ export default function CommandesKioskContent() {
     const paiement = libellePaiement(c) ? t(`kq.c.pay.${clePaiement}`) : null;
     const etat = etatCommande(c);
     return (
-      <article className={`cmd-kiosk-card${liste && etapeCommande(c) === "terminee" ? " cmd-kiosk-card-finie" : ""}`} key={c.id} ref={anim.ref(c.id)} onClick={() => aConfirmer.size > 0 && confirmerVue(c.id)}>
+      <article className={`cmd-kiosk-card${liste && etapeCommande(c) === "terminee" ? " cmd-kiosk-card-finie" : ""}${etapeCommande(c) === "en_attente" ? " cmd-kiosk-card-attente" : ""}`} key={c.id} ref={anim.ref(c.id)} onClick={() => aConfirmer.size > 0 && confirmerVue(c.id)}>
         <div className="cmd-kiosk-card-top">
           <strong>#{c.numero || "—"}</strong>
           <span>{libelleRamassage(c, locale) ? t("kq.c.ramassageHeure", { h: libelleRamassage(c, locale) }) : heureCommande(c.date_commande, locale)}</span>
@@ -765,7 +765,7 @@ export default function CommandesKioskContent() {
                         // Pas d'étape « En attente » en mode liste : c'est une commande « Traitée ».
                         const etatTexte = modeKiosque === "liste" && etat.id === "en_attente" && !estAvenirAConfirmer(c) ? { id: "traitee", couleur: "#8ab4ff" } : etat;
                         return (
-                          <tr key={c.id}>
+                          <tr key={c.id} className={etat.id === "en_attente" ? "cmd-kiosk-ligne-attente" : undefined}>
                             <td style={{ whiteSpace: "nowrap" }}>{libelleRamassage(c, locale) || "—"}</td>
                             <td>#{c.numero || "—"}</td>
                             <td>{c.client_nom || "—"}</td>

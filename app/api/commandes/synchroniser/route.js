@@ -139,12 +139,13 @@ export async function POST(request) {
       if (dejaConnues.has(l.source_id)) continue;
       const recente = new Date(dateEffective(l)) >= new Date(debutHier);
       if (!recente) continue;
+      // Le bon de toute nouvelle commande récente sort à son arrivée, peu importe l'affichage du kiosque et la date de ramassage.
+      if (new Date(l.date_commande).getTime() > il_y_a_12h) aImprimer.push(l.source_id);
       if (!modeSections) {
         // Ramassage après aujourd'hui : elle s'affiche dans la liste du jour (son + bon imprimé à l'arrivée) jusqu'à ce que
         // l'équipe appuie sur « Traitée » ; elle reste ensuite dans « Commandes à venir ».
         const pourPlusTard = l.date_ramassage && new Date(l.date_ramassage) >= new Date(debutDemain);
         l.etape = pourPlusTard ? "en_attente" : "traitee";
-        if (new Date(l.date_commande).getTime() > il_y_a_12h) aImprimer.push(l.source_id);
       } else if (l.statut_preparation === "FULFILLED") {
         // Déjà « préparée » chez Wix (éléments de menu Wix Restaurants) : nouvelle pour l'équipe, donc « En attente ».
         l.etape = "en_attente";

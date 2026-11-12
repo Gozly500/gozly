@@ -2457,6 +2457,15 @@ button.cmd-menu-option:active{background:rgba(var(--w),0.14);}
 [data-theme="clair"] .cmd-kiosk-table-jour td{background:#eceef5;}
 /* Mode liste : commande terminée = carte atténuée en fin de liste. */
 .cmd-kiosk-card-finie{opacity:.55;}
+/* Commande en attente : mise en valeur par une lueur ambrée qui scintille doucement. */
+.cmd-kiosk-card-attente{border-color:rgba(255,212,121,0.75);animation:cmdLueur 2.8s ease-in-out infinite;}
+@keyframes cmdLueur{
+  0%,100%{box-shadow:0 0 6px 0 rgba(255,212,121,0.25),0 0 18px 0 rgba(255,212,121,0.12);border-color:rgba(255,212,121,0.55);}
+  50%{box-shadow:0 0 14px 2px rgba(255,212,121,0.6),0 0 34px 6px rgba(255,212,121,0.28);border-color:rgba(255,212,121,0.95);}
+}
+.cmd-kiosk-ligne-attente td{animation:cmdLueurLigne 2.8s ease-in-out infinite;}
+@keyframes cmdLueurLigne{0%,100%{background-color:rgba(255,212,121,0.04);}50%{background-color:rgba(255,212,121,0.17);}}
+@media (prefers-reduced-motion:reduce){.cmd-kiosk-card-attente,.cmd-kiosk-ligne-attente td{animation:none;box-shadow:0 0 14px 2px rgba(255,212,121,0.4);}}
 /* Inventaire : titre d'une catégorie de produits. */
 .inventaire-categorie-titre{font-weight:700;font-size:15px;margin:0 0 8px 4px;}
 .inventaire-categorie-titre span{color:var(--text-dim);font-weight:400;font-size:13px;}
