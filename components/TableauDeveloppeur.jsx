@@ -51,10 +51,29 @@ export default function TableauDeveloppeur() {
     setEdition({ id: app.id, fiche, statut: app.statut, note_refus: app.note_refus });
   }
 
-  async function supprimer(app) {
-    if (!window.confirm(t("Supprimer cette app?"))) return;
-    const { error } = await supabase.from("apps_developpeur").delete().eq("id", app.id);
-    if (error) setMsg({ type: "err", text: t("Suppression impossible.") });
+  const [retrait, setRetrait] = useState(null); // { app, installations }
+
+  async function appelerApi(action, id) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/api/developpeur/apps", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ action, id }),
+    });
+    const json = await res.json().catch(() => ({}));
+    return res.ok ? json : null;
+  }
+
+  async function demanderRetrait(app) {
+    setMsg(null);
+    const json = await appelerApi("compter", app.id);
+    setRetrait({ app, installations: json ? json.installations : 0 });
+  }
+
+  async function confirmerRetrait() {
+    const json = await appelerApi("retirer", retrait.app.id);
+    setRetrait(null);
+    if (!json) setMsg({ type: "err", text: t("Suppression impossible.") });
     else charger(userId);
   }
 
@@ -101,17 +120,38 @@ export default function TableauDeveloppeur() {
                   <button type="button" className="admin-icon-btn" onClick={() => ouvrir(a)}>
                     {t("Modifier")}
                   </button>
-                  {a.statut !== "approuvee" && (
-                    <button type="button" className="admin-icon-btn danger" onClick={() => supprimer(a)}>
-                      {t("Supprimer")}
-                    </button>
-                  )}
+                  <button type="button" className="admin-icon-btn danger" onClick={() => demanderRetrait(a)}>
+                    {a.statut === "approuvee" ? t("Retirer") : t("Supprimer")}
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </section>
+
+      {retrait && (
+        <div className="modal-overlay" onClick={() => setRetrait(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("Retirer {nom}?", { nom: retrait.app.nom })}</h3>
+            </div>
+            <p className="panel-hint" style={{ marginTop: 0 }}>
+              {retrait.installations > 0
+                ? t("{n} entreprise(s) l'ont installée. Elles la perdront.", { n: retrait.installations })
+                : t("Aucune entreprise ne l'a installée.")}
+            </p>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <button type="button" className="btn-danger" onClick={confirmerRetrait}>
+                {t("Retirer l'app")}
+              </button>
+              <button type="button" className="admin-icon-btn" onClick={() => setRetrait(null)}>
+                {t("Annuler")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

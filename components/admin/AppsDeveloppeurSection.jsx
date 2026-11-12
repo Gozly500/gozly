@@ -78,6 +78,20 @@ export default function AppsDeveloppeurSection() {
                       Approuver
                     </button>
                   )}
+                  <button
+                    className="admin-icon-btn danger"
+                    onClick={async () => {
+                      if (!window.confirm("Supprimer cette app? Les entreprises qui l'ont installée la perdront.")) return;
+                      try {
+                        await appeler("POST", { id: a.id, supprimer: true });
+                        charger();
+                      } catch (e) {
+                        setErreur(e.message);
+                      }
+                    }}
+                  >
+                    Supprimer
+                  </button>
                   {a.statut !== "refusee" && (
                     <button className="admin-icon-btn danger" onClick={() => setRefus({ app: a, message: "" })}>
                       Refuser

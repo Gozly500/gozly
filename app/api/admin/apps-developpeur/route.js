@@ -30,7 +30,13 @@ export async function POST(request) {
   const service = getServiceClient();
   if (!service) return NextResponse.json({ error: "Configuration serveur incomplète." }, { status: 500 });
 
-  const { id, statut, note } = await request.json().catch(() => ({}));
+  const { id, statut, note, supprimer } = await request.json().catch(() => ({}));
+  if (supprimer && id) {
+    await service.from("integrations_installees").delete().eq("integration_id", `app:${id}`);
+    const { error: erreurSuppr } = await service.from("apps_developpeur").delete().eq("id", id);
+    if (erreurSuppr) return NextResponse.json({ error: "La suppression a échoué." }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
   if (!id || !["approuvee", "refusee"].includes(statut)) {
     return NextResponse.json({ error: "Décision invalide." }, { status: 400 });
   }

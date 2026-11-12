@@ -27,11 +27,13 @@ export async function POST(request) {
   // Apps approuvées de développeurs (id « app:<uuid> »).
   const { data: appsApprouvees } = await service.from("apps_developpeur").select("*").eq("statut", "approuvee");
   const idsApps = new Set((appsApprouvees || []).map((a) => `app:${a.id}`));
+  // Sans propriétaire (compte supprimé) : plus installable, mais elle continue chez les entreprises qui l'ont déjà.
+  const idsInstallables = new Set((appsApprouvees || []).filter((a) => a.proprietaire_id).map((a) => `app:${a.id}`));
 
   if (action === "installer" || action === "retirer") {
     const estApp = typeof integrationId === "string" && integrationId.startsWith("app:");
     const connue = estApp
-      ? action === "retirer" || idsApps.has(integrationId)
+      ? action === "retirer" || idsInstallables.has(integrationId)
         ? { id: integrationId }
         : null
       : CATALOGUE_INTEGRATIONS.find((i) => i.id === integrationId && i.disponible);
@@ -73,7 +75,9 @@ export async function POST(request) {
   // Noms des développeurs (la fiche publique d'une app : pas d'adresses techniques).
   const { data: profils } = await service.from("profils").select("id, full_name");
   const noms = new Map((profils || []).map((p) => [p.id, p.full_name]));
-  const apps = (appsApprouvees || []).map((a) => ({
+  const apps = (appsApprouvees || [])
+    .filter((a) => a.proprietaire_id || installees.has(`app:${a.id}`))
+    .map((a) => ({
     id: a.id,
     nom: a.nom,
     categorie: a.categorie,
