@@ -2818,6 +2818,7 @@ html.lenis,html.lenis body{height:auto;}
 html.lenis{scroll-behavior:auto;}
 
 /* Panneau admin : tickets Discord */
+.admin-point{margin-left:8px;width:10px;height:10px;border-radius:50%;background:#e5232e;display:inline-block;flex-shrink:0;}
 .admin-badge{margin-left:8px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#e5232e;color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;}
 a.admin-icon-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .ticket-conv{padding:14px 18px 18px;background:rgba(var(--w),0.05);border-top:1px solid rgba(var(--w),0.1);max-height:460px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}

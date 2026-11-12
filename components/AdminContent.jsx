@@ -51,6 +51,7 @@ export default function AdminContent() {
   const [sous, setSous] = useState(null);
   const [sens, setSens] = useState("avant"); // sens de l'animation de la barre latérale
   const [ticketsOuverts, setTicketsOuverts] = useState(0);
+  const [nonTraites, setNonTraites] = useState({ contact: 0, developpeurs: 0, apps: 0 });
 
   useEffect(() => {
     let ignore = false;
@@ -94,6 +95,16 @@ export default function AdminContent() {
         const json = await res.json();
         if (!ignore) setTicketsOuverts((json.tickets || []).filter((t) => !t.ferme).length);
       } catch {}
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch("/api/admin/compteurs", { headers: { Authorization: `Bearer ${session.access_token}` }, cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!ignore) setNonTraites({ contact: json.contact || 0, developpeurs: json.developpeurs || 0, apps: json.apps || 0 });
+      } catch {}
     }
     compter();
     const id = setInterval(compter, 60000);
@@ -101,7 +112,7 @@ export default function AdminContent() {
       ignore = true;
       clearInterval(id);
     };
-  }, [isAdmin]);
+  }, [isAdmin, sous]);
 
   if (checking) {
     return (
@@ -145,7 +156,7 @@ export default function AdminContent() {
                 }}
               >
                 <span className="icon">{tab.Icone ? <tab.Icone className="gozly-icon" /> : tab.icon}</span> {tab.label}
-                {tab.id === "support" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
+                {tab.id === "support" && ticketsOuverts + nonTraites.contact + nonTraites.developpeurs + nonTraites.apps > 0 && <span className="admin-point" aria-label="Nouveau" />}
               </button>
             ))
           ) : (
@@ -168,7 +179,11 @@ export default function AdminContent() {
               {SOUS_MENUS[vue].map((item) => (
                 <button key={item.id} type="button" className={`settings-nav-item${sous === item.id ? " active" : ""}`} onClick={() => setSous(item.id)}>
                   {item.label}
-                  {vue === "support" && item.id === "tickets" && ticketsOuverts > 0 && <span className="admin-badge">{ticketsOuverts}</span>}
+                  {vue === "support" &&
+                    ((item.id === "tickets" && ticketsOuverts > 0) ||
+                      (item.id === "contact" && nonTraites.contact > 0) ||
+                      (item.id === "developpeurs" && nonTraites.developpeurs > 0) ||
+                      (item.id === "apps" && nonTraites.apps > 0)) && <span className="admin-point" aria-label="Nouveau" />}
                 </button>
               ))}
             </>
