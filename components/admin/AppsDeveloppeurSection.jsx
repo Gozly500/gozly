@@ -10,6 +10,7 @@ export default function AppsDeveloppeurSection() {
   const [apps, setApps] = useState([]);
   const [erreur, setErreur] = useState("");
   const [ouverte, setOuverte] = useState(null);
+  const [refus, setRefus] = useState(null); // { app, message }
 
   async function appeler(methode, corps) {
     const { data: { session } } = await supabase.auth.getSession();
@@ -39,14 +40,10 @@ export default function AppsDeveloppeurSection() {
     charger();
   }, []);
 
-  async function decider(a, statut) {
-    let note = "";
-    if (statut === "refusee") {
-      note = window.prompt("Raison du refus (visible par le développeur) :") ?? null;
-      if (note === null) return;
-    }
+  async function decider(a, statut, note = "") {
     try {
       await appeler("POST", { id: a.id, statut, note });
+      setRefus(null);
       charger();
     } catch (e) {
       setErreur(e.message);
@@ -82,7 +79,7 @@ export default function AppsDeveloppeurSection() {
                     </button>
                   )}
                   {a.statut !== "refusee" && (
-                    <button className="admin-icon-btn danger" onClick={() => decider(a, "refusee")}>
+                    <button className="admin-icon-btn danger" onClick={() => setRefus({ app: a, message: "" })}>
                       Refuser
                     </button>
                   )}
@@ -110,6 +107,33 @@ export default function AppsDeveloppeurSection() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {refus && (
+        <div className="modal-overlay" onClick={() => setRefus(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Refuser {refus.app.nom}</h3>
+            </div>
+            <p className="panel-hint" style={{ marginTop: 0 }}>Ce message sera visible par le développeur.</p>
+            <textarea
+              rows={5}
+              style={{ width: "100%" }}
+              value={refus.message}
+              onChange={(e) => setRefus({ ...refus, message: e.target.value })}
+              maxLength={500}
+              autoFocus
+            />
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "14px" }}>
+              <button type="button" className="submit-btn" disabled={!refus.message.trim()} onClick={() => decider(refus.app, "refusee", refus.message.trim())}>
+                Refuser l'app
+              </button>
+              <button type="button" className="admin-icon-btn" onClick={() => setRefus(null)}>
+                Annuler
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -4,10 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { IconLoupe } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import LogoIntegration from "@/components/settings/LogoIntegration";
+import { PERMISSIONS_APP } from "@/lib/appsDeveloppeur";
 import { catalogue, CATEGORIES_INTEGRATIONS, categorieDe, sansAccents } from "@/lib/integrationsCatalogue";
 
 // Le « magasin » : toutes les intégrations sous forme de cases, avec recherche et filtre par catégorie.
 // Installer une intégration la fait apparaître dans la barre latérale (sous sa catégorie).
+const LIBELLES_PERMISSIONS = Object.fromEntries(PERMISSIONS_APP.flatMap((m) => m.actions.map((a) => [a.id, a.label])));
+
 export default function MagasinIntegrations({ installees, onInstaller, onRetirer, onOuvrir, occupe = {} }) {
   const { t } = useT();
   const [recherche, setRecherche] = useState("");
@@ -15,6 +18,7 @@ export default function MagasinIntegrations({ installees, onInstaller, onRetirer
   // Animation d'installation, par intégration : "charge" (~1,5 s) puis "ok" (coche animée ~1,3 s).
   const [anim, setAnim] = useState({});
   const [erreur, setErreur] = useState(null);
+  const [aConfirmer, setAConfirmer] = useState(null); // app de développeur en attente de confirmation
   const minuteries = useRef([]);
   useEffect(() => () => minuteries.current.forEach(clearTimeout), []);
 
@@ -124,7 +128,7 @@ export default function MagasinIntegrations({ installees, onInstaller, onRetirer
                       </button>
                     </>
                   ) : (
-                    <button type="button" className="submit-btn magasin-installer" onClick={() => lancerInstallation(i)} disabled={!!occupe[i.id]}>
+                    <button type="button" className="submit-btn magasin-installer" onClick={() => (i.tiers ? setAConfirmer(i) : lancerInstallation(i))} disabled={!!occupe[i.id]}>
                       {t("Installer")}
                     </button>
                   )}
@@ -133,6 +137,45 @@ export default function MagasinIntegrations({ installees, onInstaller, onRetirer
               </div>
             );
           })}
+        </div>
+      )}
+
+      {aConfirmer && (
+        <div className="modal-overlay" onClick={() => setAConfirmer(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("Installer {nom}?", { nom: aConfirmer.nom })}</h3>
+            </div>
+            <p className="panel-hint" style={{ marginTop: 0 }}>
+              {t("Par {nom}", { nom: aConfirmer.developpeur || "—" })}
+            </p>
+            <strong>{t("Cette app aura accès à :")}</strong>
+            {aConfirmer.details?.permissions?.length > 0 ? (
+              <ul style={{ margin: "8px 0 16px 18px" }}>
+                {aConfirmer.details.permissions.map((p) => (
+                  <li key={p}>{t(LIBELLES_PERMISSIONS[p] || p)}</li>
+                ))}
+              </ul>
+            ) : (
+              <p style={{ margin: "8px 0 16px" }}>{t("Aucune donnée de ton entreprise.")}</p>
+            )}
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="submit-btn"
+                onClick={() => {
+                  const i = aConfirmer;
+                  setAConfirmer(null);
+                  lancerInstallation(i);
+                }}
+              >
+                {t("Installer")}
+              </button>
+              <button type="button" className="admin-icon-btn" onClick={() => setAConfirmer(null)}>
+                {t("Annuler")}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
