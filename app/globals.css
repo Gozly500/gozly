@@ -505,6 +505,11 @@ a{color:inherit;text-decoration:none;}
 
 .nav-links a:hover{background:rgba(var(--w),0.12);color:var(--text);}
 
+.nav-toast{
+    position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:1000;
+    background:#14203f;color:#f2f5ff;border:1px solid rgba(var(--w),0.2);border-radius:14px;
+    padding:12px 18px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:90vw;text-align:center;
+  }
 .btn-navy{
     padding:10px;border-radius:30px;font-size:13.5px;font-weight:600;
     background:linear-gradient(160deg,#2a2a8f,#191960);

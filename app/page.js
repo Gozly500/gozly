@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
 import ModuleVitrine from "@/components/ModuleVitrine";
 import HeroParallax from "@/components/HeroParallax";
+import HeroBoutons from "@/components/HeroBoutons";
 import SmoothScroll from "@/components/SmoothScroll";
 import { Rich } from "@/components/LangProvider";
 import { getT } from "@/lib/i18n/siteServer";
@@ -34,14 +35,7 @@ export default function HomePage() {
           <div className="hero-slogan">
             {t("home.slogan")}
           </div>
-          <div className="hero-ctas">
-            <Link href="/contact" className="btn-pill-dark">
-              {t("home.cta.projet")} <IconFlecheDroite className="gozly-icon-inline" />
-            </Link>
-            <a href="#modules" className="btn-pill-glass">
-              {t("home.cta.modules")}
-            </a>
-          </div>
+          <HeroBoutons />
         </div>
       </header>
 
