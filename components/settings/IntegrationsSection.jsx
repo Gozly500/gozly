@@ -8,7 +8,8 @@ import DiagnosticWixModal from "@/components/inventaire/DiagnosticWixModal";
 import PageIA from "@/components/settings/PageIA";
 import EnteteIntegration from "@/components/settings/EnteteIntegration";
 import MagasinIntegrations from "@/components/settings/MagasinIntegrations";
-import { CATALOGUE_INTEGRATIONS } from "@/lib/integrationsCatalogue";
+import { catalogue } from "@/lib/integrationsCatalogue";
+import PageAppTierce from "@/components/settings/PageAppTierce";
 import { useT } from "@/components/LangProvider";
 
 const STOCKAGES = {
@@ -481,6 +482,7 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
 
   function renderService(service) {
     if (!service.disponible) return renderBientotDisponible(service);
+    if (service.id.startsWith("app:")) return <PageAppTierce key={service.id} id={service.id} />;
     if (service.id === "wix") return <div key={service.id}>{renderWix()}</div>;
     if (service.id === "nethris") return <div key={service.id}>{renderNethris()}</div>;
     if (service.id === "onedrive") return <div key={service.id}>{renderStockage("microsoft")}</div>;
@@ -496,7 +498,7 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
     return renderBientotDisponible(service);
   }
 
-  const integration = CATALOGUE_INTEGRATIONS.find((i) => i.id === vue && i.disponible && installees.includes(i.id));
+  const integration = catalogue().find((i) => i.id === vue && i.disponible && installees.includes(i.id));
 
   return (
     <div>

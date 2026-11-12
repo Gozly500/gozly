@@ -2,7 +2,7 @@
 
 import { useT } from "@/components/LangProvider";
 import LogoIntegration from "@/components/settings/LogoIntegration";
-import { CATALOGUE_INTEGRATIONS, categorieDe } from "@/lib/integrationsCatalogue";
+import { catalogue, categorieDe } from "@/lib/integrationsCatalogue";
 
 const ETATS = {
   connecte: { texte: "Connecté", classe: "active" },
@@ -14,7 +14,7 @@ const ETATS = {
 // En-tête commun des pages d'intégration : tuile du service, nom, catégorie, description et état de la connexion.
 export default function EnteteIntegration({ id, etat }) {
   const { t } = useT();
-  const i = CATALOGUE_INTEGRATIONS.find((x) => x.id === id);
+  const i = catalogue().find((x) => x.id === id);
   if (!i) return null;
   const e = ETATS[etat];
   return (

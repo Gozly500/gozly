@@ -24,8 +24,17 @@ export async function POST(request) {
   const service = getServiceClient();
   if (!service) return NextResponse.json({ error: "Service indisponible." }, { status: 503 });
 
+  // Apps approuvées de développeurs (id « app:<uuid> »).
+  const { data: appsApprouvees } = await service.from("apps_developpeur").select("*").eq("statut", "approuvee");
+  const idsApps = new Set((appsApprouvees || []).map((a) => `app:${a.id}`));
+
   if (action === "installer" || action === "retirer") {
-    const connue = CATALOGUE_INTEGRATIONS.find((i) => i.id === integrationId && i.disponible);
+    const estApp = typeof integrationId === "string" && integrationId.startsWith("app:");
+    const connue = estApp
+      ? action === "retirer" || idsApps.has(integrationId)
+        ? { id: integrationId }
+        : null
+      : CATALOGUE_INTEGRATIONS.find((i) => i.id === integrationId && i.disponible);
     if (!connue) return NextResponse.json({ error: "Intégration inconnue." }, { status: 400 });
 
     if (action === "installer") {
@@ -47,7 +56,8 @@ export async function POST(request) {
   // Explicites + déjà connectées.
   const installees = new Set();
   const explicites = await service.from("integrations_installees").select("integration_id").eq("entreprise_id", entreprise.id);
-  for (const r of explicites.data || []) installees.add(r.integration_id);
+  // Une app qui n'est plus approuvée disparaît de la liste (sans être effacée : elle revient si elle est réapprouvée).
+  for (const r of explicites.data || []) if (!r.integration_id.startsWith("app:") || idsApps.has(r.integration_id)) installees.add(r.integration_id);
 
   const [wix, stockage, paie, ia] = await Promise.all([
     service.from("wix_connexions").select("statut").eq("entreprise_id", entreprise.id).maybeSingle(),
@@ -60,5 +70,23 @@ export async function POST(request) {
   for (const c of paie.data || []) if (c.service === "nethris") installees.add("nethris");
   if ((ia.count || 0) > 0) installees.add("ia-assistants");
 
-  return NextResponse.json({ installees: [...installees], configure: !explicites.error });
+  // Noms des développeurs (la fiche publique d'une app : pas d'adresses techniques).
+  const { data: profils } = await service.from("profils").select("id, full_name");
+  const noms = new Map((profils || []).map((p) => [p.id, p.full_name]));
+  const apps = (appsApprouvees || []).map((a) => ({
+    id: a.id,
+    nom: a.nom,
+    categorie: a.categorie,
+    description_courte: a.description_courte,
+    description_longue: a.description_longue,
+    icone: a.icone,
+    courriel_support: a.courriel_support,
+    url_confidentialite: a.url_confidentialite,
+    payant: a.payant,
+    prix: a.prix,
+    permissions: a.permissions || [],
+    developpeur: a.proprietaire_id ? noms.get(a.proprietaire_id) || "" : "",
+  }));
+
+  return NextResponse.json({ installees: [...installees], apps, configure: !explicites.error });
 }

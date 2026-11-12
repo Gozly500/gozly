@@ -3,7 +3,7 @@
 import { IconIntegration } from "@/components/icons/GozlyIcons";
 import { IconFlecheBas, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
-import { CATALOGUE_INTEGRATIONS, categoriesInstallees } from "@/lib/integrationsCatalogue";
+import { catalogue, categoriesInstallees } from "@/lib/integrationsCatalogue";
 
 // Second niveau de la barre latérale des paramètres : le magasin toujours en premier, puis les intégrations installées.
 // Une catégorie qui n'a qu'une intégration installée affiche directement cette intégration ; avec deux ou plus, la catégorie
@@ -12,7 +12,7 @@ export default function NavIntegrations({ vue, installees, onChoisir, onRetour }
   const { t } = useT();
   const categories = categoriesInstallees(installees).map((c) => ({
     ...c,
-    items: CATALOGUE_INTEGRATIONS.filter((i) => i.categorie === c.id && installees.includes(i.id)),
+    items: catalogue().filter((i) => i.categorie === c.id && installees.includes(i.id)),
   }));
   return (
     <>

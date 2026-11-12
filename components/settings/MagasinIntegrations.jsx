@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { IconLoupe } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import LogoIntegration from "@/components/settings/LogoIntegration";
-import { CATALOGUE_INTEGRATIONS, CATEGORIES_INTEGRATIONS, categorieDe, sansAccents } from "@/lib/integrationsCatalogue";
+import { catalogue, CATEGORIES_INTEGRATIONS, categorieDe, sansAccents } from "@/lib/integrationsCatalogue";
 
 // Le « magasin » : toutes les intégrations sous forme de cases, avec recherche et filtre par catégorie.
 // Installer une intégration la fait apparaître dans la barre latérale (sous sa catégorie).
@@ -48,7 +48,7 @@ export default function MagasinIntegrations({ installees, onInstaller, onRetirer
   }
 
   const q = sansAccents(recherche.trim());
-  const visibles = CATALOGUE_INTEGRATIONS.filter((i) => {
+  const visibles = catalogue().filter((i) => {
     if (categorie !== "toutes" && i.categorie !== categorie) return false;
     if (!q) return true;
     return sansAccents(`${i.nom} ${i.description} ${categorieDe(i.categorie)?.label}`).includes(q);

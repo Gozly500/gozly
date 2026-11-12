@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { definirAppsTierces } from "@/lib/integrationsCatalogue";
 import DashSidebar from "@/components/DashSidebar";
 import InformationsEntrepriseSection from "@/components/entreprise/InformationsEntrepriseSection";
 import EquipeSection from "@/components/entreprise/EquipeSection";
@@ -128,6 +129,7 @@ export default function EntrepriseParametresContent() {
       body: JSON.stringify({ action, entrepriseId, integrationId }),
     });
     const json = await res.json().catch(() => ({}));
+    if (res.ok) definirAppsTierces(json.apps);
     if (res.ok && Array.isArray(json.installees)) setInstallees(json.installees);
     return { ok: res.ok, error: json.error };
   }
