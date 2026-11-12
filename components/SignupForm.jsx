@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { envoyerDemandeDeveloppeur } from "@/lib/developpeur";
 import { useT } from "@/components/LangProvider";
 
 // Forfaits qu'on peut présélectionner via /inscription?forfait=... (depuis la page
@@ -24,8 +25,10 @@ export default function SignupForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [forfaitVoulu, setForfaitVoulu] = useState(null);
+  const [developpeur, setDeveloppeur] = useState(false);
 
   useEffect(() => {
+    setDeveloppeur(new URLSearchParams(window.location.search).get("developpeur") === "1");
     const f = new URLSearchParams(window.location.search).get("forfait");
     if (f && FORFAITS_ACHETABLES[f]) setForfaitVoulu(f);
   }, []);
@@ -55,6 +58,20 @@ export default function SignupForm() {
     if (!user) {
       setLoading(false);
       setError(t("signup.errConfirmer"));
+      return;
+    }
+
+    // Inscription depuis « Gozly pour développeurs » : profil + demande, puis page de confirmation (pas de parcours de bienvenue).
+    if (developpeur) {
+      const { error: profilDev } = await supabase.from("profils").insert({ id: user.id, full_name: fullName });
+      if (profilDev) {
+        setLoading(false);
+        setError(t("signup.errProfil"));
+        return;
+      }
+      await envoyerDemandeDeveloppeur(user.id);
+      setLoading(false);
+      router.push("/developpeur?nouveau=1");
       return;
     }
 

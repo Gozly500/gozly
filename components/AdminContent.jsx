@@ -27,6 +27,7 @@ const SOUS_MENUS = {
   support: [
     { id: "tickets", label: "Tickets" },
     { id: "contact", label: "Formulaire de contact" },
+    { id: "developpeurs", label: "Demandes développeur" },
   ],
   annonces: [
     { id: "site", label: "Annonces du site" },

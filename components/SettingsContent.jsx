@@ -8,6 +8,7 @@ import AbonnementSection from "@/components/settings/AbonnementSection";
 import ActiviteSection from "@/components/settings/ActiviteSection";
 import AppearanceSection from "@/components/settings/AppearanceSection";
 import GestionSection from "@/components/settings/GestionSection";
+import DeveloppeurSection from "@/components/settings/DeveloppeurSection";
 import { IconCarte, IconEngrenage, IconHorloge, IconPalette, IconProfil } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
@@ -17,6 +18,7 @@ const TABS = [
   { id: "apparence", label: "Apparence", Icone: IconPalette },
   { id: "activite", label: "Activité du compte", Icone: IconHorloge },
   { id: "gestion", label: "Gestion du compte", Icone: IconEngrenage },
+  { id: "developpeur", label: "Développeur", Icone: IconEngrenage },
 ];
 
 export default function SettingsContent() {
@@ -111,6 +113,7 @@ export default function SettingsContent() {
         {activeTab === "abonnement" && <AbonnementSection profil={profil} />}
         {activeTab === "apparence" && <AppearanceSection profil={profil} setProfil={setProfil} />}
         {activeTab === "activite" && <ActiviteSection user={user} />}
+        {activeTab === "developpeur" && <DeveloppeurSection user={user} />}
         {activeTab === "gestion" && <GestionSection user={user} profil={profil} setProfil={setProfil} router={router} />}
       </div>
     </div>
