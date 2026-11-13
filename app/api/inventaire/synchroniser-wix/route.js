@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
+import { waitUntil } from "@vercel/functions";
+import { envoyerEvenement } from "@/lib/evenementsApps";
 import { obtenirInventaireWix, obtenirCollectionsWix } from "@/lib/wixClient";
 
 // Copie (lecture seule) l'inventaire Wix Stores de l'entreprise dans
@@ -83,6 +85,9 @@ export async function POST(request) {
   let requeteNettoyage = service.from("produits_inventaire").delete().eq("entreprise_id", entreprise.id).eq("source", "wix");
   requeteNettoyage = sourceIdsActuels.length > 0 ? requeteNettoyage.not("source_id", "in", `(${sourceIdsActuels.join(",")})`) : requeteNettoyage;
   await requeteNettoyage;
+
+  // Avertit les apps de développeurs installées (permission inventaire:lire) : un seul message, sans données ; elles lisent via l'API.
+  waitUntil(envoyerEvenement(service, entreprise.id, "inventaire", "inventaire.synchronise", { produits: lignes.length }).catch(() => {}));
 
   // Catégories : les collections Wix deviennent des catégories Gozly, et chaque produit sans catégorie reçoit celle de
   // sa collection Wix (une catégorie choisie à la main dans Gozly n'est jamais écrasée). Une erreur ici ne fait pas échouer la synchro.
