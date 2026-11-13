@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { annulerCommande, changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
+import { annulerCommande, changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes, planifierSynchro } from "@/lib/commandesClient";
+import { estOuvertMaintenant } from "@/lib/horairesOuverture";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration, IconTableauDeBord, IconCommandes } from "@/components/icons/GozlyIcons";
 import CommandeManuelleModal from "@/components/commandes/CommandeManuelleModal";
@@ -31,7 +32,6 @@ import { IconDocument, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTe
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 
-const INTERVALLE_SYNC_MS = 30000;
 
 async function authHeaders() {
   const { data } = await supabase.auth.getSession();
@@ -60,6 +60,8 @@ export default function CommandesSection({ entrepriseId }) {
   // Plusieurs succursales : on choisit celle dont on voit les commandes.
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementId] = useState(null);
+  const horairesRef = useRef({ emplacements: [], emplacementId: null });
+  horairesRef.current = { emplacements, emplacementId };
   const exportRef = useRef(null);
   useFermerAuClicExterieur(exportRef, exportOuvert, () => setExportOuvert(false));
   const dateRef = useRef(date);
@@ -80,6 +82,7 @@ export default function CommandesSection({ entrepriseId }) {
   const synchroniser = useCallback(
     async ({ silencieux = false } = {}) => {
       if (!silencieux) setSyncing(true);
+      let resultat = null;
       try {
         const res = await fetch("/api/commandes/synchroniser", {
           method: "POST",
@@ -87,6 +90,7 @@ export default function CommandesSection({ entrepriseId }) {
           body: JSON.stringify({ entrepriseId }),
         });
         const data = await res.json();
+        resultat = data;
         if (!res.ok) {
           // La synchro automatique reste muette (ex: Wix pas connecté, mais
           // des commandes manuelles à afficher) ; seul le bouton montre l'erreur.
@@ -104,6 +108,7 @@ export default function CommandesSection({ entrepriseId }) {
         if (!silencieux) setSyncMsg({ type: "err", text: t("La synchronisation a échoué.") });
       }
       if (!silencieux) setSyncing(false);
+      return resultat;
     },
     [entrepriseId, charger]
   );
@@ -118,10 +123,7 @@ export default function CommandesSection({ entrepriseId }) {
   // est visible (pas de sync pour un onglet en arrière-plan).
   useEffect(() => {
     synchroniser({ silencieux: true });
-    const id = setInterval(() => {
-      if (document.visibilityState === "visible") synchroniser({ silencieux: true });
-    }, INTERVALLE_SYNC_MS);
-    return () => clearInterval(id);
+    return planifierSynchro(() => synchroniser({ silencieux: true }), () => estOuvertMaintenant(horairesRef.current.emplacements, horairesRef.current.emplacementId));
   }, [synchroniser]);
 
   useEffect(() => {

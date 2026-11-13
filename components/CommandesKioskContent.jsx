@@ -11,7 +11,8 @@ import { CalendrierPlage } from "@/components/saisie/PanneauxSaisie";
 import { useAnimationCartes } from "@/lib/useAnimationCartes";
 import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
 import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle, modifierCommandeManuelle, retirerCommandeManuelle } from "@/lib/commandesNouvelle";
-import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive, annulerCommande, modifierCommandeEnLigne } from "@/lib/commandesClient";
+import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive, annulerCommande, modifierCommandeEnLigne, planifierSynchro } from "@/lib/commandesClient";
+import { estOuvertMaintenant } from "@/lib/horairesOuverture";
 import { imprimerBonsLocaux } from "@/lib/impressionLocale";
 import {
   formatMontant,
@@ -29,7 +30,6 @@ import {
 } from "@/lib/commandes";
 import { IconCalendrier, IconCloche, IconClocheBarree, IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconImprimante, IconLocalisation, IconX } from "@/components/icons/Pictogrammes";
 
-const INTERVALLE_SYNC_MS = 30000;
 
 // Les titres et libellés de boutons viennent du dictionnaire (kq.c.col.<id>, kq.c.traiter / kq.c.terminer).
 const COLONNES = [
@@ -160,6 +160,8 @@ export default function CommandesKioskContent() {
   const [emplacementId, setEmplacementId] = useState(null);
   const [calendrierPlage, setCalendrierPlage] = useState(false); // calendrier pour choisir un jour ou une plage de dates
   const audioRef = useRef(null);
+  const horairesRef = useRef({ emplacements: [], emplacementId: null });
+  horairesRef.current = { emplacements, emplacementId };
 
   useEffect(() => {
     let ignore = false;
@@ -274,7 +276,7 @@ export default function CommandesKioskContent() {
     if (!entrepriseId) return;
     let actif = true;
     async function cycle() {
-      await synchroniserCommandes(entrepriseId); // muet si Wix n'est pas connecté
+      const resultat = await synchroniserCommandes(entrepriseId); // muet si Wix n'est pas connecté
       // Tablette avec imprimante Bluetooth : les bons que la synchro vient de mettre en file sortent tout de suite.
       imprimerBonsLocaux(entrepriseId, emplacementId).then(({ erreur }) => {
         if (erreur && actif) {
@@ -286,17 +288,16 @@ export default function CommandesKioskContent() {
         await charger();
         await chargerAvenir();
       }
+      return resultat;
     }
     Promise.all([charger(), chargerAvenir()]).then(() => {
       if (actif) setPret(true);
     });
     cycle();
-    const id = setInterval(() => {
-      if (document.visibilityState === "visible") cycle();
-    }, INTERVALLE_SYNC_MS);
+    const arreter = planifierSynchro(cycle, () => estOuvertMaintenant(horairesRef.current.emplacements, horairesRef.current.emplacementId));
     return () => {
       actif = false;
-      clearInterval(id);
+      arreter();
     };
   }, [entrepriseId, charger, chargerAvenir]);
 

@@ -123,6 +123,7 @@ export async function POST(request) {
     .maybeSingle();
   const modeSections = !erreurReglage && reglage?.commandes_kiosque_mode === "sections";
   const aImprimer = [];
+  let nouvelles = 0; // nouvelles commandes récentes : le client s'en sert pour ralentir la synchro quand rien n'arrive
 
   if (lignes.length > 0) {
     const { data: connues } = await service
@@ -139,6 +140,7 @@ export async function POST(request) {
       if (dejaConnues.has(l.source_id)) continue;
       const recente = new Date(dateEffective(l)) >= new Date(debutHier);
       if (!recente) continue;
+      nouvelles++;
       // Le bon de toute nouvelle commande récente sort à son arrivée, peu importe l'affichage du kiosque et la date de ramassage.
       if (new Date(l.date_commande).getTime() > il_y_a_12h) aImprimer.push(l.source_id);
       if (!modeSections) {
@@ -217,5 +219,5 @@ export async function POST(request) {
     console.error("Erreur tâches automatiques:", err.message)
   );
 
-  return NextResponse.json({ ok: true, count: nbEnLigne });
+  return NextResponse.json({ ok: true, count: nbEnLigne, nouvelles });
 }

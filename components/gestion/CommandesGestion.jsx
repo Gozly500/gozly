@@ -10,7 +10,8 @@ import { telechargerPdfCommandes } from "@/lib/exportPdf";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import { commandeDeSuccursale } from "@/lib/commandesSuccursale";
-import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes } from "@/lib/commandesClient";
+import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes, planifierSynchro } from "@/lib/commandesClient";
+import { estOuvertMaintenant } from "@/lib/horairesOuverture";
 import {
   formatMontant,
   dateAujourdhui,
@@ -29,7 +30,6 @@ import {
 import { IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconRafraichir, IconTelecharger } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
-const INTERVALLE_SYNC_MS = 30000;
 
 const FILTRES = [
   ["toutes", "Toutes"],
@@ -56,6 +56,8 @@ export default function CommandesGestion() {
   // Plusieurs succursales : on choisit celle dont on voit les commandes.
   const [emplacements, setEmplacements] = useState([]);
   const [emplacementId, setEmplacementId] = useState(null);
+  const horairesRef = useRef({ emplacements: [], emplacementId: null });
+  horairesRef.current = { emplacements, emplacementId };
   const dateRef = useRef(date);
   dateRef.current = date;
 
@@ -89,6 +91,7 @@ export default function CommandesGestion() {
   const synchroniser = useCallback(
     async ({ silencieux = false } = {}) => {
       if (!silencieux) setSyncing(true);
+      let resultat = null;
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const res = await fetch("/api/commandes/synchroniser", {
@@ -97,6 +100,7 @@ export default function CommandesGestion() {
           body: JSON.stringify({ entrepriseId }),
         });
         const data = await res.json().catch(() => ({}));
+        resultat = data;
         if (res.ok) {
           if (!silencieux) setMessage({ type: "ok", text: t("{n} commande(s) synchronisée(s).", { n: data.count }) });
           await charger();
@@ -107,6 +111,7 @@ export default function CommandesGestion() {
         if (!silencieux) setMessage({ type: "err", text: t("La synchronisation a échoué.") });
       }
       if (!silencieux) setSyncing(false);
+      return resultat;
     },
     [entrepriseId, charger]
   );
@@ -119,10 +124,7 @@ export default function CommandesGestion() {
   // Synchro Wix au montage puis aux 30 s tant que l'écran est visible.
   useEffect(() => {
     synchroniser({ silencieux: true });
-    const id = setInterval(() => {
-      if (document.visibilityState === "visible") synchroniser({ silencieux: true });
-    }, INTERVALLE_SYNC_MS);
-    return () => clearInterval(id);
+    return planifierSynchro(() => synchroniser({ silencieux: true }), () => estOuvertMaintenant(horairesRef.current.emplacements, horairesRef.current.emplacementId));
   }, [synchroniser]);
 
   useEffect(() => {
