@@ -13,6 +13,7 @@ export default function AppsDeveloppeurSection() {
   const [ouverte, setOuverte] = useState(null);
   const [refus, setRefus] = useState(null); // { app, message }
   const [apercu, setApercu] = useState(null); // app dont on regarde la page
+  const [limites, setLimites] = useState(null); // { id, limite_min_entreprise, limite_min_app, limite_jour }
 
   async function appeler(methode, corps) {
     const { data: { session } } = await supabase.auth.getSession();
@@ -94,6 +95,21 @@ export default function AppsDeveloppeurSection() {
                   >
                     Supprimer
                   </button>
+                  {a.statut === "approuvee" && (
+                    <button
+                      className={`admin-icon-btn${a.suspendue ? "" : " danger"}`}
+                      onClick={async () => {
+                        try {
+                          await appeler("POST", { id: a.id, suspendre: !a.suspendue, raison: a.suspendue ? "" : "Suspendue par Gozly." });
+                          charger();
+                        } catch (e) {
+                          setErreur(e.message);
+                        }
+                      }}
+                    >
+                      {a.suspendue ? "Réactiver" : "Suspendre"}
+                    </button>
+                  )}
                   {a.statut !== "refusee" && (
                     <button className="admin-icon-btn danger" onClick={() => setRefus({ app: a, message: "" })}>
                       Refuser
@@ -129,6 +145,19 @@ export default function AppsDeveloppeurSection() {
                     )}
                   </Ligne>
                   <Ligne titre="Permissions">{a.permissions?.length ? a.permissions.join(", ") : "Aucune"}</Ligne>
+                  {a.statut === "approuvee" && (
+                    <Ligne titre="Usage de l'API">
+                      {a.suspendue ? <strong>Suspendue. {a.suspendue_raison}</strong> : null} Aujourd'hui : {a.usage_jour} · 30 jours : {a.usage_30j} · Clé : {a.cle_api_prefixe ? `${a.cle_api_prefixe}…` : "aucune"}
+                      <br />
+                      Limites : {a.limite_min_entreprise}/min par entreprise · {a.limite_min_app}/min par app · {a.limite_jour}/jour{" "}
+                      <button
+                        className="admin-icon-btn"
+                        onClick={() => setLimites({ id: a.id, limite_min_entreprise: a.limite_min_entreprise, limite_min_app: a.limite_min_app, limite_jour: a.limite_jour })}
+                      >
+                        Modifier
+                      </button>
+                    </Ligne>
+                  )}
                   <Ligne titre="Courriel de support">{a.courriel_support}</Ligne>
                   <Ligne titre="Confidentialité"><Lien url={a.url_confidentialite} /></Ligne>
                   <Ligne titre="Prix">{a.payant ? a.prix : "Gratuit"}</Ligne>
@@ -153,6 +182,47 @@ export default function AppsDeveloppeurSection() {
             }
           }}
         />
+      )}
+
+      {limites && (
+        <div className="modal-overlay" onClick={() => setLimites(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>Limites de l'API</h3>
+            </div>
+            {[
+              ["limite_min_entreprise", "Par minute, par entreprise"],
+              ["limite_min_app", "Par minute, pour toute l'app"],
+              ["limite_jour", "Par jour, pour toute l'app"],
+            ].map(([champ, titre]) => (
+              <div className="field" key={champ}>
+                <label>{titre}</label>
+                <input type="number" min={1} value={limites[champ]} onChange={(e) => setLimites({ ...limites, [champ]: Number(e.target.value) })} />
+              </div>
+            ))}
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "14px" }}>
+              <button
+                type="button"
+                className="submit-btn"
+                onClick={async () => {
+                  try {
+                    const { id, ...valeurs } = limites;
+                    await appeler("POST", { id, limites: valeurs });
+                    setLimites(null);
+                    charger();
+                  } catch (e) {
+                    setErreur(e.message);
+                  }
+                }}
+              >
+                Enregistrer
+              </button>
+              <button type="button" className="admin-icon-btn" onClick={() => setLimites(null)}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {refus && (

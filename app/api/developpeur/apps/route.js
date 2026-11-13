@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { urlPageApp } from "@/lib/jetonApp";
+import { genererCleApp } from "@/lib/appApi";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,16 @@ export async function POST(request) {
     const { data: app } = await service.from("apps_developpeur").select("*").eq("id", id).maybeSingle();
     if (!app || app.proprietaire_id !== user.id || !app.url_page) return NextResponse.json({ error: "Page introuvable." }, { status: 404 });
     return NextResponse.json({ url: urlPageApp(app, { entrepriseId: "apercu", entrepriseNom: "Entreprise de test", apercu: true, theme, accent, lang }) });
+  }
+
+  // Nouvelle clé d'API (l'ancienne cesse de marcher). La clé complète n'est montrée qu'une fois : seul son hash est gardé.
+  if (action === "cle") {
+    const { data: app } = await service.from("apps_developpeur").select("id, proprietaire_id").eq("id", id).maybeSingle();
+    if (!app || app.proprietaire_id !== user.id) return NextResponse.json({ error: "App introuvable." }, { status: 404 });
+    const { cle, hash, prefixe } = genererCleApp();
+    const { error } = await service.from("apps_developpeur").update({ cle_api_hash: hash, cle_api_prefixe: prefixe }).eq("id", app.id);
+    if (error) return NextResponse.json({ error: "Exécute apps_api.sql dans Supabase." }, { status: 500 });
+    return NextResponse.json({ cle, prefixe });
   }
 
   if (action === "laisser") {

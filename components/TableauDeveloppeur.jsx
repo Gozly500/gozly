@@ -61,7 +61,17 @@ export default function TableauDeveloppeur() {
     const fiche = {};
     for (const c of CHAMPS) fiche[c] = app[c] ?? FICHE_VIDE[c];
     fiche.regles_page = !!app.regles_page_le;
-    setEdition({ id: app.id, fiche, statut: app.statut, note_refus: app.note_refus, secret: app.secret_page, aPage: !!app.url_page });
+    setEdition({
+      id: app.id,
+      fiche,
+      statut: app.statut,
+      note_refus: app.note_refus,
+      secret: app.secret_page,
+      aPage: !!app.url_page,
+      clePrefixe: app.cle_api_prefixe,
+      suspendue: !!app.suspendue,
+      raisonSuspension: app.suspendue_raison,
+    });
   }
 
   const [retrait, setRetrait] = useState(null); // { app, installations }
@@ -195,6 +205,22 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
   const fichierRef = useRef(null);
   const [apercu, setApercu] = useState(false);
   const [secretVisible, setSecretVisible] = useState(false);
+  const [cleApi, setCleApi] = useState(null); // clé complète, visible seulement juste après sa génération
+  const [clePrefixe, setClePrefixe] = useState(edition.clePrefixe || null);
+
+  async function genererCle() {
+    if (clePrefixe && !window.confirm(t("L'ancienne clé cessera de fonctionner. Continuer?"))) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/api/developpeur/apps", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ action: "cle", id: edition.id }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) return setMsg({ type: "err", text: t("Impossible de générer la clé.") });
+    setCleApi(json.cle);
+    setClePrefixe(json.prefixe);
+  }
   const maj = (cle, valeur) => setF((x) => ({ ...x, [cle]: valeur }));
 
   async function choisirIcone(e) {
@@ -323,6 +349,29 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
           </div>
         )}
       </div>
+
+      {edition.id && edition.statut === "approuvee" && (
+        <div className="field">
+          <label>{t("Clé d'API")}</label>
+          {edition.suspendue && <p className="settings-msg err">{t("Ton app est suspendue.")} {edition.raisonSuspension}</p>}
+          <p className="panel-hint" style={{ margin: "0 0 6px" }}>
+            {t("Envoie-la dans l'en-tête Authorization (Bearer) avec l'en-tête X-Gozly-Entreprise, vers /api/v1/outils. Limites: 30 requêtes par minute par entreprise.")}
+          </p>
+          {cleApi ? (
+            <>
+              <code style={{ display: "block", wordBreak: "break-all" }}>{cleApi}</code>
+              <p className="panel-hint" style={{ margin: "4px 0 0" }}>{t("Copie-la maintenant : elle ne sera plus affichée.")}</p>
+            </>
+          ) : clePrefixe ? (
+            <code>{clePrefixe}…</code>
+          ) : null}
+          <div>
+            <button type="button" className="admin-icon-btn" style={{ marginTop: "8px" }} onClick={genererCle}>
+              {clePrefixe ? t("Générer une nouvelle clé") : t("Générer une clé")}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="field">
         <label>{t("Lien vers ton tableau de bord (facultatif)")}</label>
