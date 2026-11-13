@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Guide du développeur Gozly - Page de gestion d'une app</title>
+<style>
+  @page { size: Letter; margin: 20mm 17mm 22mm 17mm;
+    @bottom-left { content: "Gozly  ·  Guide du développeur"; font: 8.5pt "Segoe UI", sans-serif; color: #8a90a6; }
+    @bottom-right { content: counter(page); font: 8.5pt "Segoe UI", sans-serif; color: #8a90a6; }
+  }
+  @page :first { margin: 0; @bottom-left { content: none; } @bottom-right { content: none; } }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root { --indigo: #3a37d1; --marine: #14146b; --texte: #1b1f2a; --doux: #5b6478; --trait: #dfe2f2; --fond: #f4f5fc; }
+  body { font-family: "Segoe UI", system-ui, Arial, sans-serif; color: var(--texte); font-size: 10.4pt; line-height: 1.55; margin: 0; }
+
+  /* ---------- Couverture ---------- */
+  .couverture { height: 279.4mm; width: 215.9mm; margin: 0 0 0 0; padding: 26mm 22mm; color: #fff; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #05051c 0%, #0b0b3a 45%, #1d1d7a 100%); page-break-after: always; }
+  .couverture::before { content: ""; position: absolute; right: -60mm; top: -50mm; width: 160mm; height: 160mm; border-radius: 50%;
+    background: radial-gradient(circle, rgba(90,86,255,.55), rgba(90,86,255,0) 65%); }
+  .couverture::after { content: ""; position: absolute; left: -50mm; bottom: -70mm; width: 150mm; height: 150mm; border-radius: 50%;
+    background: radial-gradient(circle, rgba(36,196,222,.35), rgba(36,196,222,0) 65%); }
+  .couverture > * { position: relative; z-index: 1; }
+  .logo-ligne { display: flex; align-items: center; gap: 12px; font-size: 22pt; font-weight: 700; letter-spacing: .5px; }
+  .logo-ligne svg { width: 46px; height: 46px; }
+  .couv-centre { margin-top: 62mm; }
+  .etiquette { display: inline-block; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3); color: #fff; border-radius: 999px; padding: 3px 14px; font-size: 9.5pt; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }
+  .couverture h1 { font-size: 38pt; line-height: 1.1; margin: 16px 0 14px; font-weight: 800; }
+  .couverture h1 span { background: linear-gradient(90deg, #8fe3f5, #2ec4de); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .couv-sous { font-size: 14pt; color: #c9cffa; max-width: 135mm; }
+  .couv-pied { position: absolute; left: 22mm; right: 22mm; bottom: 20mm; display: flex; justify-content: space-between; font-size: 10pt; color: #aab2e8; border-top: 1px solid rgba(255,255,255,.2); padding-top: 10px; }
+
+  /* ---------- Sommaire ---------- */
+  .sommaire { page-break-after: always; }
+  .sommaire h2 { margin-top: 0; }
+  .sommaire ol { list-style: none; margin: 14px 0 0; padding: 0; counter-reset: s; }
+  .sommaire li { counter-increment: s; display: flex; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--trait); font-size: 12pt; }
+  .sommaire li::before { content: counter(s); width: 30px; height: 30px; border-radius: 50%; background: var(--indigo); color: #fff; font-weight: 700; font-size: 11pt; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sommaire li small { display: block; color: var(--doux); font-size: 9.6pt; }
+
+  /* ---------- Titres ---------- */
+  h2 { font-size: 17pt; margin: 30px 0 10px; color: var(--marine); display: flex; align-items: center; gap: 12px; page-break-after: avoid; }
+  h2 .no { width: 32px; height: 32px; border-radius: 50%; background: var(--indigo); color: #fff; font-size: 12pt; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  h3 { font-size: 11.6pt; margin: 18px 0 4px; color: var(--marine); page-break-after: avoid; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0 6px 20px; padding: 0; }
+  li { margin: 3px 0; }
+  code { font-family: Consolas, "Courier New", monospace; background: #eceefb; color: var(--marine); padding: 1px 5px; border-radius: 4px; font-size: 9.4pt; }
+
+  /* ---------- Tableaux ---------- */
+  table { border-collapse: separate; border-spacing: 0; width: 100%; margin: 10px 0; font-size: 9.8pt; border: 1px solid var(--trait); border-radius: 10px; overflow: hidden; }
+  th { background: var(--marine); color: #fff; text-align: left; padding: 8px 10px; font-weight: 600; }
+  td { padding: 7px 10px; border-top: 1px solid var(--trait); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--fond); }
+  tr { page-break-inside: avoid; }
+  table { break-inside: avoid; }
+  p:has(+ table), p:has(+ .cartes), p:has(+ .themes), p:has(+ .code), p:has(+ ol), p:has(+ ul) { break-after: avoid; }
+  td:first-child { font-weight: 600; }
+
+  /* ---------- Code ---------- */
+  .code { margin: 10px 0; border-radius: 10px; overflow: hidden; page-break-inside: avoid; border: 1px solid #1f2547; }
+  .code .barre { background: #1f2547; color: #aab2e8; font-size: 8.5pt; padding: 4px 12px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
+  .code pre { margin: 0; background: #0f1330; color: #e8ebff; padding: 10px 14px; font-family: Consolas, "Courier New", monospace; font-size: 8.8pt; line-height: 1.5; white-space: pre-wrap; }
+
+  /* ---------- Encadrés ---------- */
+  .encadre { border-radius: 10px; padding: 10px 14px 10px 16px; margin: 12px 0; background: #eef0ff; border-left: 5px solid var(--indigo); page-break-inside: avoid; }
+  .encadre b.titre { display: block; color: var(--indigo); font-size: 8.8pt; letter-spacing: .8px; text-transform: uppercase; margin-bottom: 2px; }
+  .encadre.attention { background: #fff1ef; border-left-color: #d6402f; }
+  .encadre.attention b.titre { color: #d6402f; }
+  .encadre.ok { background: #eaf8f0; border-left-color: #1f9d62; }
+  .encadre.ok b.titre { color: #1f9d62; }
+
+  /* ---------- Cartes de règles ---------- */
+  .cartes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+  .carte { border: 1px solid var(--trait); border-radius: 12px; padding: 12px 14px 12px 56px; position: relative; background: #fff; page-break-inside: avoid; }
+  .carte .n { position: absolute; left: 12px; top: 12px; width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, #3a37d1, #6a67ff); color: #fff; font-weight: 700; font-size: 13pt; display: flex; align-items: center; justify-content: center; }
+  .carte strong { display: block; color: var(--marine); font-size: 10.8pt; margin-bottom: 2px; }
+  .carte span { color: var(--doux); font-size: 9.6pt; }
+  .carte.large { grid-column: 1 / span 2; }
+
+  /* ---------- Thèmes (aperçu) ---------- */
+  .themes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; page-break-inside: avoid; }
+  .theme { border-radius: 14px; padding: 14px 16px; border: 1px solid var(--trait); }
+  .theme.sombre { background: #0b0b0d; color: #f2f5ff; }
+  .theme.clair { background: #eceef3; color: #1b1f2a; }
+  .theme .t { font-size: 9pt; letter-spacing: .8px; text-transform: uppercase; font-weight: 700; opacity: .75; }
+  .theme .titre { font-size: 13pt; font-weight: 700; margin: 4px 0 2px; }
+  .theme .sec { font-size: 9.6pt; }
+  .theme.sombre .sec { color: #9aa7c7; }
+  .theme.clair .sec { color: #5b6478; }
+  .theme .champ { margin: 8px 0; padding: 6px 10px; border-radius: 8px; font-size: 9.4pt; }
+  .theme.sombre .champ { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); }
+  .theme.clair .champ { background: rgba(0,0,0,.04); border: 1px solid rgba(0,0,0,.12); }
+  .theme .bouton { display: inline-block; background: #3a37d1; color: #fff; padding: 5px 16px; border-radius: 10px; font-size: 9.6pt; font-weight: 600; }
+  .valeurs { font-size: 8.6pt; margin-top: 10px; line-height: 1.7; }
+  .valeurs code { background: rgba(127,127,127,.18); color: inherit; }
+
+  /* ---------- Résultats attendus ---------- */
+  .tests td:first-child::before { content: "✓"; display: inline-flex; width: 18px; height: 18px; border-radius: 50%; background: #1f9d62; color: #fff; font-size: 9pt; align-items: center; justify-content: center; margin-right: 8px; font-weight: 700; }
+  .refus li { list-style: none; position: relative; padding-left: 26px; margin: 6px 0; }
+  .refus li::before { content: "✕"; position: absolute; left: 0; top: 1px; width: 18px; height: 18px; border-radius: 50%; background: #d6402f; color: #fff; font-size: 8.5pt; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .refus { margin-left: 0; }
+
+  /* ---------- Étapes ---------- */
+  .etapes { list-style: none; margin: 10px 0; padding: 0; counter-reset: e; }
+  .etapes li { counter-increment: e; position: relative; padding: 4px 0 4px 40px; margin: 6px 0; page-break-inside: avoid; }
+  .etapes li::before { content: counter(e); position: absolute; left: 0; top: 2px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--indigo); color: var(--indigo); font-weight: 700; font-size: 10pt; display: flex; align-items: center; justify-content: center; }
+  .pastille { display: inline-block; width: 13px; height: 13px; border-radius: 3px; border: 1px solid #aaa; vertical-align: -2px; margin-right: 5px; }
+  .saut { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<!-- ============ COUVERTURE ============ -->
+<div class="couverture">
+  <div class="logo-ligne">
+    <svg viewBox="0 0 1182 1182" xmlns="http://www.w3.org/2000/svg">
+      <g transform="matrix(0.136019,0,0,0.136019,590.551181,590.551181)">
+        <g transform="matrix(1,0,0,1,-4341.666667,-4341.666667)">
+          <g transform="matrix(1.736113,0,0,-1.736113,0,8680.555554)">
+            <g transform="matrix(1,0,0,1,193.559941,-68.202741)">
+              <path d="M1330,4463C1251,4450 1107,4405 1035,4371C755,4240 546,4005 447,3709C407,3590 397,3500 402,3319C407,3180 411,3141 434,3065C502,2837 637,2636 820,2490L875,2447L878,2481C889,2610 939,2805 1000,2954C1144,3309 1421,3624 1755,3812C1919,3905 2178,3996 2332,4014C2388,4021 2389,4022 2378,4043C2359,4081 2208,4224 2136,4273C2007,4363 1857,4427 1710,4454C1634,4469 1396,4474 1330,4463Z" fill="#fff"/>
+              <path d="M2437,3920C1945,3858 1524,3603 1258,3205C1072,2927 980,2626 980,2292C980,2109 996,1998 1044,1838C1182,1385 1469,1042 1885,835C2034,761 2151,720 2312,688C2407,669 2455,665 2610,666C2769,667 2812,671 2920,693C3095,730 3214,770 3365,844C3531,925 3648,1009 3775,1135C3978,1338 4120,1606 4180,1899C4218,2089 4225,2364 4195,2548C4176,2666 4145,2792 4136,2796C4125,2800 2593,2407 2585,2398C2580,2393 2724,1853 2732,1844C2736,1841 2915,1884 3130,1940C3345,1997 3523,2040 3527,2037C3539,2024 3509,1923 3471,1848C3392,1689 3255,1558 3072,1462C2895,1371 2720,1331 2540,1344C2308,1360 2113,1447 1946,1609C1651,1895 1568,2330 1740,2697C1860,2955 2068,3130 2355,3217C2437,3241 2460,3244 2610,3244C2753,3245 2786,3242 2854,3222C2996,3181 3122,3113 3236,3015L3277,2980L3481,3162C3593,3261 3707,3363 3734,3387L3783,3431L3759,3456C3722,3497 3591,3603 3525,3647C3386,3739 3166,3838 3020,3874C2835,3919 2583,3939 2437,3920Z" fill="#fff"/>
+              <path d="M2435,3120C2315,3093 2226,3056 2135,2995C1923,2854 1788,2623 1764,2361L1757,2287L1783,2294C2070,2366 2343,2584 2480,2851C2528,2945 2580,3085 2580,3121C2580,3145 2544,3145 2435,3120Z" fill="#fff"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </svg>
+    Gozly
+  </div>
+  <div class="couv-centre">
+    <span class="etiquette">Guide du développeur</span>
+    <h1>La page de gestion<br>d'une <span>app Gozly</span></h1>
+    <div class="couv-sous">Règles de design, méthode d'intégration et résultats attendus.</div>
+  </div>
+  <div class="couv-pied"><span>Pour les développeurs et les agences</span><span>Novembre 2026</span></div>
+</div>
+
+<!-- ============ SOMMAIRE ============ -->
+<div class="sommaire">
+  <h2>Au programme</h2>
+  <p>Tout ce qu'il faut savoir pour que la page de gestion de ton app s'affiche bien dans Gozly et soit approuvée du premier coup.</p>
+  <ol>
+    <li><div>Vue d'ensemble<small>Qui héberge quoi, et comment ça fonctionne</small></div></li>
+    <li><div>Le parcours d'une app<small>Du brouillon à l'approbation</small></div></li>
+    <li><div>Comment ta page est affichée<small>Le cadre, les paramètres et l'autorisation d'affichage</small></div></li>
+    <li><div>Vérifier le jeton<small>La sécurité de ton intégration, avec du code</small></div></li>
+    <li><div>Règles de design<small>7 règles, les couleurs et les formes à respecter</small></div></li>
+    <li><div>Comment tester ta page<small>L'aperçu dans ton espace développeur</small></div></li>
+    <li><div>Résultats attendus<small>Ce qu'on vérifie avant d'approuver</small></div></li>
+    <li><div>API et événements<small>Lire et écrire dans Gozly, limites et messages envoyés par Gozly</small></div></li>
+    <li><div>Refus et retrait<small>Ce qui n'est pas accepté</small></div></li>
+  </ol>
+</div>
+
+<!-- ============ 1 ============ -->
+<h2><span class="no">1</span>Vue d'ensemble</h2>
+<p>Une app publiée dans le magasin d'intégrations a une fiche (nom, description, permissions, prix, etc.). Elle peut aussi avoir une <strong>page de gestion</strong>: la page où le client règle son app, une fois installée.</p>
+<div class="cartes">
+  <div class="carte"><div class="n">1</div><strong>Tu héberges la page</strong><span>Gozly n'exécute jamais ton code. Il affiche ta page dans un cadre isolé.</span></div>
+  <div class="carte"><div class="n">2</div><strong>Tu factures toi-même</strong><span>Gozly ne touche à aucun paiement entre toi et tes clients.</span></div>
+  <div class="carte large"><div class="n">3</div><strong>On vérifie avant d'approuver</strong><span>Toute modification d'une app approuvée la renvoie en révision.</span></div>
+</div>
+
+<!-- ============ 2 ============ -->
+<h2><span class="no">2</span>Le parcours d'une app</h2>
+<table>
+  <tr><th style="width:24%">État</th><th>Ce que ça veut dire</th></tr>
+  <tr><td>Brouillon</td><td>Tu prépares la fiche. Personne d'autre ne la voit. Tu peux utiliser l'aperçu de ta page.</td></tr>
+  <tr><td>En révision</td><td>Tu as soumis l'app. Gozly vérifie la fiche et ta page (voir la section 7).</td></tr>
+  <tr><td>Approuvée</td><td>L'app apparaît dans le magasin, avec ton nom comme développeur.</td></tr>
+  <tr><td>Refusée</td><td>Tu reçois un message qui explique pourquoi. Corrige, puis soumets de nouveau.</td></tr>
+</table>
+
+<div class="encadre"><b class="titre">Une app gratuite par compte</b>Un compte sans abonnement peut créer une seule app. Pour en publier d'autres, il faut au moins l'abonnement Opale.</div>
+
+<!-- ============ 3 ============ -->
+<h2><span class="no">3</span>Comment ta page est affichée</h2>
+<p>Quand un client ouvre ton app dans Gozly, ta page est chargée dans un cadre, à l'adresse indiquée dans ta fiche, avec quatre paramètres ajoutés à l'adresse:</p>
+<table>
+  <tr><th style="width:15%">Paramètre</th><th style="width:25%">Valeur</th><th>À quoi ça sert</th></tr>
+  <tr><td><code>jeton</code></td><td>Jeton signé (JWT)</td><td>Dit quelle entreprise ouvre la page. Valide 5 minutes. À vérifier absolument (section 4).</td></tr>
+  <tr><td><code>theme</code></td><td><code>sombre</code> ou <code>clair</code></td><td>Le thème du tableau de bord du client. Ta page doit s'y adapter.</td></tr>
+  <tr><td><code>accent</code></td><td>Une couleur, p. ex. <code>#3a37d1</code></td><td>La couleur d'accent du client, pour le bouton principal.</td></tr>
+  <tr><td><code>lang</code></td><td><code>fr</code> ou <code>en</code></td><td>La langue du client.</td></tr>
+</table>
+<p>Le cadre est isolé: il autorise les scripts, les formulaires et les fenêtres ouvertes à la demande du client, mais ta page ne peut <strong>pas</strong> naviguer la page de Gozly ni y accéder. L'adresse doit commencer par <code>https://</code>.</p>
+
+<h3>Pas de page? Utilise ton propre tableau de bord</h3>
+<p>Tu n'es pas obligé de créer une page de gestion. Si ton app se gère déjà depuis un tableau de bord sur ton propre site, indique son adresse dans le champ <strong>«&nbsp;Lien vers ton tableau de bord&nbsp;»</strong> de ta fiche. Tu peux aussi avoir les deux.</p>
+<ul>
+  <li>Gozly affiche, sur la page de ton app, un bouton <strong>«&nbsp;Ouvrir [nom de ton app]&nbsp;»</strong>.</li>
+  <li>Le bouton ouvre ton site dans un <strong>nouvel onglet</strong>.</li>
+  <li>C'est la <strong>seule</strong> façon d'ouvrir un autre site depuis la page de ton app. Dans une page de gestion affichée dans Gozly, aucun lien ne peut quitter la page.</li>
+  <li>L'adresse doit commencer par <code>https://</code>. Ta propre connexion (compte, mot de passe) se fait sur ton site, jamais dans Gozly.</li>
+</ul>
+
+<h3>Autoriser l'affichage dans Gozly</h3>
+<p>Ton serveur doit accepter d'être affiché dans le cadre de Gozly. Envoie cet en-tête HTTP sur ta page, et n'envoie <strong>pas</strong> <code>X-Frame-Options: DENY</code> ni <code>SAMEORIGIN</code>:</p>
+<div class="code"><div class="barre">En-tête HTTP</div><pre>Content-Security-Policy: frame-ancestors https://gozly.net https://www.gozly.net</pre></div>
+
+<!-- ============ 4 ============ -->
+<h2><span class="no">4</span>Vérifier le jeton</h2>
+<div class="encadre attention"><b class="titre">Étape la plus importante</b>Sans cette vérification, n'importe qui pourrait ouvrir ta page en prétendant être n'importe quelle entreprise.</div>
+
+<h3>Ce que contient le jeton</h3>
+<p>Un JWT signé avec l'algorithme <strong>HS256</strong>, avec la <strong>clé de signature de ton app</strong> (visible dans ta fiche, bouton «&nbsp;Afficher la clé de signature&nbsp;»). Garde-la secrète: elle reste sur ton serveur, jamais dans le code de ta page.</p>
+<table>
+  <tr><th style="width:18%">Champ</th><th>Valeur</th></tr>
+  <tr><td><code>iss</code></td><td><code>gozly.net</code></td></tr>
+  <tr><td><code>aud</code></td><td>L'identifiant de ton app chez Gozly</td></tr>
+  <tr><td><code>sub</code></td><td>L'identifiant de l'entreprise qui ouvre la page. C'est ce que tu utilises pour retrouver ses réglages.</td></tr>
+  <tr><td><code>entreprise</code></td><td>Le nom de l'entreprise</td></tr>
+  <tr><td><code>apercu</code></td><td><code>true</code> pour un aperçu (toi ou Gozly qui regarde la page). Dans ce cas <code>sub</code> vaut <code>apercu</code>: n'enregistre rien de réel.</td></tr>
+  <tr><td><code>iat</code>, <code>exp</code></td><td>Date de création et d'expiration (5 minutes après)</td></tr>
+</table>
+
+<h3>Les étapes (côté serveur)</h3>
+<ol class="etapes">
+  <li>Lis le paramètre <code>jeton</code> de l'adresse.</li>
+  <li>Vérifie la signature avec ta clé et l'algorithme <strong>HS256 uniquement</strong>. Refuse tout autre algorithme, y compris <code>none</code>.</li>
+  <li>Vérifie que <code>exp</code> n'est pas dépassé et que <code>iss</code> vaut <code>gozly.net</code>.</li>
+  <li>Utilise <code>sub</code> comme identifiant de l'entreprise. Ne fais confiance à aucun autre paramètre de l'adresse pour savoir qui est le client.</li>
+  <li>Si une étape échoue, n'affiche rien de sensible: montre un message d'erreur simple.</li>
+</ol>
+
+<h3>Exemple en Node.js</h3>
+<div class="code"><div class="barre">JavaScript</div><pre>import jwt from "jsonwebtoken";
+
+app.get("/gestion", (req, res) => {
+  try {
+    const p = jwt.verify(req.query.jeton, process.env.CLE_GOZLY, {
+      algorithms: ["HS256"],   // jamais d'autre algorithme
+      issuer: "gozly.net",
+    });
+    const entrepriseId = p.sub;   // l'entreprise qui ouvre la page
+    // ... charge les réglages de cette entreprise, puis affiche la page
+  } catch {
+    res.status(401).send("Lien expiré. Rouvre l'app depuis Gozly.");
+  }
+});</pre></div>
+
+<h3>Exemple en Python</h3>
+<div class="code"><div class="barre">Python</div><pre>import jwt  # PyJWT
+
+try:
+    p = jwt.decode(jeton, CLE_GOZLY, algorithms=["HS256"], issuer="gozly.net",
+                   options={"verify_aud": False})
+    entreprise_id = p["sub"]
+except jwt.PyJWTError:
+    return "Lien expiré. Rouvre l'app depuis Gozly.", 401</pre></div>
+
+<div class="encadre"><b class="titre">À savoir</b>Le jeton vit 5 minutes: ne le garde pas comme session. Après la vérification, crée ta propre session (cookie) pour les actions suivantes, avec les attributs <code>Secure</code>, <code>HttpOnly</code> et <code>SameSite=None</code> (ta page est dans un cadre).</div>
+
+<!-- ============ 5 ============ -->
+<h2><span class="no">5</span>Règles de design</h2>
+<p>La page de gestion doit avoir l'air d'une partie de Gozly, pas d'un autre site. Le client ne doit voir aucune «&nbsp;couture&nbsp;» entre le tableau de bord et ta page.</p>
+
+<div class="cartes">
+  <div class="carte"><div class="n">1</div><strong>Design neutre</strong><span>Fond transparent. Aucune bannière, couleur de fond ni dégradé. Pas de cadre décoratif.</span></div>
+  <div class="carte"><div class="n">2</div><strong>Utilise le thème reçu</strong><span>Lis <code>theme</code> et <code>accent</code>. Le bouton principal prend la couleur <code>accent</code>.</span></div>
+  <div class="carte"><div class="n">3</div><strong>Aucun branding</strong><span>Pas de logo, de publicité ni de promotion. Gozly affiche déjà le nom et l'icône de ton app.</span></div>
+  <div class="carte"><div class="n">4</div><strong>Ni pop-up, ni redirection, ni lien externe</strong><span>Aucun lien vers un autre site dans ta page. Pour renvoyer vers ton tableau de bord, utilise le bouton prévu par Gozly (section 3).</span></div>
+  <div class="carte"><div class="n">5</div><strong>Ni mot de passe Gozly, ni paiement</strong><span>Le jeton suffit pour identifier l'entreprise. La facturation se fait sur ton site, avec le bouton «&nbsp;Ouvrir&nbsp;».</span></div>
+  <div class="carte"><div class="n">6</div><strong>Langues et écrans</strong><span>Français, et anglais si ton app l'est. Ordinateur et mobile (320 px au minimum).</span></div>
+  <div class="carte large"><div class="n">7</div><strong>Rapide et fiable</strong><span>Utilisable en moins de 3 secondes. Si ton service est en panne, affiche un message clair, jamais une page blanche ni une erreur technique.</span></div>
+</div>
+
+<h3>Les deux thèmes, côte à côte</h3>
+<p>Voici l'allure à viser. Ce sont des valeurs recommandées: ce qui compte, c'est que ta page ne jure pas avec le tableau de bord.</p>
+<div class="themes">
+  <div class="theme sombre">
+    <div class="t">theme = sombre</div>
+    <div class="titre">Réglages de l'app</div>
+    <div class="sec">Texte secondaire pour les explications.</div>
+    <div class="champ">Champ de formulaire</div>
+    <span class="bouton">Enregistrer</span>
+    <div class="valeurs">Texte <code>#f2f5ff</code><br>Texte secondaire <code>#9aa7c7</code><br>Bordures <code>rgba(255,255,255,0.14)</code><br>Surface <code>rgba(255,255,255,0.06)</code></div>
+  </div>
+  <div class="theme clair">
+    <div class="t">theme = clair</div>
+    <div class="titre">Réglages de l'app</div>
+    <div class="sec">Texte secondaire pour les explications.</div>
+    <div class="champ">Champ de formulaire</div>
+    <span class="bouton">Enregistrer</span>
+    <div class="valeurs">Texte <code>#1b1f2a</code><br>Texte secondaire <code>#5b6478</code><br>Bordures <code>rgba(0,0,0,0.12)</code><br>Surface <code>rgba(0,0,0,0.04)</code></div>
+  </div>
+</div>
+<ul>
+  <li><strong>Bouton principal:</strong> fond = <code>accent</code>, texte blanc.</li>
+  <li><strong>Police:</strong> <code>system-ui, -apple-system, "Segoe UI", sans-serif</code>. Pas de police décorative.</li>
+  <li><strong>Texte:</strong> 14 à 16 px. Titres de section: 16 à 20 px, en gras.</li>
+  <li><strong>Formes:</strong> coins arrondis (10 à 14 px), pas d'ombres lourdes ni de bordures épaisses.</li>
+  <li><strong>Espacement:</strong> marges de 16 à 24 px, contenu aligné à gauche.</li>
+  <li><strong>Ton:</strong> court et direct, avec «&nbsp;tu&nbsp;» (comme Gozly). Pas de longs paragraphes explicatifs.</li>
+  <li><strong>Formulaires:</strong> un champ par ligne, étiquette au-dessus, bouton d'enregistrement visible et message de confirmation après l'enregistrement.</li>
+</ul>
+
+<!-- ============ 6 ============ -->
+<h2><span class="no">6</span>Comment tester ta page</h2>
+<ol class="etapes">
+  <li>Dans ta fiche, indique l'adresse de ta page, coche la confirmation des règles et enregistre.</li>
+  <li>Clique sur <strong>«&nbsp;Aperçu de ma page&nbsp;»</strong>. Une fenêtre affiche ta page avec une entreprise de test, les boutons <em>Sombre / Clair</em> et <em>Bureau / Mobile</em>, et la liste des règles.</li>
+  <li>Teste les quatre combinaisons: sombre et clair, bureau et mobile.</li>
+  <li>Quand tout est bon, soumets l'app.</li>
+</ol>
+<div class="encadre"><b class="titre">À savoir</b>Dans l'aperçu, le jeton contient <code>apercu: true</code> et <code>sub: "apercu"</code>. Ne sauvegarde aucune donnée réelle pour cette entreprise de test.</div>
+
+<!-- ============ 7 ============ -->
+<h2><span class="no">7</span>Résultats attendus</h2>
+<p>Gozly ouvre ta page avec son outil d'aperçu et passe cette liste. Chaque ligne doit donner le résultat attendu.</p>
+<table class="tests">
+  <tr><th style="width:38%">Test</th><th>Résultat attendu</th></tr>
+  <tr><td>La page s'affiche dans le cadre</td><td>Le contenu apparaît, sans erreur ni page blanche.</td></tr>
+  <tr><td>Thème sombre</td><td>Fond transparent, texte clair lisible, aucune zone blanche.</td></tr>
+  <tr><td>Thème clair</td><td>Fond transparent, texte foncé lisible, aucune zone noire.</td></tr>
+  <tr><td>Couleur d'accent</td><td>Le bouton principal prend la couleur reçue.</td></tr>
+  <tr><td>Mobile (375 px)</td><td>Aucun défilement horizontal, texte et boutons utilisables au doigt.</td></tr>
+  <tr><td>Langue</td><td>Le français s'affiche. L'anglais aussi si l'app le prétend.</td></tr>
+  <tr><td>Branding</td><td>Aucun logo, aucune publicité ni promotion.</td></tr>
+  <tr><td>Pop-ups et redirections</td><td>Aucun, à l'ouverture comme pendant l'utilisation.</td></tr>
+  <tr><td>Liens vers un autre site</td><td>Aucun dans ta page. Le seul passage vers ton site est le bouton « Ouvrir », qui s'ouvre dans un nouvel onglet.</td></tr>
+  <tr><td>Jeton invalide ou expiré</td><td>Un message simple s'affiche, sans information sensible.</td></tr>
+  <tr><td>Service en panne</td><td>Un message clair s'affiche, jamais une erreur technique.</td></tr>
+  <tr><td>Mot de passe et paiement</td><td>La page ne demande jamais de mot de passe Gozly, ni de carte ou de paiement. La facturation se fait sur le site du développeur.</td></tr>
+  <tr><td>Rapidité</td><td>La page est utilisable en moins de 3 secondes.</td></tr>
+</table>
+<div class="encadre ok"><b class="titre">Si un test échoue</b>Ton app est refusée avec un message qui explique quoi corriger. Tu peux corriger et soumettre de nouveau autant de fois que nécessaire.</div>
+
+<!-- ============ 8 ============ -->
+<h2><span class="no">8</span>API et événements</h2>
+<p>Ton app peut lire (et parfois écrire) les données d'une entreprise qui l'a installée, dans la limite des <strong>permissions déclarées dans ta fiche</strong> et confirmées par le client à l'installation. Dans l'autre sens, Gozly peut t'envoyer des messages quand quelque chose arrive.</p>
+
+<h3>Ta clé d'API</h3>
+<p>Une fois ton app approuvée, génère ta clé dans ta fiche (bouton «&nbsp;Générer une clé&nbsp;»). Elle commence par <code>gozly_app_</code> et <strong>ne s'affiche qu'une seule fois</strong>: copie-la tout de suite. En générer une nouvelle désactive l'ancienne. Garde-la sur ton serveur, jamais dans une page ou une application mobile.</p>
+
+<h3>Appeler l'API</h3>
+<p>Toutes les requêtes vont à <code>https://gozly.net/api/v1/outils</code> et portent deux en-têtes:</p>
+<table>
+  <tr><th style="width:30%">En-tête</th><th>Valeur</th></tr>
+  <tr><td><code>Authorization</code></td><td><code>Bearer</code> suivi de ta clé d'API</td></tr>
+  <tr><td><code>X-Gozly-Entreprise</code></td><td>L'identifiant de l'entreprise (le champ <code>sub</code> du jeton, section 4). Elle doit avoir installé ton app.</td></tr>
+</table>
+<ul>
+  <li><strong>GET</strong> renvoie la liste des outils que ton app a le droit d'utiliser.</li>
+  <li><strong>POST</strong> avec <code>{ "outil": "lire_inventaire", "args": { } }</code> exécute un outil et renvoie <code>{ "resultat": ... }</code>.</li>
+</ul>
+<div class="code"><div class="barre">JavaScript</div><pre>const res = await fetch("https://gozly.net/api/v1/outils", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer " + process.env.CLE_API_GOZLY,
+    "X-Gozly-Entreprise": entrepriseId,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ outil: "lire_inventaire", args: { stock_bas: true } }),
+});
+const { resultat } = await res.json();</pre></div>
+
+<h3>Outils et permissions</h3>
+<p>Un outil n'est permis que si la permission correspondante est dans ta fiche. Les outils «&nbsp;de base&nbsp;» sont permis dès que ton app a au moins une permission.</p>
+<table>
+  <tr><th style="width:42%">Outil</th><th style="width:28%">Permission</th><th>Ce qu'il fait</th></tr>
+  <tr><td><code>lister_employes</code>, <code>lister_emplacements</code></td><td>Toute permission</td><td>Noms et rôles des employés (jamais de salaire, de NIP ni de coordonnées); succursales.</td></tr>
+  <tr><td><code>lire_horaire</code>, <code>lire_heures_pointees</code></td><td><code>horaire:lire</code></td><td>Quarts de travail et heures pointées d'une période (62 jours au maximum).</td></tr>
+  <tr><td><code>creer_quart_brouillon</code>, <code>supprimer_quart_brouillon</code></td><td><code>horaire:brouillons</code></td><td>Quarts en brouillon, invisibles des employés.</td></tr>
+  <tr><td><code>publier_horaire</code></td><td><code>horaire:publier</code></td><td>Publie les brouillons; les employés sont notifiés.</td></tr>
+  <tr><td><code>lister_categories_planning</code>, <code>lire_planning</code></td><td><code>planning:lire</code></td><td>Catégories et tâches du Planning.</td></tr>
+  <tr><td><code>creer_taches_planning</code></td><td><code>planning:creer</code></td><td>Ajoute des tâches (visibles tout de suite).</td></tr>
+  <tr><td><code>supprimer_tache_planning</code></td><td><code>planning:supprimer</code></td><td>Supprime seulement les tâches créées par une IA ou une app.</td></tr>
+  <tr><td><code>lire_inventaire</code></td><td><code>inventaire:lire</code></td><td>Produits, quantités et seuils d'alerte.</td></tr>
+  <tr><td><code>lire_ventes</code></td><td><code>ventes:lire</code></td><td>Journal des ventes d'une période, avec totaux par source.</td></tr>
+</table>
+<p>Le détail des arguments de chaque outil est renvoyé par le <strong>GET</strong>. Ne demande que les permissions dont ton app a vraiment besoin: le client les voit avant d'installer.</p>
+
+<h3>Limites</h3>
+<p>Une app mal faite ne doit pas ralentir les autres. Par défaut:</p>
+<table>
+  <tr><th style="width:42%">Limite</th><th>Valeur par défaut</th></tr>
+  <tr><td>Par entreprise</td><td>30 requêtes par minute</td></tr>
+  <tr><td>Pour toute ton app</td><td>120 requêtes par minute, 5&nbsp;000 par jour</td></tr>
+</table>
+<ul>
+  <li>Quand une limite est dépassée, Gozly répond <code>429</code> avec l'en-tête <code>Retry-After</code> (en secondes). Attends avant de réessayer.</li>
+  <li>Si ton app dépasse sa limite par minute <strong>plus de cinq fois</strong>, elle est <strong>suspendue automatiquement</strong> (réponse <code>403</code>). Écris au support de Gozly pour la faire réactiver.</li>
+  <li>Évite d'interroger Gozly sans arrêt: attends les messages de Gozly (ci-dessous) puis lis seulement ce qui a changé. Garde les réponses en mémoire quand c'est possible.</li>
+  <li>Des limites plus élevées peuvent être accordées à une app qui en a besoin: écris au support.</li>
+</ul>
+<table>
+  <tr><th style="width:15%">Code</th><th>Signification</th></tr>
+  <tr><td><code>400</code></td><td>Demande invalide ou outil inconnu, ou permission manquante dans ta fiche.</td></tr>
+  <tr><td><code>401</code></td><td>Clé d'API manquante, invalide ou remplacée.</td></tr>
+  <tr><td><code>403</code></td><td>App non approuvée, suspendue, ou entreprise qui n'a pas installé l'app.</td></tr>
+  <tr><td><code>429</code></td><td>Trop de requêtes. Voir <code>Retry-After</code>.</td></tr>
+</table>
+
+<h3>Messages envoyés par Gozly</h3>
+<p>Quand quelque chose arrive, Gozly envoie <strong>un seul message</strong> à l'adresse du service de ta fiche (méthode <code>POST</code>, JSON, <code>https</code> obligatoire). Il ne contient aucune donnée personnelle: c'est un avertissement, tu viens ensuite lire ce qui a changé avec l'API. Un message n'est envoyé qu'aux apps qui ont la permission de lecture du module concerné.</p>
+<table>
+  <tr><th style="width:30%">Événement</th><th>Quand</th></tr>
+  <tr><td><code>inventaire.synchronise</code></td><td>Après une synchronisation de l'inventaire Wix. Permission requise: <code>inventaire:lire</code>. D'autres événements s'ajouteront.</td></tr>
+</table>
+<div class="code"><div class="barre">Corps du message</div><pre>{
+  "evenement": "inventaire.synchronise",
+  "entreprise_id": "…",
+  "date": "2026-11-12T15:04:05.000Z",
+  "donnees": { "produits": 42 }
+}</pre></div>
+<p>Le message porte l'en-tête <code>X-Gozly-Evenement</code> et une signature dans <code>X-Gozly-Signature</code>: <code>sha256=</code> suivi du HMAC-SHA256 du corps, calculé avec la <strong>clé de signature de ton app</strong> (la même que pour le jeton). Vérifie-la avant de faire confiance au message.</p>
+<div class="code"><div class="barre">JavaScript</div><pre>import crypto from "crypto";
+
+// corpsBrut = le corps exact reçu, avant tout JSON.parse
+const attendue = "sha256=" +
+  crypto.createHmac("sha256", process.env.CLE_GOZLY).update(corpsBrut).digest("hex");
+const recue = req.headers["x-gozly-signature"] || "";
+const valide = recue.length === attendue.length &&
+  crypto.timingSafeEqual(Buffer.from(recue), Buffer.from(attendue));</pre></div>
+<ul>
+  <li>Réponds avec un code <code>2xx</code> en moins de 5 secondes. Fais le travail lourd après avoir répondu.</li>
+  <li>Gozly <strong>ne réessaie pas</strong> un message qui échoue: rattrape-toi avec l'API quand ton service redémarre.</li>
+</ul>
+
+<!-- ============ 9 ============ -->
+<h2><span class="no">9</span>Refus et retrait</h2>
+<ul class="refus">
+  <li>Une page qui ne respecte pas les règles de la section 5.</li>
+  <li>Un jeton non vérifié, ou une page qui montre les données d'une entreprise à une autre.</li>
+  <li>Un lien vers un autre site dans ta page, autre que le bouton « Ouvrir » prévu par Gozly.</li>
+  <li>Une page qui demande des identifiants Gozly ou collecte des données au-delà des permissions déclarées dans la fiche.</li>
+  <li>Une page ou un service qui cesse de fonctionner. Gozly peut alors retirer l'app du magasin.</li>
+  <li>Une app qui abuse de l'API (dépassements répétés des limites): elle est suspendue.</li>
+</ul>
+<div class="encadre"><b class="titre">Si tu supprimes ton compte</b>Tu choisis de retirer tes apps ou de les laisser en ligne. Si tu les laisses, tu t'engages à garder ton service en ligne, ou à ce que l'app fonctionne sans mise à jour de ta part. Les clients qui l'ont déjà installée la gardent, mais l'app n'est plus proposée à de nouveaux clients.</div>
+
+<h2 style="margin-top:34px">En résumé</h2>
+<ol class="etapes">
+  <li>Héberge ta page en <code>https</code> et autorise <code>gozly.net</code> à l'afficher (<code>frame-ancestors</code>).</li>
+  <li>Vérifie le <code>jeton</code> (HS256, <code>exp</code>, <code>iss</code>) avant d'afficher quoi que ce soit.</li>
+  <li>Adapte-toi au <code>theme</code>, à l'<code>accent</code> et à la <code>lang</code>, sur fond transparent.</li>
+  <li>Pas de logo, de pub, de pop-up, de redirection, de lien externe, de mot de passe Gozly ni de paiement.</li>
+  <li>Pas de page? Indique le lien de ton tableau de bord: Gozly affiche un bouton « Ouvrir » (nouvel onglet).</li>
+  <li>Teste avec l'aperçu (sombre, clair, bureau, mobile), puis soumets.</li>
+  <li>API: clé d'API en <code>Bearer</code> + <code>X-Gozly-Entreprise</code>, 30 requêtes par minute par entreprise, <code>429</code> = attends. Vérifie la signature des messages de Gozly.</li>
+</ol>
+
+</body>
+</html>
