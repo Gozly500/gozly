@@ -48,7 +48,7 @@ export default function VotesSection() {
 
   useEffect(() => {
     charger();
-    const id = setInterval(charger, 30000);
+    const id = setInterval(() => document.visibilityState === "visible" && charger(), 30000);
     return () => clearInterval(id);
   }, [charger]);
 

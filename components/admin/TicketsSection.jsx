@@ -50,7 +50,7 @@ export default function TicketsSection() {
 
   useEffect(() => {
     charger();
-    const id = setInterval(charger, 30000);
+    const id = setInterval(() => document.visibilityState === "visible" && charger(), 30000);
     return () => clearInterval(id);
   }, [charger]);
 
@@ -79,7 +79,7 @@ export default function TicketsSection() {
   // Pendant qu'une conversation est ouverte, on la rafraîchit pour voir les réponses de la personne.
   useEffect(() => {
     if (!ouvert) return;
-    const id = setInterval(() => chargerConv(ouvert, true), 8000);
+    const id = setInterval(() => document.visibilityState === "visible" && chargerConv(ouvert, true), 8000);
     return () => clearInterval(id);
   }, [ouvert, chargerConv]);
 

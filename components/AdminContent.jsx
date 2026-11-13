@@ -107,7 +107,7 @@ export default function AdminContent() {
       } catch {}
     }
     compter();
-    const id = setInterval(compter, 60000);
+    const id = setInterval(() => document.visibilityState === "visible" && compter(), 60000);
     return () => {
       ignore = true;
       clearInterval(id);
