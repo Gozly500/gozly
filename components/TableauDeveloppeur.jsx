@@ -32,8 +32,11 @@ export default function TableauDeveloppeur() {
   const [apps, setApps] = useState(null);
   const [edition, setEdition] = useState(null); // null | { id?: string, fiche, note_refus?, statut? }
   const [msg, setMsg] = useState(null);
+  const [forfait, setForfait] = useState(undefined); // undefined = pas encore chargé, null = aucun abonnement
 
   async function charger(id) {
+    const { data: p } = await supabase.from("profils").select("forfait").eq("id", id).maybeSingle();
+    setForfait(p?.forfait ?? null);
     const { data } = await supabase.from("apps_developpeur").select("*").eq("proprietaire_id", id).order("created_at", { ascending: false });
     setApps(data || []);
   }
@@ -48,7 +51,13 @@ export default function TableauDeveloppeur() {
 
   function ouvrir(app) {
     setMsg(null);
-    if (!app) return setEdition({ fiche: { ...FICHE_VIDE } });
+    if (!app) {
+      // Une seule app gratuite par compte : la deuxième demande un abonnement (aussi vérifié par la base).
+      if (forfait === null && (apps || []).length >= 1) {
+        return setMsg({ type: "err", text: t("Une seule app est gratuite. Pour en publier plus, il faut au moins l'abonnement Opale."), abonnement: true });
+      }
+      return setEdition({ fiche: { ...FICHE_VIDE } });
+    }
     const fiche = {};
     for (const c of CHAMPS) fiche[c] = app[c] ?? FICHE_VIDE[c];
     fiche.regles_page = !!app.regles_page_le;
@@ -104,7 +113,19 @@ export default function TableauDeveloppeur() {
         </button>
       </div>
 
-      {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}
+      {msg && (
+        <p className={`settings-msg ${msg.type}`}>
+          {msg.text}
+          {msg.abonnement && (
+            <>
+              {" "}
+              <a href="/s-abonner" style={{ textDecoration: "underline" }}>
+                {t("Voir les forfaits")}
+              </a>
+            </>
+          )}
+        </p>
+      )}
 
       <p style={{ margin: "14px 0 0" }}>
         <a href="/guide-developpeur-gozly.pdf" download className="admin-icon-btn" style={{ textDecoration: "none", display: "inline-block" }}>
@@ -216,7 +237,12 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
       ? await supabase.from("apps_developpeur").update(ligne).eq("id", edition.id)
       : await supabase.from("apps_developpeur").insert({ ...ligne, proprietaire_id: userId });
     setOccupe(false);
-    if (error) return setMsg({ type: "err", text: t("L'enregistrement a échoué.") });
+    if (error) {
+      if (String(error.message).includes("limite_apps_gratuites")) {
+        return setMsg({ type: "err", text: t("Une seule app est gratuite. Pour en publier plus, il faut au moins l'abonnement Opale.") });
+      }
+      return setMsg({ type: "err", text: t("L'enregistrement a échoué.") });
+    }
     onEnregistre();
   }
 
