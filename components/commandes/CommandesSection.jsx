@@ -123,8 +123,12 @@ export default function CommandesSection({ entrepriseId }) {
   // est visible (pas de sync pour un onglet en arrière-plan).
   useEffect(() => {
     synchroniser({ silencieux: true });
-    return planifierSynchro(() => synchroniser({ silencieux: true }), () => estOuvertMaintenant(horairesRef.current.emplacements, horairesRef.current.emplacementId));
-  }, [synchroniser]);
+    return planifierSynchro(
+      () => synchroniser({ silencieux: true }),
+      () => estOuvertMaintenant(horairesRef.current.emplacements, horairesRef.current.emplacementId),
+      () => charger()
+    );
+  }, [synchroniser, charger]);
 
   useEffect(() => {
     supabase

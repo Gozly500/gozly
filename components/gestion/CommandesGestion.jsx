@@ -124,8 +124,12 @@ export default function CommandesGestion() {
   // Synchro Wix au montage puis aux 30 s tant que l'écran est visible.
   useEffect(() => {
     synchroniser({ silencieux: true });
-    return planifierSynchro(() => synchroniser({ silencieux: true }), () => estOuvertMaintenant(horairesRef.current.emplacements, horairesRef.current.emplacementId));
-  }, [synchroniser]);
+    return planifierSynchro(
+      () => synchroniser({ silencieux: true }),
+      () => estOuvertMaintenant(horairesRef.current.emplacements, horairesRef.current.emplacementId),
+      () => charger()
+    );
+  }, [synchroniser, charger]);
 
   useEffect(() => {
     impressionActive(entrepriseId).then(setImprimanteActive);

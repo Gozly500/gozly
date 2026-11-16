@@ -160,6 +160,7 @@ export default function CommandesKioskContent() {
   const [emplacementId, setEmplacementId] = useState(null);
   const [calendrierPlage, setCalendrierPlage] = useState(false); // calendrier pour choisir un jour ou une plage de dates
   const audioRef = useRef(null);
+  const webhookActifRef = useRef(false); // Wix nous envoie les commandes (webhook) : la tablette vient chercher les bons à l'arrivée d'une commande
   const horairesRef = useRef({ emplacements: [], emplacementId: null });
   horairesRef.current = { emplacements, emplacementId };
 
@@ -277,6 +278,7 @@ export default function CommandesKioskContent() {
     let actif = true;
     async function cycle() {
       const resultat = await synchroniserCommandes(entrepriseId); // muet si Wix n'est pas connecté
+      webhookActifRef.current = !!resultat?.webhook_actif;
       // Tablette avec imprimante Bluetooth : les bons que la synchro vient de mettre en file sortent tout de suite.
       imprimerBonsLocaux(entrepriseId, emplacementId).then(({ erreur }) => {
         if (erreur && actif) {
@@ -294,7 +296,15 @@ export default function CommandesKioskContent() {
       if (actif) setPret(true);
     });
     cycle();
-    const arreter = planifierSynchro(cycle, () => estOuvertMaintenant(horairesRef.current.emplacements, horairesRef.current.emplacementId));
+    const arreter = planifierSynchro(
+      cycle,
+      () => estOuvertMaintenant(horairesRef.current.emplacements, horairesRef.current.emplacementId),
+      async () => {
+        if (!actif) return;
+        await charger();
+        await chargerAvenir();
+      }
+    );
     return () => {
       actif = false;
       arreter();
@@ -360,6 +370,11 @@ export default function CommandesKioskContent() {
     const nouvelles = toutes.filter((c) => !dejaVuesRef.current.has(c.id) && c.source !== "manuel");
     dejaVuesRef.current = ids;
     if (nouvelles.length === 0) return;
+    // Commande arrivée par le webhook de Wix : le bon est mis en file par le serveur quelques secondes après la commande,
+    // alors la tablette le cherche tout de suite, puis encore deux fois.
+    if (webhookActifRef.current) {
+      for (const delai of [0, 8000, 20000]) setTimeout(() => imprimerBonsLocaux(entrepriseId, horairesRef.current.emplacementId).catch(() => {}), delai);
+    }
     if (sonContinu) {
       if (modeKiosque === "liste") setAConfirmer((prev) => new Set([...prev, ...nouvelles.map((c) => c.id)]));
       return;
