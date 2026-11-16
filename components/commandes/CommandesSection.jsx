@@ -176,7 +176,7 @@ export default function CommandesSection({ entrepriseId }) {
 
   // Commande en ligne : l'annulation n'existe que dans Gozly (Wix reste intact). Rétablir la remet comme avant.
   async function annuler(c, annulee) {
-    if (annulee && !window.confirm(t("Annuler la commande #{n}? Elle n'est pas annulée chez Wix : si elle est payée, rembourse le client là-bas.", { n: c.numero }))) return;
+    if (annulee && !window.confirm(t("Annuler la commande #{n}? Elle est aussi annulée chez Wix (sans courriel au client). L'annulation ne rembourse pas : si elle est payée, rembourse le client dans Wix.", { n: c.numero }))) return;
     const { ok, error } = await annulerCommande(entrepriseId, c.id, annulee);
     if (!ok) setSyncMsg({ type: "err", text: error });
     charger();
