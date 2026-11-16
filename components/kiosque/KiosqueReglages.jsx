@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 import ThemeGrids from "@/components/ThemeGrids";
 import {
   THEME_SOBRE,
@@ -21,10 +23,12 @@ import { useLangue } from "@/components/moi/LangueContext";
 import { LANGUES } from "@/lib/i18n/moi";
 import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 import ImprimanteBluetooth from "@/components/ImprimanteBluetooth";
+import VerrouillageKiosque from "@/components/kiosque/VerrouillageKiosque";
 
 // Réglages de la tablette : thème (+ accent) et langue, mémorisés sur la tablette seulement.
 export default function KiosqueReglages() {
   const { t, langue, setLangue } = useLangue();
+  const router = useRouter();
   const [theme, setTheme] = useState(DEFAULT_THEME);
   const [accent, setAccent] = useState(DEFAULT_ACCENT);
   const [transition, setTransition] = useState(null); // { id, couleurs } pendant l'animation
@@ -62,6 +66,12 @@ export default function KiosqueReglages() {
   }
 
   const sobre = estSobre(theme);
+
+  // Ferme la session de cette tablette seulement (les autres appareils restent connectés) et revient à la connexion du kiosque.
+  async function changerDeCompte() {
+    await supabase.auth.signOut({ scope: "local" });
+    router.push("/kiosque");
+  }
 
   // Case "Couleur" : décochée = mode sobre ; recochée = dernier thème coloré.
   function handleToggleCouleur(couleur) {
@@ -105,8 +115,18 @@ export default function KiosqueReglages() {
         </div>
       </div>
 
+      <div style={{ marginBottom: "22px" }}>
+        <h3 style={{ marginBottom: "4px" }}>{t("kq.compte.titre")}</h3>
+        <p className="panel-hint">{t("kq.compte.desc")}</p>
+        <button type="button" className="admin-icon-btn" onClick={changerDeCompte}>
+          {t("kq.changerCompte")}
+        </button>
+      </div>
+
       {/* Seulement dans l'app Android du kiosque (le pont Bluetooth n'existe pas dans un navigateur) */}
       <ImprimanteBluetooth />
+
+      <VerrouillageKiosque />
 
       <h3 style={{ marginBottom: "4px" }}>{t("apparence.titre")}</h3>
       <p className="panel-hint">{t("apparence.hint")}</p>
