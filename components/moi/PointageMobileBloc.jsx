@@ -5,10 +5,11 @@ import { employeFetch } from "@/lib/employeAuth";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { useLangue } from "@/components/moi/LangueContext";
 import { localeDate } from "@/lib/i18n/moi";
+import { heureEntreprise } from "@/lib/dates";
 import Confettis from "@/components/moi/Confettis";
 
 function formatHeure(iso, langue) {
-  return new Date(iso).toLocaleTimeString(localeDate(langue), { hour: "2-digit", minute: "2-digit" });
+  return heureEntreprise(iso, localeDate(langue));
 }
 
 // forcer : affiche le bloc même sans quart aujourd'hui (bouton "Pointer" de l'horaire) ;

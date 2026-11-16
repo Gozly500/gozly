@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
+import { heureEntreprise, versDatetimeLocal, depuisDatetimeLocal } from "@/lib/dates";
 import { useGestion } from "@/components/gestion/GestionShell";
 import { telechargerPdfFeuilleTemps } from "@/lib/exportPdf";
 import { IconAttention, IconCrochet, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
@@ -23,7 +24,7 @@ function combineDateHeure(date, heure) {
 }
 
 function heureCourte(iso) {
-  return new Date(iso).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+  return heureEntreprise(iso, "fr-CA");
 }
 
 function heures(minutes) {
@@ -31,12 +32,6 @@ function heures(minutes) {
 }
 
 // <input type="datetime-local"> veut "AAAA-MM-JJTHH:MM" en heure locale.
-function versDatetimeLocal(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 // Feuille de temps pour le téléphone : une carte par employé (total de la semaine),
 // qu'on ouvre pour voir ses 7 jours, plus l'approbation de la semaine.
@@ -242,8 +237,8 @@ export default function FeuilleTempsMobile() {
     await supabase
       .from("pointages")
       .update({
-        entree: new Date(modal.entree).toISOString(),
-        sortie: modal.sortie ? new Date(modal.sortie).toISOString() : null,
+        entree: depuisDatetimeLocal(modal.entree),
+        sortie: modal.sortie ? depuisDatetimeLocal(modal.sortie) : null,
         sortie_auto: false, // corrigé à la main : plus un « oubli potentiel »
       })
       .eq("id", modal.pointageId);

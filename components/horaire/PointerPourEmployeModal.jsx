@@ -5,12 +5,9 @@ import { supabase } from "@/lib/supabaseClient";
 import SimpleSelect from "@/components/SimpleSelect";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
+import { versDatetimeLocal, depuisDatetimeLocal } from "@/lib/dates";
 
 // <input type="datetime-local"> veut "AAAA-MM-JJTHH:MM" en heure locale.
-function versDatetimeLocal(date) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
 
 // « Pointer pour un employé » : le gestionnaire ajoute un pointage à la place de quelqu'un (oubli, employé sans
 // téléphone...). Le pointage est marqué source = "gestionnaire" pour que ce soit visible dans la feuille de temps.
@@ -18,7 +15,7 @@ function versDatetimeLocal(date) {
 export default function PointerPourEmployeModal({ entrepriseId, employes, emplacements = [], emplacementId = null, onClose, onSaved }) {
   const { t: tr } = useT();
   const [employeId, setEmployeId] = useState("");
-  const [entree, setEntree] = useState(() => versDatetimeLocal(new Date()));
+  const [entree, setEntree] = useState(() => versDatetimeLocal(new Date().toISOString()));
   const [sortie, setSortie] = useState("");
   const [empl, setEmpl] = useState(() => emplacementId || emplacements[0]?.id || null);
   const [ouvert, setOuvert] = useState(null); // pointage encore ouvert de l'employé choisi : { id, entree }
@@ -60,8 +57,8 @@ export default function PointerPourEmployeModal({ entrepriseId, employes, emplac
     setErreur(null);
     if (!employeId) return setErreur(tr("Choisis un employé."));
 
-    const debut = new Date(entree);
-    const fin = sortie ? new Date(sortie) : null;
+    const debut = new Date(depuisDatetimeLocal(entree));
+    const fin = sortie ? new Date(depuisDatetimeLocal(sortie)) : null;
     if (Number.isNaN(debut.getTime())) return setErreur(tr("Entre l'heure d'arrivée."));
     if (debut.getTime() > Date.now() + 5 * 60000) return setErreur(tr("L'arrivée ne peut pas être dans le futur."));
     if (fin && fin <= debut) return setErreur(tr("Le départ doit être après l'arrivée."));
@@ -97,7 +94,7 @@ export default function PointerPourEmployeModal({ entrepriseId, employes, emplac
     onSaved();
   }
 
-  const heureOuvert = ouvert ? new Date(ouvert.entree).toLocaleString(loc(), { weekday: "short", hour: "2-digit", minute: "2-digit" }) : "";
+  const heureOuvert = ouvert ? new Date(ouvert.entree).toLocaleString(loc(), { weekday: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Toronto" }) : "";
 
   return (
     <div className="modal-overlay" onClick={onClose}>

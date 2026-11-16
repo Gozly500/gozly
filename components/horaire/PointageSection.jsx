@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { heureEntreprise } from "@/lib/dates";
 import { useLangue } from "@/components/moi/LangueContext";
 import { IconCrochet, IconLocalisation } from "@/components/icons/Pictogrammes";
 
@@ -167,7 +168,7 @@ export default function PointageSection({ entrepriseId }) {
       prochainType = "arrivee";
     }
 
-    const heure = new Date().toLocaleTimeString(langue === "en" ? "en-CA" : "fr-CA", { hour: "2-digit", minute: "2-digit" });
+    const heure = heureEntreprise(new Date(), langue === "en" ? "en-CA" : "fr-CA");
 
     setMessage({
       type: "ok",
@@ -218,7 +219,7 @@ export default function PointageSection({ entrepriseId }) {
           ) : (
             maintenant && (
               <>
-                <div className="pointage-heure">{maintenant.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" })}</div>
+                <div className="pointage-heure">{heureEntreprise(maintenant, loc)}</div>
                 <div className="pointage-date">{maintenant.toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
               </>
             )

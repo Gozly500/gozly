@@ -13,6 +13,7 @@ import PointerPourEmployeModal from "@/components/horaire/PointerPourEmployeModa
 import { IconAttention, IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
+import { heureEntreprise, versDatetimeLocal, depuisDatetimeLocal } from "@/lib/dates";
 
 function heuresDecimal(minutes) {
   return (minutes / 60).toFixed(2);
@@ -38,12 +39,7 @@ function downloadCsv(filename, rows) {
 }
 
 // <input type="datetime-local"> veut "AAAA-MM-JJTHH:MM" en heure locale.
-function toDatetimeLocal(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+const toDatetimeLocal = versDatetimeLocal;
 
 function dateStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
@@ -293,7 +289,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
   }
 
   function heureCourte(iso) {
-    return new Date(iso).toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit" });
+    return heureEntreprise(iso, loc());
   }
 
   function openEdit(ligne) {
@@ -312,8 +308,8 @@ export default function FeuilleTempsSection({ entrepriseId }) {
     await supabase
       .from("pointages")
       .update({
-        entree: new Date(modal.entree).toISOString(),
-        sortie: modal.sortie ? new Date(modal.sortie).toISOString() : null,
+        entree: depuisDatetimeLocal(modal.entree),
+        sortie: modal.sortie ? depuisDatetimeLocal(modal.sortie) : null,
         sortie_auto: false, // corrigé à la main : plus un « oubli potentiel »
       })
       .eq("id", modal.pointageId);
