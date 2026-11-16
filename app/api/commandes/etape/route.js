@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { imprimerAutomatiquement } from "@/lib/impressionCommandes";
-import { marquerCommandePrepareeWix } from "@/lib/wixClient";
+import { marquerCommandePrepareeWix, definirStatutWix } from "@/lib/wixClient";
+import { STATUTS_WIX_ORDRE, etapeDuStatutWix, statutWixPourEtape } from "@/lib/statutsWix";
 
 const ETAPES = ["en_attente", "traitee", "terminee"];
 
@@ -10,7 +11,7 @@ const ETAPES = ["en_attente", "traitee", "terminee"];
 // le serveur pour pouvoir déclencher des effets de bord au même endroit
 // (ex: l'impression du bon de commande quand une commande devient Traitée).
 export async function POST(request) {
-  const { entrepriseId, commandeId, etape } = await request.json().catch(() => ({}));
+  const { entrepriseId, commandeId, etape, statutWix } = await request.json().catch(() => ({}));
 
   const token = (request.headers.get("authorization") || "").replace("Bearer ", "");
   if (!token) {
@@ -36,7 +37,7 @@ export async function POST(request) {
 
   const { data: commande } = await service
     .from("commandes_en_ligne")
-    .select("id, source, source_id, statut_preparation, brut")
+    .select("*")
     .eq("id", commandeId)
     .eq("entreprise_id", entreprise.id)
     .maybeSingle();
@@ -65,23 +66,38 @@ export async function POST(request) {
     );
   }
 
-  // Commande Wix traitée/terminée : on la marque préparée chez Wix aussi (sinon elle sonne encore sur leur tableau de bord).
+  // Commande Wix : on met aussi à jour son statut de préparation chez Wix (sinon elle sonne encore sur leur tableau de bord).
+  //  - modèle Wix du kiosque : `statutWix` est le statut voulu (Pending, Accepted, Ready, In_Delivery, Fulfilled) ;
+  //  - modèle Gozly : « Traitée » prend le statut choisi dans Personnalisation (par défaut Acceptée), « Terminée » = Fulfilled.
+  // Une commande sans fulfillment (Boutique) est simplement marquée préparée, comme avant.
   let wix = null;
-  if (commande.source === "wix" && etape !== "en_attente" && commande.statut_preparation !== "FULFILLED") {
-    const { data: connexion } = await service
-      .from("wix_connexions")
-      .select("instance_id, statut")
-      .eq("entreprise_id", entreprise.id)
-      .maybeSingle();
+  let avertissement = null;
+  if (commande.source === "wix") {
+    const { data: connexion } = await service.from("wix_connexions").select("instance_id, statut").eq("entreprise_id", entreprise.id).maybeSingle();
     if (connexion?.statut === "connecte" && connexion.instance_id) {
-      wix = await marquerCommandePrepareeWix(connexion.instance_id, commande.source_id, commande.brut?.lineItems || []);
+      const { data: reglage } = await service.from("entreprises").select("*").eq("id", entreprise.id).maybeSingle();
+      const voulu = STATUTS_WIX_ORDRE.includes(statutWix) ? statutWix : statutWixPourEtape(etape, reglage?.commandes_traitee_wix);
+      wix = await definirStatutWix(connexion.instance_id, commande.source_id, voulu, commande.wix_fulfillment_id || null);
       if (wix.ok) {
-        await service.from("commandes_en_ligne").update({ statut_preparation: "FULFILLED" }).eq("id", commande.id);
+        const maj = { statut_wix: voulu, wix_fulfillment_id: wix.fulfillmentId };
+        if (voulu === "Fulfilled") maj.statut_preparation = "FULFILLED";
+        // Colonnes absentes (commandes_modele_wix.sql pas exécuté) : l'erreur est ignorée.
+        await service.from("commandes_en_ligne").update(maj).eq("id", commande.id).then(() => {}, () => {});
+        if (statutWix && etapeDuStatutWix(voulu) !== etape) {
+          await service.from("commandes_en_ligne").update({ etape: etapeDuStatutWix(voulu) }).eq("id", commande.id);
+        }
+      } else if (wix.aucun) {
+        if (etape !== "en_attente" && commande.statut_preparation !== "FULFILLED") {
+          wix = await marquerCommandePrepareeWix(connexion.instance_id, commande.source_id, commande.brut?.lineItems || []);
+          if (wix.ok) await service.from("commandes_en_ligne").update({ statut_preparation: "FULFILLED" }).eq("id", commande.id);
+          else console.error("Marquer préparée chez Wix:", wix.status, wix.detail);
+        }
       } else {
-        console.error("Marquer préparée chez Wix:", wix.status, wix.detail);
+        console.error("Statut Wix:", wix.status, wix.detail);
+        avertissement = "Wix n'a pas pu être mis à jour.";
       }
     }
   }
 
-  return NextResponse.json({ ok: true, wix });
+  return NextResponse.json({ ok: true, wix, ...(avertissement ? { avertissement } : {}) });
 }

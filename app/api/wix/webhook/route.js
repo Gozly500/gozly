@@ -6,12 +6,12 @@ import { synchroniserCommandesWix } from "@/lib/synchroCommandesWix";
 
 // Webhooks de Wix (app « Gozly connect »). Le type de message (eventType) décide de ce qu'on fait :
 //  - installation de l'app : on associe l'instanceId à la plus vieille ligne « en_attente » de wix_connexions ;
-//  - commande créée / approuvée / modifiée : on synchronise les commandes de l'entreprise tout de suite
+//  - commande créée / approuvée / modifiée, ou statut de préparation changé : on synchronise les commandes de l'entreprise tout de suite
 //    (au lieu de demander à Wix toutes les 30 s). Les messages en double sont sans danger : la synchro est rejouable.
 // Tout autre type est ignoré (200), pour ne jamais associer un site à la mauvaise entreprise.
 
 const RE_INSTALLATION = /install/i;
-const RE_COMMANDE = /order/i;
+const RE_COMMANDE = /order|fulfil/i; // commande créée / modifiée, ou statut de préparation changé
 
 export async function POST(request) {
   const rawBody = await request.text();

@@ -72,6 +72,14 @@ const OPTIONS_SON_COMMANDES = [
 const OPTIONS_KIOSQUE_COMMANDES = [
   { id: "liste", label: "Liste (cartes des commandes du jour)" },
   { id: "sections", label: "3 sections (En attente, Traitées, Terminées)" },
+  { id: "wix", label: "Statuts Wix (En attente, Acceptée, Prête, Terminée)" },
+];
+
+// Modèle Gozly (liste ou 3 sections) : le statut Wix que reçoit une commande quand on appuie sur « Traitée ».
+const OPTIONS_TRAITEE_WIX = [
+  { id: "Accepted", label: "Acceptée" },
+  { id: "Ready", label: "Prête" },
+  { id: "Fulfilled", label: "Terminée" },
 ];
 
 const OPTIONS_IMPRESSION_MANUELLES = [
@@ -434,6 +442,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
   const [retentionCommandes, setRetentionCommandes] = useState("12");
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
   const [kiosqueCommandes, setKiosqueCommandes] = useState("liste");
+  const [traiteeWix, setTraiteeWix] = useState("Accepted");
   const [sonCommandes, setSonCommandes] = useState("une_fois");
   const [commandesVersTaches, setCommandesVersTaches] = useState("active");
   const [planifDansCommandes, setPlanifDansCommandes] = useState("desactive");
@@ -490,11 +499,14 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
 
     // Mode d'affichage du kiosque : lu à part (colonne de commandes_kiosque_mode.sql, absente tant que le SQL n'est pas exécuté).
     const { data: kiosqueData, error: kiosqueErreur } = await supabase.from("entreprises").select("commandes_kiosque_mode").eq("id", entrepriseId).maybeSingle();
-    if (!kiosqueErreur) setKiosqueCommandes(kiosqueData?.commandes_kiosque_mode === "sections" ? "sections" : "liste");
+    if (!kiosqueErreur) setKiosqueCommandes(["sections", "wix"].includes(kiosqueData?.commandes_kiosque_mode) ? kiosqueData.commandes_kiosque_mode : "liste");
+    // Réglage « Traitée = statut Wix » : colonne de commandes_modele_wix.sql (absente tant que le SQL n'est pas exécuté : Acceptée).
+    const { data: traiteeData, error: traiteeErreur } = await supabase.from("entreprises").select("commandes_traitee_wix").eq("id", entrepriseId).maybeSingle();
+    if (!traiteeErreur && traiteeData?.commandes_traitee_wix) setTraiteeWix(traiteeData.commandes_traitee_wix);
     // Son des nouvelles commandes : colonne de commandes_son_mode.sql (absente tant que le SQL n'est pas exécuté : comportement selon l'affichage).
     const { data: sonData, error: sonErreur } = await supabase.from("entreprises").select("commandes_son_mode").eq("id", entrepriseId).maybeSingle();
     if (!sonErreur && sonData?.commandes_son_mode) setSonCommandes(sonData.commandes_son_mode === "continu" ? "continu" : "une_fois");
-    else if (!kiosqueErreur) setSonCommandes(kiosqueData?.commandes_kiosque_mode === "sections" ? "continu" : "une_fois");
+    else if (!kiosqueErreur) setSonCommandes(["sections", "wix"].includes(kiosqueData?.commandes_kiosque_mode) ? "continu" : "une_fois");
 
     // Rappels de températures : lus à part (colonne de temperature_rappels.sql, absente tant que le SQL n'est pas exécuté).
     const { data: rappelsData, error: rappelsErreur } = await supabase.from("entreprises").select("temperature_rappels_actif").eq("id", entrepriseId).maybeSingle();
@@ -585,6 +597,21 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
       error
         ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_kiosque_mode.sql dans Supabase?") }
         : { type: "ok", text: t("Préférence enregistrée. Recharge le kiosque pour l'appliquer.") }
+    );
+  }
+
+  async function handleChangeTraiteeWix(value) {
+    setTraiteeWix(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase.from("entreprises").update({ commandes_traitee_wix: value }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(
+      error
+        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_modele_wix.sql dans Supabase?") }
+        : { type: "ok", text: t("Préférence enregistrée.") }
     );
   }
 
@@ -954,12 +981,22 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
           <div className="param-liste">
               <ParametreSelect
                 label={t("Affichage du kiosque des commandes")}
-                info={t("Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »). 3 sections : toutes les commandes arrivent dans « En attente », puis passent à « Traitées » et « Terminées », peu importe leur date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées (bouton Vider, et celles d'avant hier disparaissent seules). Recharge le kiosque après un changement.")}
+                info={t("Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »). 3 sections : toutes les commandes arrivent dans « En attente », puis passent à « Traitées » et « Terminées », peu importe leur date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées (bouton Vider, et celles d'avant hier disparaissent seules). Statuts Wix : les sections reprennent celles de Wix Restaurants (En attente, Acceptée, Prête, En livraison, Terminée) et les deux se suivent : un changement dans Gozly est fait chez Wix, et un changement chez Wix revient dans Gozly. Recharge le kiosque après un changement.")}
                 options={OPTIONS_KIOSQUE_COMMANDES}
                 value={kiosqueCommandes}
                 onChange={handleChangeKiosqueCommandes}
                 disabled={saving}
               />
+              {kiosqueCommandes !== "wix" && (
+                <ParametreSelect
+                  label={t("« Traitée » correspond au statut Wix")}
+                  info={t("Quand tu appuies sur « Traitée » dans Gozly, la commande Wix Restaurants reçoit ce statut chez Wix (« Terminer » la met à Terminée). Acceptée arrête la sonnerie de Wix. Sans effet pour une commande Wix Boutique, qui est simplement marquée préparée.")}
+                  options={OPTIONS_TRAITEE_WIX}
+                  value={traiteeWix}
+                  onChange={handleChangeTraiteeWix}
+                  disabled={saving}
+                />
+              )}
               <ParametreSelect
                 label={t("Son des nouvelles commandes en ligne")}
                 info={t("Une seule fois : le son joue une fois quand une commande en ligne arrive. En continu : il se répète toutes les quelques secondes jusqu'à ce que la commande soit prise en charge (3 sections : quand tu la passes de « En attente » à « Traitées » ; liste : quand tu touches la commande ou le bouton « Arrêter le son »). Vaut pour les deux affichages. Le son doit être activé sur le kiosque (bouton « Activer le son »). Recharge le kiosque après un changement.")}

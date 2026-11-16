@@ -13,6 +13,7 @@ import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
 import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle, modifierCommandeManuelle, retirerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive, annulerCommande, modifierCommandeEnLigne, planifierSynchro } from "@/lib/commandesClient";
 import { estOuvertMaintenant } from "@/lib/horairesOuverture";
+import { COLONNES_WIX, etapeDuStatutWix, colonneWix, statutSuivantWix, statutPrecedentWix } from "@/lib/statutsWix";
 import { imprimerBonsLocaux } from "@/lib/impressionLocale";
 import {
   formatMontant,
@@ -141,6 +142,8 @@ export default function CommandesKioskContent() {
   const [vue, setVue] = useState("jour"); // "jour" | "avenir" (mode liste seulement)
   // Affichage choisi dans Personnalisation : "liste" (cartes, commandes du jour) ou "sections" (En attente / Traitées / Terminées).
   const [modeKiosque, setModeKiosque] = useState("liste");
+  const modeWix = modeKiosque === "wix"; // sections = statuts de préparation de Wix (En attente, Acceptée, Prête, En livraison, Terminée)
+  const modeSections = modeKiosque === "sections" || modeWix;
   // Son des nouvelles commandes en ligne choisi dans Personnalisation : "une_fois" | "continu" (null = selon l'affichage, comme avant).
   const [sonMode, setSonMode] = useState(null);
   const [pret, setPret] = useState(false); // premier chargement terminé (pas de son pour les commandes déjà là)
@@ -186,7 +189,7 @@ export default function CommandesKioskContent() {
         if (!ignore) setEntrepriseNom(data?.nom || "");
         // Colonne ajoutée par commandes_kiosque_mode.sql : tant qu'elle n'existe pas, mode liste.
         const { data: reglage, error: erreurReglage } = await supabase.from("entreprises").select("commandes_kiosque_mode").eq("id", eid).maybeSingle();
-        if (!ignore && !erreurReglage && reglage?.commandes_kiosque_mode === "sections") setModeKiosque("sections");
+        if (!ignore && !erreurReglage && (reglage?.commandes_kiosque_mode === "sections" || reglage?.commandes_kiosque_mode === "wix")) setModeKiosque(reglage.commandes_kiosque_mode);
         // Colonne ajoutée par commandes_son_mode.sql : tant qu'elle n'existe pas, le son suit l'affichage (continu en 3 sections, une fois en liste).
         const { data: son, error: erreurSon } = await supabase.from("entreprises").select("commandes_son_mode").eq("id", eid).maybeSingle();
         if (!ignore && !erreurSon && son?.commandes_son_mode) setSonMode(son.commandes_son_mode === "continu" ? "continu" : "une_fois");
@@ -235,7 +238,7 @@ export default function CommandesKioskContent() {
       .select("*")
       .eq("entreprise_id", entrepriseId)
       .neq("canal", "POS"); // les ventes du point de vente ne passent pas par la cuisine
-    if (modeKiosque === "sections") {
+    if (modeSections) {
       // 3 sections : toutes les commandes récentes ou à venir, peu importe leur date (elles arrivent
       // dans « En attente »). Les 14 derniers jours suffisent pour ne pas traîner tout l'historique.
       const depuis14 = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
@@ -315,14 +318,14 @@ export default function CommandesKioskContent() {
     if (entrepriseId) impressionActive(entrepriseId).then(setImprimanteActive);
   }, [entrepriseId]);
 
-  const nbEnAttente = modeKiosque === "sections" ? commandes.filter((c) => etapeCommande(c) === "en_attente").length : 0;
-  const sonContinu = (sonMode ?? (modeKiosque === "sections" ? "continu" : "une_fois")) === "continu";
+  const nbEnAttente = modeSections ? commandes.filter((c) => etapeCommande(c) === "en_attente").length : 0;
+  const sonContinu = (sonMode ?? (modeSections ? "continu" : "une_fois")) === "continu";
   // Liste + son continu : les commandes en ligne arrivées et pas encore vues (retirées d'ici dès qu'elles sont terminées ou annulées).
   const nbAConfirmer =
     modeKiosque === "liste" && sonContinu
       ? [...commandes, ...avenir].filter((c) => aConfirmer.has(c.id) && etapeCommande(c) !== "terminee" && etapeCommande(c) !== "annulee").length
       : 0;
-  const boucleSon = sonContinu && (modeKiosque === "sections" ? nbEnAttente > 0 : nbAConfirmer > 0);
+  const boucleSon = sonContinu && (modeSections ? nbEnAttente > 0 : nbAConfirmer > 0);
 
   // Son en boucle tant qu'une commande attend : on le joue, et 5 secondes
   // après la fin on le rejoue, jusqu'à ce que plus rien ne soit "En attente" (3 sections) ou à confirmer (liste), en mode continu.
@@ -536,21 +539,25 @@ export default function CommandesKioskContent() {
     />
   );
 
-  async function passer(commande, etape) {
+  async function passer(commande, etape, statutWix = null) {
     setEnCours(commande.id);
     // Mise à jour immédiate à l'écran, puis confirmation du serveur.
     anim.preparer();
-    setCommandes((prev) => prev.map((c) => (c.id === commande.id ? { ...c, etape } : c)));
-    setAvenir((prev) => prev.map((c) => (c.id === commande.id ? { ...c, etape } : c)));
-    const { ok, error } = await changerEtapeCommande(entrepriseId, commande.id, etape);
-    if (!ok) {
-      setMessage({ type: "err", text: error });
+    const maj = statutWix ? { etape, statut_wix: statutWix } : { etape };
+    setCommandes((prev) => prev.map((c) => (c.id === commande.id ? { ...c, ...maj } : c)));
+    setAvenir((prev) => prev.map((c) => (c.id === commande.id ? { ...c, ...maj } : c)));
+    const { ok, error, avertissement } = await changerEtapeCommande(entrepriseId, commande.id, etape, statutWix);
+    if (!ok || avertissement) {
+      setMessage({ type: "err", text: ok ? t("kq.c.wixNonMaj") : error });
       setTimeout(() => setMessage(null), 8000);
     }
     await charger();
     await chargerAvenir();
     setEnCours(null);
   }
+
+  // Modèle Wix : passer une commande à un statut Wix (l'étape Gozly en est déduite).
+  const passerWix = (commande, statut) => passer(commande, etapeDuStatutWix(statut), statut);
 
   if (checking) {
     return (
@@ -602,6 +609,9 @@ export default function CommandesKioskContent() {
   // Mode liste : une commande à venir encore « En attente » (nouvelle) s'affiche dans la liste du jour avec le bouton « Traitée ».
   const estAvenirAConfirmer = (c) => etapeCommande(c) === "en_attente" && !!c.date_ramassage && jourQuebec(c.date_ramassage) > dateAujourdhui();
   const visibles = commandes.filter((c) => etapeCommande(c) !== "annulee" && correspondRecherche(c, recherche));
+  // Modèle Wix : la section d'une commande vient de son statut Wix. La colonne « En livraison » n'apparaît que s'il y a une livraison.
+  const idColonne = (c) => (modeWix ? colonneWix(c, etapeCommande(c)) : etapeCommande(c));
+  const colonnesAffichees = modeWix ? COLONNES_WIX.filter((col) => col.id !== "livraison" || visibles.some((c) => c.mode === "livraison" || idColonne(c) === "livraison")) : COLONNES;
 
   // Commandes à venir filtrées (dates + recherche) et regroupées par jour de ramassage.
   const avenirFiltre = avenir.filter((c) => {
@@ -627,7 +637,7 @@ export default function CommandesKioskContent() {
   // sauf celles « vidées » (le nettoyage : les plus anciennes disparaissent toutes seules).
   const terminesAffichees = (c) =>
     etapeCommande(c) === "terminee" &&
-    (modeKiosque === "sections"
+    (modeSections
       ? new Date(dateEffective(c)) >= new Date(debutHier) && !masquees.has(c.id)
       : new Date(dateEffective(c)) >= new Date(debutAujourdhui));
 
@@ -696,6 +706,19 @@ export default function CommandesKioskContent() {
                 </button>
               )
             )
+          ) : modeWix ? (
+            <>
+              {statutPrecedentWix(c, col.id) && (
+                <button className="admin-icon-btn" disabled={enCours === c.id} onClick={() => passerWix(c, statutPrecedentWix(c, col.id))}>
+                  <IconFlecheGauche className="gozly-icon" /> {t("kq.c.retour")}
+                </button>
+              )}
+              {statutSuivantWix(c, col.id) && (
+                <button className="submit-btn" disabled={enCours === c.id} onClick={() => passerWix(c, statutSuivantWix(c, col.id))}>
+                  {t(`kq.c.wix.${statutSuivantWix(c, col.id)}`)} <IconFlecheDroite className="gozly-icon-inline" />
+                </button>
+              )}
+            </>
           ) : (
             <>
               {col.id !== "en_attente" && (
@@ -799,8 +822,8 @@ export default function CommandesKioskContent() {
                             <td style={{ color: etatTexte.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{t(`kq.c.etat.${etatTexte.id}`)}</td>
                             <td>
                               <div className="cmd-kiosk-table-actions">
-                                {modeKiosque === "sections" && etat.id === "en_attente" && (
-                                  <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
+                                {modeSections && etat.id === "en_attente" && (
+                                  <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee", modeWix ? "Accepted" : null)}>
                                     {t("kq.c.traiter")} <IconFlecheDroite className="gozly-icon-inline" />
                                   </button>
                                 )}
@@ -923,10 +946,10 @@ export default function CommandesKioskContent() {
           </div>
         </div>
       ) : (
-      <div className="cmd-kiosk-cols">
-        {COLONNES.map((col) => {
+      <div className={`cmd-kiosk-cols${modeWix ? ` cmd-kiosk-cols-${colonnesAffichees.length}` : ""}`}>
+        {colonnesAffichees.map((col) => {
           const liste = visibles.filter(
-            (c) => (col.id === "terminee" ? terminesAffichees(c) : etapeCommande(c) === col.id)
+            (c) => (col.id === "terminee" ? terminesAffichees(c) : idColonne(c) === col.id)
           );
           return (
             <section className="cmd-kiosk-col" key={col.id}>
