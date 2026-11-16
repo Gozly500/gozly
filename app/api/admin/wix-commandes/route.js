@@ -45,6 +45,16 @@ export async function POST(request) {
     return NextResponse.json({ commandes });
   }
 
+  // Lecture de la commande brute (sans les renseignements personnels) pour voir où Wix range le statut.
+  if (statut === "brut") {
+    const r = await fetch(`https://www.wixapis.com/ecom/v1/orders/${encodeURIComponent(orderId)}`, { headers: { Authorization: jeton } });
+    const j = await r.json().catch(() => ({}));
+    const o = { ...(j.order || {}) };
+    for (const k of ["buyerInfo", "billingInfo", "recipientInfo", "shippingInfo", "lineItems", "activities"]) delete o[k];
+    o.lineItems_apercu = (j.order?.lineItems || []).slice(0, 1).map((li) => ({ keys: Object.keys(li), catalogReference: li.catalogReference, fulfillerId: li.fulfillerId }));
+    o.activities_types = (j.order?.activities || []).map((x) => x.type);
+    return NextResponse.json({ http: r.status, order: o });
+  }
   if (!STATUTS_WIX.includes(statut)) return NextResponse.json({ error: "Statut invalide.", valeurs: STATUTS_WIX }, { status: 400 });
   const resCommande = await fetch(`https://www.wixapis.com/ecom/v1/orders/${encodeURIComponent(orderId)}`, { headers: { Authorization: jeton } });
   const jsonCommande = await resCommande.json().catch(() => ({}));
