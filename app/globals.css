@@ -2296,6 +2296,10 @@ button.cmd-kiosk-son-bloque .gozly-icon{width:30px;height:30px;}
 @keyframes cmdAlertePulse{50%{background:rgba(255,212,121,0.3);}}
 .cmd-kiosk-actions{display:flex;gap:8px;margin-top:4px;}
 .cmd-kiosk-actions .submit-btn{flex:1;padding:14px;font-size:16px;}
+/* Colonnes étroites (modèle Wix, 4 ou 5 sections) : les boutons passent à la ligne au lieu de déborder. */
+.cmd-kiosk-cols-4 .cmd-kiosk-actions,.cmd-kiosk-cols-5 .cmd-kiosk-actions{flex-wrap:wrap;}
+.cmd-kiosk-cols-4 .cmd-kiosk-actions .submit-btn,.cmd-kiosk-cols-5 .cmd-kiosk-actions .submit-btn{flex:1 1 100%;padding:12px;font-size:15px;}
+.cmd-kiosk-cols-4 .cmd-kiosk-card-top,.cmd-kiosk-cols-5 .cmd-kiosk-card-top{flex-wrap:wrap;gap:2px 8px;font-size:16px;}
 /* Bouton rond « ⋯ » (même hauteur que Terminer) : il se déplie vers la gauche, par-dessus, en pastille Modifier / Retirer. */
 .cmd-menu-place{position:relative;flex:0 0 52px;align-self:stretch;min-height:52px;margin-left:auto;}
 .cmd-menu{position:absolute;right:0;top:0;bottom:0;display:flex;align-items:stretch;width:52px;overflow:hidden;border-radius:999px;z-index:2;background:color-mix(in srgb,var(--navy,#0d0d3f) 80%,#fff 20%);border:1px solid rgba(var(--w),0.25);transition:width .32s cubic-bezier(.22,.8,.3,1);}
