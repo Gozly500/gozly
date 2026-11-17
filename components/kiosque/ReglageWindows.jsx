@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLangue } from "@/components/moi/LangueContext";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
 import { pontWindows } from "@/lib/appareilWindows";
+import { saisieGozlyActive } from "@/lib/saisieGozly";
 
 // Réglages de l'appareil dans l'app Windows du kiosque (le kiosque est en plein écran : on n'a plus accès à Windows) :
 // volume, luminosité, Bluetooth, Wi-Fi, et les paramètres de Windows eux-mêmes avec le code administrateur de Gozly.
@@ -29,7 +30,7 @@ export default function ReglageWindows() {
 
   useEffect(() => {
     pont.current = pontWindows();
-    setTablette(window.matchMedia("(pointer: coarse)").matches || new URLSearchParams(window.location.search).get("saisie") === "gozly");
+    setTablette(saisieGozlyActive());
   }, []);
 
   const lire = useCallback(async () => {

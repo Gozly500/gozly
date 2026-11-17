@@ -15,6 +15,7 @@ import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressi
 import { estOuvertMaintenant } from "@/lib/horairesOuverture";
 import { COLONNES_WIX, etapeDuStatutWix, colonneWix, statutSuivantWix, statutPrecedentWix, typeCommande, stadeListe, etapeSuivanteListe } from "@/lib/statutsWix";
 import { imprimerBonsLocaux } from "@/lib/impressionLocale";
+import { saisieGozlyActive } from "@/lib/saisieGozly";
 import {
   formatMontant,
   dateAujourdhui,
@@ -156,7 +157,7 @@ export default function CommandesKioskContent() {
   const [rechercheOuverte, setRechercheOuverte] = useState(false); // tablette : fenêtre de recherche avec le clavier Gozly
   const [tablette, setTablette] = useState(false);
   useEffect(() => {
-    setTablette(window.matchMedia("(pointer: coarse)").matches || new URLSearchParams(window.location.search).get("saisie") === "gozly");
+    setTablette(saisieGozlyActive());
   }, []);
   const [avenir, setAvenir] = useState([]); // commandes dont le ramassage est après aujourd'hui
   const [du, setDu] = useState("");
@@ -1082,7 +1083,7 @@ export default function CommandesKioskContent() {
           <CommandeEmployeModal
             // Tablette (écran tactile) : le clavier, le calendrier et le choix d'heure de Gozly. ?saisie=gozly pour l'essayer sur un ordinateur.
             catalogue
-            saisieGozly={window.matchMedia("(pointer: coarse)").matches || new URLSearchParams(window.location.search).get("saisie") === "gozly"}
+            saisieGozly={saisieGozlyActive()}
             dateParDefaut={dateAujourdhui()}
             chargerProduits={() => chargerProduitsInventaire(entrepriseId)}
             chargerCategories={() => chargerCategoriesInventaire(entrepriseId)}
