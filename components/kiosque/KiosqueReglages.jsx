@@ -27,6 +27,8 @@ import ReglageVerrouNip from "@/components/kiosque/ReglageVerrouNip";
 import ReglageEpinglerKiosque from "@/components/kiosque/ReglageEpinglerKiosque";
 import { effacerVerrouNip } from "@/lib/verrouNip";
 import { dansAppKiosque } from "@/lib/appareilKiosque";
+import { dansAppWindows } from "@/lib/appareilWindows";
+import ReglageWindows from "@/components/kiosque/ReglageWindows";
 import { kiosqueEpingle, surChangementEpingle } from "@/lib/kiosqueEpingle";
 
 // Les réglages sont rangés par catégories, comme dans les réglages de l'app employé et de l'app gestion.
@@ -34,6 +36,7 @@ const CATEGORIES = [
   { id: "langue", emoji: "🌐", titre: "kq.langue.titre", desc: "kq.langue.desc" },
   { id: "compte", emoji: "👤", titre: "kq.compte.titre", desc: "kq.cat.compteDesc" },
   { id: "imprimante", emoji: "🖨️", titre: "kq.imp.titre", desc: "kq.cat.imprimanteDesc", seulementApp: true },
+  { id: "windows", emoji: "💻", titre: "kq.win.titre", desc: "kq.win.desc", seulementWindows: true },
   { id: "securite", emoji: "🔒", titre: "kq.cat.securite", desc: "kq.cat.securiteDesc" },
   { id: "apparence", emoji: "🎨", titre: "apparence.titre", desc: "apparence.hint" },
 ];
@@ -47,11 +50,13 @@ export default function KiosqueReglages() {
   const [transition, setTransition] = useState(null); // { id, couleurs } pendant l'animation
   const [vue, setVue] = useState(null); // null = la liste des catégories
   const [dansApp, setDansApp] = useState(false);
+  const [dansWindows, setDansWindows] = useState(false);
   const [epingle, setEpingle] = useState(null); // kiosque épinglé (on quitte les réglages vers lui)
   const [confirmerSortie, setConfirmerSortie] = useState(false);
 
   useEffect(() => {
     setDansApp(dansAppKiosque());
+    setDansWindows(dansAppWindows());
     const relire = () => setEpingle(kiosqueEpingle());
     relire();
     return surChangementEpingle(relire);
@@ -138,7 +143,7 @@ export default function KiosqueReglages() {
         <>
           <p className="panel-hint">{t("kq.reglages.hint")}</p>
           <div className="moi-settings-list">
-            {CATEGORIES.filter((c) => !c.seulementApp || dansApp).map((c) => (
+            {CATEGORIES.filter((c) => (!c.seulementApp || dansApp) && (!c.seulementWindows || dansWindows)).map((c) => (
               <button key={c.id} type="button" className="moi-settings-item" onClick={() => setVue(c.id)}>
                 <span className="moi-settings-item-emoji">{c.emoji}</span>
                 <span className="moi-settings-item-text">
@@ -182,6 +187,12 @@ export default function KiosqueReglages() {
       {vue === "imprimante" && (
         <div style={{ marginTop: "16px" }}>
           <ImprimanteBluetooth />
+        </div>
+      )}
+
+      {vue === "windows" && (
+        <div style={{ marginTop: "16px" }}>
+          <ReglageWindows />
         </div>
       )}
 

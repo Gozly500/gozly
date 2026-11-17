@@ -76,7 +76,8 @@ function Panneau({ ctx, champId }) {
 // Champ de formulaire : un champ normal sans SaisieGozly autour, ouvre le panneau Gozly avec.
 // type : "texte" | "textarea" | "tel" | "entier" | "decimal" | "date" | "heure".
 // onOuvre : appelé quand le champ est touché ; onBlur : quand il perd le focus (champ normal seulement).
-export function ChampGozly({ id, type = "texte", label, value, onChange, placeholder, style, disabled, maxLength, rows, onOuvre, onBlur, autoOuvrir }) {
+// masque : le texte tapé s'affiche en points (mot de passe, code).
+export function ChampGozly({ id, type = "texte", label, value, onChange, placeholder, style, disabled, maxLength, rows, onOuvre, onBlur, autoOuvrir, masque = false }) {
   const sg = useContext(Ctx);
   const { langue } = useLangue();
   // autoOuvrir : le panneau s’ouvre dès l’apparition du champ (fenêtre de recherche).
@@ -87,7 +88,7 @@ export function ChampGozly({ id, type = "texte", label, value, onChange, placeho
   if (!sg) {
     const commun = { value, onChange: (e) => onChange(e.target.value), placeholder, "aria-label": label, maxLength, style, disabled, onFocus: onOuvre, onBlur, autoComplete: "off" };
     if (type === "textarea") return <textarea {...commun} rows={rows} />;
-    const natif = { texte: "text", tel: "tel", entier: "number", decimal: "text", date: "date", heure: "time" }[type];
+    const natif = masque ? "password" : { texte: "text", tel: "tel", entier: "number", decimal: "text", date: "date", heure: "time" }[type];
     const mode = { tel: "tel", decimal: "decimal" }[type];
     return <input type={natif} inputMode={mode} min={type === "entier" ? 1 : undefined} {...commun} />;
   }
@@ -102,7 +103,7 @@ export function ChampGozly({ id, type = "texte", label, value, onChange, placeho
     const el = e?.currentTarget;
     setTimeout(() => el?.scrollIntoView?.({ block: "center", behavior: "smooth" }), 420);
   };
-  const affiche = type === "date" ? dateLisible(value, langue) : value;
+  const affiche = type === "date" ? dateLisible(value, langue) : masque ? "•".repeat(String(value || "").length) : value;
   const proprietes = {
     readOnly: true,
     inputMode: "none",
