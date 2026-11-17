@@ -333,6 +333,8 @@ export default function CommandesKioskContent() {
   const nbEnAttente = [...commandes, ...(modeKiosque === "liste" ? avenir : [])].filter((c) => etapeCommande(c) === "en_attente" && !cacheeWix(c)).length;
   const sonContinu = (sonMode ?? "continu") === "continu";
   const boucleSon = sonContinu && nbEnAttente > 0;
+  // Bandeau « nouvelle commande en ligne » : celles arrivées et pas encore vues (retirées dès qu'elles sont terminées ou annulées).
+  const nbAConfirmer = modeKiosque === "liste" ? [...commandes, ...avenir].filter((c) => aConfirmer.has(c.id) && etapeCommande(c) !== "terminee" && etapeCommande(c) !== "annulee").length : 0;
 
   // Son en boucle tant qu'une commande attend : on le joue, et 5 secondes
   // après la fin on le rejoue, jusqu'à ce que plus rien ne soit "En attente" (3 sections) ou à confirmer (liste), en mode continu.
