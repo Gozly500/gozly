@@ -24,6 +24,8 @@ import { LANGUES } from "@/lib/i18n/moi";
 import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 import ImprimanteBluetooth from "@/components/ImprimanteBluetooth";
 import VerrouillageKiosque from "@/components/kiosque/VerrouillageKiosque";
+import ReglageVerrouNip from "@/components/kiosque/ReglageVerrouNip";
+import { effacerVerrouNip } from "@/lib/verrouNip";
 
 // Réglages de la tablette : thème (+ accent) et langue, mémorisés sur la tablette seulement.
 export default function KiosqueReglages() {
@@ -70,6 +72,7 @@ export default function KiosqueReglages() {
   // Ferme la session de cette tablette seulement (les autres appareils restent connectés) et revient à la connexion du kiosque.
   async function changerDeCompte() {
     await supabase.auth.signOut({ scope: "local" });
+    effacerVerrouNip(); // le NIP est celui de la tablette de ce commerce
     router.push("/kiosque");
   }
 
@@ -125,6 +128,8 @@ export default function KiosqueReglages() {
 
       {/* Seulement dans l'app Android du kiosque (le pont Bluetooth n'existe pas dans un navigateur) */}
       <ImprimanteBluetooth />
+
+      <ReglageVerrouNip />
 
       <VerrouillageKiosque />
 

@@ -76,7 +76,7 @@ export async function POST(request) {
     const { data: connexion } = await service.from("wix_connexions").select("instance_id, statut").eq("entreprise_id", entreprise.id).maybeSingle();
     if (connexion?.statut === "connecte" && connexion.instance_id) {
       const { data: reglage } = await service.from("entreprises").select("*").eq("id", entreprise.id).maybeSingle();
-      const voulu = STATUTS_WIX_ORDRE.includes(statutWix) ? statutWix : statutWixPourEtape(etape, reglage?.commandes_traitee_wix);
+      const voulu = STATUTS_WIX_ORDRE.includes(statutWix) ? statutWix : statutWixPourEtape(etape, reglage?.commandes_traitee_wix, reglage?.commandes_terminee_wix);
       wix = await definirStatutWix(connexion.instance_id, commande.source_id, voulu, commande.wix_fulfillment_id || null);
       if (wix.ok) {
         const maj = { statut_wix: voulu, wix_fulfillment_id: wix.fulfillmentId };

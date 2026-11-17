@@ -13,7 +13,7 @@ import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
 import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle, modifierCommandeManuelle, retirerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive, annulerCommande, modifierCommandeEnLigne, planifierSynchro } from "@/lib/commandesClient";
 import { estOuvertMaintenant } from "@/lib/horairesOuverture";
-import { COLONNES_WIX, etapeDuStatutWix, colonneWix, statutSuivantWix, statutPrecedentWix } from "@/lib/statutsWix";
+import { COLONNES_WIX, etapeDuStatutWix, colonneWix, statutSuivantWix, statutPrecedentWix, typeCommande, stadeListe, etapeSuivanteListe } from "@/lib/statutsWix";
 import { imprimerBonsLocaux } from "@/lib/impressionLocale";
 import {
   formatMontant,
@@ -146,6 +146,9 @@ export default function CommandesKioskContent() {
   const modeSections = modeKiosque === "sections" || modeWix;
   // Son des nouvelles commandes en ligne choisi dans Personnalisation : "une_fois" | "continu" (null = selon l'affichage, comme avant).
   const [sonMode, setSonMode] = useState(null);
+  // Mode liste : « Accepter » saute-t-il directement au statut choisi (réglage « Traitée = statut Wix ») au lieu de passer chaque étape ?
+  const [listeSauter, setListeSauter] = useState(false);
+  const [cibleSauter, setCibleSauter] = useState("Accepted");
   const [pret, setPret] = useState(false); // premier chargement terminé (pas de son pour les commandes déjà là)
   const [aConfirmer, setAConfirmer] = useState(() => new Set()); // liste + son continu : commandes en ligne pas encore vues
   const [masquees, setMasquees] = useState(() => new Set()); // commandes terminées « vidées » de l'écran (mode sections)
@@ -193,6 +196,12 @@ export default function CommandesKioskContent() {
         // Colonne ajoutée par commandes_son_mode.sql : tant qu'elle n'existe pas, le son suit l'affichage (continu en 3 sections, une fois en liste).
         const { data: son, error: erreurSon } = await supabase.from("entreprises").select("commandes_son_mode").eq("id", eid).maybeSingle();
         if (!ignore && !erreurSon && son?.commandes_son_mode) setSonMode(son.commandes_son_mode === "continu" ? "continu" : "une_fois");
+        // Colonnes de commandes_types_wix.sql : tant qu'elles n'existent pas, chaque étape se fait une à la fois.
+        const { data: saut, error: erreurSaut } = await supabase.from("entreprises").select("commandes_liste_sauter, commandes_traitee_wix").eq("id", eid).maybeSingle();
+        if (!ignore && !erreurSaut) {
+          setListeSauter(!!saut?.commandes_liste_sauter);
+          if (saut?.commandes_traitee_wix) setCibleSauter(saut.commandes_traitee_wix);
+        }
         // Le son reste voulu d'une fois à l'autre (rechargement, retour au kiosque, tablette qui se rallume) : mémorisé sur cet appareil.
         // Le navigateur exige un toucher pour jouer un son : on essaie tout de suite, sinon le premier toucher sur l'écran le réactive.
         try {
@@ -318,14 +327,11 @@ export default function CommandesKioskContent() {
     if (entrepriseId) impressionActive(entrepriseId).then(setImprimanteActive);
   }, [entrepriseId]);
 
-  const nbEnAttente = modeSections ? commandes.filter((c) => etapeCommande(c) === "en_attente").length : 0;
-  const sonContinu = (sonMode ?? (modeSections ? "continu" : "une_fois")) === "continu";
-  // Liste + son continu : les commandes en ligne arrivées et pas encore vues (retirées d'ici dès qu'elles sont terminées ou annulées).
-  const nbAConfirmer =
-    modeKiosque === "liste" && sonContinu
-      ? [...commandes, ...avenir].filter((c) => aConfirmer.has(c.id) && etapeCommande(c) !== "terminee" && etapeCommande(c) !== "annulee").length
-      : 0;
-  const boucleSon = sonContinu && (modeSections ? nbEnAttente > 0 : nbAConfirmer > 0);
+  // Toute nouvelle commande arrive « En attente » : le son continu dure tant qu'il en reste une (liste : y compris les précommandes à accepter).
+  const cacheeWix = (c) => modeWix && typeCommande(c) === "boutique"; // le modèle Wix est celui de Wix Restaurants
+  const nbEnAttente = [...commandes, ...(modeKiosque === "liste" ? avenir : [])].filter((c) => etapeCommande(c) === "en_attente" && !cacheeWix(c)).length;
+  const sonContinu = (sonMode ?? "continu") === "continu";
+  const boucleSon = sonContinu && nbEnAttente > 0;
 
   // Son en boucle tant qu'une commande attend : on le joue, et 5 secondes
   // après la fin on le rejoue, jusqu'à ce que plus rien ne soit "En attente" (3 sections) ou à confirmer (liste), en mode continu.
@@ -378,10 +384,7 @@ export default function CommandesKioskContent() {
     if (webhookActifRef.current) {
       for (const delai of [0, 8000, 20000]) setTimeout(() => imprimerBonsLocaux(entrepriseId, horairesRef.current.emplacementId).catch(() => {}), delai);
     }
-    if (sonContinu) {
-      if (modeKiosque === "liste") setAConfirmer((prev) => new Set([...prev, ...nouvelles.map((c) => c.id)]));
-      return;
-    }
+    if (sonContinu) return; // la boucle repart toute seule : la commande arrive « En attente »
     if (son) {
       if (!audioRef.current) audioRef.current = obtenirLecteurSon();
       audioRef.current.currentTime = 0;
@@ -608,7 +611,7 @@ export default function CommandesKioskContent() {
   const debutAujourdhui = bornesJour(dateAujourdhui()).debut;
   // Mode liste : une commande à venir encore « En attente » (nouvelle) s'affiche dans la liste du jour avec le bouton « Traitée ».
   const estAvenirAConfirmer = (c) => etapeCommande(c) === "en_attente" && !!c.date_ramassage && jourQuebec(c.date_ramassage) > dateAujourdhui();
-  const visibles = commandes.filter((c) => etapeCommande(c) !== "annulee" && correspondRecherche(c, recherche));
+  const visibles = commandes.filter((c) => etapeCommande(c) !== "annulee" && !cacheeWix(c) && correspondRecherche(c, recherche));
   // Modèle Wix : la section d'une commande vient de son statut Wix. La colonne « En livraison » n'apparaît que s'il y a une livraison.
   const idColonne = (c) => (modeWix ? colonneWix(c, etapeCommande(c)) : etapeCommande(c));
   const colonnesAffichees = modeWix ? COLONNES_WIX.filter((col) => col.id !== "livraison" || visibles.some((c) => c.mode === "livraison" || idColonne(c) === "livraison")) : COLONNES;
@@ -649,6 +652,20 @@ export default function CommandesKioskContent() {
   const terminesListe = visibles.filter(terminesAffichees).sort(parHeure);
   const aAfficherListe = [...aFaireListe, ...terminesListe];
 
+  // Mode liste : le bouton de la prochaine étape de la commande (Restaurants : Accepter, Prête, En livraison, Terminer ;
+  // Boutique et commandes manuelles : Traitée, Terminer).
+  const optionsListe = { sauter: listeSauter, cible: cibleSauter };
+  const libelleEtape = (c, s) => (typeCommande(c) === "restaurant" ? t(`kq.c.wix.${s.statut}`) : t(s.etape === "terminee" ? "kq.c.terminer" : "kq.c.traitee"));
+  const boutonSuivantListe = (c) => {
+    const s = etapeSuivanteListe(c, etapeCommande(c), optionsListe);
+    if (!s) return null;
+    return (
+      <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, s.etape, s.statut)}>
+        {libelleEtape(c, s)} {s.etape === "terminee" ? <IconCrochet className="gozly-icon" /> : <IconFlecheDroite className="gozly-icon-inline" />}
+      </button>
+    );
+  };
+
   function renderCarte(c, col, liste = false) {
     const modeTexte = libelleMode(c.mode) ? t(`kq.c.mode.${c.mode}`) : null;
     const clePaiement = c.statut_paiement === "PARTIALLY_REFUNDED" ? "REFUNDED" : c.statut_paiement;
@@ -666,6 +683,11 @@ export default function CommandesKioskContent() {
           {liste && etapeCommande(c) === "terminee" && (
             <span className="cmd-kiosk-tag" style={{ color: etat.couleur, fontWeight: 700 }}>
               <IconCrochet className="gozly-icon" /> {t("kq.c.terminee")}
+            </span>
+          )}
+          {liste && etapeCommande(c) !== "terminee" && (
+            <span className="cmd-kiosk-tag" style={{ color: etat.couleur, fontWeight: 700 }}>
+              {t(`kq.c.stade.${stadeListe(c, etapeCommande(c))}`)}
             </span>
           )}
           {modeTexte && <span className="cmd-kiosk-tag">{modeTexte}</span>}
@@ -695,17 +717,7 @@ export default function CommandesKioskContent() {
             </button>
           )}
           {liste ? (
-            estAvenirAConfirmer(c) ? (
-              <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
-                {t("kq.c.traitee")} <IconCrochet className="gozly-icon" />
-              </button>
-            ) : (
-              etapeCommande(c) !== "terminee" && (
-                <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "terminee")}>
-                  {t("kq.c.terminer")} <IconCrochet className="gozly-icon" />
-                </button>
-              )
-            )
+            boutonSuivantListe(c)
           ) : modeWix ? (
             <>
               {statutPrecedentWix(c, col.id) && (
@@ -801,8 +813,7 @@ export default function CommandesKioskContent() {
                       </tr>
                       {g.commandes.map((c) => {
                         const etat = etatCommande(c);
-                        // Pas d'étape « En attente » en mode liste : c'est une commande « Traitée ».
-                        const etatTexte = modeKiosque === "liste" && etat.id === "en_attente" && !estAvenirAConfirmer(c) ? { id: "traitee", couleur: "#8ab4ff" } : etat;
+                        const etatTexte = etat;
                         return (
                           <tr key={c.id} className={etat.id === "en_attente" ? "cmd-kiosk-ligne-attente" : undefined}>
                             <td style={{ whiteSpace: "nowrap" }}>{libelleRamassage(c, locale) || "—"}</td>
@@ -827,11 +838,7 @@ export default function CommandesKioskContent() {
                                     {t("kq.c.traiter")} <IconFlecheDroite className="gozly-icon-inline" />
                                   </button>
                                 )}
-                                {modeKiosque === "liste" && estAvenirAConfirmer(c) && (
-                                  <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee")}>
-                                    {t("kq.c.traitee")} <IconCrochet className="gozly-icon" />
-                                  </button>
-                                )}
+                                {modeKiosque === "liste" && estAvenirAConfirmer(c) && boutonSuivantListe(c)}
                                 {imprimanteActive && (
                                   <button className="admin-icon-btn" onClick={() => imprimer(c)} aria-label={t("kq.c.imprimerBon")}>
                                     <IconImprimante className="gozly-icon" /> {t("kq.c.imprimer")}

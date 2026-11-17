@@ -1,5 +1,6 @@
 "use client";
 
+import { effacerVerrouNip } from "@/lib/verrouNip";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -94,6 +95,7 @@ export default function KiosqueAccueil() {
 
   async function changerDeCompte() {
     await supabase.auth.signOut({ scope: "local" });
+    effacerVerrouNip(); // le NIP est celui de la tablette de ce commerce
     setEtat("deconnecte");
   }
 
