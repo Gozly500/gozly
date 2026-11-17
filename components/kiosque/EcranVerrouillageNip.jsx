@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { derniereFermeture } from "@/lib/horairesOuverture";
 import { useLangue } from "@/components/moi/LangueContext";
+import { kiosqueEpingle } from "@/lib/kiosqueEpingle";
 import {
   deverrouiller,
   effacerVerrouNip,
@@ -28,6 +29,7 @@ const PAUSE_SECONDES = 30;
 export default function EcranVerrouillageNip() {
   const { t } = useLangue();
   const router = useRouter();
+  const pathname = usePathname();
   const [pret, setPret] = useState(false);
   const [aUnNip, setAUnNip] = useState(false);
   const [verrouille, setVerrouille] = useState(false);
@@ -143,6 +145,10 @@ export default function EcranVerrouillageNip() {
   if (!pret || !aUnNip) return null;
 
   if (!verrouille) {
+    // Le cadenas n'est que sur la page d'accueil de l'app (la liste des kiosques) ; tablette épinglée sur un kiosque : sur ce kiosque.
+    const epingle = kiosqueEpingle();
+    const surAccueil = pathname === "/kiosque" || (!!epingle && pathname === `/kiosque/${epingle}`);
+    if (!surAccueil) return null;
     return (
       <button
         type="button"

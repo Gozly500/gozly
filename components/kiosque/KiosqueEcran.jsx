@@ -13,6 +13,7 @@ import InventaireKioskContent from "@/components/InventaireKioskContent";
 import CommandesKioskContent from "@/components/CommandesKioskContent";
 import { useLangue } from "@/components/moi/LangueContext";
 import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import { kiosqueEpingle, surChangementEpingle } from "@/lib/kiosqueEpingle";
 
 const ECRANS = {
   pointage: PointageKioskContent,
@@ -49,6 +50,12 @@ export default function KiosqueEcran({ id }) {
   const { t, langue, setLangue } = useLangue();
   const { entrepriseId, modules } = useEntrepriseKiosque();
   const [epingle, setEpingle] = useState("off");
+  const [kiosqueFixe, setKiosqueFixe] = useState(false); // tablette épinglée sur un kiosque : pas de retour à la liste
+  useEffect(() => {
+    const relire = () => setKiosqueFixe(!!kiosqueEpingle());
+    relire();
+    return surChangementEpingle(relire);
+  }, []);
 
   useEffect(() => {
     try {
@@ -105,9 +112,11 @@ export default function KiosqueEcran({ id }) {
         <Ecran />
       </div>
       {mode !== "off" && <MusiqueEpingle entrepriseId={entrepriseId} mode={mode} onMode={changerEpingle} />}
-      <Link href="/kiosque" aria-label={t("kq.retourListe")} style={{ ...BOUTON_COIN, left: "4px" }}>
-        <IconFlecheGauche className="gozly-icon" />
-      </Link>
+      {!kiosqueFixe && (
+        <Link href="/kiosque" aria-label={t("kq.retourListe")} style={{ ...BOUTON_COIN, left: "4px" }}>
+          <IconFlecheGauche className="gozly-icon" />
+        </Link>
+      )}
       {estMusique && <BoutonEpingler mode={epingle} onChoix={changerEpingle} />}
       {/* Montre la langue vers laquelle on bascule : « EN » quand l'écran est en français. */}
       <button

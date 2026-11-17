@@ -25,6 +25,7 @@ import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 import ImprimanteBluetooth from "@/components/ImprimanteBluetooth";
 import VerrouillageKiosque from "@/components/kiosque/VerrouillageKiosque";
 import ReglageVerrouNip from "@/components/kiosque/ReglageVerrouNip";
+import ReglageEpinglerKiosque from "@/components/kiosque/ReglageEpinglerKiosque";
 import { effacerVerrouNip } from "@/lib/verrouNip";
 
 // Réglages de la tablette : thème (+ accent) et langue, mémorisés sur la tablette seulement.
@@ -130,6 +131,8 @@ export default function KiosqueReglages() {
       <ImprimanteBluetooth />
 
       <ReglageVerrouNip />
+
+      <ReglageEpinglerKiosque />
 
       <VerrouillageKiosque />
 

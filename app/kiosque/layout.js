@@ -1,6 +1,7 @@
 import KiosqueThemeAppliqueur from "@/components/kiosque/KiosqueThemeAppliqueur";
 import { LangueProvider } from "@/components/moi/LangueContext";
 import EcranVerrouillageNip from "@/components/kiosque/EcranVerrouillageNip";
+import GardeKiosqueEpingle from "@/components/kiosque/GardeKiosqueEpingle";
 
 export const metadata = {
   title: "Gozly Kiosque",
@@ -20,6 +21,7 @@ export default function KiosqueLayout({ children }) {
       <KiosqueThemeAppliqueur />
       <LangueProvider>
         {children}
+        <GardeKiosqueEpingle />
         <EcranVerrouillageNip />
       </LangueProvider>
     </div>
