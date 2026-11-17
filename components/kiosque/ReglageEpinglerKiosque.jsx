@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLangue } from "@/components/moi/LangueContext";
 import { useEntrepriseKiosque } from "@/components/kiosque/useEntrepriseKiosque";
 import { KIOSQUES } from "@/lib/kiosques";
-import { epinglerKiosque } from "@/lib/kiosqueEpingle";
+import { desepinglerKiosque, epinglerKiosque, kiosqueEpingle, surChangementEpingle } from "@/lib/kiosqueEpingle";
 
-// Réglages du kiosque : épingler la tablette sur un seul kiosque. Réglage d'administrateur : pas de bouton pour désépingler,
-// il faut quitter l'application puis revenir (sur Windows en mode borne : redémarrer).
+// Réglages du kiosque : épingler la tablette sur un seul kiosque. Réglage d'administrateur : on peut annuler l'épinglage tant qu'on est
+// dans les réglages ; une fois sortis, il faut quitter l'application puis revenir (sur Windows en mode borne : redémarrer).
 export default function ReglageEpinglerKiosque() {
   const { t } = useLangue();
   const { modules } = useEntrepriseKiosque();
   const [choix, setChoix] = useState(null);
+  const [epingle, setEpingle] = useState(null);
+  useEffect(() => {
+    const relire = () => setEpingle(kiosqueEpingle());
+    relire();
+    return surChangementEpingle(relire);
+  }, []);
   const disponibles = KIOSQUES.filter((k) => modules.includes(k.module));
 
   if (disponibles.length === 0) return null;
@@ -34,9 +40,17 @@ export default function ReglageEpinglerKiosque() {
           </button>
         ))}
       </div>
-      <button type="button" className="submit-btn" disabled={!choix} onClick={() => epinglerKiosque(choix)}>
-        {t("kq.epingle.bouton")}
-      </button>
+      {epingle ? (
+        <div style={{ border: "1px solid #ffd479", borderRadius: "12px", padding: "12px 14px" }}>
+          <strong style={{ color: "#ffd479" }}>{t("kq.epingle.actif", { nom: t(`kq.k.${epingle}.nom`) })}</strong>
+          <p style={{ margin: "6px 0 10px" }}>{t("kq.epingle.avertir")}</p>
+          <button type="button" className="admin-icon-btn" onClick={desepinglerKiosque}>{t("kq.epingle.annuler")}</button>
+        </div>
+      ) : (
+        <button type="button" className="submit-btn" disabled={!choix} onClick={() => epinglerKiosque(choix)}>
+          {t("kq.epingle.bouton")}
+        </button>
+      )}
       <p className="panel-hint" style={{ marginTop: "8px" }}>{t("kq.epingle.aide")}</p>
     </div>
   );

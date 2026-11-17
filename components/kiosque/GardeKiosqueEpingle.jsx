@@ -3,9 +3,10 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { KIOSQUES } from "@/lib/kiosques";
-import { desepinglerKiosque, kiosqueEpingle, surChangementEpingle } from "@/lib/kiosqueEpingle";
+import { desepinglerKiosque, fermerReglagesEpingle, kiosqueEpingle, reglagesOuverts, surChangementEpingle } from "@/lib/kiosqueEpingle";
 
-// Tant qu'un kiosque est épinglé (voir lib/kiosqueEpingle.js), toute autre page du kiosque ramène au kiosque épinglé.
+// Tant qu'un kiosque est épinglé (voir lib/kiosqueEpingle.js), toute autre page du kiosque ramène au kiosque épinglé
+// (sauf les réglages, juste après l'épinglage : on y reste jusqu'à ce qu'on les quitte).
 // Après un déverrouillage par NIP, on se retrouve donc directement sur le kiosque épinglé.
 export default function GardeKiosqueEpingle() {
   const pathname = usePathname();
@@ -19,6 +20,9 @@ export default function GardeKiosqueEpingle() {
         desepinglerKiosque(); // kiosque inconnu : on n'enferme personne
         return;
       }
+      // Les réglages d'où on vient d'épingler restent ouverts, le temps de les quitter ; ensuite ils ne se rouvrent plus.
+      if (pathname === "/kiosque/reglages" && reglagesOuverts()) return;
+      fermerReglagesEpingle();
       const cible = `/kiosque/${id}`;
       if (pathname !== cible) router.replace(cible);
     }
