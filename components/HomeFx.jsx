@@ -5,7 +5,7 @@ import { useEffect } from "react";
 // Effets dynamiques de l'accueil (aucun rendu) :
 //  - apparition au défilement des éléments .rv ;
 //  - barre de progression du défilement (--sp) ;
-//  - souris : halo qui suit le curseur (--mx/--my), léger décalage des blobs
+//  - souris : léger décalage des blobs
 //    et des pastilles du haut (--px/--py), inclinaison des visuels de modules.
 // Tout est coupé si la personne a demandé moins d'animations.
 export default function HomeFx() {
@@ -54,8 +54,6 @@ export default function HomeFx() {
       rafMove = 0;
       const e = dernier;
       if (!e) return;
-      root.style.setProperty("--mx", `${e.clientX}px`);
-      root.style.setProperty("--my", `${e.clientY}px`);
       root.style.setProperty("--px", String((e.clientX / window.innerWidth - 0.5) * 2));
       root.style.setProperty("--py", String((e.clientY / window.innerHeight - 0.5) * 2));
       const v = e.target.closest?.(".vitrine-visuel");
@@ -97,7 +95,6 @@ export default function HomeFx() {
   return (
     <>
       <div className="home-progress" aria-hidden="true" />
-      <div className="home-spot" aria-hidden="true" />
     </>
   );
 }
