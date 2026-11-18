@@ -1,5 +1,6 @@
 import "./globals.css";
 import { LangProvider } from "@/components/LangProvider";
+import DemoInit from "@/components/DemoInit";
 import { getLang } from "@/lib/i18n/siteServer";
 import { SITE_URL, IMAGE_ACCUEIL } from "@/lib/seo";
 
@@ -45,7 +46,10 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <LangProvider lang={lang}>{children}</LangProvider>
+        <LangProvider lang={lang}>
+          <DemoInit />
+          {children}
+        </LangProvider>
       </body>
     </html>
   );

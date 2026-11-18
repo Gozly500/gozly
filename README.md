@@ -197,6 +197,17 @@ forfait, popup de blocage) et un widget dans `lib/dashboardWidgets.js`.
 - Les changements du site (kiosque, clavier, etc.) n'exigent PAS de mise à jour
   des apps : elles chargent gozly.net.
 
+### Démo (`/demo`, code dans `lib/demo/`)
+
+- Le bouton « Démo » de l'accueil ouvre `/demo`, puis le vrai tableau de bord branché sur une **fausse base qui vit dans le
+  navigateur** (aucun serveur, rien chez Gozly). Tout est dans `sessionStorage` : fermer l'onglet efface la démo.
+- `lib/supabaseClient.js` est un proxy : si le drapeau de démo est actif (`lib/demo/actif.js`), tous les appels vont vers le moteur
+  `lib/demo/moteur.js` (mini PostgREST en mémoire) ; `fetch("/api/...")` est intercepté par `lib/demo/api.js`. Le code de la démo est
+  chargé à la demande : les visiteurs normaux n'en téléchargent rien.
+- Données de départ : `lib/demo/donnees.js` (entreprise fictive, 15 employés, OneDrive et Nethris « connectés »). Une nouvelle table
+  ou colonne utilisée par un module = l'ajouter à ces données si on veut qu'elle soit remplie dans la démo.
+- Pas dans la démo : app mobile `/moi`, paiements, Wix, Sonos (Commandes et Musique s'activent mais restent vides).
+
 ### Variables d'environnement à ne pas oublier
 
 - `KIOSQUE_CODE_ADMIN` (Vercel) : code qui ouvre les Paramètres Windows depuis
