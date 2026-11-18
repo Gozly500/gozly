@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { urlPageApp } from "@/lib/jetonApp";
-import { genererCleApp } from "@/lib/appApi";
+import { genererCleApp, limitesPourApp } from "@/lib/appApi";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +36,13 @@ export async function POST(request) {
     const { error } = await service.from("apps_developpeur").update({ cle_api_hash: hash, cle_api_prefixe: prefixe }).eq("id", app.id);
     if (error) return NextResponse.json({ error: "Exécute apps_api.sql dans Supabase." }, { status: 500 });
     return NextResponse.json({ cle, prefixe });
+  }
+
+  // Limites d'API de son app (selon son forfait) et nombre d'apps permises : affichés dans le tableau du développeur.
+  if (action === "limites") {
+    const { data: app } = await service.from("apps_developpeur").select("*").eq("id", id).maybeSingle();
+    if (!app || app.proprietaire_id !== user.id) return NextResponse.json({ error: "App introuvable." }, { status: 404 });
+    return NextResponse.json({ limites: await limitesPourApp(service, app) });
   }
 
   if (action === "laisser") {

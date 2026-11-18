@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, getServiceClient } from "@/lib/adminServer";
 import { urlPageApp } from "@/lib/jetonApp";
+import { limitesPourApp } from "@/lib/appApi";
 
 // Fiches d'apps des développeurs : liste et décision (approuver / refuser). Réservé aux admins.
 export async function GET(request) {
@@ -27,9 +28,13 @@ export async function GET(request) {
     if (l.jour === aujourdhui) usage.jour.set(l.app_id, (usage.jour.get(l.app_id) || 0) + l.n);
   }
 
+  // Limites réelles de chaque app : les siennes si l'admin en a fixé, sinon celles du forfait de son développeur.
+  const effectives = await Promise.all((apps || []).map((a) => limitesPourApp(service, a)));
   return NextResponse.json({
-    apps: (apps || []).map(({ secret_page, cle_api_hash, ...a }) => ({
+    apps: (apps || []).map(({ secret_page, cle_api_hash, ...a }, i) => ({
       ...a,
+      limites_effectives: effectives[i],
+      limites_propres: a.limite_min_entreprise != null || a.limite_min_app != null || a.limite_jour != null,
       usage_jour: usage.jour.get(a.id) || 0,
       usage_30j: usage.mois.get(a.id) || 0,
       developpeur: a.proprietaire_id ? noms.get(a.proprietaire_id) || courriels.get(a.proprietaire_id) || "" : "",
@@ -43,13 +48,19 @@ export async function POST(request) {
   const service = getServiceClient();
   if (!service) return NextResponse.json({ error: "Configuration serveur incomplète." }, { status: 500 });
 
-  const { id, statut, note, supprimer, apercu, theme, accent, lang, suspendre, raison, limites } = await request.json().catch(() => ({}));
+  const { id, statut, note, supprimer, apercu, theme, accent, lang, suspendre, raison, limites, reinitialiser } = await request.json().catch(() => ({}));
   if (id && typeof suspendre === "boolean") {
     const { error } = await service
       .from("apps_developpeur")
       .update({ suspendue: suspendre, suspendue_raison: suspendre ? String(raison || "").slice(0, 300) || "Suspendue par Gozly." : null })
       .eq("id", id);
     if (error) return NextResponse.json({ error: "Exécute apps_api.sql dans Supabase." }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+  // Revenir aux limites du forfait du développeur (efface les limites propres à l'app).
+  if (id && reinitialiser === true) {
+    const { error } = await service.from("apps_developpeur").update({ limite_min_entreprise: null, limite_min_app: null, limite_jour: null }).eq("id", id);
+    if (error) return NextResponse.json({ error: "Exécute apps_limites_forfait.sql dans Supabase." }, { status: 500 });
     return NextResponse.json({ ok: true });
   }
   if (id && limites && typeof limites === "object") {

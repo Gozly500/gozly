@@ -207,6 +207,25 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
   const [secretVisible, setSecretVisible] = useState(false);
   const [cleApi, setCleApi] = useState(null); // clé complète, visible seulement juste après sa génération
   const [clePrefixe, setClePrefixe] = useState(edition.clePrefixe || null);
+  const [limitesApi, setLimitesApi] = useState(null); // limites d'API de cette app selon le forfait du développeur
+
+  useEffect(() => {
+    if (!edition.id || edition.statut !== "approuvee") return;
+    let annule = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/developpeur/apps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ action: "limites", id: edition.id }),
+      }).catch(() => null);
+      const json = res && res.ok ? await res.json().catch(() => ({})) : {};
+      if (!annule && json.limites) setLimitesApi(json.limites);
+    })();
+    return () => {
+      annule = true;
+    };
+  }, [edition.id, edition.statut]);
 
   async function genererCle() {
     if (clePrefixe && !window.confirm(t("L'ancienne clé cessera de fonctionner. Continuer?"))) return;
@@ -264,8 +283,12 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
       : await supabase.from("apps_developpeur").insert({ ...ligne, proprietaire_id: userId });
     setOccupe(false);
     if (error) {
-      if (String(error.message).includes("limite_apps_gratuites")) {
+      const m = String(error.message).match(/limite_apps:(d+)/);
+      if (String(error.message).includes("limite_apps_gratuites") || (m && Number(m[1]) <= 1)) {
         return setMsg({ type: "err", text: t("Une seule app est gratuite. Pour en publier plus, il faut au moins l'abonnement Opale.") });
+      }
+      if (m) {
+        return setMsg({ type: "err", text: `${t("Ton forfait permet")} ${m[1]} ${t("apps. Passe à un forfait supérieur pour en publier plus.")}` });
       }
       return setMsg({ type: "err", text: t("L'enregistrement a échoué.") });
     }
@@ -355,7 +378,13 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
           <label>{t("Clé d'API")}</label>
           {edition.suspendue && <p className="settings-msg err">{t("Ton app est suspendue.")} {edition.raisonSuspension}</p>}
           <p className="panel-hint" style={{ margin: "0 0 6px" }}>
-            {t("Envoie-la dans l'en-tête Authorization (Bearer) avec l'en-tête X-Gozly-Entreprise, vers /api/v1/outils. Limites: 30 requêtes par minute par entreprise.")}
+            {t("Envoie-la dans l'en-tête Authorization (Bearer) avec l'en-tête X-Gozly-Entreprise, vers /api/v1/outils.")}
+            {limitesApi && (
+              <>
+                <br />
+                {t("Limites de ton forfait")} : {limitesApi.limite_min_entreprise} {t("requêtes par minute par entreprise")} · {limitesApi.limite_min_app} {t("requêtes par minute pour l'app")} · {limitesApi.limite_jour} {t("requêtes par jour")}.
+              </>
+            )}
           </p>
           {cleApi ? (
             <>

@@ -149,10 +149,11 @@ export default function AppsDeveloppeurSection() {
                     <Ligne titre="Usage de l'API">
                       {a.suspendue ? <strong>Suspendue. {a.suspendue_raison}</strong> : null} Aujourd'hui : {a.usage_jour} · 30 jours : {a.usage_30j} · Clé : {a.cle_api_prefixe ? `${a.cle_api_prefixe}…` : "aucune"}
                       <br />
-                      Limites : {a.limite_min_entreprise}/min par entreprise · {a.limite_min_app}/min par app · {a.limite_jour}/jour{" "}
+                      Limites : {a.limites_effectives?.limite_min_entreprise}/min par entreprise · {a.limites_effectives?.limite_min_app}/min par app · {a.limites_effectives?.limite_jour}/jour{" "}
+                      <em>({a.limites_propres ? "fixées pour cette app" : `forfait du développeur : ${a.limites_effectives?.forfait || "gratuit"}`})</em>{" "}
                       <button
                         className="admin-icon-btn"
-                        onClick={() => setLimites({ id: a.id, limite_min_entreprise: a.limite_min_entreprise, limite_min_app: a.limite_min_app, limite_jour: a.limite_jour })}
+                        onClick={() => setLimites({ id: a.id, limite_min_entreprise: a.limites_effectives?.limite_min_entreprise, limite_min_app: a.limites_effectives?.limite_min_app, limite_jour: a.limites_effectives?.limite_jour, propres: a.limites_propres })}
                       >
                         Modifier
                       </button>
@@ -206,7 +207,7 @@ export default function AppsDeveloppeurSection() {
                 className="submit-btn"
                 onClick={async () => {
                   try {
-                    const { id, ...valeurs } = limites;
+                    const { id, propres, ...valeurs } = limites;
                     await appeler("POST", { id, limites: valeurs });
                     setLimites(null);
                     charger();
@@ -217,6 +218,23 @@ export default function AppsDeveloppeurSection() {
               >
                 Enregistrer
               </button>
+              {limites.propres && (
+                <button
+                  type="button"
+                  className="admin-icon-btn"
+                  onClick={async () => {
+                    try {
+                      await appeler("POST", { id: limites.id, reinitialiser: true });
+                      setLimites(null);
+                      charger();
+                    } catch (e) {
+                      setErreur(e.message);
+                    }
+                  }}
+                >
+                  Revenir au forfait
+                </button>
+              )}
               <button type="button" className="admin-icon-btn" onClick={() => setLimites(null)}>
                 Annuler
               </button>
