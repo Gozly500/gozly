@@ -4670,3 +4670,16 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 }
 .fx .module-row.rv.in:hover{transform:translateY(-3px);}
+
+/* ===== Barre latérale flottante (tableau de bord, bureau) =====
+   Détachée des bords de la page : marge autour, coins arrondis, contour complet et ombre douce.
+   Sur mobile elle garde son tiroir collé au bord (voir @media max-width:820px plus haut). */
+@media (min-width:821px){
+  .dash-sidebar{
+    margin:12px 0 12px 12px;
+    height:calc(100vh - 24px);top:12px;
+    border-radius:24px;
+    border:1px solid rgba(var(--w),0.14);
+    box-shadow:0 24px 50px -24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(var(--w),0.10);
+  }
+}
