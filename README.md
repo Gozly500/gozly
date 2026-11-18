@@ -143,3 +143,87 @@ L'app mobile employé (`/moi`) donne accès à l'horaire, aux demandes
 (congés/échanges de quart), à la discussion d'équipe, aux tâches et
 températures (selon les modules actifs), avec notifications push
 configurables et plusieurs thèmes visuels.
+
+## État du projet (mis à jour le 2026-11-17)
+
+Modules actuels (`lib/modules.js`) : Planning, Horaire & Pointage, Inventaire,
+Suivi des ventes, Températures (MAPAQ), Commandes en ligne (kiosque), Musique
+(Sonos). Un nouveau module s'ajoute dans `lib/modules.js` (sidebar, limite de
+forfait, popup de blocage) et un widget dans `lib/dashboardWidgets.js`.
+
+### Intégrations
+
+- **Wix** (app « Gozly connect ») : inventaire dans les deux sens (quantité
+  seulement) et commandes. Deux types de commandes qui se gèrent différemment :
+  **Wix Restaurants** (statuts Pending/Accepted/Ready/In_Delivery/Fulfilled) et
+  **Wix Boutique** (aucun statut). Le type est détecté et stocké dans
+  `commandes_en_ligne.type_wix` (`lib/statutsWix.js`, `lib/synchroCommandesWix.js`).
+  Jamais de test d'écriture Wix sur de vraies commandes de clients.
+- **Stripe** en production (forfait par compte). **Nethris** : export CSV manuel
+  seulement. **Moneris** : jamais recherché (bloque la conciliation des ventes).
+- **Connexions IA (MCP)**, **OneDrive** (export des fiches de température),
+  **Discord** (bot Gozyx), **Sonos** (quota 20 000 demandes/jour par compte).
+
+### Kiosque Commandes (`/kiosque`, composant `CommandesKioskContent.jsx`)
+
+- Toute nouvelle commande arrive « En attente » (son en boucle + halo).
+- Mode **Liste** : Restaurants = Accepter → Prête → (En livraison si livraison)
+  → Terminer ; Boutique/manuelle = Traitée → Terminer. Option « Accepter saute
+  directement à un statut » (`commandes_liste_sauter`).
+- Mode **3 sections** : 2e = `commandes_traitee_wix`, 3e = `commandes_terminee_wix`.
+  En mode Wix, les commandes Boutique sont cachées.
+- **Verrouillage par NIP** (`lib/verrouNip.js`) : haché avec sel dans le
+  localStorage de la tablette, marche hors connexion, 5 erreurs = pause de 30 s,
+  verrouillage auto « jamais / à la fermeture / à une heure ».
+- **Épinglage d'un kiosque** (`lib/kiosqueEpingle.js`) : armé depuis les
+  réglages ; pour désépingler, quitter l'app et la rouvrir (borne Windows :
+  redémarrer).
+- Réglages du kiosque en catégories (`KiosqueReglages.jsx`, textes dans
+  `lib/i18n/kiosque.js`). Clavier et calendrier Gozly actifs sur écran tactile,
+  dans l'app Android et dans l'app Windows (`lib/saisieGozly.js`).
+
+### Apps du kiosque (dépôt séparé `gozly-suite`, dossier `gozly-traitement-texte/`)
+
+- **Android** (`kiosque-android/`, WebView, impression Bluetooth, build sur
+  GitHub Actions, version 0.3.0 à installer sur la tablette).
+- **Windows** (`kiosque-windows/`, Electron) : réglages de l'appareil depuis les
+  Réglages du kiosque (volume, luminosité des écrans intégrés, Bluetooth avec
+  recherche/jumelage, Wi-Fi, Paramètres Windows). Les paramètres Windows
+  s'ouvrent seulement avec le code administrateur Gozly, vérifié côté serveur
+  (`/api/kiosque/code-admin`). Publier une version : changer la version dans
+  `package.json`, `npm run dist`, puis `gh release create kiosque-pc-vX` avec
+  l'installeur, le `.blockmap` et `latest.yml`. Les kiosques se mettent à jour
+  la nuit. Installeur non signé (SmartScreen).
+- Les changements du site (kiosque, clavier, etc.) n'exigent PAS de mise à jour
+  des apps : elles chargent gozly.net.
+
+### Variables d'environnement à ne pas oublier
+
+- `KIOSQUE_CODE_ADMIN` (Vercel) : code qui ouvre les Paramètres Windows depuis
+  le kiosque. Pour le changer : modifier la valeur dans Vercel puis
+  **redéployer** (une variable ne s'applique qu'aux nouveaux déploiements).
+  Ne jamais l'écrire dans le code, le chat ou un endroit visible par les clients.
+
+### Règles de travail
+
+- Français québécois familier (« tu »), jamais le nom d'un client dans le code,
+  l'interface ou le SQL.
+- Jamais de `<select>` natif : utiliser le menu maison `.emplacement-select-*`.
+- Toute nouvelle table/colonne = un fichier `.sql` dans `supabase/` à exécuter
+  soi-même dans le SQL Editor (et le dire explicitement).
+- Avant un push majeur : aperçu local à tester, regrouper les petits changements
+  (les minutes de build Vercel coûtent). Lancer `next build` avant de pousser
+  (les erreurs « Invalid URL » sur les icônes prérendues existaient déjà) puis
+  supprimer `.next` avant de relancer le serveur de dev.
+- Dates et heures affichées en heure du Québec (`lib/dates.js`).
+
+### Fait / à faire
+
+- Terminé : kiosque Android + Windows, NIP, épinglage, réglages Windows.
+- À vérifier : installer l'app Android 0.3.0 sur la tablette, tester le son et
+  l'impression d'une nouvelle commande avec le nouveau flux « En attente »,
+  vérifier que l'ancien système d'impression par IP est bien retiré.
+- Reporté : pages glissantes entre plateformes (attendre une 2e plateforme),
+  Commandes du dashboard encore en 3 étapes, modification d'une commande Wix
+  depuis Gozly, Shopify, signature de l'installeur Windows, app native Expo
+  (jamais lancée sur un téléphone), conciliation Wix/Moneris.
