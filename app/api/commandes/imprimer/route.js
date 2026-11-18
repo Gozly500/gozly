@@ -40,7 +40,7 @@ export async function POST(request) {
 
   const { data: config } = await service.from("entreprises").select("impression_actif").eq("id", entreprise.id).maybeSingle();
   if (!config?.impression_actif) {
-    return NextResponse.json({ error: "L'impression n'est pas configurée (Personnalisation → Commandes en ligne)." }, { status: 400 });
+    return NextResponse.json({ error: "L'impression n'est pas configurée (Modules → Commandes en ligne)." }, { status: 400 });
   }
 
   const { data: commande } = await service

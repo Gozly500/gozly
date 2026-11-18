@@ -438,7 +438,7 @@ export default function FeuilleTempsSection({ entrepriseId }) {
       <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "10px", marginBottom: "14px", flexWrap: "wrap" }}>
         {autoVisible && (
           <span className="section-hint" style={{ margin: 0 }}>
-            {tr("Mode automatique actif (Personnalisation) - visible sans approbation.")}
+            {tr("Mode automatique actif (Modules) - visible sans approbation.")}
           </span>
         )}
 

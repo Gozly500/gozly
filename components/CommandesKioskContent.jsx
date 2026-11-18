@@ -141,11 +141,11 @@ export default function CommandesKioskContent() {
   const [sonVerrouille, setSonVerrouille] = useState(false); // voulu, mais le navigateur attend un toucher pour l'autoriser (après un rechargement)
   const son = sonActif && !sonVerrouille; // le son peut vraiment jouer
   const [vue, setVue] = useState("jour"); // "jour" | "avenir" (mode liste seulement)
-  // Affichage choisi dans Personnalisation : "liste" (cartes, commandes du jour) ou "sections" (En attente / Traitées / Terminées).
+  // Affichage choisi dans Modules : "liste" (cartes, commandes du jour) ou "sections" (En attente / Traitées / Terminées).
   const [modeKiosque, setModeKiosque] = useState("liste");
   const modeWix = modeKiosque === "wix"; // sections = statuts de préparation de Wix (En attente, Acceptée, Prête, En livraison, Terminée)
   const modeSections = modeKiosque === "sections" || modeWix;
-  // Son des nouvelles commandes en ligne choisi dans Personnalisation : "une_fois" | "continu" (null = selon l'affichage, comme avant).
+  // Son des nouvelles commandes en ligne choisi dans Modules : "une_fois" | "continu" (null = selon l'affichage, comme avant).
   const [sonMode, setSonMode] = useState(null);
   // Mode liste : « Accepter » saute-t-il directement au statut choisi (réglage « Traitée = statut Wix ») au lieu de passer chaque étape ?
   const [listeSauter, setListeSauter] = useState(false);

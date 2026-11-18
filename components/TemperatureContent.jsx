@@ -387,7 +387,7 @@ export default function TemperatureContent() {
                     )}
                   </div>
                   <span className="section-hint" style={{ margin: 0 }}>
-                    {t("Les fiches sont supprimées automatiquement après la durée choisie dans Personnalisation - exporte-les pour les garder.")}
+                    {t("Les fiches sont supprimées automatiquement après la durée choisie dans Modules - exporte-les pour les garder.")}
                   </span>
                 </div>
               )}

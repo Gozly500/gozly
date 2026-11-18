@@ -4,7 +4,7 @@ import { dateStr } from "@/lib/temperature";
 
 // Nettoyage automatique des relevés de température, déclenché une fois par
 // jour par Vercel Cron (voir vercel.json) : supprime les relevés plus vieux
-// que la durée de conservation choisie par l'entreprise (Personnalisation >
+// que la durée de conservation choisie par l'entreprise (Modules >
 // Températures, entreprises.temperature_retention_mois - 3 mois par défaut).
 // L'entreprise peut exporter ses fiches en Excel avant qu'elles disparaissent.
 

@@ -61,7 +61,7 @@ const sections = [
     contenu: [
       "Nous conservons les renseignements seulement le temps nécessaire aux fins pour lesquelles ils ont été recueillis, puis nous les détruisons. En pratique :",
       [
-        "Données du compte et des modules : tant que le compte de l'entreprise est actif. Certaines données sont supprimées automatiquement selon un délai que l'entreprise règle dans Personnalisation (par exemple les fiches de température : 3, 6 ou 12 mois; les demandes de congé et d'échange traitées).",
+        "Données du compte et des modules : tant que le compte de l'entreprise est actif. Certaines données sont supprimées automatiquement selon un délai que l'entreprise règle dans Modules (par exemple les fiches de température : 3, 6 ou 12 mois; les demandes de congé et d'échange traitées).",
         `Après la fermeture d'un compte : ${LEGAL.delaiExportApresFermetureJours} jours pour exporter les données, puis destruction dans les ${LEGAL.delaiSuppressionApresExportJours} jours suivants.`,
         `Facturation et paiements : ${LEGAL.conservationFacturationAnnees} ans, comme l'exigent les lois fiscales pour les registres comptables.`,
         "Copies de sauvegarde : elles sont écrasées selon le cycle normal de notre fournisseur, ce qui peut retarder de quelques semaines la disparition complète d'une donnée supprimée.",

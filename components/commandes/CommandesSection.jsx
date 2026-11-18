@@ -48,7 +48,7 @@ export default function CommandesSection({ entrepriseId }) {
   const [syncMsg, setSyncMsg] = useState(null);
   const [filtre, setFiltre] = useState("toutes");
   const [vue, setVue] = useState("apercu"); // "apercu" ou "commandes"
-  // Boîte "Planification" (Personnalisation > Commandes en ligne) : seulement si
+  // Boîte "Planification" (Modules > Commandes en ligne) : seulement si
   // le réglage est activé ET que le module Tâches est actif.
   const [planifActive, setPlanifActive] = useState(false);
   const [premierJourDimanche, setPremierJourDimanche] = useState(false);

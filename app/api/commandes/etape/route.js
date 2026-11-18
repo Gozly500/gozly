@@ -68,7 +68,7 @@ export async function POST(request) {
 
   // Commande Wix : on met aussi à jour son statut de préparation chez Wix (sinon elle sonne encore sur leur tableau de bord).
   //  - modèle Wix du kiosque : `statutWix` est le statut voulu (Pending, Accepted, Ready, In_Delivery, Fulfilled) ;
-  //  - modèle Gozly : « Traitée » prend le statut choisi dans Personnalisation (par défaut Acceptée), « Terminée » = Fulfilled.
+  //  - modèle Gozly : « Traitée » prend le statut choisi dans Modules (par défaut Acceptée), « Terminée » = Fulfilled.
   // Une commande sans fulfillment (Boutique) est simplement marquée préparée, comme avant.
   let wix = null;
   let avertissement = null;

@@ -4,7 +4,7 @@ import { getServiceClient } from "@/lib/adminServer";
 // Nettoyage automatique des commandes en ligne, déclenché une fois par jour
 // par Vercel Cron (voir vercel.json) :
 // - supprime les commandes COPIÉES d'une plateforme (Wix...) plus vieilles
-//   que la durée choisie par l'entreprise (Personnalisation > Commandes en
+//   que la durée choisie par l'entreprise (Modules > Commandes en
 //   ligne, entreprises.commandes_retention_mois - 12 mois par défaut) : le
 //   registre officiel reste sur la plateforme d'origine ;
 // - ne touche JAMAIS aux commandes manuelles (source = 'manuel') ;

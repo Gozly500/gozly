@@ -20,7 +20,7 @@ const TABS = [
   { id: "informations", label: "Informations", Icone: IconProfil },
   { id: "equipe", label: "Équipe", Icone: IconEquipe },
   { id: "emplacements", label: "Emplacements", Icone: IconEmplacement },
-  { id: "personnalisation", label: "Personnalisation", Icone: IconPalette },
+  { id: "personnalisation", label: "Modules", Icone: IconPalette },
   { id: "integrations", label: "Intégrations", Icone: IconIntegration },
 ];
 
@@ -140,7 +140,7 @@ export default function EntrepriseParametresContent() {
 
   const modulesPerso = MODULES_PERSONNALISATION.filter((m) => modulesActifs.includes(m.id));
 
-  // En entrant dans Personnalisation (ou si le module choisi n'existe plus), on ouvre le premier module et sa première catégorie.
+  // En entrant dans Modules (ou si le module choisi n'existe plus), on ouvre le premier module et sa première catégorie.
   useEffect(() => {
     if (vue !== "personnalisation" || modulesPerso.length === 0) return;
     if (!modulesPerso.some((m) => m.id === moduleChoisi)) {
@@ -244,7 +244,7 @@ export default function EntrepriseParametresContent() {
                         </span>{" "}
                         {t("Retour")}
                       </button>
-                      <div className="admin-nav-titre">{t("Personnalisation")}</div>
+                      <div className="admin-nav-titre">{t("Modules")}</div>
                       {modulesPerso.map((m) => {
                         const ouvert = moduleChoisi === m.id;
                         const plusieurs = m.categories.length > 1;

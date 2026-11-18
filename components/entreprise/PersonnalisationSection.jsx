@@ -874,7 +874,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
 
   return (
     <div className="param-page">
-      <h2>{moduleChoisi ? t(moduleChoisi.label) : t("Personnalisation")}</h2>
+      <h2>{moduleChoisi ? t(moduleChoisi.label) : t("Modules")}</h2>
       {categorieChoisie && moduleChoisi.categories.length > 1 && <p className="panel-hint">{t(categorieChoisie.label)}</p>}
 
       {msg && <p className={`settings-msg ${msg.type}`}>{msg.text}</p>}

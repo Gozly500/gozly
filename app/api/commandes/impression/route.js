@@ -3,7 +3,7 @@ import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer"
 import { getServiceClient } from "@/lib/adminServer";
 import { construireBonCommande } from "@/lib/impressionCommandes";
 
-// Configuration de l'impression des bons de commande (Personnalisation > Commandes > Impression) : active/désactive,
+// Configuration de l'impression des bons de commande (Modules > Commandes > Impression) : active/désactive,
 // affiche l'aperçu du bon et met un bon de test en file (le kiosque Android l'imprime en Bluetooth).
 
 export async function POST(request) {

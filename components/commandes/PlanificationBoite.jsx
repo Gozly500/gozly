@@ -18,7 +18,7 @@ function dateQuebec(iso) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date(iso));
 }
 
-// Boîte "Planification" de la page Commandes (Personnalisation > Commandes en
+// Boîte "Planification" de la page Commandes (Modules > Commandes en
 // ligne > Planification dans les commandes) : les jours de la semaine (avec le
 // nombre de réservations de chacun), et sous le jour choisi les catégories de
 // tâches où on peut ajouter directement la production à faire - sans quitter

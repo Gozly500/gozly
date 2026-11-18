@@ -5,7 +5,7 @@ import { pousserQuantiteWix, creerProduitWix } from "@/lib/wixClient";
 
 // Repousse la quantité d'UN produit déjà lié à Wix (source = 'wix') vers
 // Wix. Appelée manuellement (bouton) ou automatiquement après une
-// modification si l'entreprise a activé la synchro auto (Personnalisation).
+// modification si l'entreprise a activé la synchro auto (Modules).
 export async function POST(request) {
   const { produitId, entrepriseId } = await request.json().catch(() => ({}));
   if (!produitId) {

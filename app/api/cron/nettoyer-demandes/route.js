@@ -7,7 +7,7 @@ import { getServiceClient } from "@/lib/adminServer";
 // 1. Une demande jamais traitée après DELAI_EXPIRATION_EN_ATTENTE_JOURS
 //    est supprimée automatiquement - l'employé doit en renvoyer une.
 // 2. Une demande déjà traitée (approuvée/refusée) est supprimée après le
-//    délai de conservation choisi par l'entreprise (Personnalisation >
+//    délai de conservation choisi par l'entreprise (Modules >
 //    Horaire & Pointage, entreprises.demandes_retention_mois).
 //
 // "Traité" pour un échange de quart veut dire : refusé par l'employé

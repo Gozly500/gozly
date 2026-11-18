@@ -52,7 +52,7 @@ const sections = [
     contenu: [
       "Vous demeurez propriétaire des données que vous saisissez dans Gozly (« vos données »). Vous nous donnez le droit de les héberger et de les traiter uniquement pour vous offrir le service, comme décrit dans la Politique de confidentialité.",
       "En tant qu'entreprise cliente, vous êtes responsable d'avoir le droit de saisir les renseignements de vos employés et clients dans Gozly et de les informer, au besoin, de la manière dont ils sont utilisés.",
-      "Vous pouvez exporter vos données (par exemple les fiches de température et la feuille de temps). Certaines données sont supprimées automatiquement après le délai que vous choisissez dans Personnalisation : il vous appartient d'exporter ce que vous devez conserver.",
+      "Vous pouvez exporter vos données (par exemple les fiches de température et la feuille de temps). Certaines données sont supprimées automatiquement après le délai que vous choisissez dans Modules : il vous appartient d'exporter ce que vous devez conserver.",
     ],
   },
   {

@@ -18,7 +18,7 @@ async function appelerImpression(entrepriseId, action) {
   return { ok: res.ok, ...json };
 }
 
-// Impression des bons de commande (Personnalisation > Commandes > Impression) : active l'impression (le kiosque Android
+// Impression des bons de commande (Modules > Commandes > Impression) : active l'impression (le kiosque Android
 // imprime en Bluetooth), aperçu du bon et bon de test.
 // selecteur : le menu « Impression des commandes manuelles », affiché à côté des boutons.
 export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
