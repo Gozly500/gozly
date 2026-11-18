@@ -1,6 +1,8 @@
 "use client";
 
-export default function TiltCard({ className, children }) {
+// Carte qui s'incline vers la souris. Avec `reveal`, elle est enveloppée dans un
+// bloc qui apparaît au défilement (le décalage `delay` en ms échelonne les cartes).
+export default function TiltCard({ className, children, reveal = false, delay = 0 }) {
   function handleMouseMove(e) {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
@@ -11,13 +13,16 @@ export default function TiltCard({ className, children }) {
     const rotateX = ((y - cy) / cy) * -6;
     const rotateY = ((x - cx) / cx) * 6;
     card.style.transform = `perspective(700px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+    // Reflet qui suit la souris (voir .price-card::after)
+    card.style.setProperty("--gx", `${(x / rect.width) * 100}%`);
+    card.style.setProperty("--gy", `${(y / rect.height) * 100}%`);
   }
 
   function handleMouseLeave(e) {
     e.currentTarget.style.transform = "perspective(700px) rotateX(0) rotateY(0) translateY(0)";
   }
 
-  return (
+  const carte = (
     <div
       className={className}
       style={{ transition: "transform .15s ease-out" }}
@@ -25,6 +30,13 @@ export default function TiltCard({ className, children }) {
       onMouseLeave={handleMouseLeave}
     >
       {children}
+    </div>
+  );
+
+  if (!reveal) return carte;
+  return (
+    <div className="rv price-slot" style={{ "--d": `${delay}ms` }}>
+      {carte}
     </div>
   );
 }

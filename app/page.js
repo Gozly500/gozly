@@ -5,9 +5,10 @@ import BoutonForfait from "@/components/BoutonForfait";
 import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
 import ModuleVitrine from "@/components/ModuleVitrine";
-import HeroParallax from "@/components/HeroParallax";
 import HeroBoutons from "@/components/HeroBoutons";
+import HeroMaquette from "@/components/HeroMaquette";
 import SmoothScroll from "@/components/SmoothScroll";
+import HomeFx from "@/components/HomeFx";
 import { Rich } from "@/components/LangProvider";
 import { getT } from "@/lib/i18n/siteServer";
 import JsonLd from "@/components/JsonLd";
@@ -22,38 +23,112 @@ export function generateMetadata() {
 export default function HomePage() {
   const { t, lang } = getT();
   return (
-    <div className="page page-default">
+    <div className="page page-default home">
       <JsonLd data={donneesAccueil(lang)} />
       <SmoothScroll />
+      <HomeFx />
       <Loader />
       <Nav />
 
       <header className="hero">
-        <HeroParallax src="/marketing/hero-blocks.png" />
+        <div className="home-blocs" aria-hidden="true">
+          <i className="k1" /><i className="k2" /><i className="k3" /><i className="k4" /><i className="k5" />
+        </div>
+        <div className="home-aurora" aria-hidden="true">
+          <i className="a1" />
+          <i className="a2" />
+          <i className="a3" />
+          <i className="a4" />
+        </div>
         <div className="wrap">
           <div className="hero-title">Gozly</div>
           <div className="hero-slogan">
             {t("home.slogan")}
           </div>
           <HeroBoutons />
+          <HeroMaquette />
         </div>
       </header>
 
+      <div className="bande" aria-hidden="true">
+        <div className="bande-piste">
+          {[0, 1].map((k) => (
+            <ul key={k}>
+              {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+                <li key={n}>{t(`home.bande.${n}`)}</li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+
+      <div className="pile">
       <ModuleVitrine
         id="modules"
         titre={t("home.planification.titre")}
         texte={t("home.planification.texte")}
         image="/marketing/planification-element.svg"
         alt={t("home.planification.alt")}
+        accent="violet"
+        numero="01"
+        puces={[t("home.planification.c1"), t("home.planification.c2"), t("home.planification.c3")]}
       />
+      <ModuleVitrine
+        titre={t("home.horaire.titre")}
+        texte={t("home.horaire.texte")}
+        image="/marketing/horaire-element.svg"
+        alt={t("home.horaire.alt")}
+        inverse
+        accent="cyan"
+        numero="02"
+        puces={[t("home.horaire.c1"), t("home.horaire.c2"), t("home.horaire.c3")]}
+      />
+      <ModuleVitrine
+        titre={t("home.inventaire.titre")}
+        texte={t("home.inventaire.texte")}
+        image="/marketing/inventaire-element.svg"
+        alt={t("home.inventaire.alt")}
+        accent="orange"
+        numero="03"
+        puces={[t("home.inventaire.c1"), t("home.inventaire.c2"), t("home.inventaire.c3")]}
+      />
+      <ModuleVitrine
+        titre={t("home.ventes.titre")}
+        texte={t("home.ventes.texte")}
+        image="/marketing/ventes-element.svg"
+        alt={t("home.ventes.alt")}
+        inverse
+        accent="pink"
+        numero="04"
+        puces={[t("home.ventes.c1"), t("home.ventes.c2"), t("home.ventes.c3")]}
+      />
+      </div>
+
+      <section id="etapes">
+        <div className="wrap">
+          <div className="sec-head sec-head-centre rv">
+            <div className="eyebrow">{t("home.etapes.eyebrow")}</div>
+            <h2>{t("home.etapes.titre")}</h2>
+          </div>
+          <div className="etapes">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="etape rv" style={{ "--d": `${(n - 1) * 120}ms` }}>
+                <span className="etape-num">{n}</span>
+                <h3>{t(`home.etapes.${n}.t`)}</h3>
+                <p>{t(`home.etapes.${n}.p`)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section id="process">
         <div className="wrap">
-          <div className="sec-head">
+          <div className="sec-head rv">
             <div className="eyebrow">{t("home.philo.eyebrow")}</div>
             <h2>{t("home.philo.titre")}</h2>
           </div>
-          <div className="about-wrap">
+          <div className="about-wrap rv">
             <div className="about-block">
               <p>{t("home.philo.p1")}</p>
               <p>
@@ -95,22 +170,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      <ModuleVitrine
-        titre={t("home.horaire.titre")}
-        texte={t("home.horaire.texte")}
-        image="/marketing/horaire-element.svg"
-        alt={t("home.horaire.alt")}
-        inverse
-      />
-
       <section id="pricing">
         <div className="wrap">
-          <div className="sec-head">
+          <div className="sec-head rv">
             <div className="eyebrow">{t("home.tarifs.eyebrow")}</div>
             <h2>{t("home.tarifs.titre")}</h2>
           </div>
           <div className="pricing">
-            <TiltCard className="price-card tilt-card">
+            <TiltCard reveal className="price-card tilt-card">
               <div className="price-head">
                 <div className="price-icon pi-1"></div>
                 <h3>Opale</h3>
@@ -130,7 +197,7 @@ export default function HomePage() {
                 {t("plan.choisir")}
               </BoutonForfait>
             </TiltCard>
-            <TiltCard className="price-card featured tilt-card">
+            <TiltCard reveal delay={120} className="price-card featured tilt-card">
               <div className="price-head">
                 <div className="price-icon pi-2"></div>
                 <h3>Onyx</h3>
@@ -150,7 +217,7 @@ export default function HomePage() {
                 {t("plan.choisir")}
               </BoutonForfait>
             </TiltCard>
-            <TiltCard className="price-card tilt-card">
+            <TiltCard reveal delay={240} className="price-card tilt-card">
               <div className="price-head">
                 <div className="price-icon pi-3"></div>
                 <h3>Crystal</h3>
@@ -175,17 +242,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <ModuleVitrine
-        titre={t("home.inventaire.titre")}
-        texte={t("home.inventaire.texte")}
-        image="/marketing/inventaire-element.svg"
-        alt={t("home.inventaire.alt")}
-      />
-
       <section className="promo">
         <div className="wrap promo-wrap">
           <div className="promo-big top">{t("home.promo.haut")}</div>
-          <div className="promo-card">
+          <div className="promo-card rv">
             <div className="promo-icon">
               <svg viewBox="0 0 1182 1182" xmlns="http://www.w3.org/2000/svg">
                 <g transform="matrix(1.15332,0,0,1.15332,19.876162,42.135557)">
@@ -213,17 +273,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <ModuleVitrine
-        titre={t("home.ventes.titre")}
-        texte={t("home.ventes.texte")}
-        image="/marketing/ventes-element.svg"
-        alt={t("home.ventes.alt")}
-        inverse
-      />
-
       <section id="contact-cta">
         <div className="wrap">
-          <div className="cta-band">
+          <div className="cta-band rv">
             <h2>{t("home.cta.titre")}</h2>
             <p>{t("home.cta.texte")}</p>
             <Link href="/contact" className="btn-pill-dark">
