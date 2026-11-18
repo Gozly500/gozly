@@ -4642,13 +4642,13 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .page-default,.page-contact{isolation:isolate;}
 .page-decor{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;}
 .home .page-decor{display:none;}
-/* Carrés nets (sans flou) répartis pour qu'aucun ne touche un autre : tailles liées à la hauteur ET à la largeur de l'écran */
-.page-decor i{position:absolute;display:block;width:min(30vw,40vh);aspect-ratio:1;border-radius:12%;}
-.page-decor .pd-k1{left:-4%;top:2%;rotate:-6deg;opacity:.42;background:linear-gradient(170deg,#6a3ad8 0%,#d46aa8 50%,#ff9a6a 100%);}
-.page-decor .pd-k2{right:-4%;top:4%;rotate:6deg;opacity:.38;background:linear-gradient(160deg,#c262d8 0%,#ee7aa0 45%,#ff9a5e 100%);}
-.page-decor .pd-k3{left:-2%;bottom:2%;rotate:7deg;opacity:.34;background:linear-gradient(150deg,#ff9a6a 0%,#c470b0 55%,#8f55f5 100%);}
-.page-decor .pd-a1{right:-2%;bottom:3%;rotate:-7deg;opacity:.34;background:linear-gradient(160deg,#7a44d8 0%,#e0709a 100%);}
-.page-decor .pd-a2{left:40%;top:34%;rotate:5deg;opacity:.26;background:linear-gradient(150deg,#ffb27d,#d078a8);}
+/* Carrés nets (sans flou), gros, qui sortent un peu de l'écran ; positions = centre en % de l'écran, aucun ne touche un autre */
+.page-decor i{position:absolute;display:block;aspect-ratio:1;border-radius:12%;translate:-50% -50%;}
+.page-decor .pd-k1{width:29vw;left:44%;top:13%;rotate:13deg;opacity:.42;background:linear-gradient(170deg,#6a3ad8 0%,#d46aa8 50%,#ff9a6a 100%);}
+.page-decor .pd-k2{width:22vw;left:88%;top:31%;rotate:5deg;opacity:.38;background:linear-gradient(160deg,#c262d8 0%,#ee7aa0 45%,#ff9a5e 100%);}
+.page-decor .pd-k3{width:22vw;left:9%;top:44%;rotate:-15deg;opacity:.34;background:linear-gradient(150deg,#ff9a6a 0%,#c470b0 55%,#8f55f5 100%);}
+.page-decor .pd-a1{width:31vw;left:78%;top:107%;rotate:-12deg;opacity:.34;background:linear-gradient(160deg,#7a44d8 0%,#e0709a 100%);}
+.page-decor .pd-a2{width:21vw;left:34%;top:96%;rotate:15deg;opacity:.3;background:linear-gradient(150deg,#ffb27d,#d078a8);}
 .page-decor .pd-a3{display:none;}
 @media (prefers-reduced-motion:reduce){.page-decor i{animation:none;}}
 
