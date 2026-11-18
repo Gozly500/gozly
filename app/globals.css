@@ -4642,17 +4642,14 @@ input[type="checkbox"].case-selection:indeterminate:not(:checked)::after{content
 .page-default,.page-contact{isolation:isolate;}
 .page-decor{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;}
 .home .page-decor{display:none;}
-.page-decor i{position:absolute;display:block;}
-/* Carrés flous chauds (mêmes teintes que le hero), discrets pour garder le texte lisible */
-.page-decor .pd-k1,.page-decor .pd-k2,.page-decor .pd-k3{border-radius:12%;}
-.page-decor .pd-k1{width:min(30vw,380px);aspect-ratio:1;left:-8%;top:10%;rotate:-8deg;opacity:.42;background:linear-gradient(170deg,#6a3ad8 0%,#d46aa8 50%,#ff9a6a 100%);}
-.page-decor .pd-k2{width:min(26vw,330px);aspect-ratio:1;right:-7%;top:34%;rotate:16deg;opacity:.38;background:linear-gradient(160deg,#c262d8 0%,#ee7aa0 45%,#ff9a5e 100%);animation-delay:-6s;}
-.page-decor .pd-k3{width:min(22vw,280px);aspect-ratio:1;left:6%;bottom:-6%;rotate:10deg;opacity:.34;background:linear-gradient(150deg,#ff9a6a 0%,#c470b0 55%,#8f55f5 100%);animation-delay:-11s;}
-/* Lueurs dynamiques par-dessus */
-.page-decor .pd-a1,.page-decor .pd-a2,.page-decor .pd-a3{display:none;}
-.page-decor .pd-a1{width:520px;height:520px;left:-10%;top:-10%;background:#6d3df0;opacity:.3;}
-.page-decor .pd-a2{width:480px;height:480px;right:-8%;top:20%;background:#ec4899;opacity:.2;animation-delay:-7s;}
-.page-decor .pd-a3{width:460px;height:460px;left:30%;bottom:-18%;background:#2f6bff;opacity:.28;animation-delay:-13s;}
+/* Carrés nets (sans flou) répartis pour qu'aucun ne touche un autre : tailles liées à la hauteur ET à la largeur de l'écran */
+.page-decor i{width:min(18vw,26vh);aspect-ratio:1;border-radius:12%;}
+.page-decor .pd-k1{left:-3%;top:6%;rotate:-8deg;opacity:.42;background:linear-gradient(170deg,#6a3ad8 0%,#d46aa8 50%,#ff9a6a 100%);}
+.page-decor .pd-k2{right:-3%;top:8%;rotate:16deg;opacity:.38;background:linear-gradient(160deg,#c262d8 0%,#ee7aa0 45%,#ff9a5e 100%);}
+.page-decor .pd-k3{left:5%;bottom:4%;rotate:10deg;opacity:.34;background:linear-gradient(150deg,#ff9a6a 0%,#c470b0 55%,#8f55f5 100%);}
+.page-decor .pd-a1{right:4%;bottom:6%;rotate:-12deg;opacity:.34;background:linear-gradient(160deg,#7a44d8 0%,#e0709a 100%);}
+.page-decor .pd-a2{left:48%;top:40%;rotate:8deg;opacity:.26;background:linear-gradient(150deg,#ffb27d,#d078a8);}
+.page-decor .pd-a3{left:26%;top:60%;rotate:-6deg;opacity:.3;background:linear-gradient(170deg,#6a3ad8 0%,#c470b0 100%);}
 @media (prefers-reduced-motion:reduce){.page-decor i{animation:none;}}
 
 /* Titres de page : dégradé + entrée douce, comme l'accueil */
