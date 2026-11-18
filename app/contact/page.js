@@ -25,7 +25,7 @@ export default function ContactPage() {
 
       <section id="contact-form">
         <div className="wrap">
-          <div className="contact-stack">
+          <div className="contact-stack rv">
             <div className="contact-logo">
               <svg viewBox="0 0 1182 1182" xmlns="http://www.w3.org/2000/svg">
                 <g transform="matrix(2.362205,0,0,2.362205,269.144405,286.176469)">
@@ -78,7 +78,7 @@ export default function ContactPage() {
             <ContactForm />
           </div>
 
-          <div className="contact-alt">
+          <div className="contact-alt rv">
             {t("contact.alt.debut")} <a href="mailto:info@gozly.net">Gmail</a> {t("contact.alt.ou")} <a href="#">Outlook</a>{t("contact.alt.fin")}
             <br />
             {t("contact.alt.ok")}

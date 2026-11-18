@@ -10,7 +10,7 @@ import { useEffect } from "react";
 // Tout est coupé si la personne a demandé moins d'animations.
 export default function HomeFx() {
   useEffect(() => {
-    const root = document.querySelector(".home");
+    const root = document.querySelector(".home, .page-default, .page-contact");
     if (!root) return;
     const reduit = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const souris = window.matchMedia("(hover: hover) and (pointer: fine)").matches;

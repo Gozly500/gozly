@@ -8,7 +8,6 @@ import ModuleVitrine from "@/components/ModuleVitrine";
 import HeroBoutons from "@/components/HeroBoutons";
 import HeroMaquette from "@/components/HeroMaquette";
 import SmoothScroll from "@/components/SmoothScroll";
-import HomeFx from "@/components/HomeFx";
 import { Rich } from "@/components/LangProvider";
 import { getT } from "@/lib/i18n/siteServer";
 import JsonLd from "@/components/JsonLd";
@@ -26,7 +25,6 @@ export default function HomePage() {
     <div className="page page-default home">
       <JsonLd data={donneesAccueil(lang)} />
       <SmoothScroll />
-      <HomeFx />
       <Loader />
       <Nav />
 

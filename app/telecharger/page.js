@@ -77,7 +77,7 @@ export default function TelechargerPage() {
       {PRODUITS.map((p, i) => (
         <section className="suite-produit" key={p.logiciel} id={p.logiciel === "texte" ? "textas" : p.logiciel}>
           <div className={`wrap suite-produit-rangee${i % 2 ? " inverse" : ""}`}>
-            <div className="suite-produit-texte">
+            <div className="suite-produit-texte rv">
               <img className="suite-produit-icone" src={p.icone} alt="" width="72" height="72" />
               <h2>{t(p.nom)}</h2>
               <p className="suite-accroche">{t(p.accroche)}</p>
@@ -103,13 +103,13 @@ export default function TelechargerPage() {
 
       <section className="suite-pourquoi">
         <div className="wrap">
-          <div className="sec-head suite-centre">
+          <div className="sec-head suite-centre rv">
             <div className="eyebrow">{t("suite.pourquoi.eyebrow")}</div>
             <h2>{t("suite.pourquoi.titre")}</h2>
           </div>
           <div className="suite-avantages">
             {AVANTAGES.map((a) => (
-              <div className="suite-avantage" key={a.titre}>
+              <div className="suite-avantage rv" key={a.titre}>
                 <h3>{t(a.titre)}</h3>
                 <p>{t(a.texte)}</p>
               </div>
@@ -120,7 +120,7 @@ export default function TelechargerPage() {
 
       <section id="contact-cta">
         <div className="wrap">
-          <div className="cta-band">
+          <div className="cta-band rv">
             <h2>{t("suite.autres.titre")}</h2>
             <p>{t("suite.autres.texte")}</p>
             <Link href="/logiciels" className="btn-pill-dark">

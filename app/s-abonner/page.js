@@ -29,7 +29,7 @@ export default function SubscribePage() {
       <section id="pricing">
         <div className="wrap">
           <div className="pricing">
-            <TiltCard className="price-card tilt-card">
+            <TiltCard reveal className="price-card tilt-card">
               <div className="price-head">
                 <div className="price-icon pi-1"></div>
                 <h3>Opale</h3>
@@ -49,7 +49,7 @@ export default function SubscribePage() {
                 {t("plan.choisir")}
               </BoutonForfait>
             </TiltCard>
-            <TiltCard className="price-card featured tilt-card">
+            <TiltCard reveal delay={120} className="price-card featured tilt-card">
               <div className="price-head">
                 <div className="price-icon pi-2"></div>
                 <h3>Onyx</h3>
@@ -69,7 +69,7 @@ export default function SubscribePage() {
                 {t("plan.choisir")}
               </BoutonForfait>
             </TiltCard>
-            <TiltCard className="price-card tilt-card">
+            <TiltCard reveal delay={240} className="price-card tilt-card">
               <div className="price-head">
                 <div className="price-icon pi-3"></div>
                 <h3>Crystal</h3>
@@ -96,13 +96,13 @@ export default function SubscribePage() {
 
       <section id="modules">
         <div className="wrap">
-          <div className="sec-head">
+          <div className="sec-head rv">
             <div className="eyebrow">{t("abonner.modules.eyebrow")}</div>
             <h2>{t("abonner.modules.titre")}</h2>
             <p>{t("abonner.modules.sous")}</p>
           </div>
           <div className="modules-stack">
-            <div className="module-row">
+            <div className="module-row rv">
               <div className="badge b-1"><IconEcran className="badge-icone" /></div>
               <div className="module-row-text">
                 <h3>{t("abonner.vitrine.titre")}</h3>
@@ -110,35 +110,35 @@ export default function SubscribePage() {
                 <span className="wix-tag">{t("abonner.vitrine.wix")}</span>
               </div>
             </div>
-            <div className="module-row">
+            <div className="module-row rv">
               <div className="badge b-3"><IconPlanning className="badge-icone" /></div>
               <div className="module-row-text">
                 <h3>{t("abonner.taches.titre")}</h3>
                 <p>{t("abonner.taches.texte")}</p>
               </div>
             </div>
-            <div className="module-row">
+            <div className="module-row rv">
               <div className="badge b-4"><IconHoraire className="badge-icone" /></div>
               <div className="module-row-text">
                 <h3>{t("abonner.horaire.titre")}</h3>
                 <p>{t("abonner.horaire.texte")}</p>
               </div>
             </div>
-            <div className="module-row">
+            <div className="module-row rv">
               <div className="badge b-5"><IconInventaire className="badge-icone" /></div>
               <div className="module-row-text">
                 <h3>{t("abonner.inventaire.titre")}</h3>
                 <p>{t("abonner.inventaire.texte")}</p>
               </div>
             </div>
-            <div className="module-row">
+            <div className="module-row rv">
               <div className="badge b-6"><IconVentes className="badge-icone" /></div>
               <div className="module-row-text">
                 <h3>{t("abonner.ventes.titre")}</h3>
                 <p>{t("abonner.ventes.texte")}</p>
               </div>
             </div>
-            <div className="module-row">
+            <div className="module-row rv">
               <div className="badge b-7"><IconTemperature className="badge-icone" /></div>
               <div className="module-row-text">
                 <h3>{t("abonner.temperature.titre")}</h3>

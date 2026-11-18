@@ -18,7 +18,7 @@ export function generateMetadata() {
 function CarteLogiciel({ cle, t }) {
   const f = FICHES_LOGICIELS[cle];
   return (
-    <TiltCard className="cata-carte tilt-card">
+    <TiltCard reveal className="cata-carte tilt-card">
       <div className="cata-carte-tete">
         {f.icone ? (
           <img className="cata-icone" src={f.icone} alt="" width="64" height="64" loading="lazy" />
@@ -78,7 +78,7 @@ export default function LogicielsPage() {
       {CATEGORIES_LOGICIELS.map((cat) => (
         <section className="cata-section" id={cat.id} key={cat.id}>
           <div className="wrap">
-            <div className="cata-section-tete">
+            <div className="cata-section-tete rv">
               <h2>{t(cat.titre)}</h2>
               <p>{t(cat.texte)}</p>
             </div>
@@ -93,7 +93,7 @@ export default function LogicielsPage() {
 
       <section id="contact-cta">
         <div className="wrap">
-          <div className="cta-band">
+          <div className="cta-band rv">
             <h2>{t("cata.avenir.titre")}</h2>
             <p>{t("cata.avenir.texte")}</p>
             <Link href="/contact" className="btn-pill-dark">

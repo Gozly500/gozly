@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { IconFlecheBas } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import LangSwitch from "@/components/LangSwitch";
+import PageDecor from "@/components/PageDecor";
+import HomeFx from "@/components/HomeFx";
 import { lireDemandeDeveloppeur } from "@/lib/developpeur";
 
 export default function Nav() {
@@ -61,6 +63,9 @@ export default function Nav() {
   }
 
   return (
+    <>
+      <PageDecor />
+      <HomeFx />
     <div className="navbar">
       <div className="navpill">
         <div className="nav-logo-spacer">
@@ -200,5 +205,6 @@ export default function Nav() {
         )}
       </div>
     </div>
+    </>
   );
 }
