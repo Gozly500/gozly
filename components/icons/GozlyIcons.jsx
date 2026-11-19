@@ -9,7 +9,7 @@ export { IconBoite as IconInventaire } from "./Pictogrammes";
 export { IconDemandePack as IconDemande } from "./Pictogrammes";
 export { IconPaniers as IconVentes } from "./Pictogrammes";
 export { IconSac as IconCommandes } from "./Pictogrammes";
-export { IconEchange as IconIntegration } from "./Pictogrammes";
+export { IconEclair as IconIntegration } from "./Pictogrammes";
 export { IconFeuilleTempsPack as IconFeuilleTemps } from "./Pictogrammes";
 export { IconCrochetDansBoite as IconTaches } from "./Pictogrammes";
 export { IconMenuPack as IconMenu } from "./Pictogrammes";
