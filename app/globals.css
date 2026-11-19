@@ -4851,3 +4851,6 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) :is(.widget-card.drag-o
 .do.o2 .marque-ex-tuile{background:#f4f3fb;color:#0d0d3f;border-color:#dcdbe9;}
 .do.o3 .marque-ex-tuile{background:#221f8a;}
 @media (max-width:760px){.marque-espace{grid-template-columns:1fr;}.marque-exemples{grid-template-columns:repeat(2,minmax(0,1fr));}}
+/* /marque : texte des boutons pleins bien centré (le bloc de l'icône agrandissait la ligne et remontait le texte) */
+.marque-boutons .submit-btn,.marque-boutons .btn-pill-glass,.marque-page-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.2;padding:13px 26px 12px;}
+.marque-boutons .gozly-icon{width:16px;height:16px;margin:0;vertical-align:baseline;}
