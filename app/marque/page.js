@@ -81,6 +81,47 @@ export default function MarquePage() {
           ))}
         </ul>
 
+        <h3 className="marque-sous-titre">{t("marque.espaceTitre")}</h3>
+        <div className="marque-espace">
+          <div className="marque-espace-schema">
+            <div className="marque-espace-boite">
+              <img src="/gozly-logo.svg" alt="" width="200" height="200" />
+              <span className="brand">Gozly</span>
+            </div>
+          </div>
+          <div>
+            <p className="marque-sous" style={{ marginBottom: "10px" }}>{t("marque.espaceTexte")}</p>
+            <p className="marque-sous" style={{ marginBottom: 0 }}>{t("marque.tailleMin")}</p>
+          </div>
+        </div>
+
+        <h3 className="marque-sous-titre">{t("marque.dontsTitre")}</h3>
+        <div className="marque-exemples">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <figure key={n} className={`marque-ex dont d${n}`}>
+              <div className="marque-ex-tuile">
+                <img src="/gozly-logo.svg" alt="" width="200" height="200" loading="lazy" />
+                <i className="marque-pastille non" aria-hidden="true">✕</i>
+              </div>
+              <figcaption>{t(`marque.dont${n}`)}</figcaption>
+            </figure>
+          ))}
+        </div>
+
+        <h3 className="marque-sous-titre">{t("marque.dosTitre")}</h3>
+        <div className="marque-exemples">
+          {[1, 2, 3].map((n) => (
+            <figure key={n} className={`marque-ex do o${n}`}>
+              <div className="marque-ex-tuile">
+                <img src="/gozly-logo.svg" alt="" width="200" height="200" loading="lazy" />
+                <span className="brand">Gozly</span>
+                <i className="marque-pastille oui" aria-hidden="true">✓</i>
+              </div>
+              <figcaption>{t(`marque.do${n}`)}</figcaption>
+            </figure>
+          ))}
+        </div>
+
         <h3 className="marque-sous-titre">{t("marque.appsTitre")}</h3>
         <div className="marque-apps">
           <figure>

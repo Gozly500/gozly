@@ -4827,3 +4827,27 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) :is(.widget-card.drag-o
 .marque-theme i{display:block;height:18px;width:62%;border-radius:9px;}
 @media (max-width:760px){.marque-logos,.marque-polices{grid-template-columns:1fr;}}
 .marque-logo-tuile img{width:220px;height:220px;margin:-62px 0 -52px;}
+.marque-espace{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:center;}
+.marque-espace-schema{display:flex;align-items:center;justify-content:center;padding:30px;border-radius:24px;background:#f4f3fb;border:1px solid #dcdbe9;}
+.marque-espace-boite{display:flex;align-items:center;gap:6px;padding:26px 30px;border:1.5px dashed #7a3fe0;color:#0d0d3f;}
+.marque-espace-boite img{width:110px;height:110px;margin:-34px -18px -34px -28px;}
+.marque-espace-boite .brand{font-size:44px;line-height:1;}
+.marque-exemples{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;}
+.marque-ex{margin:0;}
+.marque-ex-tuile{position:relative;display:flex;align-items:center;justify-content:center;gap:4px;height:150px;border-radius:20px;overflow:hidden;background:#0d0d3f;color:#fff;border:1px solid rgba(var(--w),0.14);}
+.marque-ex-tuile img{width:140px;height:140px;margin:-30px 0;}
+.marque-ex-tuile .brand{font-size:30px;line-height:1;margin-left:-26px;}
+.marque-ex figcaption{margin-top:8px;font-size:13px;color:var(--text-dim);text-align:center;}
+.marque-pastille{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;font-weight:700;color:#fff;}
+.marque-pastille.non{background:#dc3c46;}
+.marque-pastille.oui{background:#28aa6e;}
+.dont.d1 img{transform:scale(1.5,.8);}
+.dont.d2 img{transform:rotate(32deg);}
+.dont.d3 img{filter:hue-rotate(150deg) saturate(1.8);}
+.dont.d4 .marque-ex-tuile{background:#f4f3fb;}
+.dont.d4 img{filter:drop-shadow(10px 10px 6px rgba(0,0,0,.85));}
+.dont.d5 .marque-ex-tuile{background:linear-gradient(90deg,#ffc850 0 16%,#3cbee6 16% 33%,#ec4899 33% 50%,#7846dc 50% 66%,#ffc850 66% 83%,#3cbee6 83%);}
+.dont.d6 .marque-ex-tuile{background:#6e3cd2;}
+.do.o2 .marque-ex-tuile{background:#f4f3fb;color:#0d0d3f;border-color:#dcdbe9;}
+.do.o3 .marque-ex-tuile{background:#221f8a;}
+@media (max-width:760px){.marque-espace{grid-template-columns:1fr;}.marque-exemples{grid-template-columns:repeat(2,minmax(0,1fr));}}
