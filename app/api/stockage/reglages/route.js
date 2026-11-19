@@ -6,8 +6,10 @@ const FREQUENCES = ["aucun", "hebdo", "mensuel"];
 
 // Fréquence de l'export automatique des fiches de température vers le stockage en ligne.
 export async function POST(request) {
-  const { entrepriseId, fournisseur, exportTemperatures } = await request.json().catch(() => ({}));
-  if (!FOURNISSEURS.includes(fournisseur) || !FREQUENCES.includes(exportTemperatures)) {
+  const { entrepriseId, fournisseur, exportTemperatures, exportVentes } = await request.json().catch(() => ({}));
+  const champ = exportVentes !== undefined ? { export_ventes: exportVentes } : { export_temperatures: exportTemperatures };
+  const valeur = Object.values(champ)[0];
+  if (!FOURNISSEURS.includes(fournisseur) || !FREQUENCES.includes(valeur)) {
     return NextResponse.json({ error: "Réglage invalide." }, { status: 400 });
   }
 
@@ -16,7 +18,7 @@ export async function POST(request) {
 
   const { error } = await service
     .from("stockage_connexions")
-    .update({ export_temperatures: exportTemperatures, updated_at: new Date().toISOString() })
+    .update({ ...champ, updated_at: new Date().toISOString() })
     .eq("entreprise_id", entreprise.id)
     .eq("fournisseur", fournisseur);
 

@@ -4733,3 +4733,44 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) :is(.widget-card.drag-o
 .mkp-chevron .gozly-icon{width:17px;height:17px;}
 .inst-ok .gozly-icon{width:26px;height:26px;}
 .abo-module-case .gozly-icon{width:14px;height:14px;}
+
+/* Suivi des ventes : page d'une journée, conciliation, calendrier d'import */
+.vj{max-width:980px;}
+.vj-tete{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+.vj-tete h2{margin:0;flex:1;min-width:200px;}
+.vj-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.vj-cartes{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;}
+.vj-carte{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:16px;background:rgba(var(--w),0.07);border:1px solid rgba(var(--w),0.12);}
+.vj-carte span{font-size:13px;color:var(--text-dim);}
+.vj-carte strong{font-size:22px;}
+.vj-carte small{font-size:12px;color:var(--text-dim);}
+.vj-deux{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:26px;align-items:start;}
+@media (max-width:820px){.vj-deux{grid-template-columns:1fr;}}
+.vj-concilier-corps{padding:6px 16px 16px;display:flex;flex-direction:column;gap:10px;}
+.vj-ecart{margin:0;padding:8px 12px;border-radius:10px;font-size:14px;font-weight:600;}
+.vj-ecart.ok{background:rgba(126,231,135,0.14);color:#7ee787;}
+.vj-ecart.err{background:rgba(255,120,120,0.14);color:#ff9a9a;}
+.vj-conciliee{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.vj-liste-tete{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
+.vj-liste-tete h3{margin:0;}
+.vj-filtres{display:flex;gap:8px;}
+.vj-filtres .admin-icon-btn.on{background:var(--violet);color:#fff;border-color:transparent;}
+.vj-table-wrap{overflow-x:auto;border-radius:16px;border:1px solid rgba(var(--w),0.12);}
+.vj-table{width:100%;border-collapse:collapse;font-size:14px;}
+.vj-table th,.vj-table td{padding:10px 14px;text-align:left;border-bottom:1px solid rgba(var(--w),0.08);white-space:nowrap;}
+.vj-table th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);}
+.vj-table .droite{text-align:right;}
+.vj-table tr.non-comptee td{opacity:.5;text-decoration:line-through;}
+.vj-table tr:last-child td{border-bottom:none;}
+.vj-ligne{cursor:pointer;transition:background .15s ease;}
+.vj-ligne:hover{background:rgba(var(--w),0.06);}
+.cal-jour{width:100%;max-width:340px;margin:0 auto 14px;}
+.cal-jour-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;text-transform:capitalize;}
+.cal-jour-grille{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;}
+.cal-jour-nom{text-align:center;font-size:12px;color:var(--text-dim);padding:4px 0;text-transform:uppercase;}
+.cal-jour-case{position:relative;min-width:0;width:100%;padding:0;height:40px;border-radius:10px;border:1px solid transparent;background:rgba(var(--w),0.07);color:inherit;font:inherit;cursor:pointer;}
+.cal-jour-case:hover:not(:disabled){background:rgba(var(--w),0.16);}
+.cal-jour-case:disabled{opacity:.3;cursor:default;}
+.cal-jour-case.choisi{background:var(--violet);color:#fff;font-weight:700;}
+.cal-jour-case.marque::after{content:"";position:absolute;bottom:5px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#7ee787;}
+.vj-tete h2::first-letter{text-transform:uppercase;}

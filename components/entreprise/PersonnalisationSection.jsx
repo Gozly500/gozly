@@ -118,6 +118,12 @@ const OPTIONS_RETENTION_COMMANDES = [
   { id: "24", label: "24 mois" },
 ];
 
+const OPTIONS_RETENTION_VENTES = [
+  { id: "3", label: "3 mois" },
+  { id: "6", label: "6 mois" },
+  { id: "12", label: "12 mois" },
+];
+
 const OPTIONS_RETENTION_TEMPERATURE = [
   { id: "1", label: "1 mois" },
   { id: "3", label: "3 mois" },
@@ -284,7 +290,10 @@ const NOMS_STOCKAGE = { microsoft: "OneDrive", google: "Google Drive" };
 
 // Export automatique des fiches de température vers le OneDrive / Google Drive connecté dans Paramètres > Intégrations.
 // La connexion se fait dans Intégrations ; ce qu'on y dépose (et à quelle fréquence) se choisit ici, dans le module.
-function ExportsNuageTemperature({ entrepriseId }) {
+function ExportsNuage({ entrepriseId, sujet = "temperature" }) {
+  const ventes = sujet === "ventes";
+  const champ = ventes ? "exportVentes" : "exportTemperatures";
+  const champDernier = ventes ? "dernierExportVentes" : "dernierExport";
   const { t } = useT();
   const [connexions, setConnexions] = useState(null);
   const [occupe, setOccupe] = useState(null);
@@ -310,19 +319,19 @@ function ExportsNuageTemperature({ entrepriseId }) {
   }, [entrepriseId]);
 
   async function changerFrequence(fournisseur, frequence) {
-    const avant = connexions[fournisseur].exportTemperatures;
-    setConnexions((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], exportTemperatures: frequence } }));
+    const avant = connexions[fournisseur][champ];
+    setConnexions((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], [champ]: frequence } }));
     setMsg(null);
     try {
       const res = await fetch("/api/stockage/reglages", {
         method: "POST",
         headers: await entetes(),
-        body: JSON.stringify({ entrepriseId, fournisseur, exportTemperatures: frequence }),
+        body: JSON.stringify(ventes ? { entrepriseId, fournisseur, exportVentes: frequence } : { entrepriseId, fournisseur, exportTemperatures: frequence }),
       });
       if (!res.ok) throw new Error();
       setMsg({ type: "ok", text: t("Préférence enregistrée.") });
     } catch {
-      setConnexions((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], exportTemperatures: avant } }));
+      setConnexions((cur) => ({ ...cur, [fournisseur]: { ...cur[fournisseur], [champ]: avant } }));
       setMsg({ type: "err", text: t("L'enregistrement a échoué.") });
     }
   }
@@ -335,16 +344,16 @@ function ExportsNuageTemperature({ entrepriseId }) {
       const res = await fetch("/api/stockage/exporter-maintenant", {
         method: "POST",
         headers: await entetes(),
-        body: JSON.stringify({ entrepriseId, fournisseur }),
+        body: JSON.stringify({ entrepriseId, fournisseur, sujet }),
       });
       const data = await res.json();
       if (!res.ok) {
         setMsg({ type: "err", text: data.error || t("L'export a échoué.") });
         charger();
       } else if (data.releves === 0) {
-        setMsg({ type: "ok", text: t("Aucun relevé de température à exporter pour les 30 derniers jours.") });
+        setMsg({ type: "ok", text: ventes ? t("Aucune journée de ventes importée à exporter pour les 30 derniers jours.") : t("Aucun relevé de température à exporter pour les 30 derniers jours.") });
       } else {
-        setMsg({ type: "ok", text: t("Export terminé : {n} relevé(s) déposé(s) dans {nom} (dossier Gozly > Temperatures).", { n: data.releves, nom }) });
+        setMsg({ type: "ok", text: ventes ? t("Export terminé : {n} journée(s) déposée(s) dans {nom} (dossier Gozly > Ventes).", { n: data.releves, nom }) : t("Export terminé : {n} relevé(s) déposé(s) dans {nom} (dossier Gozly > Temperatures).", { n: data.releves, nom }) });
       }
     } catch {
       setMsg({ type: "err", text: t("L'export a échoué.") });
@@ -375,9 +384,9 @@ function ExportsNuageTemperature({ entrepriseId }) {
             <ParametreSelect
               key={fournisseur}
               label={t("Export automatique vers {nom}", { nom })}
-              info={t("Chaque semaine ou chaque mois, Gozly dépose les fiches de la période passée en fichier Excel (CSV) dans le dossier « Gozly » de ton {nom}, avant leur suppression de Gozly. Le bouton « Exporter maintenant » envoie les 30 derniers jours.", { nom })}
+              info={ventes ? t("Chaque semaine ou chaque mois, Gozly dépose le rapport des journées de ventes importées de la période passée, en Excel (CSV) et en PDF, dans le dossier « Gozly > Ventes » de ton {nom}, avant leur suppression de Gozly. Le bouton « Exporter maintenant » envoie les 30 derniers jours.", { nom }) : t("Chaque semaine ou chaque mois, Gozly dépose les fiches de la période passée en fichier Excel (CSV) dans le dossier « Gozly » de ton {nom}, avant leur suppression de Gozly. Le bouton « Exporter maintenant » envoie les 30 derniers jours.", { nom })}
               options={FREQUENCES_EXPORT_NUAGE}
-              value={c.exportTemperatures}
+              value={c[champ]}
               onChange={(v) => changerFrequence(fournisseur, v)}
               disabled={false}
             />
@@ -400,7 +409,7 @@ function ExportsNuageTemperature({ entrepriseId }) {
             <button type="button" className="admin-icon-btn" onClick={() => exporterMaintenant(fournisseur)} disabled={occupe === fournisseur}>
               {occupe === fournisseur ? "..." : t("Exporter vers {nom} maintenant", { nom })}
             </button>
-            {c.dernierExport && <span className="section-hint" style={{ marginLeft: "10px" }}>{t("Dernier export : {date}", { date: c.dernierExport })}</span>}
+            {c[champDernier] && <span className="section-hint" style={{ marginLeft: "10px" }}>{t("Dernier export : {date}", { date: c[champDernier] })}</span>}
             {c.erreur && <p className="settings-msg err">{c.erreur}</p>}
           </div>
         );
@@ -434,6 +443,7 @@ export const MODULES_PERSONNALISATION = [
     ],
   },
   { id: "inventaire", label: "Inventaire", categories: [{ id: "general", label: "Général" }] },
+  { id: "ventes", label: "Suivi des ventes", categories: [{ id: "general", label: "Général" }] },
 ];
 
 export default function PersonnalisationSection({ entrepriseId, module, categorie }) {
@@ -454,6 +464,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
   const [retentionDemandes, setRetentionDemandes] = useState("6");
   const [retentionTemperature, setRetentionTemperature] = useState("3");
   const [retentionCommandes, setRetentionCommandes] = useState("12");
+  const [retentionVentes, setRetentionVentes] = useState("12");
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
   const [kiosqueCommandes, setKiosqueCommandes] = useState("liste");
   const [traiteeWix, setTraiteeWix] = useState("Accepted");
@@ -479,7 +490,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, impression_commandes_manuelles, commandes_vers_taches, wix_lieu_nom, commandes_planning_integre, nom, latitude, longitude"
+          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, ventes_retention_mois, impression_commandes_manuelles, commandes_vers_taches, wix_lieu_nom, commandes_planning_integre, nom, latitude, longitude"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -508,6 +519,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
     setRetentionDemandes(String(entrepriseData?.demandes_retention_mois || 6));
     setRetentionTemperature(String(entrepriseData?.temperature_retention_mois || 3));
     setRetentionCommandes(String(entrepriseData?.commandes_retention_mois || 12));
+    setRetentionVentes(String(entrepriseData?.ventes_retention_mois || 12));
     setImpressionManuelles(entrepriseData?.impression_commandes_manuelles || "desactivee");
     setCommandesVersTaches(entrepriseData?.commandes_vers_taches === false ? "desactive" : "active");
     setLieuWix(entrepriseData?.wix_lieu_nom || "");
@@ -704,6 +716,20 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
     const { error } = await supabase
       .from("entreprises")
       .update({ commandes_retention_mois: Number(value) })
+      .eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
+  }
+
+  async function handleChangeRetentionVentes(value) {
+    setRetentionVentes(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ ventes_retention_mois: Number(value) })
       .eq("id", entrepriseId);
 
     setSaving(false);
@@ -985,7 +1011,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
                 disabled={saving}
               />
               <Bloc>
-                <ExportsNuageTemperature entrepriseId={entrepriseId} />
+                <ExportsNuage entrepriseId={entrepriseId} sujet="temperature" />
               </Bloc>
           </div>
         )}
@@ -1095,6 +1121,22 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
                       />
                   }
                 />
+              </Bloc>
+          </div>
+        )}
+
+        {dans("ventes", "general") && (
+          <div className="param-liste">
+              <ParametreSelect
+                label={t("Conservation des journées importées")}
+                info={t("Combien de temps garder le résumé d'une journée de ventes importée (totaux par mode de paiement, taxes, écart Moneris) avant sa suppression automatique. Les transactions elles-mêmes ne sont jamais gardées par Gozly : la page d'une journée les relit chez Wix. Les ventes entrées à la main ne sont pas supprimées.")}
+                options={OPTIONS_RETENTION_VENTES}
+                value={retentionVentes}
+                onChange={handleChangeRetentionVentes}
+                disabled={saving}
+              />
+              <Bloc>
+                <ExportsNuage entrepriseId={entrepriseId} sujet="ventes" />
               </Bloc>
           </div>
         )}

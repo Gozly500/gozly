@@ -9,7 +9,7 @@ export async function GET(request) {
 
   const { data } = await service
     .from("stockage_connexions")
-    .select("fournisseur, compte_email, statut, export_temperatures, dernier_export_temperatures, derniere_erreur")
+    .select("fournisseur, compte_email, statut, export_temperatures, dernier_export_temperatures, export_ventes, dernier_export_ventes, derniere_erreur")
     .eq("entreprise_id", entreprise.id);
 
   const connexions = {};
@@ -19,6 +19,8 @@ export async function GET(request) {
       statut: c.statut,
       exportTemperatures: c.export_temperatures,
       dernierExport: c.dernier_export_temperatures,
+      exportVentes: c.export_ventes || "aucun",
+      dernierExportVentes: c.dernier_export_ventes,
       erreur: c.derniere_erreur,
     };
   }

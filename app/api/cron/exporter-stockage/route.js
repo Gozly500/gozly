@@ -21,7 +21,7 @@ export async function GET(request) {
     .from("stockage_connexions")
     .select("*")
     .eq("statut", "connecte")
-    .in("export_temperatures", ["hebdo", "mensuel"]);
+    .or("export_temperatures.in.(hebdo,mensuel),export_ventes.in.(hebdo,mensuel)");
 
   let exportes = 0;
   let echecs = 0;

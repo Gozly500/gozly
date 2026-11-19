@@ -6,9 +6,14 @@ import { supabase } from "@/lib/supabaseClient";
 import { SOURCES_VENTE } from "@/lib/modules";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import { IconIntegration } from "@/components/icons/GozlyIcons";
-import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconTelecharger } from "@/components/icons/Pictogrammes";
+import CalendrierJour from "@/components/ventes/CalendrierJour";
+import VentesJour from "@/components/ventes/VentesJour";
+import { telechargerFichier } from "@/lib/temperature";
+import { ecartMoneris, journeesEnCsv, pdfJournees, totalJour } from "@/lib/ventesExport";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
+import { dateAujourdhui, decalerJour } from "@/lib/commandes";
 
 const FORM_VIDE = { source: "comptant", montant: "", date: "", description: "" };
 
@@ -35,6 +40,15 @@ export default function VentesSection({ entrepriseId }) {
   useFermerAuClicExterieur(sourceRef, sourceOpen, () => setSourceOpen(false));
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState(null);
+  const [journees, setJournees] = useState([]); // journées importées de la semaine affichée
+  const [datesImportees, setDatesImportees] = useState(new Set()); // toutes les journées importées (points du calendrier)
+  const [importOuvert, setImportOuvert] = useState(false);
+  const [dateImport, setDateImport] = useState("");
+  const [jourOuvert, setJourOuvert] = useState(null);
+  const [exportOuvert, setExportOuvert] = useState(false);
+  const [exportEnCours, setExportEnCours] = useState(false);
+  const exportRef = useRef(null);
+  useFermerAuClicExterieur(exportRef, exportOuvert, () => setExportOuvert(false));
 
   const weekEnd = addDays(weekStart, 7);
 
@@ -64,45 +78,80 @@ export default function VentesSection({ entrepriseId }) {
       .lt("date", weekEnd.toISOString().slice(0, 10))
       .order("date", { ascending: false });
     setVentes(data || []);
+    const debut = weekStart.toISOString().slice(0, 10);
+    const fin = weekEnd.toISOString().slice(0, 10);
+    const { data: jours } = await supabase
+      .from("ventes_jours")
+      .select("*")
+      .eq("entreprise_id", entrepriseId)
+      .gte("date", debut)
+      .lt("date", fin)
+      .order("date", { ascending: false });
+    setJournees(jours || []);
+    const { data: toutes } = await supabase.from("ventes_jours").select("date").eq("entreprise_id", entrepriseId);
+    setDatesImportees(new Set((toutes || []).map((j) => j.date)));
     setLoading(false);
   }
 
-  // Importe les ventes Wix (en ligne + point de vente). À l'ouverture de la page :
-  // silencieux, 3 derniers jours. Avec le bouton : 30 jours, avec un message.
-  async function synchroniserWix({ jours, silencieux }) {
-    if (!silencieux) {
-      setSyncing(true);
-      setSyncMsg(null);
-    }
+  function ouvrirImport() {
+    setSyncMsg(null);
+    setDateImport(decalerJour(dateAujourdhui(), -1)); // par défaut : la veille
+    setImportOuvert(true);
+  }
+
+  // Importe UNE journée de ventes Wix : Gozly en garde le résumé (pas les transactions), voir /api/ventes/importer-jour.
+  async function importerJournee() {
+    if (!dateImport) return;
+    setSyncing(true);
+    setSyncMsg(null);
     try {
       const { data: session } = await supabase.auth.getSession();
-      const res = await fetch("/api/ventes/synchroniser", {
+      const res = await fetch("/api/ventes/importer-jour", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.session?.access_token}` },
-        body: JSON.stringify({ entrepriseId, jours }),
+        body: JSON.stringify({ entrepriseId, date: dateImport }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
+        setImportOuvert(false);
         await load();
-        if (!silencieux) {
-          setSyncMsg({
-            type: "ok",
-            text: t("Ventes Wix importées : {enLigne} commande(s) en ligne et {jours} jour(s) de point de vente.", { enLigne: data.enLigne, jours: data.jours }),
-          });
-        }
-      } else if (!silencieux) {
+        setJourOuvert(dateImport);
+      } else {
         setSyncMsg({ type: "err", text: `${data.error || t("L'import a échoué.")}${data.detail ? ` [${data.detail}]` : ""}` });
       }
     } catch {
-      if (!silencieux) setSyncMsg({ type: "err", text: t("L'import a échoué.") });
+      setSyncMsg({ type: "err", text: t("L'import a échoué.") });
     }
-    if (!silencieux) setSyncing(false);
+    setSyncing(false);
   }
 
-  // Au chargement : rafraîchit les 3 derniers jours depuis Wix (muet si Wix n'est pas connecté).
-  useEffect(() => {
-    synchroniserWix({ jours: 3, silencieux: true });
-  }, [entrepriseId]);
+  // Rapport des journées importées de la semaine affichée ou du mois de cette semaine, en Excel (CSV) ou PDF.
+  async function exporterPeriode(portee, format) {
+    setExportOuvert(false);
+    setExportEnCours(true);
+    try {
+      const milieu = addDays(weekStart, 3);
+      const debut = portee === "mois" ? new Date(Date.UTC(milieu.getFullYear(), milieu.getMonth(), 1)) : weekStart;
+      const fin = portee === "mois" ? new Date(Date.UTC(milieu.getFullYear(), milieu.getMonth() + 1, 1)) : weekEnd;
+      const d1 = debut.toISOString().slice(0, 10);
+      const d2 = fin.toISOString().slice(0, 10);
+      const { data: jours } = await supabase.from("ventes_jours").select("*").eq("entreprise_id", entrepriseId).gte("date", d1).lt("date", d2).order("date");
+      if (!jours || jours.length === 0) {
+        setSyncMsg({ type: "err", text: t("Aucune journée importée sur cette période.") });
+        return;
+      }
+      const nomBase = `ventes_${d1}_au_${decalerJour(d2, -1)}`;
+      if (format === "csv") {
+        telechargerFichier(`${nomBase}.csv`, journeesEnCsv(jours));
+      } else {
+        const { data: ent } = await supabase.from("entreprises").select("nom").eq("id", entrepriseId).maybeSingle();
+        const doc = await pdfJournees({ entrepriseNom: ent?.nom || "", periodeLabel: `${d1} - ${decalerJour(d2, -1)}`, jours });
+        doc.save(`${nomBase}.pdf`);
+      }
+    } finally {
+      setExportEnCours(false);
+    }
+  }
 
   function openAdd() {
     setEditingId(null);
@@ -152,11 +201,18 @@ export default function VentesSection({ entrepriseId }) {
     load();
   }
 
+  if (jourOuvert) {
+    return <VentesJour entrepriseId={entrepriseId} date={jourOuvert} onRetour={() => setJourOuvert(null)} onChange={load} />;
+  }
+
   const totauxParSource = SOURCES_VENTE.map((s) => ({
     ...s,
-    total: ventes.filter((v) => v.source === s.id).reduce((sum, v) => sum + Number(v.montant), 0),
+    total:
+      ventes.filter((v) => v.source === s.id).reduce((sum, v) => sum + Number(v.montant), 0) +
+      (s.id === "wix" ? journees.reduce((sum, j) => sum + Number(j.total_en_ligne), 0) : 0) +
+      (s.id === "wix_pos" ? journees.reduce((sum, j) => sum + Number(j.total_comptoir), 0) : 0),
   })).filter((s) => s.total > 0);
-  const totalGeneral = ventes.reduce((sum, v) => sum + Number(v.montant), 0);
+  const totalGeneral = ventes.reduce((sum, v) => sum + Number(v.montant), 0) + journees.reduce((sum, j) => sum + totalJour(j), 0);
 
   const weekLabel = `${weekStart.toLocaleDateString(loc(), { day: "numeric", month: "long" })} - ${addDays(
     weekStart,
@@ -179,16 +235,29 @@ export default function VentesSection({ entrepriseId }) {
           <h2>{t("Suivi des ventes")}</h2>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <button className="admin-icon-btn" onClick={() => synchroniserWix({ jours: 30, silencieux: false })} disabled={syncing}>
-            <IconIntegration className="gozly-icon" /> {syncing ? t("Import en cours...") : t("Importer les ventes Wix (30 jours)")}
+          <button className="admin-icon-btn" onClick={ouvrirImport} disabled={syncing}>
+            <IconIntegration className="gozly-icon" /> {t("Importer une journée Wix")}
           </button>
+          <div className="account-wrap" ref={exportRef}>
+            <button className="admin-icon-btn" onClick={() => setExportOuvert((v) => !v)} disabled={exportEnCours}>
+              {exportEnCours ? "..." : <><IconTelecharger className="gozly-icon" /> {t("Exporter")} <IconFlecheBas className="gozly-icon-inline" /></>}
+            </button>
+            {exportOuvert && (
+              <div className="account-dropdown open">
+                <button type="button" className="menu-item" onClick={() => exporterPeriode("semaine", "csv")}>{t("Semaine - Excel (CSV)")}</button>
+                <button type="button" className="menu-item" onClick={() => exporterPeriode("semaine", "pdf")}>{t("Semaine - PDF")}</button>
+                <button type="button" className="menu-item" onClick={() => exporterPeriode("mois", "csv")}>{t("Mois - Excel (CSV)")}</button>
+                <button type="button" className="menu-item" onClick={() => exporterPeriode("mois", "pdf")}>{t("Mois - PDF")}</button>
+              </div>
+            )}
+          </div>
           <button className="submit-btn" onClick={openAdd}>
             {t("+ Ajouter une vente")}
           </button>
         </div>
       </div>
 
-      {syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
+      {!importOuvert && syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
 
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
@@ -202,7 +271,7 @@ export default function VentesSection({ entrepriseId }) {
 
       {loading ? (
         <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
-      ) : ventes.length === 0 ? (
+      ) : ventes.length === 0 && journees.length === 0 ? (
         <div className="admin-list" style={{ maxWidth: "700px" }}>
           <div className="admin-empty">{t("Aucune vente cette semaine.")}</div>
         </div>
@@ -227,6 +296,35 @@ export default function VentesSection({ entrepriseId }) {
             </div>
           </div>
 
+          {journees.length > 0 && (
+            <>
+              <h3 style={{ margin: "0 0 10px" }}>{t("Journées importées")}</h3>
+              <div className="admin-list" style={{ maxWidth: "700px", marginBottom: "24px" }}>
+                {journees.map((j) => {
+                  const ecart = ecartMoneris(j);
+                  return (
+                    <div className="admin-row vj-ligne" key={j.id} role="button" tabIndex={0} onClick={() => setJourOuvert(j.date)} onKeyDown={(e) => e.key === "Enter" && setJourOuvert(j.date)}>
+                      <div className="admin-row-main">
+                        <div className="admin-row-title">
+                          {new Date(j.date + "T00:00:00").toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long" })}
+                        </div>
+                        <div className="admin-row-sub">
+                          {t("{n} vente(s)", { n: j.nb_en_ligne + j.nb_comptoir })}
+                          {" · "}
+                          {j.conciliee ? t("Conciliée") : ecart === null ? t("À concilier") : Math.abs(ecart) < 0.005 ? t("Totaux concordants") : t("Écart : {m}", { m: formatMontant(ecart) })}
+                        </div>
+                      </div>
+                      <div className="admin-row-controls">
+                        {formatMontant(totalJour(j))} <IconFlecheDroite className="gozly-icon" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {ventes.length > 0 && <h3 style={{ margin: "0 0 10px" }}>{t("Ventes entrées à la main")}</h3>}
           <div className="admin-list" style={{ maxWidth: "700px" }}>
             {ventes.map((v) => (
               <div className="admin-row" key={v.id}>
@@ -261,6 +359,29 @@ export default function VentesSection({ entrepriseId }) {
             ))}
           </div>
         </>
+      )}
+
+      {importOuvert && (
+        <div className="modal-overlay" onClick={() => setImportOuvert(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{t("Importer une journée Wix")}</h3>
+              <button className="admin-icon-btn" onClick={() => setImportOuvert(false)}>
+                {t("Fermer")}
+              </button>
+            </div>
+            <p className="section-hint" style={{ marginBottom: "12px" }}>
+              {t("Choisis la journée à importer : Gozly lit toutes ses ventes chez Wix et en garde le résumé. Les transactions ne sont pas enregistrées.")}
+            </p>
+            <CalendrierJour value={dateImport} onChange={setDateImport} max={dateAujourdhui()} marquees={datesImportees} />
+            {syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
+            <div className="admin-edit-actions">
+              <button type="button" className="submit-btn" onClick={importerJournee} disabled={syncing || !dateImport}>
+                {syncing ? t("Import en cours...") : t("Importer le {date}", { date: dateImport ? new Date(dateImport + "T00:00:00").toLocaleDateString(loc(), { day: "numeric", month: "long" }) : "" })}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {modalOpen && (
