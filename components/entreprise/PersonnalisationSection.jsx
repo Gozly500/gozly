@@ -465,6 +465,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
   const [retentionTemperature, setRetentionTemperature] = useState("3");
   const [retentionCommandes, setRetentionCommandes] = useState("12");
   const [retentionVentes, setRetentionVentes] = useState("12");
+  const [terminalNom, setTerminalNom] = useState("");
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
   const [kiosqueCommandes, setKiosqueCommandes] = useState("liste");
   const [traiteeWix, setTraiteeWix] = useState("Accepted");
@@ -490,7 +491,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
       supabase
         .from("entreprises")
         .select(
-          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, ventes_retention_mois, impression_commandes_manuelles, commandes_vers_taches, wix_lieu_nom, commandes_planning_integre, nom, latitude, longitude"
+          "premier_jour_semaine, auto_approuver_echanges, echanges_actif, auto_approuver_conges, conges_actif, sync_produits_auto, pointage_calcul_mode, feuille_temps_visible_sans_approbation, demandes_retention_mois, pointage_mobile_actif, temperature_retention_mois, commandes_retention_mois, ventes_retention_mois, ventes_terminal_nom, impression_commandes_manuelles, commandes_vers_taches, wix_lieu_nom, commandes_planning_integre, nom, latitude, longitude"
         )
         .eq("id", entrepriseId)
         .maybeSingle(),
@@ -520,6 +521,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
     setRetentionTemperature(String(entrepriseData?.temperature_retention_mois || 3));
     setRetentionCommandes(String(entrepriseData?.commandes_retention_mois || 12));
     setRetentionVentes(String(entrepriseData?.ventes_retention_mois || 12));
+    setTerminalNom(entrepriseData?.ventes_terminal_nom || "");
     setImpressionManuelles(entrepriseData?.impression_commandes_manuelles || "desactivee");
     setCommandesVersTaches(entrepriseData?.commandes_vers_taches === false ? "desactive" : "active");
     setLieuWix(entrepriseData?.wix_lieu_nom || "");
@@ -718,6 +720,17 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
       .update({ commandes_retention_mois: Number(value) })
       .eq("id", entrepriseId);
 
+    setSaving(false);
+    setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
+  }
+
+  async function enregistrerTerminal() {
+    setSaving(true);
+    setMsg(null);
+    const { error } = await supabase
+      .from("entreprises")
+      .update({ ventes_terminal_nom: terminalNom.trim() || null })
+      .eq("id", entrepriseId);
     setSaving(false);
     setMsg(error ? { type: "err", text: t("L'enregistrement a échoué.") } : { type: "ok", text: t("Préférence enregistrée.") });
   }
@@ -1127,6 +1140,22 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
 
         {dans("ventes", "general") && (
           <div className="param-liste">
+              <div className="param-ligne">
+                <div className="param-ligne-libelle">
+                  {t("Nom de ton terminal de paiement")}
+                  <InfoTooltip>{t("Le nom qui apparaît dans la conciliation et les exports (Moneris, Clover, Lightspeed...). Laisse vide pour « terminal de paiement ».")}</InfoTooltip>
+                </div>
+                <input
+                  type="text"
+                  className="param-ligne-controle"
+                  value={terminalNom}
+                  maxLength={40}
+                  placeholder="Moneris"
+                  onChange={(e) => setTerminalNom(e.target.value)}
+                  onBlur={enregistrerTerminal}
+                  disabled={saving}
+                />
+              </div>
               <ParametreSelect
                 label={t("Conservation des journées importées")}
                 info={t("Combien de temps garder le résumé d'une journée de ventes importée (totaux par mode de paiement, taxes, écart Moneris) avant sa suppression automatique. Les transactions elles-mêmes ne sont jamais gardées par Gozly : la page d'une journée les relit chez Wix. Les ventes entrées à la main ne sont pas supprimées.")}

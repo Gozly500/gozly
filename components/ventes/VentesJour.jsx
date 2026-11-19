@@ -31,6 +31,7 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
   const [msg, setMsg] = useState(null);
   const [occupe, setOccupe] = useState(null);
   const [entrepriseNom, setEntrepriseNom] = useState("");
+  const [terminalNom, setTerminalNom] = useState("");
   const [exportOuvert, setExportOuvert] = useState(false);
   const [confirmerSuppr, setConfirmerSuppr] = useState(false);
   const exportRef = useRef(null);
@@ -89,7 +90,10 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
       .eq("source", "wix")
       .maybeSingle()
       .then(({ data }) => appliquer(data));
-    supabase.from("entreprises").select("nom").eq("id", entrepriseId).maybeSingle().then(({ data }) => setEntrepriseNom(data?.nom || ""));
+    supabase.from("entreprises").select("*").eq("id", entrepriseId).maybeSingle().then(({ data }) => {
+      setEntrepriseNom(data?.nom || "");
+      setTerminalNom(data?.ventes_terminal_nom || "");
+    });
     chargerTransactions();
   }, [entrepriseId, date]);
 
@@ -99,7 +103,7 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
     setMsg(null);
     const valeur = moneris.trim() === "" ? null : Number(String(moneris).replace(",", "."));
     if (valeur !== null && Number.isNaN(valeur)) {
-      setMsg({ type: "err", text: t("Le total Moneris n'est pas un nombre valide.") });
+      setMsg({ type: "err", text: t("Le total du terminal n'est pas un nombre valide.") });
       setOccupe(null);
       return;
     }
@@ -278,7 +282,7 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
               <div className="admin-row">
                 <div className="admin-row-main">
                   <div className="admin-row-title">{t("Conciliation")}</div>
-                  <div className="admin-row-sub">{t("Compare le total « carte » de Wix au rapport Moneris de la journée.")}</div>
+                  <div className="admin-row-sub">{t("Compare le total « carte » de Wix au rapport du terminal de paiement de la journée.")}</div>
                 </div>
               </div>
               <div className="vj-concilier-corps">
@@ -287,12 +291,12 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
                   <input type="text" value={formatMontant(totalCarte(jour))} readOnly />
                 </div>
                 <div className="field">
-                  <label>{t("Total du rapport Moneris")}</label>
+                  <label>{t("Total du rapport ({terminal})", { terminal: terminalNom || t("terminal de paiement") })}</label>
                   <input type="text" inputMode="decimal" value={moneris} onChange={(e) => setMoneris(e.target.value)} placeholder="0.00" />
                 </div>
                 {ecart !== null && (
                   <p className={`vj-ecart ${Math.abs(ecart) < 0.005 ? "ok" : "err"}`}>
-                    {Math.abs(ecart) < 0.005 ? t("Aucun écart : les totaux concordent.") : t("Écart : {m} (Moneris moins Wix)", { m: formatMontant(ecart) })}
+                    {Math.abs(ecart) < 0.005 ? t("Aucun écart : les totaux concordent.") : t("Écart : {m} (terminal moins Wix)", { m: formatMontant(ecart) })}
                   </p>
                 )}
                 <div className="field">

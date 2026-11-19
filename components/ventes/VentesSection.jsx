@@ -141,11 +141,11 @@ export default function VentesSection({ entrepriseId }) {
         return;
       }
       const nomBase = `ventes_${d1}_au_${decalerJour(d2, -1)}`;
+      const { data: ent } = await supabase.from("entreprises").select("*").eq("id", entrepriseId).maybeSingle();
       if (format === "csv") {
-        telechargerFichier(`${nomBase}.csv`, journeesEnCsv(jours));
+        telechargerFichier(`${nomBase}.csv`, journeesEnCsv(jours, ent?.ventes_terminal_nom || "Terminal"));
       } else {
-        const { data: ent } = await supabase.from("entreprises").select("nom").eq("id", entrepriseId).maybeSingle();
-        const doc = await pdfJournees({ entrepriseNom: ent?.nom || "", periodeLabel: `${d1} - ${decalerJour(d2, -1)}`, jours });
+        const doc = await pdfJournees({ entrepriseNom: ent?.nom || "", periodeLabel: `${d1} - ${decalerJour(d2, -1)}`, jours, terminal: ent?.ventes_terminal_nom || "Terminal" });
         doc.save(`${nomBase}.pdf`);
       }
     } finally {
