@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 const SRC = "C:/Users/gulou/OneDrive/Pictures/Gozly/Gozly/Avatard";
-const OUT = "C:/Users/gulou/Downloads/gozly-app/gozly-app/lib/avatarPieces.js";
+const OUT = path.join(__dirname, "..", "lib", "avatarPieces.js"); // chemin relatif : le projet peut changer de dossier
 
 const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\.svg$/, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 const label = (f) => { const b = f.replace(/\.svg$/i, ""); return b.charAt(0).toUpperCase() + b.slice(1); };
