@@ -4774,3 +4774,56 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) :is(.widget-card.drag-o
 .cal-jour-case.choisi{background:var(--violet);color:#fff;font-weight:700;}
 .cal-jour-case.marque::after{content:"";position:absolute;bottom:5px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#7ee787;}
 .vj-tete h2::first-letter{text-transform:uppercase;}
+
+/* Page /marque : identité visuelle */
+.marque-ancres{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:34px;}
+.marque-ancres a{padding:8px 16px;border-radius:999px;font-size:14px;color:var(--text-dim);background:rgba(var(--w),0.06);border:1px solid rgba(var(--w),0.12);transition:color .2s ease,background .2s ease;}
+.marque-ancres a:hover{color:var(--fg);background:rgba(var(--w),0.12);}
+.marque-boutons{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.marque-section{padding:70px 0 10px;}
+.marque-titre{font-size:clamp(28px,4vw,40px);margin:0 0 10px;text-align:left;}
+.marque-sous{color:var(--text-dim);max-width:640px;margin:0 0 30px;text-align:left;}
+.marque-sous-titre{font-size:18px;margin:34px 0 14px;text-align:left;}
+.marque-logos{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+.marque-logo-tuile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:56px 20px 30px;border-radius:26px;border:1px solid rgba(var(--w),0.14);}
+.marque-logo-tuile .brand{font-size:44px;line-height:1;}
+.marque-logo-tuile small{font-size:12px;margin-top:10px;opacity:.7;}
+.marque-logo-tuile.sombre{background:linear-gradient(160deg,#0d0d3f,#17175f);color:#fff;}
+.marque-logo-tuile.clair{background:#f4f3fb;color:#0d0d3f;border-color:#dcdbe9;}
+.marque-regles{margin:22px 0 0;padding:0;list-style:none;display:grid;gap:8px;color:var(--text-dim);max-width:640px;}
+.marque-regles li{padding-left:22px;position:relative;text-align:left;}
+.marque-regles li::before{content:"";position:absolute;left:0;top:8px;width:8px;height:8px;border-radius:3px;background:linear-gradient(135deg,var(--cyan),var(--violet));}
+.marque-apps{display:flex;flex-wrap:wrap;gap:22px;}
+.marque-apps figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.marque-apps img{border-radius:20px;}
+.marque-apps figcaption{font-size:13px;color:var(--text-dim);}
+.marque-couleurs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+.marque-couleur{display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:4px;padding:10px;border-radius:20px;background:rgba(var(--w),0.05);border:1px solid rgba(var(--w),0.12);color:inherit;font:inherit;cursor:pointer;transition:transform .2s ease,background .2s ease;}
+.marque-couleur:hover{transform:translateY(-3px);background:rgba(var(--w),0.09);}
+.marque-couleur-puce{display:flex;align-items:center;justify-content:center;height:84px;border-radius:12px;margin-bottom:8px;font-size:13px;font-weight:600;border:1px solid rgba(var(--w),0.14);}
+.marque-couleur-nom{font-weight:600;padding:0 4px;}
+.marque-couleur-code{font-size:12px;color:var(--text-dim);padding:0 4px;font-variant-numeric:tabular-nums;}
+.marque-couleur-role{font-size:12px;color:var(--text-dim);padding:0 4px 4px;line-height:1.4;}
+.marque-degrade{height:64px;border-radius:18px;}
+.marque-polices{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+.marque-police{padding:28px;border-radius:24px;background:rgba(var(--w),0.05);border:1px solid rgba(var(--w),0.12);text-align:left;}
+.marque-police-aa{font-size:78px;line-height:1;margin-bottom:12px;background:linear-gradient(135deg,var(--cyan),var(--violet),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.marque-police h3{margin:0 0 6px;font-size:24px;}
+.marque-police-usage{margin:0;color:var(--text-dim);font-size:14px;}
+.marque-police-graisses{margin:4px 0 18px;color:var(--text-dim);font-size:13px;}
+.marque-police-apercu{font-size:20px;line-height:1.35;margin:0 0 16px;}
+.marque-lien{font-size:14px;color:var(--cyan);}
+.marque-pictos{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:10px;}
+.marque-picto{display:flex;align-items:center;justify-content:center;height:72px;border-radius:16px;background:rgba(var(--w),0.05);border:1px solid rgba(var(--w),0.1);color:var(--fg);transition:background .2s ease,transform .2s ease;}
+.marque-picto:hover{background:rgba(var(--w),0.12);transform:translateY(-2px);}
+.marque-mascottes{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-end;}
+.marque-mascottes img{height:240px;width:240px;border-radius:50%;box-shadow:0 18px 50px rgba(0,0,0,.35);}
+.marque-verre{padding:30px;border-radius:26px;background:rgba(var(--w),0.07);border:1px solid rgba(var(--w),0.16);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);max-width:520px;text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.28);}
+.marque-verre strong{font-size:20px;font-family:'Fredoka',sans-serif;}
+.marque-verre p{color:var(--text-dim);margin:8px 0 22px;}
+.marque-verre .marque-boutons{justify-content:flex-start;}
+.marque-themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.marque-theme{display:flex;flex-direction:column;justify-content:space-between;gap:26px;padding:16px;border-radius:18px;border:1px solid rgba(var(--w),0.14);font-weight:600;text-align:left;}
+.marque-theme i{display:block;height:18px;width:62%;border-radius:9px;}
+@media (max-width:760px){.marque-logos,.marque-polices{grid-template-columns:1fr;}}
+.marque-logo-tuile img{width:220px;height:220px;margin:-62px 0 -52px;}

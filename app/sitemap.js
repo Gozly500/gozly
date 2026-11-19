@@ -8,6 +8,7 @@ const PAGES = [
   { chemin: "/inscription", priorite: 0.7, frequence: "yearly" },
   { chemin: "/telecharger", priorite: 0.7, frequence: "monthly" },
   { chemin: "/logiciels", priorite: 0.7, frequence: "monthly" },
+  { chemin: "/marque", priorite: 0.4, frequence: "monthly" },
   { chemin: "/aide", priorite: 0.6, frequence: "monthly" },
   { chemin: "/conditions", priorite: 0.3, frequence: "yearly" },
   { chemin: "/confidentialite", priorite: 0.3, frequence: "yearly" },

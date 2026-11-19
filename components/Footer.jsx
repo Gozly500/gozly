@@ -60,6 +60,7 @@ export default function Footer() {
             <Link href="/logiciels">{t("footer.logiciels")}</Link>
             <Link href="/scattegories">{t("footer.scat")}</Link>
             <Link href="/developpeur">{t("footer.dev")}</Link>
+            <Link href="/marque">{t("footer.marque")}</Link>
             <LangFooterLink />
           </div>
         </nav>
