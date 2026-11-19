@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseForToken } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
+import { autreBoutiqueConnectee, messageBoutique } from "@/lib/boutiqueExclusive";
 
 // Relie ce dashboard au MÊME site Wix qu'un autre dashboard de l'utilisateur
 // (copie l'instance de l'app Wix déjà installée). L'utilisateur doit être
@@ -25,6 +26,9 @@ export async function POST(request) {
   if (!service) {
     return NextResponse.json({ error: "Configuration manquante." }, { status: 500 });
   }
+
+  const autre = await autreBoutiqueConnectee(service, entrepriseId, "wix");
+  if (autre) return NextResponse.json({ error: messageBoutique(autre, "Wix") }, { status: 409 });
 
   const { data: membres } = await service
     .from("membres")

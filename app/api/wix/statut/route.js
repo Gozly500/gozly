@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
+import { autreBoutiqueConnectee } from "@/lib/boutiqueExclusive";
 
 export async function GET(request) {
   const authHeader = request.headers.get("authorization") || "";
@@ -35,5 +36,6 @@ export async function GET(request) {
   return NextResponse.json({
     connecte: connexion?.statut === "connecte",
     enAttente: connexion?.statut === "en_attente",
+    autreBoutique: connexion?.statut === "connecte" ? null : await autreBoutiqueConnectee(service, entreprise.id, "wix"),
   });
 }

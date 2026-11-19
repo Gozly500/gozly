@@ -32,6 +32,9 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
   const [statut, setStatut] = useState("chargement"); // "chargement" | "deconnecte" | "en_attente" | "connecte"
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [autreBoutique, setAutreBoutique] = useState(null); // une autre boutique en ligne (Shopify) déjà connectée : bloque la connexion de Wix
+  const [deconnexionOuverte, setDeconnexionOuverte] = useState(false);
+  const [nbWix, setNbWix] = useState({ produits: 0, commandes: 0 });
   const pollRef = useRef(null);
   // Autres dashboards de l'utilisateur qui ont déjà Wix connecté (même site, plusieurs succursales).
   const [autresDashboards, setAutresDashboards] = useState([]);
@@ -206,6 +209,7 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
       const res = await fetch(`/api/wix/statut?entrepriseId=${entrepriseId}`, { headers: await authHeaders() });
       const data = await res.json();
       setStatut(data.connecte ? "connecte" : data.enAttente ? "en_attente" : "deconnecte");
+      setAutreBoutique(data.autreBoutique || null);
       if (data.enAttente) demarrerSurveillance();
       if (!data.connecte && !data.enAttente) chargerAutresDashboards();
     } catch {
@@ -288,7 +292,21 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
     setBusy(false);
   }
 
-  async function handleDeconnecter() {
+  // Déconnecter une connexion Wix active : on demande d'abord quoi faire de ce qui vient de Wix (garder ou supprimer).
+  async function demanderDeconnexion() {
+    setMsg(null);
+    const compte = async (table) => {
+      const { count } = await supabase.from(table).select("id", { count: "exact", head: true }).eq("entreprise_id", entrepriseId).eq("source", "wix");
+      return count || 0;
+    };
+    try {
+      setNbWix({ produits: await compte("produits_inventaire"), commandes: await compte("commandes_en_ligne") });
+    } catch {}
+    setDeconnexionOuverte(true);
+  }
+
+  async function handleDeconnecter(donnees) {
+    setDeconnexionOuverte(false);
     setBusy(true);
     setMsg(null);
     clearInterval(pollRef.current);
@@ -297,7 +315,7 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
       await fetch("/api/wix/deconnecter", {
         method: "POST",
         headers: await authHeaders(),
-        body: JSON.stringify({ entrepriseId }),
+        body: JSON.stringify({ entrepriseId, donnees }),
       });
       setStatut("deconnecte");
       setMsg({ type: "ok", text: t("Wix est déconnecté.") });
@@ -310,6 +328,32 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
   function renderWix() {
     return (
       <div>
+        {deconnexionOuverte && (
+          <div className="modal-overlay" onClick={() => setDeconnexionOuverte(false)}>
+            <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-head">
+                <h3>{t("Déconnecter Wix")}</h3>
+                <button className="admin-icon-btn" onClick={() => setDeconnexionOuverte(false)}>
+                  {t("Annuler")}
+                </button>
+              </div>
+              <p className="section-hint" style={{ marginBottom: "14px" }}>
+                {t("Que faire des produits et des commandes qui viennent de Wix ({p} produit(s), {c} commande(s)) ?", { p: nbWix.produits, c: nbWix.commandes })}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <button type="button" className="submit-btn" onClick={() => handleDeconnecter("garder")}>
+                  {t("Les garder")}
+                </button>
+                <button type="button" className="admin-icon-btn danger" onClick={() => handleDeconnecter("supprimer")}>
+                  {t("Tout supprimer")}
+                </button>
+              </div>
+              <p className="section-hint" style={{ marginTop: "12px" }}>
+                {t("Les garder : les produits deviennent des produits Gozly ordinaires. Tout supprimer : produits, catégories, commandes et journées de ventes importés de Wix.")}
+              </p>
+            </div>
+          </div>
+        )}
         <EnteteIntegration id="wix" etat={statut === "chargement" ? null : statut} />
 
         <div className="corps-integration">
@@ -320,11 +364,16 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
               <p className="section-hint">
                 {t("Connecte ton compte Wix pour lire l'inventaire de ta boutique Wix Stores directement dans Gozly.")}
               </p>
-              <button type="button" className="submit-btn" onClick={handleConnecter} disabled={busy}>
+              {autreBoutique && (
+                <p className="settings-msg err">
+                  {t("{autre} est déjà connecté à ce dashboard. Une seule boutique en ligne à la fois : déconnecte {autre} avant de connecter Wix.", { autre: autreBoutique })}
+                </p>
+              )}
+              <button type="button" className="submit-btn" onClick={handleConnecter} disabled={busy || !!autreBoutique}>
                 {busy ? "..." : t("Connecter Wix")}
               </button>
 
-              {autresDashboards.length > 0 && (
+              {!autreBoutique && autresDashboards.length > 0 && (
                 <div style={{ marginTop: "18px" }}>
                   <p className="section-hint">
                     {t("Ce site Wix est déjà connecté à un autre de tes dashboards (ex: l'autre succursale)? Réutilise la même connexion, sans réinstaller l'app.")}
@@ -349,7 +398,7 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
               <button type="button" className="admin-icon-btn" onClick={handleConnecter} disabled={busy}>
                 {busy ? "..." : t("Réessayer / ouvrir le lien à nouveau")}
               </button>
-              <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
+              <button type="button" className="admin-icon-btn danger" onClick={() => handleDeconnecter()} disabled={busy}>
                 {t("Annuler")}
               </button>
             </>
@@ -357,7 +406,7 @@ export default function IntegrationsSection({ entrepriseId, vue = "magasin", ins
 
           {statut === "connecte" && (
             <>
-              <button type="button" className="admin-icon-btn danger" onClick={handleDeconnecter} disabled={busy}>
+              <button type="button" className="admin-icon-btn danger" onClick={demanderDeconnexion} disabled={busy}>
                 {busy ? "..." : t("Déconnecter")}
               </button>
 

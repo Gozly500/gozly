@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseForToken, getUserEntrepriseParId } from "@/lib/stripeServer";
 import { getServiceClient } from "@/lib/adminServer";
 import { WIX_INSTALL_LINK } from "@/lib/wixClient";
+import { autreBoutiqueConnectee, messageBoutique } from "@/lib/boutiqueExclusive";
 
 // Crée (ou réinitialise) une ligne "en_attente" pour cette entreprise AVANT
 // que le client aille sur Wix - c'est ce qui permet au webhook
@@ -30,6 +31,9 @@ export async function POST(request) {
   if (!service) {
     return NextResponse.json({ error: "La connexion à Wix n'est pas encore configurée." }, { status: 501 });
   }
+
+  const autre = await autreBoutiqueConnectee(service, entreprise.id, "wix");
+  if (autre) return NextResponse.json({ error: messageBoutique(autre, "Wix") }, { status: 409 });
 
   const { error } = await service.from("wix_connexions").upsert(
     { entreprise_id: entreprise.id, instance_id: null, statut: "en_attente", created_at: new Date().toISOString() },
