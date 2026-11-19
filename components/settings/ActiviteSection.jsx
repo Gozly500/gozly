@@ -34,9 +34,6 @@ export default function ActiviteSection({ user }) {
         </div>
       </div>
 
-      <p className="section-hint" style={{ marginTop: "18px" }}>
-        {t("L'historique détaillé des connexions (appareil, localisation) n'est pas encore disponible.")}
-      </p>
     </div>
   );
 }

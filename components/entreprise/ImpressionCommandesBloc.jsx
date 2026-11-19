@@ -150,9 +150,6 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
                 )
               )}
             </div>
-            <p className="section-hint" style={{ marginTop: "10px" }}>
-              {t("C'est le contenu exact envoyé à l'imprimante. Les accents sont retirés à l'impression (l'imprimante les afficherait mal).")}
-            </p>
           </div>
         </div>
       )}

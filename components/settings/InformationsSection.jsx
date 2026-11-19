@@ -165,7 +165,6 @@ export default function InformationsSection({ user, profil, setProfil }) {
         <div className="settings-divider">{t("Contact")}</div>
 
         <div className="settings-section">
-          <p className="section-hint">{t("Tes propres coordonnées, distinctes de celles de tes entreprises.")}</p>
 
           <div className="field">
             <label>{t("Courriel de connexion")}</label>

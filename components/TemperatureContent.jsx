@@ -278,9 +278,6 @@ export default function TemperatureContent() {
 
               <div className="settings-section">
                 <h3>{t("Créneau actuel :")}{" "}{periodeLabel}</h3>
-                <p className="section-hint">
-                  {t("Une fenêtre manquée ne revient pas - inutile de rattraper un relevé oublié, on passe simplement au prochain créneau.")}
-                </p>
 
                 {equipementsFiltres.length === 0 ? (
                   <p className="section-hint">
@@ -386,9 +383,6 @@ export default function TemperatureContent() {
                       </div>
                     )}
                   </div>
-                  <span className="section-hint" style={{ margin: 0 }}>
-                    {t("Les fiches sont supprimées automatiquement après la durée choisie dans Modules - exporte-les pour les garder.")}
-                  </span>
                 </div>
               )}
 

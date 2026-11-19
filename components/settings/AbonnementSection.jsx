@@ -142,9 +142,6 @@ export default function AbonnementSection({ profil }) {
 
       <div className="settings-section">
         <h3>{t("Forfait actuel")}</h3>
-        <p className="section-hint">
-          {t("Le forfait détermine les modules disponibles et le nombre d'entreprises que tu peux créer.")}
-        </p>
 
         {current ? (
           <span className="forfait-badge">

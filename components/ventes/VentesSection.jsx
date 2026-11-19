@@ -370,9 +370,6 @@ export default function VentesSection({ entrepriseId }) {
                 {t("Fermer")}
               </button>
             </div>
-            <p className="section-hint" style={{ marginBottom: "12px" }}>
-              {t("Choisis la journée à importer : Gozly lit toutes ses ventes chez Wix et en garde le résumé. Les transactions ne sont pas enregistrées.")}
-            </p>
             <CalendrierJour value={dateImport} onChange={setDateImport} max={dateAujourdhui()} marquees={datesImportees} />
             {syncMsg && <p className={`settings-msg ${syncMsg.type}`}>{syncMsg.text}</p>}
             <div className="admin-edit-actions">

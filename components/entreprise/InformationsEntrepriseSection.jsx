@@ -221,7 +221,6 @@ export default function InformationsEntrepriseSection({ entrepriseId, userId }) 
         <div className="settings-divider">{t("Contact")}</div>
 
         <div className="settings-section">
-          <p className="section-hint">{t("Ces informations servent à contacter l'entreprise.")}</p>
 
           <div className="field">
             <label htmlFor="adresse-entreprise">{t("Adresse physique")}</label>

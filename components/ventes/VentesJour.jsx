@@ -323,9 +323,6 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
               ))}
             </div>
           </div>
-          <p className="section-hint" style={{ marginBottom: "10px" }}>
-            {t("Ces transactions sont lues chez Wix à l'instant : Gozly ne les garde pas.")}
-          </p>
 
           {erreurWix && <p className="settings-msg err">{erreurWix}</p>}
           {transactions === null ? (

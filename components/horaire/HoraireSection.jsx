@@ -386,9 +386,6 @@ export default function HoraireSection({ entrepriseId }) {
         <p style={{ color: "var(--text-dim)" }}>{t("Aucun employé assigné à cet emplacement pour l'instant.")}</p>
       ) : (
         <>
-          <p className="section-hint" style={{ marginBottom: "14px" }}>
-            {t("Glisse un employé sur une journée pour lui assigner un quart.")}
-          </p>
           <div className="horaire-layout">
             <div className="horaire-employees">
               <div className="horaire-employee-search">

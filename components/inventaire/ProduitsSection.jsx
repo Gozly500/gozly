@@ -629,9 +629,6 @@ export default function ProduitsSection({ entrepriseId }) {
                   )}
                   {enReorg ? (
                     <>
-                      <p className="section-hint" style={{ margin: "0 0 10px 4px", maxWidth: "900px" }}>
-                        {t("Glisse les produits pour choisir leur ordre : celui du haut s'affiche en premier dans le kiosque et dans la prise de commande.")}
-                      </p>
                       <ListeReordonnable
                         className="admin-list"
                         style={{ maxWidth: "900px" }}

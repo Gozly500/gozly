@@ -37,7 +37,6 @@ export default function LangueSection({ profil, setProfil }) {
   return (
     <div className="settings-section" style={{ marginTop: "28px" }}>
       <h3>{t("Langue")}</h3>
-      <p className="section-hint">{t("Choisis la langue du site et du tableau de bord.")}</p>
       <div className="forfait-choices">
         {CHOIX.map((c) => (
           <button
