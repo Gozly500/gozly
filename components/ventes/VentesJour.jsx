@@ -49,14 +49,30 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
     setNote(ligne?.note || "");
   }
 
-  async function chargerTransactions() {
-    setTransactions(null);
+  // La liste est gardée en mémoire le temps de l'onglet (sessionStorage) : rouvrir une journée déjà vue ne rappelle pas Wix.
+  // « Actualiser depuis Wix » force une nouvelle lecture. Rien n'est enregistré chez Gozly.
+  const cleCache = `gozly_ventes_jour_${entrepriseId}_${date}`;
+
+  async function chargerTransactions(forcer = false) {
     setErreurWix(null);
+    if (!forcer) {
+      try {
+        const garde = JSON.parse(window.sessionStorage.getItem(cleCache) || "null");
+        if (garde?.transactions) {
+          setTransactions(garde.transactions);
+          return;
+        }
+      } catch {}
+    }
+    setTransactions(null);
     try {
       const res = await fetch(`/api/ventes/jour?entrepriseId=${entrepriseId}&date=${date}`, { headers: await entetes() });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || t("La lecture des ventes chez Wix a échoué."));
       setTransactions(data.transactions || []);
+      try {
+        window.sessionStorage.setItem(cleCache, JSON.stringify({ transactions: data.transactions || [] }));
+      } catch {}
     } catch (err) {
       setTransactions([]);
       setErreurWix(err.message);
@@ -112,7 +128,7 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
       appliquer(data.jour);
       onChange?.();
       setMsg({ type: "ok", text: t("Journée mise à jour depuis Wix.") });
-      chargerTransactions();
+      chargerTransactions(true);
     } catch (err) {
       setMsg({ type: "err", text: err.message });
     }
