@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLangue } from "@/components/moi/LangueContext";
+import { IconFlecheHaut, IconFlecheBas, IconMajuscule, IconMajusculeActive, IconRetour, IconEntree, IconFlecheGauche, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 // Appui long sur une lettre : ses variantes accentuées (comme sur un vrai clavier). La première sert d'indice sur la touche.
 const VARIANTES = { a: ["à", "â", "ä", "æ"], e: ["é", "è", "ê", "ë"], i: ["î", "ï"], o: ["ô", "ö", "œ"], u: ["ù", "û", "ü"], c: ["ç"], y: ["ÿ"], n: ["ñ"] };
@@ -129,7 +130,7 @@ export function Clavier({ champ, onFermer }) {
           ))}
           {extras.length > 0 ? <Touche c={extras[0] === " " ? "␣" : extras[0]} large={2} classe="num" onClick={() => ajouter(extras[0])} /> : <span style={{ gridColumn: "span 2" }} />}
           <Touche c="0" large={2} classe="num" onClick={() => ajouter("0")} />
-          <Touche large={2} classe="num special" onClick={effacer} label={t("sg.effacer")}>⌫</Touche>
+          <Touche large={2} classe="num special" onClick={effacer} label={t("sg.effacer")}><IconRetour className="gozly-icon" /></Touche>
           {type === "tel" && (
             <>
               <Touche c="(" large={2} classe="num" onClick={() => ajouter("(")} />
@@ -179,7 +180,7 @@ export function Clavier({ champ, onFermer }) {
             {LIGNES[1].map(rendreLettre)}
             {vide()}
             {/* Rangée du bas : ⇧ et ⌫ aux extrémités, les 7 lettres entre les deux */}
-            <Touche large={3} classe={`special${maj ? " actif" : ""}`} onClick={() => setMaj((m) => !m)} label={t("sg.majuscule")}>⇧</Touche>
+            <Touche large={3} classe={`special${maj ? " actif" : ""}`} onClick={() => setMaj((m) => !m)} label={t("sg.majuscule")}>{maj ? <IconMajusculeActive className="gozly-icon" /> : <IconMajuscule className="gozly-icon" />}</Touche>
             {LIGNES[2].map(rendreLettre)}
             <Touche large={3} classe="special" onClick={effacer} label={t("sg.effacer")}>⌫</Touche>
             {/* Dernière rangée centrée (18 colonnes sur 20) */}
@@ -188,7 +189,7 @@ export function Clavier({ champ, onFermer }) {
             <Touche large={6} classe="espace" onClick={() => ajouter(" ")} label={t("sg.espace")}>{t("sg.espace")}</Touche>
             <Touche c="." large={2} onClick={() => ajouter(".")} />
             <Touche c="," large={2} onClick={() => ajouter(",")} />
-            {type === "textarea" ? <Touche large={2} classe="special" onClick={() => ajouter("\n")}>↵</Touche> : <Touche c="-" large={2} onClick={() => ajouter("-")} />}
+            {type === "textarea" ? <Touche large={2} classe="special" onClick={() => ajouter("\n")}><IconEntree className="gozly-icon" /></Touche> : <Touche c="-" large={2} onClick={() => ajouter("-")} />}
           </>
         )}
       </div>
@@ -245,9 +246,9 @@ export function Calendrier({ champ, onFermer, langue }) {
         </div>
       </div>
       <div className="sg-cal-tete">
-        <button type="button" className="sg-fleche" onClick={() => bouge(-1)} aria-label={t("sg.moisPrecedent")}>‹</button>
+        <button type="button" className="sg-fleche" onClick={() => bouge(-1)} aria-label={t("sg.moisPrecedent")}><IconFlecheGauche className="gozly-icon" /></button>
         <strong>{new Date(vue.a, vue.m, 1).toLocaleDateString(loc, { month: "long", year: "numeric" })}</strong>
-        <button type="button" className="sg-fleche" onClick={() => bouge(1)} aria-label={t("sg.moisSuivant")}>›</button>
+        <button type="button" className="sg-fleche" onClick={() => bouge(1)} aria-label={t("sg.moisSuivant")}><IconFlecheDroite className="gozly-icon" /></button>
       </div>
       <div className="sg-cal-grille">
         {nomsJours.map((n, i) => <span className="sg-cal-jour-nom" key={i}>{n}</span>)}
@@ -304,9 +305,9 @@ export function CalendrierPlage({ debut, fin, onValider, onFermer, langue, min }
       </div>
       <p className="panel-hint" style={{ margin: "0 0 8px", fontSize: "13px" }}>{t("kq.c.plageAide")}</p>
       <div className="sg-cal-tete">
-        <button type="button" className="sg-fleche" onClick={() => bouge(-1)} aria-label={t("sg.moisPrecedent")}>‹</button>
+        <button type="button" className="sg-fleche" onClick={() => bouge(-1)} aria-label={t("sg.moisPrecedent")}><IconFlecheGauche className="gozly-icon" /></button>
         <strong>{new Date(vue.a, vue.m, 1).toLocaleDateString(loc, { month: "long", year: "numeric" })}</strong>
-        <button type="button" className="sg-fleche" onClick={() => bouge(1)} aria-label={t("sg.moisSuivant")}>›</button>
+        <button type="button" className="sg-fleche" onClick={() => bouge(1)} aria-label={t("sg.moisSuivant")}><IconFlecheDroite className="gozly-icon" /></button>
       </div>
       <div className="sg-cal-grille">
         {nomsJours.map((n, i) => <span className="sg-cal-jour-nom" key={i}>{n}</span>)}
@@ -335,11 +336,7 @@ export function CalendrierPlage({ debut, fin, onValider, onFermer, langue, min }
 
 const deuxChiffres = (n) => String(n).padStart(2, "0");
 
-const Chevron = ({ bas }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: 30, height: 30, transform: bas ? "rotate(180deg)" : undefined }}>
-    <path d="M6 15l6-6 6 6" />
-  </svg>
-);
+const Chevron = ({ bas }) => (bas ? <IconFlecheBas aria-hidden="true" style={{ width: 30, height: 30 }} /> : <IconFlecheHaut aria-hidden="true" style={{ width: 30, height: 30 }} />);
 
 // Une colonne « flèche haut / chiffre / flèche bas ». Garder le doigt sur une flèche fait défiler.
 function Rouleau({ titre, valeur, onPas, labelHaut, labelBas }) {

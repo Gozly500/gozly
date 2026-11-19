@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useT } from "@/components/LangProvider";
+import { IconX } from "@/components/icons/Pictogrammes";
 
 const CLE_VUE = "gozly-annonce-vue";
 const JOURS_VISIBLE = 21;
@@ -53,7 +54,7 @@ export default function BandeauAnnonce() {
         {t("Lire l'annonce")}
       </Link>
       <button type="button" className="dash-annonce-fermer" onClick={fermer} aria-label={t("Masquer")} title={t("Masquer")}>
-        ×
+        <IconX className="gozly-icon" />
       </button>
     </div>
   );

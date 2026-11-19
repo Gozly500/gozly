@@ -30,7 +30,7 @@ import {
   libelleRamassage,
   noteCommande,
 } from "@/lib/commandes";
-import { IconCalendrier, IconCloche, IconClocheBarree, IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconImprimante, IconLocalisation, IconX } from "@/components/icons/Pictogrammes";
+import { IconTroisPoints, IconCalendrier, IconCloche, IconClocheBarree, IconCrochet, IconDocument, IconFlecheDroite, IconFlecheGauche, IconImprimante, IconLocalisation, IconX } from "@/components/icons/Pictogrammes";
 
 
 // Les titres et libellés de boutons viennent du dictionnaire (kq.c.col.<id>, kq.c.traiter / kq.c.terminer).
@@ -83,11 +83,7 @@ export function MenuCommande({ onModifier, onRetirer, t, cleRetirer = "kq.c.reti
           {t(cleRetirer)}
         </button>
         <button type="button" className="cmd-menu-points" aria-expanded={ouvert} aria-label={t("kq.c.plus")} onClick={() => setOuvert((o) => !o)}>
-          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
-            <circle cx="5" cy="12" r="2.2" />
-            <circle cx="12" cy="12" r="2.2" />
-            <circle cx="19" cy="12" r="2.2" />
-          </svg>
+          <IconTroisPoints width="26" height="26" aria-hidden="true" />
         </button>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLangue } from "@/components/moi/LangueContext";
 import { formatMontant } from "@/lib/commandes";
+import { IconOeil, IconOeilBarre } from "@/components/icons/Pictogrammes";
 
 const POINTS = "•••••"; // toujours la même longueur : le nombre de points ne trahit pas le montant
 
@@ -14,13 +15,7 @@ export function formatHeures(minutes) {
   return m ? `${h} h ${String(m).padStart(2, "0")}` : `${h} h`;
 }
 
-const Oeil = ({ barre }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: 22, height: 22 }}>
-    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
-    <circle cx="12" cy="12" r="3" />
-    {barre && <path d="M4 4l16 16" />}
-  </svg>
-);
+const Oeil = ({ barre }) => (barre ? <IconOeilBarre style={{ width: 22, height: 22 }} aria-hidden="true" /> : <IconOeil style={{ width: 22, height: 22 }} aria-hidden="true" />);
 
 // Montant, ou des points tant que les montants sont cachés.
 export function Montant({ valeur, cache }) {

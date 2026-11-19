@@ -7,25 +7,8 @@ import { logoPlateforme } from "@/lib/plateformesMusique";
 import { useLangue } from "@/components/moi/LangueContext";
 import { IconMusique } from "@/components/icons/GozlyIcons";
 import Curseur from "@/components/CurseurVolume";
+import { IconLecture as Lecture, IconPause as Pause, IconPrecedent as Precedent, IconSuivant as Suivant, IconX as Fermer, IconHautParleur as HautParleur, IconHautParleurBarre as Muet, IconFlecheGauche as Retour, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
-const Svg = ({ children, ...p }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...p}>
-    {children}
-  </svg>
-);
-const Trait = ({ children, ...p }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...p}>
-    {children}
-  </svg>
-);
-const Lecture = (p) => <Svg {...p}><path d="M8 5v14l11-7z" /></Svg>;
-const Pause = (p) => <Svg {...p}><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></Svg>;
-const Precedent = (p) => <Svg {...p}><path d="M6 5h2v14H6zM20 5v14L9 12z" /></Svg>;
-const Suivant = (p) => <Svg {...p}><path d="M16 5h2v14h-2zM4 5l11 7-11 7z" /></Svg>;
-const Fermer = (p) => <Trait {...p}><path d="M6 6l12 12M18 6L6 18" /></Trait>;
-const HautParleur = (p) => <Trait {...p}><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16.5 8.5a5 5 0 010 7" /></Trait>;
-const Muet = (p) => <Trait {...p}><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M17 9l5 6M22 9l-5 6" /></Trait>;
-const Retour = (p) => <Trait {...p}><path d="M15 5l-7 7 7 7" /></Trait>;
 
 // Logo d'une plateforme (ou sa première lettre si on ne la connaît pas).
 function LogoPlateforme({ nom }) {
@@ -256,7 +239,7 @@ export default function MusiqueEpingle({ entrepriseId, mode = "compact", demo = 
         </div>
         {multi && (
           <button type="button" className="mkp-appareils-bouton" aria-expanded={ouvert} onClick={() => basculerAppareils(g.id)}>
-            {t("kq.mus.nAppareils", { n: g.joueurs.length })} <span className={`mkp-chevron${ouvert ? " ouvert" : ""}`}>›</span>
+            {t("kq.mus.nAppareils", { n: g.joueurs.length })} <span className={`mkp-chevron${ouvert ? " ouvert" : ""}`}><IconFlecheDroite className="gozly-icon" /></span>
           </button>
         )}
         {multi && ouvert && (

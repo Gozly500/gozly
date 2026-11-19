@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
 import { LOGICIELS, forfaitPermetLogiciel } from "@/lib/logiciels";
+import { IconCrochet } from "@/components/icons/Pictogrammes";
 
 // État du téléchargement sur la page d'installation (/telecharger/<slug>) : vérifie la connexion et le forfait, puis démarre
 // le téléchargement tout seul, une seule fois. Les étapes d'installation sont affichées à côté par la page.
@@ -82,7 +83,7 @@ export default function InstallationLogiciel({ logiciel }) {
 
         {etat === "pret" && (
           <>
-            <div className="inst-ok">✓</div>
+            <div className="inst-ok"><IconCrochet className="gozly-icon" /></div>
             <p>{t("inst.ok")}</p>
             <button type="button" className="inst-lien" onClick={lancer}>
               {t("inst.relancer")}

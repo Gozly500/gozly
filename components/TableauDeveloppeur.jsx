@@ -7,6 +7,7 @@ import SimpleSelect from "@/components/SimpleSelect";
 import { CATEGORIES_INTEGRATIONS } from "@/lib/integrationsCatalogue";
 import { ETIQUETTES_STATUT, FICHE_VIDE, PERMISSIONS_APP, REGLES_PAGE, lireIcone, verifierFiche } from "@/lib/appsDeveloppeur";
 import ApercuPageApp from "@/components/ApercuPageApp";
+import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 const CHAMPS = [
   "nom",
@@ -298,7 +299,7 @@ function FicheApp({ edition, userId, onRetour, onEnregistre }) {
   return (
     <div style={{ maxWidth: "720px", margin: "0 auto" }}>
       <button type="button" className="admin-icon-btn" onClick={onRetour}>
-        ← {t("Retour")}
+        <IconFlecheGauche className="gozly-icon" /> {t("Retour")}
       </button>
       <h2 style={{ marginTop: "16px" }}>{edition.id ? t("Modifier l'app") : t("Nouvelle app")}</h2>
       {edition.statut === "refusee" && edition.note_refus && <p className="settings-msg err">{edition.note_refus}</p>}

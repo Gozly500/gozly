@@ -6,6 +6,7 @@ import CodeDoubleAuth from "@/components/CodeDoubleAuth";
 import Link from "next/link";
 import { useT } from "@/components/LangProvider";
 import { genererCode, lireSecretGozly, stockerSecretGozly, effacerSecretGozly, NOM_FACTEUR_APP_GOZLY } from "@/lib/codesGozly";
+import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 // La méthode « appareil » (clé d'accès) demande que WebAuthn soit activé dans Supabase, ce qui n'est pas offert pour l'instant.
 const APPAREIL_DISPONIBLE = false;
@@ -182,7 +183,7 @@ export default function SecuriteGestion({ sansTitre = false, dansApp = false }) 
       {!sansTitre && (
         <>
           <Link href="/gestion/parametres" className="retour-parametres">
-            ‹ {t("Paramètres")}
+            <IconFlecheGauche className="gozly-icon" /> {t("Paramètres")}
           </Link>
           <h2 style={{ marginBottom: "4px" }}>{t("Sécurité")}</h2>
           <p className="section-hint">{t("Double authentification")}</p>

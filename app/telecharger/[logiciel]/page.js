@@ -5,6 +5,7 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import InstallationLogiciel from "@/components/InstallationLogiciel";
 import { getT } from "@/lib/i18n/siteServer";
+import Pictos from "@/components/icons/Pictos";
 import { metaPublic } from "@/lib/seoPages";
 import { LOGICIELS, cleParSlug } from "@/lib/logiciels";
 
@@ -68,7 +69,7 @@ export default function InstallationPage({ params }) {
           </div>
 
           <Link href={kiosque ? "/logiciels" : `/telecharger#${slug}`} className="inst-retour">
-            {t("inst.retour")}
+            <Pictos texte={t("inst.retour")} />
           </Link>
         </div>
       </section>

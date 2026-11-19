@@ -20,7 +20,7 @@ import {
 import TransitionTheme from "@/components/moi/TransitionTheme";
 import { useLangue } from "@/components/moi/LangueContext";
 import { LANGUES } from "@/lib/i18n/moi";
-import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
+import { IconFlecheGauche, IconGlobe, IconProfil, IconImprimante, IconEcran, IconCadenas, IconPalette, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import ImprimanteBluetooth from "@/components/ImprimanteBluetooth";
 import VerrouillageKiosque from "@/components/kiosque/VerrouillageKiosque";
 import ReglageVerrouNip from "@/components/kiosque/ReglageVerrouNip";
@@ -30,15 +30,16 @@ import { dansAppKiosque } from "@/lib/appareilKiosque";
 import { dansAppWindows } from "@/lib/appareilWindows";
 import ReglageWindows from "@/components/kiosque/ReglageWindows";
 import { kiosqueEpingle, surChangementEpingle } from "@/lib/kiosqueEpingle";
+import Pictos from "@/components/icons/Pictos";
 
 // Les réglages sont rangés par catégories, comme dans les réglages de l'app employé et de l'app gestion.
 const CATEGORIES = [
-  { id: "langue", emoji: "🌐", titre: "kq.langue.titre", desc: "kq.langue.desc" },
-  { id: "compte", emoji: "👤", titre: "kq.compte.titre", desc: "kq.cat.compteDesc" },
-  { id: "imprimante", emoji: "🖨️", titre: "kq.imp.titre", desc: "kq.cat.imprimanteDesc", seulementApp: true },
-  { id: "windows", emoji: "💻", titre: "kq.win.titre", desc: "kq.win.desc", seulementWindows: true },
-  { id: "securite", emoji: "🔒", titre: "kq.cat.securite", desc: "kq.cat.securiteDesc" },
-  { id: "apparence", emoji: "🎨", titre: "apparence.titre", desc: "apparence.hint" },
+  { id: "langue", Icone: IconGlobe, titre: "kq.langue.titre", desc: "kq.langue.desc" },
+  { id: "compte", Icone: IconProfil, titre: "kq.compte.titre", desc: "kq.cat.compteDesc" },
+  { id: "imprimante", Icone: IconImprimante, titre: "kq.imp.titre", desc: "kq.cat.imprimanteDesc", seulementApp: true },
+  { id: "windows", Icone: IconEcran, titre: "kq.win.titre", desc: "kq.win.desc", seulementWindows: true },
+  { id: "securite", Icone: IconCadenas, titre: "kq.cat.securite", desc: "kq.cat.securiteDesc" },
+  { id: "apparence", Icone: IconPalette, titre: "apparence.titre", desc: "apparence.hint" },
 ];
 
 // Réglages de la tablette : langue, compte, imprimante, verrouillage, thème (+ accent). Mémorisés sur la tablette seulement.
@@ -129,7 +130,7 @@ export default function KiosqueReglages() {
   return (
     <div className="wrap" style={{ maxWidth: "720px", padding: "28px 16px 60px" }}>
       <button type="button" className="admin-icon-btn" style={{ display: "inline-flex", gap: "6px", marginBottom: "14px" }} onClick={retour}>
-        <IconFlecheGauche className="gozly-icon" /> {t("retour")}
+        <Pictos texte={t("retour")} />
       </button>
       <h2>{categorie ? t(categorie.titre) : t("kq.reglages.titre")}</h2>
 
@@ -145,12 +146,12 @@ export default function KiosqueReglages() {
           <div className="moi-settings-list">
             {CATEGORIES.filter((c) => (!c.seulementApp || dansApp) && (!c.seulementWindows || dansWindows)).map((c) => (
               <button key={c.id} type="button" className="moi-settings-item" onClick={() => setVue(c.id)}>
-                <span className="moi-settings-item-emoji">{c.emoji}</span>
+                <span className="moi-settings-item-emoji"><c.Icone className="gozly-icon" /></span>
                 <span className="moi-settings-item-text">
                   <strong>{t(c.titre)}</strong>
                   <span>{t(c.desc)}</span>
                 </span>
-                <span className="moi-settings-item-chevron">›</span>
+                <span className="moi-settings-item-chevron"><IconFlecheDroite className="gozly-icon" /></span>
               </button>
             ))}
           </div>

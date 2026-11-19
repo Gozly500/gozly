@@ -7,6 +7,7 @@ import { resoudreEntrepriseActive } from "@/lib/entreprise";
 import { derniereFermeture } from "@/lib/horairesOuverture";
 import { useLangue } from "@/components/moi/LangueContext";
 import { kiosqueEpingle } from "@/lib/kiosqueEpingle";
+import { IconCadenas } from "@/components/icons/Pictogrammes";
 import {
   deverrouiller,
   effacerVerrouNip,
@@ -170,7 +171,7 @@ export default function EcranVerrouillageNip() {
           cursor: "pointer",
         }}
       >
-        🔒
+        <IconCadenas className="gozly-icon" />
       </button>
     );
   }
@@ -183,7 +184,7 @@ export default function EcranVerrouillageNip() {
       aria-modal="true"
       style={{ position: "fixed", inset: 0, zIndex: 10000, background: "var(--navy, #0b0b2e)", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "18px", padding: "24px", touchAction: "manipulation", userSelect: "none" }}
     >
-      <div style={{ fontSize: "38px" }}>🔒</div>
+      <div style={{ fontSize: "38px" }}><IconCadenas className="gozly-icon" style={{ width: "1em", height: "1em" }} /></div>
       <h2 style={{ margin: 0 }}>{t("kq.nip.titre")}</h2>
       <p style={{ margin: 0, color: erreur ? "#ff9494" : "var(--text-dim, #b9b9d9)", minHeight: "24px", textAlign: "center" }}>
         {enPause ? t("kq.nip.pause", { s: secondesRestantes }) : erreur ? t("kq.nip.mauvais") : t("kq.nip.entre")}

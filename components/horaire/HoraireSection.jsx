@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import SimpleSelect from "@/components/SimpleSelect";
-import { IconCrochet, IconDocument, IconEtoile, IconEtoilePleine, IconFlecheDroite, IconFlecheGauche, IconMegaphone } from "@/components/icons/Pictogrammes";
+import { IconCrochet, IconTelecharger, IconEtoile, IconEtoilePleine, IconFlecheDroite, IconFlecheGauche, IconMegaphone } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 
@@ -355,7 +355,7 @@ export default function HoraireSection({ entrepriseId }) {
           {favoris.includes(toISODate(weekStart)) ? <IconEtoilePleine className="gozly-icon" /> : <IconEtoile className="gozly-icon" />}
         </button>
         <button className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={openImportModal}>
-          <IconDocument className="gozly-icon" />{" "}{t("Importer une semaine")}
+          <IconTelecharger className="gozly-icon" />{" "}{t("Importer une semaine")}
         </button>
         <button
           className="submit-btn"

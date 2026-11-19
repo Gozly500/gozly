@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/components/LangProvider";
 import { ALPHABET, LETTRES_DIFFICILES, DUREES, CLE_STOCKAGE, PRESETS, presetCategories, formatTemps } from "@/lib/scattegories";
 import { useSalleHote } from "@/lib/useSalleHote";
+import { IconX } from "@/components/icons/Pictogrammes";
 
 // Jeu Scattegories (refait pour gozly.net) : une lettre, des catégories, un compte à rebours.
 // Mode solo par défaut ; "Multijoueur" ouvre une salle (code) où les joueurs répondent depuis leur téléphone.
@@ -440,7 +441,7 @@ export default function ScattegoriesGame() {
                   <span className="scat-num">{i + 1}</span>
                   <span className="scat-nom">{c}</span>
                   <button type="button" className="scat-retirer" aria-label={t("scat.retirer")} title={t("scat.retirer")} onClick={() => modifier(categories.filter((_, k) => k !== i))}>
-                    ×
+                    <IconX className="gozly-icon" />
                   </button>
                 </li>
               ))}

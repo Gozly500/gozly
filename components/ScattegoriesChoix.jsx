@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/LangProvider";
 import { normaliserCode } from "@/lib/scattegoriesRoom";
+import { IconFlecheDroite, IconTelephone } from "@/components/icons/Pictogrammes";
 
 // Page d'entrée de Scattegories : on choisit d'animer la partie (maître du jeu) ou de rejoindre avec un code.
 export default function ScattegoriesChoix() {
@@ -32,12 +33,12 @@ export default function ScattegoriesChoix() {
         </span>
         <h2>{t("scat.maitre")}</h2>
         <p>{t("scat.maitreSous")}</p>
-        <span className="scat-choix-go">{t("scat.commencer")} →</span>
+        <span className="scat-choix-go">{t("scat.commencer")} <IconFlecheDroite className="gozly-icon" /></span>
       </Link>
 
       <form className="scat-choix-carte scat-choix-joueur" onSubmit={rejoindre}>
         <span className="scat-choix-icone" aria-hidden="true">
-          📱
+          <IconTelephone className="gozly-icon" />
         </span>
         <h2>{t("scat.rejoindre")}</h2>
         <p>{t("scat.joueurSous")}</p>

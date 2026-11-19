@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import SimpleSelect from "@/components/SimpleSelect";
 import { rechargerForfaits } from "@/lib/useForfaits";
 import { MODULES } from "@/lib/modules";
-import { IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import { IconFlecheDroite, IconCrochet } from "@/components/icons/Pictogrammes";
 
 const PERIODES = [
   { id: "mensuel", label: "Mensuel" },
@@ -128,7 +128,7 @@ function ChampsAvantages({ valeur, onChange }) {
             const coche = valeur.autorises.includes(m.id);
             return (
               <button key={m.id} type="button" className={`abo-module${coche ? " actif" : ""}`} onClick={() => bascule(m.id)} aria-pressed={coche}>
-                <span className="abo-module-case">{coche ? "✓" : ""}</span>
+                <span className="abo-module-case">{coche ? <IconCrochet className="gozly-icon" /> : ""}</span>
                 {m.nom}
               </button>
             );

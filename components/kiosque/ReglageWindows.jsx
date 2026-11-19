@@ -5,6 +5,7 @@ import { useLangue } from "@/components/moi/LangueContext";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
 import { pontWindows } from "@/lib/appareilWindows";
 import { saisieGozlyActive } from "@/lib/saisieGozly";
+import { IconHautParleur, IconCadenas, IconWifi, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 // Réglages de l'appareil dans l'app Windows du kiosque (le kiosque est en plein écran : on n'a plus accès à Windows) :
 // volume, luminosité, Bluetooth, Wi-Fi, et les paramètres de Windows eux-mêmes avec le code administrateur de Gozly.
@@ -218,7 +219,7 @@ export default function ReglageWindows() {
                 {appareilsBt.length === 0 && <p className="panel-hint">{t("kq.win.btAucun")}</p>}
                 {appareilsBt.map((a) => (
                   <div key={a.id} className="moi-settings-item" style={{ cursor: "default" }}>
-                    <span className="moi-settings-item-emoji">🎧</span>
+                    <span className="moi-settings-item-emoji"><IconHautParleur className="gozly-icon" /></span>
                     <span className="moi-settings-item-text">
                       <strong>{a.nom}</strong>
                       <span>{a.jumele ? t("kq.win.btJumeleTag") : t("kq.win.btProche")}</span>
@@ -256,7 +257,7 @@ export default function ReglageWindows() {
                 onClick={() => toucherReseau(r)}
                 style={r.ssid === wifi.ssid ? { borderColor: "#7ee2a8" } : undefined}
               >
-                <span className="moi-settings-item-emoji">{r.securise ? "🔒" : "📶"}</span>
+                <span className="moi-settings-item-emoji">{r.securise ? <IconCadenas className="gozly-icon" /> : <IconWifi className="gozly-icon" />}</span>
                 <span className="moi-settings-item-text">
                   <strong>{r.ssid}</strong>
                   <span>
@@ -265,7 +266,7 @@ export default function ReglageWindows() {
                     {!r.pris_en_charge ? ` · ${t("kq.win.nonSupporte")}` : ""}
                   </span>
                 </span>
-                <span className="moi-settings-item-chevron">›</span>
+                <span className="moi-settings-item-chevron"><IconFlecheDroite className="gozly-icon" /></span>
               </button>
             ))}
           </div>

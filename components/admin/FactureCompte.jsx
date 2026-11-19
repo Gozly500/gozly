@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { IconX } from "@/components/icons/Pictogrammes";
 
 async function authFetch(path, options = {}) {
   const { data: sessionData } = await supabase.auth.getSession();
@@ -100,7 +101,7 @@ export default function FactureCompte({ compte }) {
           </div>
           {lignes.length > 1 && (
             <button type="button" className="admin-icon-btn" onClick={() => setLignes((ls) => ls.filter((_, j) => j !== i))} aria-label="Retirer la ligne">
-              ✕
+              <IconX className="gozly-icon" />
             </button>
           )}
         </div>

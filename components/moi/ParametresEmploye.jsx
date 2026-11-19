@@ -7,6 +7,8 @@ import { LANGUES } from "@/lib/i18n/moi";
 import { employeFetch, clearEmployeToken } from "@/lib/employeAuth";
 import Avatar from "@/components/Avatar";
 import BetaBadge from "@/components/BetaBadge";
+import { IconLocalisation, IconPalette, IconCloche, IconCarte, IconGlobe, IconFlecheDroite } from "@/components/icons/Pictogrammes";
+import Pictos from "@/components/icons/Pictos";
 
 // Cas rencontré en test : un employé a refusé l'accès à la localisation par
 // accident au tout premier pointage mobile, et ne pouvait plus jamais
@@ -55,14 +57,14 @@ function SectionLocalisation({ t }) {
   return (
     <>
       <button type="button" className="moi-settings-item" style={{ cursor: "pointer" }} onClick={tester}>
-        <span className="moi-settings-item-emoji">📍</span>
+        <span className="moi-settings-item-emoji"><IconLocalisation className="gozly-icon" /></span>
         <span className="moi-settings-item-text">
           <strong>{t("parametres.localisationTitre")}</strong>
           <span>
             {etat === "accordee"
-              ? t("localisation.ok")
+              ? <Pictos texte={t("localisation.ok")} />
               : etat === "refusee"
-              ? t("localisation.refusee")
+              ? <Pictos texte={t("localisation.refusee")} />
               : t("parametres.localisationDesc")}
           </span>
         </span>
@@ -81,15 +83,15 @@ function SectionLocalisation({ t }) {
 }
 
 const SECTIONS = [
-  { id: "apparence", emoji: "🎨", titreCle: "parametres.apparenceTitre", descCle: "parametres.apparenceDesc", href: "/moi/parametres/apparence" },
+  { id: "apparence", Icone: IconPalette, titreCle: "parametres.apparenceTitre", descCle: "parametres.apparenceDesc", href: "/moi/parametres/apparence" },
   {
     id: "notifications",
-    emoji: "🔔",
+    Icone: IconCloche,
     titreCle: "parametres.notificationsTitre",
     descCle: "parametres.notificationsDesc",
     href: "/moi/parametres/notifications",
   },
-  { id: "paie", emoji: "💰", titreCle: "parametres.paieTitre", descCle: "parametres.paieDesc", href: "/moi/parametres/paie" },
+  { id: "paie", Icone: IconCarte, titreCle: "parametres.paieTitre", descCle: "parametres.paieDesc", href: "/moi/parametres/paie" },
 ];
 
 export default function ParametresEmploye() {
@@ -127,21 +129,21 @@ export default function ParametresEmploye() {
             </strong>
             <span>{t("parametres.avatarDesc")}</span>
           </span>
-          <span className="moi-settings-item-chevron">›</span>
+          <span className="moi-settings-item-chevron"><IconFlecheDroite className="gozly-icon" /></span>
         </button>
         {SECTIONS.map((s) => (
           <button key={s.id} type="button" className="moi-settings-item" onClick={() => router.push(s.href)}>
-            <span className="moi-settings-item-emoji">{s.emoji}</span>
+            <span className="moi-settings-item-emoji"><s.Icone className="gozly-icon" /></span>
             <span className="moi-settings-item-text">
               <strong>{t(s.titreCle)}</strong>
               <span>{t(s.descCle)}</span>
             </span>
-            <span className="moi-settings-item-chevron">›</span>
+            <span className="moi-settings-item-chevron"><IconFlecheDroite className="gozly-icon" /></span>
           </button>
         ))}
 
         <div className="moi-settings-item" style={{ cursor: "default" }}>
-          <span className="moi-settings-item-emoji">🌐</span>
+          <span className="moi-settings-item-emoji"><IconGlobe className="gozly-icon" /></span>
           <span className="moi-settings-item-text">
             <strong>{t("parametres.langueTitre")}</strong>
             <span>{t("parametres.langueDesc")}</span>

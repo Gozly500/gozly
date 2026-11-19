@@ -845,7 +845,7 @@ section{padding:80px 0;position:relative;}
 
 .price-card ul{list-style:none;color:var(--text-dim);font-size:13.5px;line-height:2.1;margin-bottom:26px;flex:1;}
 
-.price-card ul li::before{content:'';display:inline-block;width:11px;height:11px;margin-right:8px;background:var(--cyan);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 760 924'%3E%3Cpath d='M983.736,191.167L590.551,934.193L404.795,632.339' transform='translate(-211 -110) translate(-104 9)' fill='none' stroke='black' stroke-width='180' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 760 924'%3E%3Cpath d='M983.736,191.167L590.551,934.193L404.795,632.339' transform='translate(-211 -110) translate(-104 9)' fill='none' stroke='black' stroke-width='180' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;}
+.price-card ul li::before{content:'';display:inline-block;width:11px;height:11px;margin-right:8px;background:var(--cyan);-webkit-mask:url("/pictos/crochet.svg") center/contain no-repeat;mask:url("/pictos/crochet.svg") center/contain no-repeat;}
 
 .price-btn{
     text-align:center;padding:12px;border-radius:30px;font-weight:600;font-size:14px;
@@ -1637,8 +1637,7 @@ input[type="checkbox"]:not(.switch input):checked{
     background:var(--violet);border-color:var(--violet);
   }
 input[type="checkbox"]:not(.switch input):checked::after{
-    content:'';position:absolute;left:6px;top:2px;width:5px;height:10px;
-    border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);
+    content:'';position:absolute;inset:2px;background:#fff;-webkit-mask:url("/pictos/crochet.svg") center/contain no-repeat;mask:url("/pictos/crochet.svg") center/contain no-repeat;
   }
 input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
 
@@ -4722,3 +4721,15 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) :is(.widget-card.drag-o
 .demo-bandeau-point{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px rgba(242,146,90,0.25);}
 .demo-bandeau .admin-icon-btn{padding:6px 14px;font-size:12px;}
 @media (max-width:640px){.demo-bandeau{left:12px;right:12px;transform:none;white-space:normal;flex-wrap:wrap;justify-content:center;border-radius:20px;}}
+
+/* Pictogrammes du pack dans les endroits où il y avait des symboles texte (tailles) */
+.moi-settings-item-emoji .gozly-icon{width:22px;height:22px;}
+.moi-settings-item-chevron .gozly-icon{width:16px;height:16px;}
+.sg-panneau button.sg-touche .gozly-icon{width:24px;height:24px;}
+.sg-panneau button.sg-fleche .gozly-icon{width:26px;height:26px;}
+.scat-choix-icone .gozly-icon{width:54px;height:54px;}
+.scat-retirer .gozly-icon{width:16px;height:16px;}
+.dash-annonce-fermer .gozly-icon{width:16px;height:16px;}
+.mkp-chevron .gozly-icon{width:17px;height:17px;}
+.inst-ok .gozly-icon{width:26px;height:26px;}
+.abo-module-case .gozly-icon{width:14px;height:14px;}

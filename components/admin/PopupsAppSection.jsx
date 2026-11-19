@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import PopupMiseAJour from "@/components/PopupMiseAJour";
+import { IconCrochet } from "@/components/icons/Pictogrammes";
 
 async function jeton(ref) {
   // getSession peut rester bloqué (verrou d'auth) : on retombe sur le dernier jeton connu.
@@ -173,7 +174,7 @@ export default function PopupsAppSection() {
                 Français
               </button>
               <button type="button" className={en ? "actif" : ""} aria-pressed={en} onClick={() => setLangueForm("en")}>
-                English{form.titreEn ? " ✓" : " (facultatif)"}
+                English{form.titreEn ? <> <IconCrochet className="gozly-icon" /></> : " (facultatif)"}
               </button>
             </div>
             {en && <p className="aide-note" style={{ marginTop: "8px" }}>Les personnes dont l'app est en anglais verront cette version. Sans version anglaise, elles verront la française.</p>}

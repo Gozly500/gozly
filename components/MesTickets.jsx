@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useT } from "@/components/LangProvider";
+import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 const TXT = {
   fr: {
@@ -229,7 +230,7 @@ export default function MesTickets() {
             </button>
           </div>
           <p className="aide-note">
-            {T.aideLien} <Link href="/aide">→</Link>
+            {T.aideLien} <Link href="/aide"><IconFlecheDroite className="gozly-icon" /></Link>
           </p>
           {erreur && <p className="settings-msg err">{erreur}</p>}
           {tickets.length === 0 && !erreur && (
@@ -271,7 +272,7 @@ export default function MesTickets() {
       {etape === "ticket" && ouvert && (
         <div className="aide-carte">
           <button type="button" className="admin-icon-btn" onClick={retourListe} style={{ marginBottom: "14px" }}>
-            ← {T.retour}
+            <IconFlecheGauche className="gozly-icon" /> {T.retour}
           </button>
           <h2 style={{ margin: "0 0 4px" }}>{ouvert.ticket.sujet}</h2>
           <div className="admin-row-sub" style={{ marginBottom: "16px" }}>

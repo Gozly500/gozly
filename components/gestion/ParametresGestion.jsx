@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useGestion } from "@/components/gestion/GestionShell";
 import { useT } from "@/components/LangProvider";
 import { LANG_COOKIE } from "@/lib/i18n/site";
+import { IconCadenas, IconClef, IconGlobe, IconMaison, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 
 const LANGUES = [
   { id: "fr", label: "FR" },
@@ -41,27 +42,27 @@ export default function ParametresGestion() {
 
       <div className="moi-settings-list">
         <button type="button" className="moi-settings-item" onClick={() => router.push("/gestion/securite")}>
-          <span className="moi-settings-item-emoji">🔒</span>
+          <span className="moi-settings-item-emoji"><IconCadenas className="gozly-icon" /></span>
           <span className="moi-settings-item-text">
             <strong>{t("Sécurité")}</strong>
             <span>{t("Double authentification")}</span>
           </span>
-          <span className="moi-settings-item-chevron">›</span>
+          <span className="moi-settings-item-chevron"><IconFlecheDroite className="gozly-icon" /></span>
         </button>
 
         {aCodes && (
           <button type="button" className="moi-settings-item" onClick={() => router.push("/gestion/codes")}>
-            <span className="moi-settings-item-emoji">🔑</span>
+            <span className="moi-settings-item-emoji"><IconClef className="gozly-icon" /></span>
             <span className="moi-settings-item-text">
               <strong>{t("Mes codes")}</strong>
               <span>{t("Le code à entrer pour te connecter")}</span>
             </span>
-            <span className="moi-settings-item-chevron">›</span>
+            <span className="moi-settings-item-chevron"><IconFlecheDroite className="gozly-icon" /></span>
           </button>
         )}
 
         <div className="moi-settings-item" style={{ cursor: "default" }}>
-          <span className="moi-settings-item-emoji">🌐</span>
+          <span className="moi-settings-item-emoji"><IconGlobe className="gozly-icon" /></span>
           <span className="moi-settings-item-text">
             <strong>{t("Langue")}</strong>
           </span>
@@ -83,11 +84,11 @@ export default function ParametresGestion() {
 
         {plusieursEntreprises && (
           <button type="button" className="moi-settings-item" onClick={() => router.push("/dashboards?retour=/gestion")}>
-            <span className="moi-settings-item-emoji">🏢</span>
+            <span className="moi-settings-item-emoji"><IconMaison className="gozly-icon" /></span>
             <span className="moi-settings-item-text">
               <strong>{t("Changer d'entreprise")}</strong>
             </span>
-            <span className="moi-settings-item-chevron">›</span>
+            <span className="moi-settings-item-chevron"><IconFlecheDroite className="gozly-icon" /></span>
           </button>
         )}
       </div>

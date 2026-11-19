@@ -12,27 +12,9 @@ import { IconFlecheBas, IconFlecheDroite, IconFlecheGauche, IconFlecheHaut, Icon
 import { IconMusique } from "@/components/icons/GozlyIcons";
 import { logoPlateforme } from "@/lib/plateformesMusique";
 import Curseur from "@/components/CurseurVolume";
+import { IconLecture as Lecture, IconPause as Pause, IconPrecedent as Precedent, IconSuivant as Suivant, IconMoins as Moins, IconPlus as Plus, IconCorbeille as Poubelle, IconHautParleur as HautParleur, IconHautParleurBarre as Muet } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 
-const Svg = ({ children, ...p }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...p}>
-    {children}
-  </svg>
-);
-const Trait = ({ children, ...p }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...p}>
-    {children}
-  </svg>
-);
-const Lecture = (p) => <Svg {...p}><path d="M8 5v14l11-7z" /></Svg>;
-const Pause = (p) => <Svg {...p}><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></Svg>;
-const Precedent = (p) => <Svg {...p}><path d="M6 5h2v14H6zM20 5v14L9 12z" /></Svg>;
-const Suivant = (p) => <Svg {...p}><path d="M16 5h2v14h-2zM4 5l11 7-11 7z" /></Svg>;
-const Moins = (p) => <Trait {...p}><path d="M5 12h14" /></Trait>;
-const Plus = (p) => <Trait {...p}><path d="M12 5v14M5 12h14" /></Trait>;
-const Poubelle = (p) => <Trait {...p}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></Trait>;
-const HautParleur = (p) => <Trait {...p}><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12" /></Trait>;
-const Muet = (p) => <Trait {...p}><path d="M4 9v6h4l5 4V5L8 9H4z" /><path d="M17 9l5 6M22 9l-5 6" /></Trait>;
 
 const PAS_VOLUME = 5;
 

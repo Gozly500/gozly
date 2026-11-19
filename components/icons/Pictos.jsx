@@ -3,6 +3,7 @@ import { IconCrochet, IconX, IconHorloge, IconTelecharger, IconFlecheGauche, Ico
 // Textes traduits qui commencent par un émoji / symbole (« ✅ Approuvé », « ‹ Retour »...) : l'émoji est
 // remplacé par le pictogramme correspondant de la bibliothèque, le reste du texte est inchangé.
 const PICTOS = {
+  "←": IconFlecheGauche,
   "✅": IconCrochet,
   "❌": IconX,
   "⏳": IconHorloge,

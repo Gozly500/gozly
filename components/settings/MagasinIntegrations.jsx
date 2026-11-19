@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { IconLoupe } from "@/components/icons/Pictogrammes";
+import { IconLoupe, IconCrochet } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import LogoIntegration from "@/components/settings/LogoIntegration";
 import { PERMISSIONS_APP } from "@/lib/appsDeveloppeur";
@@ -94,10 +94,7 @@ export default function MagasinIntegrations({ installees, onInstaller, onRetirer
               <div key={i.id} className={`magasin-carte${installee ? " installee" : ""}${i.disponible ? "" : " bientot"}`}>
                 {etape === "ok" && (
                   <div className="magasin-succes" role="status">
-                    <svg viewBox="0 0 52 52" className="magasin-coche" aria-hidden="true">
-                      <circle className="magasin-coche-cercle" cx="26" cy="26" r="23" fill="none" />
-                      <path className="magasin-coche-trait" fill="none" d="M15 27l8 8 14-16" />
-                    </svg>
+                    <IconCrochet className="magasin-coche" style={{ color: "#7ee787" }} aria-hidden="true" />
                     <strong>{t("{nom} est installée !", { nom: i.nom })}</strong>
                   </div>
                 )}

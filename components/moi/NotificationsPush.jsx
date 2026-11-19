@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { employeFetch } from "@/lib/employeAuth";
 import { useLangue } from "@/components/moi/LangueContext";
+import Pictos from "@/components/icons/Pictos";
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -155,11 +156,11 @@ export default function NotificationsPush() {
     <div className="moi-notifications-bar">
       {statut === "actif" ? (
         <button type="button" className="admin-icon-btn" onClick={desactiver} disabled={busy}>
-          {t("push.actif")}
+          <Pictos texte={t("push.actif")} />
         </button>
       ) : (
         <button type="button" className="admin-icon-btn" onClick={activer} disabled={busy}>
-          {statut === "erreur" ? t("push.reessayer") : t("push.activer")}
+          {statut === "erreur" ? t("push.reessayer") : <Pictos texte={t("push.activer")} />}
         </button>
       )}
     </div>

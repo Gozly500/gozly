@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/components/LangProvider";
+import { IconPoignee } from "@/components/icons/Pictogrammes";
 
 const MARGE_DEFILEMENT = 80; // px du bord de l'écran où la page se met à défiler
 const VITESSE_DEFILEMENT = 14;
@@ -144,14 +145,7 @@ export default function ListeReordonnable({ items, getId, onReorder, renderItem,
               onPointerCancel={() => fin(false)}
               onKeyDown={(e) => auClavier(e, index)}
             >
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
-                <circle cx="9" cy="6" r="1.8" />
-                <circle cx="15" cy="6" r="1.8" />
-                <circle cx="9" cy="12" r="1.8" />
-                <circle cx="15" cy="12" r="1.8" />
-                <circle cx="9" cy="18" r="1.8" />
-                <circle cx="15" cy="18" r="1.8" />
-              </svg>
+              <IconPoignee width="22" height="22" aria-hidden="true" />
             </button>
           ),
         };

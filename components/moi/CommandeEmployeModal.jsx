@@ -6,7 +6,7 @@ import { useLangue } from "@/components/moi/LangueContext";
 import { formatMontant } from "@/lib/commandes";
 import { formaterTelephone } from "@/lib/telephone";
 import { separerVariante, produitIdWix, versIsoQuebec, dateHeureQuebec } from "@/lib/commandesManuelles";
-import { IconFlecheDroite, IconFlecheGauche, IconX } from "@/components/icons/Pictogrammes";
+import { IconFlecheDroite, IconFlecheGauche, IconX, IconCrochet } from "@/components/icons/Pictogrammes";
 import { SaisieGozly, ChampGozly } from "@/components/saisie/SaisieGozly";
 import CatalogueCommande from "@/components/commandes/CatalogueCommande";
 
@@ -302,7 +302,7 @@ export default function CommandeEmployeModal({ dateParDefaut, onClose, onSaved, 
                     setPlage((p) => !p);
                   }}
                 >
-                  {plage ? "✓ " : ""}{t("sg.plage")}
+                  {plage ? <><IconCrochet className="gozly-icon" />{" "}</> : ""}{t("sg.plage")}
                 </button>
                 {plage && (
                   <div style={{ flex: 1, minWidth: 0 }}>

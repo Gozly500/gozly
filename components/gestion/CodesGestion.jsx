@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { lireSecretGozly, effacerSecretGozly } from "@/lib/codesGozly";
 import CodeVivant from "@/components/CodeVivant";
 import { useT } from "@/components/LangProvider";
+import { IconFlecheGauche } from "@/components/icons/Pictogrammes";
 
 // « Mes codes » : le code à 6 chiffres de la méthode « App Gozly », à entrer sur l'écran de connexion (dashboard, ordinateur).
 // Il change toutes les 30 secondes, comme dans Google Authenticator. L'écran de connexion de Gozly l'affiche aussi sur
@@ -47,7 +48,7 @@ export default function CodesGestion() {
   return (
     <div className="gestion-section">
       <Link href="/gestion/parametres" className="retour-parametres">
-        ‹ {t("Paramètres")}
+        <IconFlecheGauche className="gozly-icon" /> {t("Paramètres")}
       </Link>
       <h2 style={{ marginBottom: "4px" }}>{t("Mes codes")}</h2>
       {etat === "aucun" ? (
