@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useFermerAuClicExterieur } from "@/lib/useFermerAuClicExterieur";
-import { IconFlecheBas, IconFlecheGauche, IconTelecharger, IconRafraichir } from "@/components/icons/Pictogrammes";
+import { IconFlecheBas, IconFlecheGauche, IconTelecharger, IconRafraichir, IconCorbeille } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 import { telechargerFichier } from "@/lib/temperature";
@@ -32,6 +32,7 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
   const [occupe, setOccupe] = useState(null);
   const [entrepriseNom, setEntrepriseNom] = useState("");
   const [exportOuvert, setExportOuvert] = useState(false);
+  const [confirmerSuppr, setConfirmerSuppr] = useState(false);
   const exportRef = useRef(null);
   useFermerAuClicExterieur(exportRef, exportOuvert, () => setExportOuvert(false));
 
@@ -135,6 +136,23 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
     setOccupe(null);
   }
 
+  // Supprime le résumé de cette journée (les transactions ne sont de toute façon pas gardées) ; on peut la réimporter.
+  async function supprimerImport() {
+    if (!jour) return;
+    setOccupe("suppression");
+    const { error } = await supabase.from("ventes_jours").delete().eq("id", jour.id);
+    setOccupe(null);
+    if (error) {
+      setMsg({ type: "err", text: t("La suppression a échoué.") });
+      return;
+    }
+    try {
+      window.sessionStorage.removeItem(cleCache);
+    } catch {}
+    onChange?.();
+    onRetour();
+  }
+
   async function exporter(format) {
     setExportOuvert(false);
     if (!jour || !transactions) return;
@@ -166,6 +184,20 @@ export default function VentesJour({ entrepriseId, date, onRetour, onChange }) {
           <button type="button" className="admin-icon-btn" onClick={reimporter} disabled={occupe === "import"}>
             <IconRafraichir className="gozly-icon" /> {occupe === "import" ? t("Import en cours...") : t("Actualiser depuis Wix")}
           </button>
+          {confirmerSuppr ? (
+            <>
+              <button type="button" className="admin-icon-btn danger" onClick={supprimerImport} disabled={occupe === "suppression"}>
+                {occupe === "suppression" ? "..." : t("Confirmer la suppression")}
+              </button>
+              <button type="button" className="admin-icon-btn" onClick={() => setConfirmerSuppr(false)}>
+                {t("Annuler")}
+              </button>
+            </>
+          ) : (
+            <button type="button" className="admin-icon-btn danger" onClick={() => setConfirmerSuppr(true)} disabled={!jour}>
+              <IconCorbeille className="gozly-icon" /> {t("Supprimer l'import")}
+            </button>
+          )}
           <div className="account-wrap" ref={exportRef}>
             <button type="button" className="admin-icon-btn" onClick={() => setExportOuvert((v) => !v)} disabled={!jour || !transactions || occupe === "pdf"}>
               <IconTelecharger className="gozly-icon" /> {occupe === "pdf" ? "PDF..." : t("Exporter")} <IconFlecheBas className="gozly-icon-inline" />
