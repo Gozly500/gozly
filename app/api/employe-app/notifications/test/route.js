@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 import { envoyerTestPush } from "@/lib/pushServer";
+import { envoyerTestNatif } from "@/lib/pushNatif";
 import { enHeuresCalmes } from "@/lib/heuresCalmes";
 
 // Diagnostic des notifications de l'employé : envoie un test à son appareil et renvoie ce que le serveur sait
@@ -24,5 +25,7 @@ export async function POST(request) {
     .maybeSingle();
   if (!erreurCalmes && calmes) heuresCalmes = enHeuresCalmes(calmes);
 
-  return NextResponse.json({ ...test, notifMessages: prefs?.notif_messages !== false, heuresCalmes });
+  const natif = await envoyerTestNatif(service, employe.id);
+
+  return NextResponse.json({ ...test, natif, notifMessages: prefs?.notif_messages !== false, heuresCalmes });
 }
