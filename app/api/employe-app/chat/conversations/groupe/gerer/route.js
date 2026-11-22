@@ -80,7 +80,7 @@ export async function GET(request) {
   const liste = membres
     .map((p) =>
       p.employe_id
-        ? { id: p.employe_id, type: "employe", nom: employes?.find((e) => e.id === p.employe_id)?.nom || "Employé", avatar: employes?.find((e) => e.id === p.employe_id)?.avatar || null, estAdmin: !!p.est_admin, moi: p.employe_id === employe.id }
+        ? { id: p.employe_id, type: "employe", nom: employes?.find((e) => e.id === p.employe_id)?.nom || "Employé", avatar: employes?.find((e) => e.id === p.employe_id)?.avatar || null, emoji: employes?.find((e) => e.id === p.employe_id)?.emoji || null, estAdmin: !!p.est_admin, moi: p.employe_id === employe.id }
         : { id: p.user_id, type: "admin", nom: profils?.find((x) => x.id === p.user_id)?.full_name || "Administration", avatar: profils?.find((x) => x.id === p.user_id)?.avatar || null, estAdmin: true, moi: false }
     )
     .sort((a, b) => Number(b.estAdmin) - Number(a.estAdmin) || a.nom.localeCompare(b.nom));

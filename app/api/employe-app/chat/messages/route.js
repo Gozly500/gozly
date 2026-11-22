@@ -84,6 +84,7 @@ async function resoudreNoms(service, messages, employeIdCourant) {
       createdAt: m.created_at,
       expediteurNom: expediteurNom(m),
       expediteurAvatar: expediteurAvatar(m),
+      expediteurEmoji: m.employe_id ? employes?.find((e) => e.id === m.employe_id)?.emoji || null : null,
       deMoi: m.employe_id === employeIdCourant,
       demandeEchangeId: m.demande_echange_id || null,
       systeme: m.systeme || null, // message d'information d'un groupe (quitté, ajouté…)
