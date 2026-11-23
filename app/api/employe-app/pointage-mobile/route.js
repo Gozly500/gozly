@@ -176,8 +176,14 @@ export async function POST(request) {
     return NextResponse.json({ error: "Succursale invalide." }, { status: 403 });
   }
 
+  // Entreprise de démonstration (ex. le compte de test de la révision Google Play) : pas de vérification de distance.
+  // Colonne entreprises.mode_demo (supabase/entreprises_mode_demo.sql), activée à la main ; lue à part pour que le pointage continue de
+  // fonctionner tant que le SQL n'est pas exécuté.
+  const { data: ligneDemo, error: erreurDemo } = await service.from("entreprises").select("mode_demo").eq("id", employe.entreprise_id).maybeSingle();
+  const modeDemo = !erreurDemo && ligneDemo?.mode_demo === true;
+
   const distance = distanceMetres(latitude, longitude, emplacement.latitude, emplacement.longitude);
-  if (distance > RAYON_MAX_METRES) {
+  if (!modeDemo && distance > RAYON_MAX_METRES) {
     return NextResponse.json(
       { error: `Tu sembles trop loin de ${emplacement.nom} pour pointer depuis l'app.` },
       { status: 400 }
