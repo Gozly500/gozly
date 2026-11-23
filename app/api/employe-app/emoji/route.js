@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/adminServer";
 import { getBearerToken, verifierSession } from "@/lib/employeSession";
 
-// Émoji de profil de l'employé connecté (supabase/employe_emoji.sql). `emoji: null` le retire.
+// Émoji de profil de l'employé connecté (supabase/employe_emoji.sql). GET : le lire ; POST avec `emoji: null` : le retirer.
+export async function GET(request) {
+  const employe = await verifierSession(getBearerToken(request));
+  if (!employe) return NextResponse.json({ error: "Session invalide." }, { status: 401 });
+  return NextResponse.json({ nom: employe.nom, emoji: employe.emoji || null });
+}
+
 export async function POST(request) {
   const employe = await verifierSession(getBearerToken(request));
   if (!employe) return NextResponse.json({ error: "Session invalide." }, { status: 401 });

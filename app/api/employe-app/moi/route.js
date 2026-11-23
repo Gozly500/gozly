@@ -19,7 +19,7 @@ export async function GET(request) {
   ]);
 
   return NextResponse.json({
-    employe: { id: employe.id, nom: employe.nom, avatar: employe.avatar || null, emoji: employe.emoji || null },
+    employe: { id: employe.id, nom: employe.nom, emoji: employe.emoji || null },
     entreprise: {
       nom: entreprise?.nom || "",
       premierJourSemaine: entreprise?.premier_jour_semaine || "lundi",

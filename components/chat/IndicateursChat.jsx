@@ -43,8 +43,8 @@ export function LigneVu({ vu }) {
   );
 }
 
-// avatars : (facultatif) avatar de chaque personne qui écrit, dans le même ordre que `ecrivent`. Sans lui, rien d'autre qu'avant.
-export function IndicateurEcriture({ ecrivent, avatars, textes = TEXTES_FR }) {
+// emojis : (facultatif) émoji de profil de chaque personne qui écrit, dans le même ordre que `ecrivent`. Sans lui, rien d'autre qu'avant.
+export function IndicateurEcriture({ ecrivent, emojis, textes = TEXTES_FR }) {
   if (!ecrivent || ecrivent.length === 0) return null;
   const texte =
     ecrivent.length === 1
@@ -54,10 +54,10 @@ export function IndicateurEcriture({ ecrivent, avatars, textes = TEXTES_FR }) {
         : textes.ecritPlusieurs;
   return (
     <div className="chat-ecrit">
-      {avatars && (
+      {emojis && (
         <span className="chat-ecrit-avatars">
           {ecrivent.slice(0, 3).map((nom, i) => (
-            <Avatar key={nom + i} valeur={avatars[i]} nom={nom} taille={22} />
+            <Avatar key={nom + i} emoji={emojis[i]} nom={nom} taille={22} />
           ))}
         </span>
       )}

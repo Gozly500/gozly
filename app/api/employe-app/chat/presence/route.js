@@ -36,7 +36,7 @@ export async function POST(request) {
     monNom: employe.nom,
     ecrit: typeof ecrit === "boolean" ? ecrit : undefined,
     lu: !!lu,
-    avecAvatars: true,
+    avecEmojis: true,
   });
   return NextResponse.json(etat);
 }

@@ -5,7 +5,7 @@ import { waitUntil } from "@vercel/functions";
 import { notifierNouveauMessage } from "@/lib/pushServer";
 import { reactionsDe } from "@/lib/chatReactions";
 import { chargerRestrictions, conversationDirecteBloquee } from "@/lib/chatRestrictions";
-import { employesAvecAvatar, profilsAvecAvatar } from "@/lib/avatarServeur";
+import { employesAvecEmoji, profilsNoms } from "@/lib/profilsChat";
 
 async function aAcces(service, employe, conversationId) {
   const { data: conversation } = await service
@@ -61,18 +61,12 @@ async function resoudreNoms(service, messages, employeIdCourant) {
   const employeIds = [...new Set(messages.filter((m) => m.employe_id).map((m) => m.employe_id))];
   const userIds = [...new Set(messages.filter((m) => m.user_id).map((m) => m.user_id))];
 
-  const [employes, profils] = await Promise.all([employesAvecAvatar(service, employeIds), profilsAvecAvatar(service, userIds)]);
+  const [employes, profils] = await Promise.all([employesAvecEmoji(service, employeIds), profilsNoms(service, userIds)]);
 
   function expediteurNom(m) {
     if (m.employe_id) return employes?.find((e) => e.id === m.employe_id)?.nom || "Employé";
     if (m.user_id) return profils?.find((p) => p.id === m.user_id)?.full_name || "Administration";
     return "Compte supprimé";
-  }
-
-  function expediteurAvatar(m) {
-    if (m.employe_id) return employes?.find((e) => e.id === m.employe_id)?.avatar || null;
-    if (m.user_id) return profils?.find((p) => p.id === m.user_id)?.avatar || null;
-    return null;
   }
 
   const parId = new Map(messages.map((m) => [m.id, m]));
@@ -83,7 +77,6 @@ async function resoudreNoms(service, messages, employeIdCourant) {
       contenu: m.contenu,
       createdAt: m.created_at,
       expediteurNom: expediteurNom(m),
-      expediteurAvatar: expediteurAvatar(m),
       expediteurEmoji: m.employe_id ? employes?.find((e) => e.id === m.employe_id)?.emoji || null : null,
       deMoi: m.employe_id === employeIdCourant,
       demandeEchangeId: m.demande_echange_id || null,

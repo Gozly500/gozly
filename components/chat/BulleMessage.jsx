@@ -108,7 +108,7 @@ export default function BulleMessage({ m, ouvert, onToggle, onReagir, onRepondre
         <IconRepondre className="gozly-icon" />
       </span>
       <div className="chat-bubble-auteur">
-        {!m.mine && m.nomAvatar && <Avatar valeur={m.avatar} nom={m.nomAvatar} taille={22} className="chat-bubble-avatar" />}
+        {!m.mine && m.nomAvatar && <Avatar emoji={m.emoji} nom={m.nomAvatar} taille={22} className="chat-bubble-avatar" />}
         {m.auteur}
       </div>
       <div

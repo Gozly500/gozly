@@ -21,7 +21,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
   const [messages, setMessages] = useState([]);
   const [texte, setTexte] = useState("");
   const [employes, setEmployes] = useState([]);
-  const [profilsAdmin, setProfilsAdmin] = useState({}); // { [user_id]: { full_name, avatar } } des autres membres de l'administration
+  const [profilsAdmin, setProfilsAdmin] = useState({}); // { [user_id]: { full_name } } des autres membres de l'administration
   const [employeIdsEnDiscussion, setEmployeIdsEnDiscussion] = useState(new Set());
   const [recherche, setRecherche] = useState("");
   const [loading, setLoading] = useState(true);
@@ -52,10 +52,10 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
 
   useEffect(() => {
     chargerConversations();
-    // Avec l'avatar ; tant que supabase/avatars.sql n'est pas exécuté la colonne n'existe pas : on relit sans elle.
+    // Avec l'émoji de profil ; tant que supabase/employe_emoji.sql n'est pas exécuté la colonne n'existe pas : on relit sans elle.
     (async () => {
       const base = () => supabase.from("employes");
-      let { data, error } = await base().select("id, nom, avatar").eq("entreprise_id", entrepriseId).order("nom", { ascending: true });
+      let { data, error } = await base().select("id, nom, emoji").eq("entreprise_id", entrepriseId).order("nom", { ascending: true });
       if (error) ({ data } = await base().select("id, nom").eq("entreprise_id", entrepriseId).order("nom", { ascending: true }));
       setEmployes(data || []);
     })();
@@ -200,11 +200,10 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
       .order("created_at", { ascending: true });
     setMessages(data || []);
 
-    // Avatars des autres membres de l'administration qui ont écrit (les employés viennent de la liste `employes`).
+    // Noms des autres membres de l'administration qui ont écrit (les employés viennent de la liste `employes`).
     const adminIds = [...new Set((data || []).filter((m) => m.user_id && m.user_id !== userId).map((m) => m.user_id))];
     if (adminIds.length > 0) {
-      let { data: profs, error } = await supabase.from("profils").select("id, full_name, avatar").in("id", adminIds);
-      if (error) ({ data: profs } = await supabase.from("profils").select("id, full_name").in("id", adminIds));
+      const { data: profs } = await supabase.from("profils").select("id, full_name").in("id", adminIds);
       setProfilsAdmin(Object.fromEntries((profs || []).map((p) => [p.id, p])));
     }
 
@@ -553,7 +552,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                         m={{
                           id: m.id,
                           auteur: nomExpediteur(m),
-                          avatar: m.employe_id ? employes.find((e) => e.id === m.employe_id)?.avatar || null : profilsAdmin[m.user_id]?.avatar || null,
+                          emoji: m.employe_id ? employes.find((e) => e.id === m.employe_id)?.emoji || null : null,
                           nomAvatar: m.employe_id ? employes.find((e) => e.id === m.employe_id)?.nom || nomExpediteur(m) : profilsAdmin[m.user_id]?.full_name || nomExpediteur(m),
                           mine: m.user_id === userId,
                           contenu: m.contenu,
@@ -578,7 +577,7 @@ export default function DiscussionSection({ entrepriseId, userId, mobile = false
                     );
                   });
                 })()}
-                <IndicateurEcriture ecrivent={presence.ecrivent} avatars={presence.ecriventAvatars} />
+                <IndicateurEcriture ecrivent={presence.ecrivent} emojis={presence.ecriventEmojis} />
                 <div ref={messagesEndRef} />
               </div>
               {repondreA && (

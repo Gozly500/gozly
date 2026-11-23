@@ -148,7 +148,7 @@ function MoiShellReel({ children }) {
     <div className={`moi-shell${estDiscussion ? " moi-shell-chat" : ""}`}>
       <header className="moi-header">
         <button type="button" className="moi-header-identite" onClick={() => router.push("/moi/accueil")}>
-          <Avatar valeur={moi?.employe?.avatar} nom={moi?.employe?.nom} taille={40} />
+          <Avatar emoji={moi?.employe?.emoji} nom={moi?.employe?.nom} taille={40} />
           <span className="moi-header-identite-textes">
             <div className="moi-header-nom">{moi?.employe?.nom}</div>
             <div className="moi-header-entreprise">{moi?.entreprise?.nom}</div>

@@ -739,7 +739,7 @@ export default function DiscussionEmploye() {
                           m={{
                             id: m.id,
                             auteur: m.deMoi ? t("chat.toi") : m.expediteurNom,
-                            avatar: m.deMoi ? null : m.expediteurAvatar,
+                            emoji: m.deMoi ? null : m.expediteurEmoji,
                             nomAvatar: m.expediteurNom,
                             mine: m.deMoi,
                             contenu: m.contenu,
@@ -763,7 +763,7 @@ export default function DiscussionEmploye() {
                       </div>
                       )
                     )}
-                    <IndicateurEcriture ecrivent={presence.ecrivent} avatars={presence.ecriventAvatars} textes={textesChat} />
+                    <IndicateurEcriture ecrivent={presence.ecrivent} emojis={presence.ecriventEmojis} textes={textesChat} />
                   </>
                 );
               })()}
@@ -1056,7 +1056,7 @@ export default function DiscussionEmploye() {
                 <div>
                   {membres.map((mb) => (
                     <div className="chat-membre-row" key={mb.type + mb.id}>
-                      <Avatar valeur={mb.avatar} nom={mb.nom} taille={34} />
+                      <Avatar emoji={mb.emoji} nom={mb.nom} taille={34} />
                       <span className="chat-membre-nom">
                         {mb.nom}
                         {mb.moi ? ` (${String(t("chat.toi")).toLowerCase()})` : ""}

@@ -6,7 +6,6 @@ import { useLangue } from "@/components/moi/LangueContext";
 import { LANGUES } from "@/lib/i18n/moi";
 import { employeFetch, clearEmployeToken } from "@/lib/employeAuth";
 import Avatar from "@/components/Avatar";
-import BetaBadge from "@/components/BetaBadge";
 import { IconLocalisation, IconPalette, IconCloche, IconCarte, IconGlobe, IconFlecheDroite } from "@/components/icons/Pictogrammes";
 import Pictos from "@/components/icons/Pictos";
 
@@ -97,11 +96,11 @@ const SECTIONS = [
 export default function ParametresEmploye() {
   const router = useRouter();
   const { t, langue, setLangue } = useLangue();
-  const [monAvatar, setMonAvatar] = useState({ nom: "", avatar: null });
+  const [monProfil, setMonProfil] = useState({ nom: "", emoji: null });
 
   useEffect(() => {
-    employeFetch("/api/employe-app/avatar")
-      .then(async (res) => res.ok && setMonAvatar(await res.json()))
+    employeFetch("/api/employe-app/emoji")
+      .then(async (res) => res.ok && setMonProfil(await res.json()))
       .catch(() => {});
   }, []);
 
@@ -118,16 +117,15 @@ export default function ParametresEmploye() {
       <h2>{t("parametres.titre")}</h2>
 
       <div className="moi-settings-list">
-        <button type="button" className="moi-settings-item" onClick={() => router.push("/moi/parametres/avatar")}>
+        <button type="button" className="moi-settings-item" onClick={() => router.push("/moi/parametres/emoji")}>
           <span className="moi-settings-item-emoji" style={{ display: "flex" }}>
-            <Avatar valeur={monAvatar.avatar} nom={monAvatar.nom} taille={34} />
+            <Avatar emoji={monProfil.emoji} nom={monProfil.nom} taille={34} />
           </span>
           <span className="moi-settings-item-text">
             <strong>
-              {t("parametres.avatarTitre")}
-              <BetaBadge hauteur={16} />
+              {t("parametres.emojiTitre")}
             </strong>
-            <span>{t("parametres.avatarDesc")}</span>
+            <span>{t("parametres.emojiDesc")}</span>
           </span>
           <span className="moi-settings-item-chevron"><IconFlecheDroite className="gozly-icon" /></span>
         </button>
