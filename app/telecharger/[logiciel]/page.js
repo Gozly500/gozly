@@ -17,7 +17,7 @@ export function generateStaticParams() {
   return Object.values(LOGICIELS).map((l) => ({ logiciel: l.slug }));
 }
 
-const ICONES = { texte: "/logiciels/texte.svg", calky: "/logiciels/calky.svg", kiosque: "/icone-kiosque-512.png", "kiosque-pc": "/icone-kiosque-512.png" };
+const ICONES = { conex: "/logiciels/conex.svg", texte: "/logiciels/texte.svg", calky: "/logiciels/calky.svg", kiosque: "/icone-kiosque-512.png", "kiosque-pc": "/icone-kiosque-512.png" };
 
 // Page d'installation d'un logiciel : on y arrive en cliquant sur « Télécharger ». Le téléchargement démarre ici, et les étapes
 // pour l'installer s'affichent en même temps. Les étapes dépendent de la plateforme (Windows ou Android).
