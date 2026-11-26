@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 import { bloc } from "@/lib/horaireJour";
+import { genreDispo, texteDispo } from "@/lib/disponibilites";
 
 const heuresDe = (liste) => liste.reduce((s, q) => s + bloc(q).a - bloc(q).de, 0) / 60;
 
 // Modèle « Tableau » : les employés en rangées, les jours en colonnes. Un clic sur une case ajoute un quart,
 // un clic sur un bloc le modifie, un clic sur une date ouvre la journée.
-export default function HoraireTableau({ jours, employes, quarts, recherche, onRecherche, onAjouter, onModifier, onDeplacer, onJour }) {
+export default function HoraireTableau({ jours, employes, quarts, recherche, onRecherche, onAjouter, onModifier, onDeplacer, onJour, dispo = () => null }) {
   const { t } = useT();
   const [survol, setSurvol] = useState(null); // case survolée pendant un glisser-déposer
   const total = (liste) => `${heuresDe(liste).toLocaleString(loc(), { maximumFractionDigits: 1 })} h`;
@@ -35,9 +36,11 @@ export default function HoraireTableau({ jours, employes, quarts, recherche, onR
                 <strong title={emp.nom}>{emp.nom}</strong>
                 <span>{total(siens)}</span>
               </div>
-              {jours.map((j) => (
+              {jours.map((j) => {
+                const libre = dispo(emp.id, j.iso);
+                return (
                 <div
-                  className={`htab-case${survol === `${emp.id}|${j.iso}` ? " survol" : ""}`}
+                  className={`htab-case${libre ? " libre" : ""}${genreDispo(libre)}${survol === `${emp.id}|${j.iso}` ? " survol" : ""}`}
                   key={j.iso}
                   onClick={() => onAjouter(emp.id, j.iso)}
                   onDragOver={(e) => {
@@ -74,9 +77,13 @@ export default function HoraireTableau({ jours, employes, quarts, recherche, onR
                         {!q.publie && <span className="horaire-chip-badge">{t("Brouillon")}</span>}
                       </button>
                     ))}
+                  {libre && (
+                    <span className="htab-dispo" title={libre.note || undefined}>{texteDispo(libre, t)}</span>
+                  )}
                   <span className="htab-plus" aria-hidden="true">+</span>
                 </div>
-              ))}
+                );
+              })}
             </div>
           );
         })}

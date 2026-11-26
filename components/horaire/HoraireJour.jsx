@@ -4,10 +4,11 @@ import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogram
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 import { bloc, plageHeures, heureTexte } from "@/lib/horaireJour";
+import { genreDispo, texteDispo } from "@/lib/disponibilites";
 
 // La journée en ligne du temps : une rangée par employé, les heures en haut, chaque quart est un bloc.
 // Un clic sur un bloc le modifie ; un clic dans une rangée ajoute un quart à cette heure-là.
-export default function HoraireJour({ date, employes, quarts, onRetour, onJour, onAjouter, onModifier }) {
+export default function HoraireJour({ date, employes, quarts, onRetour, onJour, onAjouter, onModifier, dispo = () => null }) {
   const { t } = useT();
   const { debut, fin } = plageHeures(quarts);
   const heures = Array.from({ length: fin - debut }, (_, i) => debut + i);
@@ -55,10 +56,19 @@ export default function HoraireJour({ date, employes, quarts, onRetour, onJour, 
               ))}
             </div>
           </div>
-          {rangees.map(({ emp, quarts: blocs }) => (
+          {rangees.map(({ emp, quarts: blocs }) => {
+            const libre = dispo(emp.id, date);
+            // Bande de disponibilité, limitée aux heures affichées.
+            const minutes = (h) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
+            const du = libre ? Math.max(debut * 60, libre.de ? minutes(libre.de) : 0) : 0;
+            const au = libre ? Math.min(fin * 60, libre.a ? minutes(libre.a) : 1440) : 0;
+            return (
             <div className="hjour-ligne" key={emp.id}>
               <div className={`hjour-nom${blocs.length ? "" : " libre"}`} title={emp.nom}>{emp.nom}</div>
               <div className="hjour-piste hjour-cliquable" onClick={(e) => clicRangee(e, emp.id)}>
+                {libre && au > du && (
+                  <span className={`hchr-dispo${genreDispo(libre)}`} style={{ left: pourcent(du - debut * 60), width: pourcent(au - du) }} title={texteDispo(libre, t)} />
+                )}
                 {blocs.map(({ q, de, a }) => (
                   <button
                     key={q.id}
@@ -78,7 +88,8 @@ export default function HoraireJour({ date, employes, quarts, onRetour, onJour, 
                 ))}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

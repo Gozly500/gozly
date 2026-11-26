@@ -363,6 +363,7 @@ const { resultat } = await res.json();</pre></div>
   <tr><th style="width:42%">Outil</th><th style="width:28%">Permission</th><th>Ce qu'il fait</th></tr>
   <tr><td><code>lister_employes</code>, <code>lister_emplacements</code></td><td>Toute permission</td><td>Noms et rôles des employés (jamais de salaire, de NIP ni de coordonnées); succursales.</td></tr>
   <tr><td><code>lire_horaire</code>, <code>lire_heures_pointees</code></td><td><code>horaire:lire</code></td><td>Quarts de travail et heures pointées d'une période (62 jours au maximum).</td></tr>
+  <tr><td><code>lire_disponibilites</code></td><td><code>horaire:lire</code></td><td>Périodes où des employés se sont déclarés disponibles ou non.</td></tr>
   <tr><td><code>creer_quart_brouillon</code>, <code>supprimer_quart_brouillon</code></td><td><code>horaire:brouillons</code></td><td>Quarts en brouillon, invisibles des employés.</td></tr>
   <tr><td><code>publier_horaire</code></td><td><code>horaire:publier</code></td><td>Publie les brouillons; les employés sont notifiés.</td></tr>
   <tr><td><code>lister_categories_planning</code>, <code>lire_planning</code></td><td><code>planning:lire</code></td><td>Catégories et tâches du Planning.</td></tr>

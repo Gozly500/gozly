@@ -5,6 +5,7 @@ import { IconCorbeille, IconPlus } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 import { bloc, heureTexte } from "@/lib/horaireJour";
+import { genreDispo, texteDispo } from "@/lib/disponibilites";
 
 const PAS = 30; // les blocs se calent aux 30 minutes
 const JOUR = 1440;
@@ -15,7 +16,7 @@ const borne = (v, min, max) => Math.max(min, Math.min(max, v));
 // Modèle « Chronologie » (style jeu de gestion) : les jours à gauche, les 24 heures en haut, une rangée par employé.
 // Glisser sur une rangée vide peint un quart ; glisser un bloc le déplace (aussi vers une autre personne) ; glisser ses bords
 // change le début ou la fin ; un clic l'ouvre.
-export default function HoraireChrono({ jours, employes, quarts, recherche, onRecherche, onAjouter, onModifier, onHeures, onSupprimer, onCopierJour, onViderJour }) {
+export default function HoraireChrono({ jours, employes, quarts, recherche, onRecherche, onAjouter, onModifier, onHeures, onSupprimer, onCopierJour, onViderJour, dispo = () => null }) {
   const { t } = useT();
   const [choisi, setChoisi] = useState(null);
   const [sourceCopie, setSourceCopie] = useState(null); // jour à copier : le prochain jour touché le reçoit
@@ -163,6 +164,9 @@ export default function HoraireChrono({ jours, employes, quarts, recherche, onRe
             const postes = [...new Set(blocs.map((b) => b.q.poste).filter(Boolean))];
             const semaine = quarts.filter((q) => q.employe_id === emp.id).reduce((s, q) => s + bloc(q).a - bloc(q).de, 0);
             const apercu = geste?.type === "peindre" && geste.bouge && String(geste.employeId) === String(emp.id) ? geste : null;
+            const libre = dispo(emp.id, jour.iso);
+            const minutesDe = (h) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
+            const bande = !libre ? null : libre.de ? [minutesDe(libre.de), minutesDe(libre.a)] : [0, JOUR];
             return (
               <div className="hchr-ligne" key={emp.id}>
                 <div
@@ -176,6 +180,7 @@ export default function HoraireChrono({ jours, employes, quarts, recherche, onRe
                   {HEURES.map((h) => (
                     <span key={h} className="hchr-case" />
                   ))}
+                  {bande && <span className={`hchr-dispo${genreDispo(libre)}`} style={{ left: pourcent(bande[0]), width: pourcent(bande[1] - bande[0]) }} />}
                   {blocs.map(({ q, de, a }) => {
                     const base = { quart: q, de0: bloc(q).de, a0: bloc(q).a, de: bloc(q).de, a: bloc(q).a, employeId: q.employe_id };
                     const apresMinuit = bloc(q).a > JOUR;
@@ -206,6 +211,7 @@ export default function HoraireChrono({ jours, employes, quarts, recherche, onRe
                 <div className="hchr-info">
                   <strong title={emp.nom}>{emp.nom}</strong>
                   <span>{t("Semaine")} : {duree(semaine)}</span>
+                  {libre && <span className={`hchr-info-dispo${genreDispo(libre)}`}>{texteDispo(libre, t)}</span>}
                   {postes.length > 0 && <span>{postes.join(", ")}</span>}
                 </div>
               </div>

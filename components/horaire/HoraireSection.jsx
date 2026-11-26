@@ -8,6 +8,9 @@ import SimpleSelect from "@/components/SimpleSelect";
 import HoraireJour from "@/components/horaire/HoraireJour";
 import HoraireTableau from "@/components/horaire/HoraireTableau";
 import HoraireChrono from "@/components/horaire/HoraireChrono";
+import HoraireDispos from "@/components/horaire/HoraireDispos";
+import HorairePanneauDispos from "@/components/horaire/HorairePanneauDispos";
+import { dispoDe, periodeDeLigne } from "@/lib/disponibilites";
 import { bloc } from "@/lib/horaireJour";
 import { IconPlus as IconDupliquer, IconCrochet, IconTelecharger, IconEtoile, IconEtoilePleine, IconFlecheDroite, IconFlecheGauche, IconMegaphone } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
@@ -61,6 +64,48 @@ export default function HoraireSection({ entrepriseId }) {
       .maybeSingle()
       .then(({ data }) => setModele(data?.horaire_modele || "classique"));
   }, [entrepriseId]);
+
+  // Disponibilités déclarées par les employés (disponibilites.sql ; absent tant qu'il n'est pas exécuté : rien d'affiché).
+  const [dispos, setDispos] = useState(null);
+  const [affichageDispos, setAffichageDispos] = useState("horaire"); // "horaire" (dans les cases) | "panneau" (à côté)
+  const [vueDispos, setVueDispos] = useState(false); // vue d'ensemble sur 4 semaines
+  const [nonActif, setNonActif] = useState(false); // l'entreprise accepte les « pas disponible »
+  useEffect(() => {
+    supabase
+      .from("entreprises")
+      .select("horaire_non_dispo_actif")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => setNonActif(!!data?.horaire_non_dispo_actif));
+  }, [entrepriseId]);
+  useEffect(() => {
+    supabase
+      .from("entreprises")
+      .select("horaire_dispos_affichage")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => setAffichageDispos(data?.horaire_dispos_affichage || "horaire"));
+  }, [entrepriseId]);
+  useEffect(() => {
+    // Depuis 8 semaines avant la semaine affichée, pour pouvoir reculer dans la vue d'ensemble.
+    supabase
+      .from("disponibilites")
+      .select("*")
+      .eq("entreprise_id", entrepriseId)
+      .gte("date_fin", toISODate(addDays(weekStart, -56)))
+      .order("date_debut", { ascending: true })
+      .then(({ data, error }) => setDispos(error ? null : (data || []).map(periodeDeLigne)));
+  }, [entrepriseId, weekStart]);
+  // Réglage désactivé : les « pas disponible » déjà saisis ne sont plus montrés.
+  const periodes = dispos && (nonActif ? dispos : dispos.filter((p) => !p.non));
+  const dansLesCases = periodes && affichageDispos === "horaire";
+  const dispo = dansLesCases ? (employeId, iso) => dispoDe(periodes, employeId, iso) : undefined;
+  // Formulaire d'un quart : la personne choisie s'est-elle dite pas disponible à ces heures ?
+  const conflit =
+    modal &&
+    periodes?.find(
+      (p) => p.non && String(p.employeId) === String(modal.employeId) && p.debut <= modal.date && p.fin >= modal.date && (!p.de || (modal.heureDebut < p.a && (modal.heureFin <= modal.heureDebut || modal.heureFin > p.de))),
+    );
 
   const weekEnd = addDays(weekStart, 6);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -504,6 +549,27 @@ export default function HoraireSection({ entrepriseId }) {
     <div>
       <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={setEmplacementId} />
 
+      {vueDispos ? (
+        <>
+          <button type="button" className="admin-icon-btn" style={{ marginBottom: "12px" }} onClick={() => setVueDispos(false)}>
+            <IconFlecheGauche className="gozly-icon" />{" "}{t("Horaire")}
+          </button>
+          <HoraireDispos
+            depart={toISODate(weekStart)}
+            employes={employesVisibles}
+            periodes={periodes || []}
+            nonActif={nonActif}
+            onJour={(iso) => {
+              // Ouvre la semaine qui contient la date touchée.
+              const ecart = Math.floor((new Date(`${iso}T00:00:00Z`) - new Date(`${toISODate(weekStart)}T00:00:00Z`)) / (7 * 86400000));
+              setJourOuvert(null);
+              setWeekStart((w) => addDays(w, ecart * 7));
+              setVueDispos(false);
+            }}
+          />
+        </>
+      ) : (
+      <>
       <div className="planning-week-nav">
         <button className="admin-icon-btn" onClick={() => { setJourOuvert(null); setWeekStart((w) => addDays(w, -7)); }}>
           <IconFlecheGauche className="gozly-icon" />{" "}{t("Semaine précédente")}
@@ -519,7 +585,12 @@ export default function HoraireSection({ entrepriseId }) {
         >
           {favoris.includes(toISODate(weekStart)) ? <IconEtoilePleine className="gozly-icon" /> : <IconEtoile className="gozly-icon" />}
         </button>
-        <button className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={openImportModal}>
+        {dispos && (
+          <button type="button" className="admin-icon-btn" style={{ marginLeft: "auto" }} onClick={() => setVueDispos(true)}>
+            {t("Disponibilités")}
+          </button>
+        )}
+        <button className="admin-icon-btn" style={dispos ? undefined : { marginLeft: "auto" }} onClick={openImportModal}>
           <IconTelecharger className="gozly-icon" />{" "}{t("Importer une semaine")}
         </button>
         <button
@@ -546,6 +617,8 @@ export default function HoraireSection({ entrepriseId }) {
         </div>
       )}
 
+      <div className="horaire-avec-panneau">
+      <div className="horaire-principal">
       {loading ? (
         <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       ) : employes.length === 0 ? (
@@ -560,6 +633,7 @@ export default function HoraireSection({ entrepriseId }) {
           // Les employés de la succursale, plus ceux qui ont un quart ce jour-là sans y être assignés.
           employes={employes.filter((e) => employesVisibles.includes(e) || quarts.some((q) => q.date === jourOuvert && q.employe_id === e.id))}
           quarts={quarts.filter((q) => q.date === jourOuvert)}
+          dispo={dispo}
           onRetour={() => setJourOuvert(null)}
           onJour={changerJour}
           onAjouter={(employeId, heureDebut, heureFin) =>
@@ -587,6 +661,7 @@ export default function HoraireSection({ entrepriseId }) {
           onModifier={toucherQuart}
           onHeures={changerHeures}
           onSupprimer={supprimerQuart}
+          dispo={dispo}
           onCopierJour={copierJour}
           onViderJour={viderJour}
         />
@@ -607,6 +682,7 @@ export default function HoraireSection({ entrepriseId }) {
           }
           onModifier={toucherQuart}
           onDeplacer={deplacerQuart}
+          dispo={dispo}
           onJour={setJourOuvert}
         />
       ) : (
@@ -665,6 +741,15 @@ export default function HoraireSection({ entrepriseId }) {
                       <div className="horaire-col-day">{t(JOURS[(day.getDay() + 6) % 7])}</div>
                       <div className="horaire-col-date">{day.toLocaleDateString(loc(), { day: "numeric", month: "short" })}</div>
                       <div className="horaire-col-resume">{resumeJour(dayQuarts)}</div>
+                      {dispo &&
+                        [false, true].map((non) => {
+                          const noms = employesVisibles.filter((e) => { const p = dispo(e.id, dateISO); return p && !!p.non === non; }).map((e) => e.nom);
+                          return noms.length === 0 ? null : (
+                            <div key={String(non)} className={`horaire-col-dispos${non ? " non" : ""}`} title={noms.join(", ")}>
+                              {t(non ? "{n} non dispo." : "{n} dispo.", { n: noms.length })}
+                            </div>
+                          );
+                        })}
                     </button>
 
                     {dayQuarts.map((q) => (
@@ -703,6 +788,21 @@ export default function HoraireSection({ entrepriseId }) {
             </div>
           </div>
         </>
+      )}
+      </div>
+      {dispos && affichageDispos === "panneau" && !loading && (
+        <HorairePanneauDispos
+          jours={weekDays.map((day) => ({
+            iso: toISODate(day),
+            nom: t(JOURS[(day.getDay() + 6) % 7]),
+            date: day.toLocaleDateString(loc(), { day: "numeric", month: "short" }),
+          }))}
+          employes={employesVisibles}
+          periodes={periodes}
+        />
+      )}
+      </div>
+      </>
       )}
 
       {modal && (
@@ -759,6 +859,13 @@ export default function HoraireSection({ entrepriseId }) {
                   placeholder={t("Ex: Machine 3, Cuisine, Caisse...")}
                 />
               </div>
+              {conflit && (
+                <p className="settings-msg err">
+                  {t("Pas disponible")}
+                  {conflit.de && ` ${conflit.de} - ${conflit.a}`}
+                  {conflit.note && ` · ${conflit.note}`}
+                </p>
+              )}
               <div className="admin-edit-actions">
                 <button type="submit" className="submit-btn">
                   {modal.quartId ? t("Enregistrer") : t("Ajouter")}

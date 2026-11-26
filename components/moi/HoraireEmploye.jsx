@@ -13,6 +13,7 @@ import { dateAujourdhui } from "@/lib/commandes";
 import { IconFlecheDroite, IconFlecheGauche } from "@/components/icons/Pictogrammes";
 import CartePaie, { Montant, montantDe, formatHeures } from "@/components/moi/CartePaie";
 import CarteHeures from "@/components/moi/CarteHeures";
+import DisposEmploye from "@/components/moi/DisposEmploye";
 import { heureCommande } from "@/lib/commandes";
 
 function heure(t) {
@@ -42,6 +43,36 @@ export default function HoraireEmploye() {
   const [pointageOuvert, setPointageOuvert] = useState(false);
   const [paie, setPaie] = useState(null); // calculateur de paie (Paramètres > Paie) : null tant qu'il est désactivé
   const [cache, setCache] = useState(true); // montants cachés par défaut (points)
+  const [onglet, setOnglet] = useState("horaire"); // "horaire" | "dispos"
+  const [dispos, setDispos] = useState(null); // null : pas encore disponible (l'onglet reste caché)
+  const [erreurDispo, setErreurDispo] = useState(false);
+  const [nonActif, setNonActif] = useState(false);
+
+  async function chargerDispos() {
+    try {
+      const res = await employeFetch("/api/employe-app/disponibilites");
+      if (!res.ok) return;
+      const data = await res.json();
+      setDispos(data.periodes);
+      setNonActif(!!data.nonActif);
+    } catch {}
+  }
+
+  useEffect(() => {
+    chargerDispos();
+  }, []);
+
+  async function ecrireDispo(url, options) {
+    setErreurDispo(false);
+    let ok = false;
+    try {
+      ok = (await employeFetch(url, options)).ok;
+    } catch {}
+    setErreurDispo(!ok);
+    await chargerDispos();
+    return ok;
+  }
+
   const [heures, setHeures] = useState(null); // heures pointées de la semaine : { minutesTotal, jours, aDesPointages }
 
   // Heures réellement travaillées (pointages) ; se rafraîchit chaque minute pour suivre un pointage en cours.
@@ -177,6 +208,24 @@ export default function HoraireEmploye() {
           </div>
         </div>
       )}
+      {dispos && (
+        <div className="dispo-choix">
+          <button type="button" className={onglet === "horaire" ? "actif" : ""} onClick={() => setOnglet("horaire")}>{t("dispo.monHoraire")}</button>
+          <button type="button" className={onglet === "dispos" ? "actif" : ""} onClick={() => setOnglet("dispos")}>{t("dispo.mesDispos")}</button>
+        </div>
+      )}
+      {onglet === "dispos" && dispos ? (
+        <>
+          {erreurDispo && <p className="settings-msg err">{t("demandes.erreur")}</p>}
+          <DisposEmploye
+            periodes={dispos}
+            nonActif={nonActif}
+            onAjouter={(p) => ecrireDispo("/api/employe-app/disponibilites", { method: "POST", body: JSON.stringify(p) })}
+            onRetirer={(id) => ecrireDispo(`/api/employe-app/disponibilites?id=${encodeURIComponent(id)}`, { method: "DELETE" })}
+          />
+        </>
+      ) : (
+      <>
       <div className="moi-week-nav">
         <button className="admin-icon-btn" onClick={() => {
             setSens("arriere");
@@ -312,6 +361,9 @@ export default function HoraireEmploye() {
             );
           })}
         </div>
+      )}
+
+      </>
       )}
 
       {remplacantQuart && <RemplacantModal quart={remplacantQuart} onClose={() => setRemplacantQuart(null)} />}

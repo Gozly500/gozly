@@ -81,6 +81,16 @@ const OPTIONS_MODELE_HORAIRE = [
   { id: "chronologie", label: "Chronologie" },
 ];
 
+const OPTIONS_AFFICHAGE_DISPOS = [
+  { id: "horaire", label: "Dans l'horaire" },
+  { id: "panneau", label: "Panneau à côté" },
+];
+
+const OPTIONS_NON_DISPO = [
+  { id: "desactive", label: "Désactivé" },
+  { id: "active", label: "Activé" },
+];
+
 const OPTIONS_TRAITER_AUTO = [
   { id: "desactive", label: "Désactivé" },
   { id: "active", label: "Activé" },
@@ -460,6 +470,8 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
   const [kiosqueCommandes, setKiosqueCommandes] = useState("liste");
   const [traiterAuto, setTraiterAuto] = useState("desactive");
   const [modeleHoraire, setModeleHoraire] = useState("classique");
+  const [affichageDispos, setAffichageDispos] = useState("horaire");
+  const [nonDispo, setNonDispo] = useState("desactive");
   const [sonCommandes, setSonCommandes] = useState("une_fois");
   const [commandesVersTaches, setCommandesVersTaches] = useState("active");
   const [planifDansCommandes, setPlanifDansCommandes] = useState("desactive");
@@ -530,6 +542,13 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
     // Modèle d'horaire : colonne de horaire_modele.sql (absente tant que le SQL n'est pas exécuté : classique).
     const { data: modeleData, error: modeleErreur } = await supabase.from("entreprises").select("horaire_modele").eq("id", entrepriseId).maybeSingle();
     if (!modeleErreur) setModeleHoraire(modeleData?.horaire_modele || "classique");
+
+    // Affichage des disponibilités : colonne de disponibilites.sql.
+    const { data: disposData, error: disposErreur } = await supabase.from("entreprises").select("horaire_dispos_affichage").eq("id", entrepriseId).maybeSingle();
+    if (!disposErreur) setAffichageDispos(disposData?.horaire_dispos_affichage || "horaire");
+
+    const { data: nonData, error: nonErreur } = await supabase.from("entreprises").select("horaire_non_dispo_actif").eq("id", entrepriseId).maybeSingle();
+    if (!nonErreur) setNonDispo(nonData?.horaire_non_dispo_actif ? "active" : "desactive");
 
     // Rappels de températures : lus à part (colonne de temperature_rappels.sql, absente tant que le SQL n'est pas exécuté).
     const { data: rappelsData, error: rappelsErreur } = await supabase.from("entreprises").select("temperature_rappels_actif").eq("id", entrepriseId).maybeSingle();
@@ -649,6 +668,36 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
     setMsg(
       error
         ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté horaire_modele.sql dans Supabase?") }
+        : { type: "ok", text: t("Préférence enregistrée.") }
+    );
+  }
+
+  async function handleChangeAffichageDispos(value) {
+    setAffichageDispos(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase.from("entreprises").update({ horaire_dispos_affichage: value }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(
+      error
+        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté disponibilites.sql dans Supabase?") }
+        : { type: "ok", text: t("Préférence enregistrée.") }
+    );
+  }
+
+  async function handleChangeNonDispo(value) {
+    setNonDispo(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase.from("entreprises").update({ horaire_non_dispo_actif: value === "active" }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(
+      error
+        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté disponibilites.sql dans Supabase?") }
         : { type: "ok", text: t("Préférence enregistrée.") }
     );
   }
@@ -905,6 +954,22 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
                 options={OPTIONS_MODELE_HORAIRE}
                 value={modeleHoraire}
                 onChange={handleChangeModeleHoraire}
+                disabled={saving}
+              />
+              <ParametreSelect
+                label={t("Affichage des disponibilités")}
+                info={t("Où voir les disponibilités des employés dans l'Horaire.")}
+                options={OPTIONS_AFFICHAGE_DISPOS}
+                value={affichageDispos}
+                onChange={handleChangeAffichageDispos}
+                disabled={saving}
+              />
+              <ParametreSelect
+                label={t("Non-disponibilités")}
+                info={t("Les employés peuvent aussi indiquer quand ils ne sont pas disponibles. C'est une information, pas une demande de congé.")}
+                options={OPTIONS_NON_DISPO}
+                value={nonDispo}
+                onChange={handleChangeNonDispo}
                 disabled={saving}
               />
               <ParametreSelect
