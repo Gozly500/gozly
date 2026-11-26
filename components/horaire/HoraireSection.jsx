@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
 import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import SimpleSelect from "@/components/SimpleSelect";
+import HoraireJour from "@/components/horaire/HoraireJour";
+import { bloc } from "@/lib/horaireJour";
 import { IconCrochet, IconTelecharger, IconEtoile, IconEtoilePleine, IconFlecheDroite, IconFlecheGauche, IconMegaphone } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
@@ -32,6 +34,7 @@ export default function HoraireSection({ entrepriseId }) {
   const [importing, setImporting] = useState(false);
   const [favoris, setFavoris] = useState([]); // dates ISO (semaine_debut) marquées favorites
   const [favoriMsg, setFavoriMsg] = useState(null);
+  const [jourOuvert, setJourOuvert] = useState(null); // date ISO de la journée affichée en blocs (null = semaine)
 
   const MAX_FAVORIS = 3;
 
@@ -164,6 +167,23 @@ export default function HoraireSection({ entrepriseId }) {
     const employeId = e.dataTransfer.getData("text/plain");
     if (!employeId) return;
     setModal({ date: dateISO, employeId, quartId: null, heureDebut: "09:00", heureFin: "17:00", poste: "" });
+  }
+
+  // Jour précédent / suivant dans la vue journée (change de semaine au besoin).
+  function changerJour(pas) {
+    const jour = addDays(new Date(`${jourOuvert}T00:00:00`), pas);
+    const iso = toISODate(jour);
+    if (iso < toISODate(weekStart)) setWeekStart((w) => addDays(w, -7));
+    else if (iso > toISODate(weekEnd)) setWeekStart((w) => addDays(w, 7));
+    setJourOuvert(iso);
+  }
+
+  // « 3 personnes · 21,5 h » sous la date de chaque colonne.
+  function resumeJour(liste) {
+    if (liste.length === 0) return t("Personne");
+    const n = new Set(liste.map((q) => q.employe_id)).size;
+    const heures = liste.reduce((s, q) => s + bloc(q).a - bloc(q).de, 0) / 60;
+    return t("{n} pers. · {h} h", { n, h: heures.toLocaleString(loc(), { maximumFractionDigits: 1 }) });
   }
 
   function openAddViaButton(dateISO) {
@@ -340,11 +360,11 @@ export default function HoraireSection({ entrepriseId }) {
       <EmplacementSelect emplacements={emplacements} value={emplacementId} onChange={setEmplacementId} />
 
       <div className="planning-week-nav">
-        <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, -7))}>
+        <button className="admin-icon-btn" onClick={() => { setJourOuvert(null); setWeekStart((w) => addDays(w, -7)); }}>
           <IconFlecheGauche className="gozly-icon" />{" "}{t("Semaine précédente")}
         </button>
         <span className="planning-week-label">{weekLabel}</span>
-        <button className="admin-icon-btn" onClick={() => setWeekStart((w) => addDays(w, 7))}>
+        <button className="admin-icon-btn" onClick={() => { setJourOuvert(null); setWeekStart((w) => addDays(w, 7)); }}>
           {t("Semaine suivante")}{" "}<IconFlecheDroite className="gozly-icon" />
         </button>
         <button
@@ -384,6 +404,17 @@ export default function HoraireSection({ entrepriseId }) {
         </p>
       ) : employesVisibles.length === 0 ? (
         <p style={{ color: "var(--text-dim)" }}>{t("Aucun employé assigné à cet emplacement pour l'instant.")}</p>
+      ) : jourOuvert ? (
+        <HoraireJour
+          date={jourOuvert}
+          // Les employés de la succursale, plus ceux qui ont un quart ce jour-là sans y être assignés.
+          employes={employes.filter((e) => employesVisibles.includes(e) || quarts.some((q) => q.date === jourOuvert && q.employe_id === e.id))}
+          quarts={quarts.filter((q) => q.date === jourOuvert)}
+          onRetour={() => setJourOuvert(null)}
+          onJour={changerJour}
+          onAjouter={(employeId, heureDebut, heureFin) => setModal({ date: jourOuvert, employeId, quartId: null, heureDebut, heureFin, poste: "" })}
+          onModifier={openEdit}
+        />
       ) : (
         <>
           <div className="horaire-layout">
@@ -428,11 +459,15 @@ export default function HoraireSection({ entrepriseId }) {
                     }}
                     onDragLeave={() => setDragOverDate((d) => (d === dateISO ? null : d))}
                     onDrop={(e) => handleDrop(e, dateISO)}
+                    onClick={(e) => {
+                      if (e.target === e.currentTarget) setJourOuvert(dateISO);
+                    }}
                   >
-                    <div className="horaire-col-head">
-                      <div className="horaire-col-day">{JOURS[(day.getDay() + 6) % 7]}</div>
+                    <button type="button" className="horaire-col-head" title={t("Voir la journée en blocs")} onClick={() => setJourOuvert(dateISO)}>
+                      <div className="horaire-col-day">{t(JOURS[(day.getDay() + 6) % 7])}</div>
                       <div className="horaire-col-date">{day.toLocaleDateString(loc(), { day: "numeric", month: "short" })}</div>
-                    </div>
+                      <div className="horaire-col-resume">{resumeJour(dayQuarts)}</div>
+                    </button>
 
                     {dayQuarts.map((q) => (
                       <div className={`horaire-chip${q.publie ? "" : " brouillon"}`} key={q.id} onClick={() => openEdit(q)}>
