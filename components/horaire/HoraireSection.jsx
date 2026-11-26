@@ -6,8 +6,9 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 import { getDebutSemaine, addDays } from "@/lib/semaine";
 import SimpleSelect from "@/components/SimpleSelect";
 import HoraireJour from "@/components/horaire/HoraireJour";
+import HoraireTableau from "@/components/horaire/HoraireTableau";
 import { bloc } from "@/lib/horaireJour";
-import { IconCrochet, IconTelecharger, IconEtoile, IconEtoilePleine, IconFlecheDroite, IconFlecheGauche, IconMegaphone } from "@/components/icons/Pictogrammes";
+import { IconPlus as IconDupliquer, IconCrochet, IconTelecharger, IconEtoile, IconEtoilePleine, IconFlecheDroite, IconFlecheGauche, IconMegaphone } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
 import { loc } from "@/lib/i18n/locale";
 
@@ -35,8 +36,29 @@ export default function HoraireSection({ entrepriseId }) {
   const [favoris, setFavoris] = useState([]); // dates ISO (semaine_debut) marquées favorites
   const [favoriMsg, setFavoriMsg] = useState(null);
   const [jourOuvert, setJourOuvert] = useState(null); // date ISO de la journée affichée en blocs (null = semaine)
+  const [copie, setCopie] = useState(null); // quart à dupliquer : { employeId, heureDebut, heureFin }
+
+  // Échap termine la duplication ; changer de succursale aussi.
+  useEffect(() => {
+    if (!copie) return;
+    const touche = (e) => e.key === "Escape" && setCopie(null);
+    window.addEventListener("keydown", touche);
+    return () => window.removeEventListener("keydown", touche);
+  }, [copie]);
+  useEffect(() => setCopie(null), [entrepriseId, emplacementId]);
 
   const MAX_FAVORIS = 3;
+
+  // Modèle d'affichage choisi dans Modules (colonne de horaire_modele.sql, absente tant que le SQL n'est pas exécuté : classique).
+  const [modele, setModele] = useState("classique");
+  useEffect(() => {
+    supabase
+      .from("entreprises")
+      .select("horaire_modele")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => setModele(data?.horaire_modele || "classique"));
+  }, [entrepriseId]);
 
   const weekEnd = addDays(weekStart, 6);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -105,8 +127,9 @@ export default function HoraireSection({ entrepriseId }) {
     }
   }
 
-  async function load() {
-    setLoading(true);
+  // discret : relit sans afficher « Chargement... » (après un déplacement ou une duplication).
+  async function load(discret = false) {
+    if (!discret) setLoading(true);
     const { data: employesData } = await supabase
       .from("employes")
       .select("*")
@@ -161,9 +184,51 @@ export default function HoraireSection({ entrepriseId }) {
     ? employesVisibles.filter((e) => e.nom.toLowerCase().includes(rechercheEmploye.trim().toLowerCase()))
     : employesVisibles;
 
+  // Quart glissé sur une autre case (ou une autre journée) : il change de date et/ou d'employé.
+  async function deplacerQuart(quartId, date, employeId = null) {
+    const q = quarts.find((x) => x.id === quartId);
+    if (!q) return;
+    const maj = { date, employe_id: employeId || q.employe_id };
+    if (maj.date === q.date && maj.employe_id === q.employe_id) return;
+    setQuarts((liste) => liste.map((x) => (x.id === quartId ? { ...x, ...maj } : x)));
+    await supabase.from("planning_quarts").update(maj).eq("id", quartId);
+    load(true);
+  }
+
+  // Duplication : seules les heures sont copiées, une fois, dans la case choisie (en brouillon).
+  async function collerQuart(date, employeId) {
+    setCopie(null);
+    await supabase.from("planning_quarts").insert({
+      entreprise_id: entrepriseId,
+      employe_id: employeId,
+      date,
+      heure_debut: copie.heureDebut,
+      heure_fin: copie.heureFin,
+      poste: null,
+      emplacement_id: emplacementId,
+    });
+    load(true);
+  }
+
+  function dupliquerQuart() {
+    setCopie({ employeId: modal.employeId, heureDebut: modal.heureDebut, heureFin: modal.heureFin });
+    setModal(null);
+  }
+
+  // Toucher un quart l'ouvre toujours (et abandonne la duplication en cours) : seule une case vide reçoit la copie.
+  const toucherQuart = (q) => {
+    setCopie(null);
+    openEdit(q);
+  };
+
   function handleDrop(e, dateISO) {
     e.preventDefault();
     setDragOverDate(null);
+    const quartId = e.dataTransfer.getData("application/x-quart");
+    if (quartId) {
+      deplacerQuart(quarts.find((q) => String(q.id) === quartId)?.id, dateISO);
+      return;
+    }
     const employeId = e.dataTransfer.getData("text/plain");
     if (!employeId) return;
     setModal({ date: dateISO, employeId, quartId: null, heureDebut: "09:00", heureFin: "17:00", poste: "" });
@@ -396,6 +461,16 @@ export default function HoraireSection({ entrepriseId }) {
         </p>
       )}
 
+      {copie && (
+        <div className="horaire-copie">
+          <IconDupliquer className="gozly-icon" />
+          <strong>{copie.heureDebut} - {copie.heureFin}</strong>
+          <button type="button" className="admin-icon-btn" onClick={() => setCopie(null)}>
+            {t("Annuler")}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <p style={{ color: "var(--text-dim)" }}>{t("Chargement...")}</p>
       ) : employes.length === 0 ? (
@@ -412,8 +487,29 @@ export default function HoraireSection({ entrepriseId }) {
           quarts={quarts.filter((q) => q.date === jourOuvert)}
           onRetour={() => setJourOuvert(null)}
           onJour={changerJour}
-          onAjouter={(employeId, heureDebut, heureFin) => setModal({ date: jourOuvert, employeId, quartId: null, heureDebut, heureFin, poste: "" })}
-          onModifier={openEdit}
+          onAjouter={(employeId, heureDebut, heureFin) =>
+            copie ? collerQuart(jourOuvert, employeId) : setModal({ date: jourOuvert, employeId, quartId: null, heureDebut, heureFin, poste: "" })
+          }
+          onModifier={toucherQuart}
+        />
+      ) : modele === "tableau" ? (
+        <HoraireTableau
+          jours={weekDays.map((day) => ({
+            iso: toISODate(day),
+            nom: t(JOURS[(day.getDay() + 6) % 7]),
+            date: day.toLocaleDateString(loc(), { day: "numeric", month: "short" }),
+          }))}
+          // Les employés de la succursale (selon la recherche), plus ceux qui ont un quart cette semaine sans y être assignés.
+          employes={[...employesAffiches, ...(rechercheEmploye.trim() ? [] : employes.filter((e) => !employesVisibles.includes(e) && quarts.some((q) => q.employe_id === e.id)))]}
+          quarts={quarts}
+          recherche={rechercheEmploye}
+          onRecherche={setRechercheEmploye}
+          onAjouter={(employeId, date) =>
+            copie ? collerQuart(date, employeId) : setModal({ date, employeId, quartId: null, heureDebut: "09:00", heureFin: "17:00", poste: "" })
+          }
+          onModifier={toucherQuart}
+          onDeplacer={deplacerQuart}
+          onJour={setJourOuvert}
         />
       ) : (
         <>
@@ -460,7 +556,11 @@ export default function HoraireSection({ entrepriseId }) {
                     onDragLeave={() => setDragOverDate((d) => (d === dateISO ? null : d))}
                     onDrop={(e) => handleDrop(e, dateISO)}
                     onClick={(e) => {
-                      if (e.target === e.currentTarget) setJourOuvert(dateISO);
+                      // Duplication : le formulaire s'ouvre avec les heures copiées, pour choisir la personne.
+                      if (copie) {
+                        setModal({ date: dateISO, employeId: copie.employeId, quartId: null, heureDebut: copie.heureDebut, heureFin: copie.heureFin, poste: "" });
+                        setCopie(null);
+                      } else if (e.target === e.currentTarget) setJourOuvert(dateISO);
                     }}
                   >
                     <button type="button" className="horaire-col-head" title={t("Voir la journée en blocs")} onClick={() => setJourOuvert(dateISO)}>
@@ -470,7 +570,16 @@ export default function HoraireSection({ entrepriseId }) {
                     </button>
 
                     {dayQuarts.map((q) => (
-                      <div className={`horaire-chip${q.publie ? "" : " brouillon"}`} key={q.id} onClick={() => openEdit(q)}>
+                      <div
+                        className={`horaire-chip${q.publie ? "" : " brouillon"}`}
+                        key={q.id}
+                        draggable
+                        onDragStart={(e) => e.dataTransfer.setData("application/x-quart", String(q.id))}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toucherQuart(q);
+                        }}
+                      >
                         <div className="horaire-chip-nom">
                           {employeNom(q.employe_id)}
                           {!q.publie && <span className="horaire-chip-badge">{t("Brouillon")}</span>}
@@ -556,6 +665,11 @@ export default function HoraireSection({ entrepriseId }) {
                 <button type="submit" className="submit-btn">
                   {modal.quartId ? t("Enregistrer") : t("Ajouter")}
                 </button>
+                {modal.quartId && (
+                  <button type="button" className="admin-icon-btn" onClick={dupliquerQuart}>
+                    <IconDupliquer className="gozly-icon" />{" "}{t("Dupliquer")}
+                  </button>
+                )}
                 {modal.quartId && (
                   <button type="button" className="btn-danger" onClick={handleDeleteModal}>
                     {t("Retirer ce quart")}

@@ -75,6 +75,11 @@ const OPTIONS_KIOSQUE_COMMANDES = [
   { id: "wix", label: "Statuts Wix (En attente, Acceptée, Prête, Terminée)" },
 ];
 
+const OPTIONS_MODELE_HORAIRE = [
+  { id: "classique", label: "Classique" },
+  { id: "tableau", label: "Tableau" },
+];
+
 const OPTIONS_TRAITER_AUTO = [
   { id: "desactive", label: "Désactivé" },
   { id: "active", label: "Activé" },
@@ -453,6 +458,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
   const [kiosqueCommandes, setKiosqueCommandes] = useState("liste");
   const [traiterAuto, setTraiterAuto] = useState("desactive");
+  const [modeleHoraire, setModeleHoraire] = useState("classique");
   const [sonCommandes, setSonCommandes] = useState("une_fois");
   const [commandesVersTaches, setCommandesVersTaches] = useState("active");
   const [planifDansCommandes, setPlanifDansCommandes] = useState("desactive");
@@ -519,6 +525,10 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
     const { data: sonData, error: sonErreur } = await supabase.from("entreprises").select("commandes_son_mode").eq("id", entrepriseId).maybeSingle();
     if (!sonErreur && sonData?.commandes_son_mode) setSonCommandes(sonData.commandes_son_mode === "continu" ? "continu" : "une_fois");
     else if (!kiosqueErreur) setSonCommandes(["sections", "wix"].includes(kiosqueData?.commandes_kiosque_mode) ? "continu" : "une_fois");
+
+    // Modèle d'horaire : colonne de horaire_modele.sql (absente tant que le SQL n'est pas exécuté : classique).
+    const { data: modeleData, error: modeleErreur } = await supabase.from("entreprises").select("horaire_modele").eq("id", entrepriseId).maybeSingle();
+    if (!modeleErreur) setModeleHoraire(modeleData?.horaire_modele || "classique");
 
     // Rappels de températures : lus à part (colonne de temperature_rappels.sql, absente tant que le SQL n'est pas exécuté).
     const { data: rappelsData, error: rappelsErreur } = await supabase.from("entreprises").select("temperature_rappels_actif").eq("id", entrepriseId).maybeSingle();
@@ -624,6 +634,21 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
       error
         ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_traitement_copies.sql dans Supabase?") }
         : { type: "ok", text: t("Préférence enregistrée. Recharge le kiosque pour l'appliquer.") }
+    );
+  }
+
+  async function handleChangeModeleHoraire(value) {
+    setModeleHoraire(value);
+    setSaving(true);
+    setMsg(null);
+
+    const { error } = await supabase.from("entreprises").update({ horaire_modele: value }).eq("id", entrepriseId);
+
+    setSaving(false);
+    setMsg(
+      error
+        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté horaire_modele.sql dans Supabase?") }
+        : { type: "ok", text: t("Préférence enregistrée.") }
     );
   }
 
@@ -873,6 +898,14 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
 
         {dans("horaire", "horaire") && (
           <div className="param-liste">
+              <ParametreSelect
+                label={t("Modèle d'horaire")}
+                info={t("La façon d'afficher la semaine dans l'Horaire.")}
+                options={OPTIONS_MODELE_HORAIRE}
+                value={modeleHoraire}
+                onChange={handleChangeModeleHoraire}
+                disabled={saving}
+              />
               <ParametreSelect
                 label={t("Premier jour de la semaine")}
                 info={t("Le jour où commence chaque semaine dans l'Horaire et la Feuille de temps.")}
