@@ -5029,3 +5029,14 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) :is(.widget-card.drag-o
 .dispo-cal-jour.deja.non{--dispo-trait:#e8606d;}
 .dispo-ligne.non{border-left-color:#e8606d;}
 .dispo-choix button.actif.non{background:#c93d4b;}
+/* Panneau à côté : colonnes un peu plus étroites pour garder les 7 jours visibles. */
+.horaire-avec-panneau:has(.hpan) .horaire-layout{gap:14px;}
+.horaire-avec-panneau:has(.hpan) .horaire-employees{width:150px;}
+.horaire-avec-panneau:has(.hpan) .horaire-grid{grid-template-columns:repeat(7,minmax(94px,1fr));gap:8px;}
+.horaire-avec-panneau:has(.hpan) .horaire-col{padding:12px 7px;min-width:0;}
+.horaire-avec-panneau:has(.hpan) .hpan{flex-basis:210px;}
+/* App employé : espace sous les deux onglets, corbeille à droite de la période. */
+.dispo-choix + .dispo-moi,.dispo-choix + .moi-week-nav,.dispo-choix + .settings-msg{margin-top:12px;}
+.dispo-moi .dispo-ligne{flex-direction:row;flex-wrap:nowrap;align-items:center;}
+.dispo-ligne .admin-row-main{flex:1;min-width:0;}
+.dispo-ligne .admin-icon-btn{flex:none;width:auto;}

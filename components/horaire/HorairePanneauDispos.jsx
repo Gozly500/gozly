@@ -13,7 +13,7 @@ export default function HorairePanneauDispos({ jours, employes, periodes }) {
   return (
     <aside className="hpan">
       <strong className="hpan-titre">{t("Disponibilités")}</strong>
-      {liste.length === 0 && <span className="hpan-vide">{t("Personne")}</span>}
+      {liste.length === 0 && <span className="hpan-vide">{t("Aucune cette semaine")}</span>}
       {liste.map(({ emp, semaine }) => {
         // Les heures précises, regroupées par plage : « 17:00 - 22:00 : lun., mar. ».
         const plages = new Map();
