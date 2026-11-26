@@ -1149,12 +1149,9 @@ footer .brand{color:var(--fg,#fff);gap:12px;}
 .settings-nav-item.active{background:rgba(var(--w),0.10);color:var(--fg);}
 .settings-nav-item .icon{font-size:15px;flex-shrink:0;}
 
-/* .settings-nav est déjà position:sticky (voir plus haut) - utilisé ici à
-   l'horizontale pour les onglets Horaire/Feuille de temps/Demandes. Sans
-   fond, les onglets collés flottaient à nu par-dessus le contenu qui
-   défile en dessous ; ce fond flouté règle ça. */
+/* Onglets des modules (Horaire, Réservations, Inventaire) : en haut de la page, ils ne suivent pas le défilement. */
 .horaire-tabs-sticky{
-    z-index:8;margin:-10px -10px 24px;padding:10px;
+    position:static;margin:-10px -10px 24px;padding:10px;
     background:var(--glass);border:1px solid var(--glass-border);
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     border-radius:18px;
