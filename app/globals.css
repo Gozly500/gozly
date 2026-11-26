@@ -1788,6 +1788,49 @@ input[type="checkbox"]:not(.switch input):disabled{opacity:.5;cursor:default;}
   }
 .horaire-col-add:hover{background:rgba(var(--w),0.06);color:var(--fg);}
 
+/* Modèle « Chronologie » : jours à gauche, 24 heures en haut, blocs à étirer */
+.hchr{display:flex;gap:12px;align-items:flex-start;user-select:none;}
+.hchr-jours{width:132px;flex-shrink:0;display:flex;flex-direction:column;gap:6px;}
+.hchr-jour{border-radius:14px;background:rgba(var(--w),0.07);border:1px solid rgba(var(--w),0.14);overflow:hidden;transition:background .15s ease;}
+.hchr-jour.actif{background:linear-gradient(135deg,#7a3fe0,#5b4fd8);border-color:rgba(190,160,255,0.75);color:#fff;}
+.hchr-jour.cible{border-style:dashed;border-color:rgba(190,160,255,0.85);}
+.hchr-jour-nom{display:flex;flex-direction:column;gap:2px;width:100%;padding:11px 12px;text-align:left;background:none;border:0;border-radius:0;color:inherit;font:inherit;cursor:pointer;}
+.hchr-jour-nom strong{font-size:12px;text-transform:uppercase;letter-spacing:.04em;}
+.hchr-jour-nom span{font-size:11px;color:var(--text-dim);}
+.hchr-jour.actif .hchr-jour-nom span{color:#e8e0ff;}
+.hchr-jour-actions{display:flex;justify-content:flex-end;gap:6px;padding:0 8px 8px;}
+.hchr-jour-actions button{display:flex;align-items:center;justify-content:center;width:28px;height:26px;padding:0;border:0;border-radius:8px;background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;}
+.hchr-jour-actions button.allume{background:#fff;color:#4b2fb0;}
+.hchr-jour-actions button:disabled{background:rgba(255,255,255,0.08);color:#b9aee6;cursor:default;}
+.hchr-cadre{flex:1;min-width:0;overflow-x:auto;border:1px solid rgba(var(--w),0.13);border-radius:16px;background:rgba(var(--w),0.05);padding:8px;}
+.hchr-table{--hchr-info:144px;position:relative;min-width:760px;display:flex;flex-direction:column;gap:8px;}
+.hchr-repere{position:absolute;top:0;z-index:5;width:2px;margin-left:-1px;background:#ffd479;pointer-events:none;}
+.hchr-repere span{position:absolute;top:-4px;left:50%;transform:translateX(-50%);padding:2px 6px;border-radius:6px;background:#ffd479;color:#1d1642;font-size:11px;font-weight:700;white-space:nowrap;}
+.hchr-ligne{display:flex;gap:8px;align-items:stretch;}
+.hchr-heures,.hchr-piste{flex:1;display:grid;grid-template-columns:repeat(24,1fr);}
+.hchr-heure{display:flex;align-items:center;justify-content:center;min-height:30px;font-size:11px;font-weight:700;}
+.hchr-info{width:136px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:6px 10px;border-radius:10px;background:rgba(var(--w),0.07);overflow:hidden;}
+.hchr-entete .hchr-info{background:none;padding:0;}
+.hchr-info input{width:100%;padding:8px 10px;border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;background:rgba(var(--w),0.06);border:1px solid rgba(var(--w),0.16);color:var(--text);outline:none;}
+.hchr-info strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hchr-info span{font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hchr-piste{position:relative;min-height:58px;cursor:crosshair;touch-action:pan-y;}
+.hchr-case{margin:0 1px;border-radius:4px;background:rgba(var(--w),0.05);border:1px solid rgba(var(--w),0.10);pointer-events:none;}
+.hchr-bloc{position:absolute;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 16px;overflow:hidden;white-space:nowrap;border-radius:8px;background:linear-gradient(135deg,#7a3fe0,#5b4fd8);border:1px solid rgba(190,160,255,0.65);color:#fff;font-size:11px;cursor:grab;touch-action:none;}
+.hchr-bloc:active{cursor:grabbing;}
+.hchr-bloc strong{font-size:12.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+.hchr-bloc>span{max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+.hchr-bloc.brouillon{border-style:dashed;border-color:rgba(242,146,90,0.9);background:linear-gradient(135deg,#4b3a86,#3d3a78);}
+.hchr-bloc.apercu{pointer-events:none;background:rgba(122,63,224,0.6);border-style:dashed;}
+.hchr-bloc .hchr-poignee{position:absolute;top:0;bottom:0;width:12px;cursor:ew-resize;background:rgba(255,255,255,0.28);}
+.hchr-poignee::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;border-radius:50%;background:#fff;box-shadow:0 -7px #fff,0 7px #fff;}
+.hchr-poignee.gauche{left:0;}
+.hchr-poignee.droite{right:0;}
+.hchr-retirer{position:absolute;left:15px;bottom:3px;display:none;align-items:center;justify-content:center;width:20px;height:20px;padding:0;border:0;border-radius:5px;background:rgba(0,0,0,0.35);color:#fff;font-size:11px;cursor:pointer;}
+.hchr-bloc:hover .hchr-retirer{display:flex;}
+@media(hover:none){.hchr-retirer{display:flex;}}
+@media(max-width:900px){.hchr{flex-direction:column;}.hchr-jours{width:100%;flex-direction:row;overflow-x:auto;}.hchr-jour{flex:0 0 auto;min-width:112px;}.hchr-cadre{width:100%;}}
+
 /* Modèle « Tableau » : employés en rangées, jours en colonnes */
 .htab-cadre{overflow-x:auto;border:1px solid rgba(var(--w),0.13);border-radius:16px;background:rgba(var(--w),0.05);}
 .htab{display:grid;grid-template-columns:170px repeat(7,minmax(110px,1fr));min-width:940px;}

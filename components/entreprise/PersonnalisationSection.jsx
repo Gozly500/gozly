@@ -78,6 +78,7 @@ const OPTIONS_KIOSQUE_COMMANDES = [
 const OPTIONS_MODELE_HORAIRE = [
   { id: "classique", label: "Classique" },
   { id: "tableau", label: "Tableau" },
+  { id: "chronologie", label: "Chronologie" },
 ];
 
 const OPTIONS_TRAITER_AUTO = [

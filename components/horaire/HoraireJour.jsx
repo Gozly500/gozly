@@ -81,7 +81,6 @@ export default function HoraireJour({ date, employes, quarts, onRetour, onJour, 
           ))}
         </div>
       </div>
-      <p className="section-hint">{t("Clique dans une rangée pour ajouter un quart, ou sur un bloc pour le modifier.")}</p>
     </div>
   );
 }

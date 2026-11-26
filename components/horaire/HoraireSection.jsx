@@ -7,6 +7,7 @@ import { getDebutSemaine, addDays } from "@/lib/semaine";
 import SimpleSelect from "@/components/SimpleSelect";
 import HoraireJour from "@/components/horaire/HoraireJour";
 import HoraireTableau from "@/components/horaire/HoraireTableau";
+import HoraireChrono from "@/components/horaire/HoraireChrono";
 import { bloc } from "@/lib/horaireJour";
 import { IconPlus as IconDupliquer, IconCrochet, IconTelecharger, IconEtoile, IconEtoilePleine, IconFlecheDroite, IconFlecheGauche, IconMegaphone } from "@/components/icons/Pictogrammes";
 import { useT } from "@/components/LangProvider";
@@ -36,6 +37,7 @@ export default function HoraireSection({ entrepriseId }) {
   const [favoris, setFavoris] = useState([]); // dates ISO (semaine_debut) marquées favorites
   const [favoriMsg, setFavoriMsg] = useState(null);
   const [jourOuvert, setJourOuvert] = useState(null); // date ISO de la journée affichée en blocs (null = semaine)
+  const [confirmation, setConfirmation] = useState(null); // { titre, bouton, action }
   const [copie, setCopie] = useState(null); // quart à dupliquer : { employeId, heureDebut, heureFin }
 
   // Échap termine la duplication ; changer de succursale aussi.
@@ -207,6 +209,84 @@ export default function HoraireSection({ entrepriseId }) {
       poste: null,
       emplacement_id: emplacementId,
     });
+    load(true);
+  }
+
+  // Chronologie : nouvelles heures (ou nouvelle personne) d'un bloc étiré ou déplacé.
+  async function changerHeures(quart, maj) {
+    const pareil = maj.heure_debut === quart.heure_debut.slice(0, 5) && maj.heure_fin === quart.heure_fin.slice(0, 5) && maj.employe_id === quart.employe_id;
+    if (pareil) return;
+    setQuarts((liste) => liste.map((x) => (x.id === quart.id ? { ...x, ...maj } : x)));
+    await supabase.from("planning_quarts").update(maj).eq("id", quart.id);
+    load(true);
+  }
+
+  // Chronologie : un quart peint en glissant est créé tout de suite (en brouillon).
+  async function creerQuart(employeId, date, heureDebut, heureFin) {
+    await supabase.from("planning_quarts").insert({
+      entreprise_id: entrepriseId,
+      employe_id: employeId,
+      date,
+      heure_debut: heureDebut,
+      heure_fin: heureFin,
+      poste: null,
+      emplacement_id: emplacementId,
+    });
+    load(true);
+  }
+
+  async function supprimerQuart(quart) {
+    setQuarts((liste) => liste.filter((x) => x.id !== quart.id));
+    await supabase.from("planning_quarts").delete().eq("id", quart.id);
+    load(true);
+  }
+
+  async function effacerJour(date) {
+    const ids = quarts.filter((q) => q.date === date).map((q) => q.id);
+    if (ids.length > 0) await supabase.from("planning_quarts").delete().in("id", ids);
+  }
+
+  // Confirmation dans une fenêtre de Gozly (celle du navigateur peut être bloquée et répondre « non » sans rien afficher).
+  function viderJour(date) {
+    if (!quarts.some((q) => q.date === date)) return;
+    setConfirmation({
+      titre: t("Retirer tous les quarts de cette journée ?"),
+      bouton: t("Retirer"),
+      action: async () => {
+        await effacerJour(date);
+        load(true);
+      },
+    });
+  }
+
+  // Copie tous les quarts d'une journée sur une autre (en brouillon), en remplaçant ce qu'elle contenait.
+  function copierJour(source, cible) {
+    const aCopier = quarts.filter((q) => q.date === source);
+    if (aCopier.length === 0) return;
+    if (!quarts.some((q) => q.date === cible)) return ecrireCopie(aCopier, cible);
+    setConfirmation({
+      titre: t("Remplacer les quarts de la journée choisie ?"),
+      bouton: t("Remplacer"),
+      action: async () => {
+        await effacerJour(cible);
+        await ecrireCopie(aCopier, cible);
+      },
+    });
+  }
+
+  async function ecrireCopie(aCopier, cible) {
+    await supabase.from("planning_quarts").insert(
+      aCopier.map((q) => ({
+        entreprise_id: entrepriseId,
+        employe_id: q.employe_id,
+        date: cible,
+        heure_debut: q.heure_debut,
+        heure_fin: q.heure_fin,
+        poste: q.poste,
+        emplacement_id: q.emplacement_id,
+        publie: false,
+      })),
+    );
     load(true);
   }
 
@@ -455,11 +535,6 @@ export default function HoraireSection({ entrepriseId }) {
           {favoriMsg}
         </p>
       )}
-      {quarts.some((q) => !q.publie) && (
-        <p className="section-hint" style={{ marginBottom: "10px" }}>
-          {t("Les quarts marqués")}{" "}<strong>{t("Brouillon")}</strong>{" "}{t("ne sont pas encore visibles des employés - clique \"Publier la semaine\" quand l'horaire est prêt.")}
-        </p>
-      )}
 
       {copie && (
         <div className="horaire-copie">
@@ -491,6 +566,29 @@ export default function HoraireSection({ entrepriseId }) {
             copie ? collerQuart(jourOuvert, employeId) : setModal({ date: jourOuvert, employeId, quartId: null, heureDebut, heureFin, poste: "" })
           }
           onModifier={toucherQuart}
+        />
+      ) : modele === "chronologie" ? (
+        <HoraireChrono
+          jours={weekDays.map((day) => ({
+            iso: toISODate(day),
+            nom: t(JOURS[(day.getDay() + 6) % 7]),
+            date: day.toLocaleDateString(loc(), { day: "numeric", month: "short" }),
+          }))}
+          employes={[...employesAffiches, ...(rechercheEmploye.trim() ? [] : employes.filter((e) => !employesVisibles.includes(e) && quarts.some((q) => q.employe_id === e.id)))]}
+          quarts={quarts}
+          recherche={rechercheEmploye}
+          onRecherche={setRechercheEmploye}
+          // peint : créé directement ; simple clic : le formulaire s'ouvre. Pendant une duplication, les heures copiées sont collées.
+          onAjouter={(employeId, date, heureDebut, heureFin, peint) => {
+            if (copie) collerQuart(date, employeId);
+            else if (peint) creerQuart(employeId, date, heureDebut, heureFin);
+            else setModal({ date, employeId, quartId: null, heureDebut, heureFin, poste: "" });
+          }}
+          onModifier={toucherQuart}
+          onHeures={changerHeures}
+          onSupprimer={supprimerQuart}
+          onCopierJour={copierJour}
+          onViderJour={viderJour}
         />
       ) : modele === "tableau" ? (
         <HoraireTableau
@@ -681,6 +779,31 @@ export default function HoraireSection({ entrepriseId }) {
         </div>
       )}
 
+      {confirmation && (
+        <div className="modal-overlay" onClick={() => setConfirmation(null)}>
+          <div className="modal-card" style={{ maxWidth: "360px" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{confirmation.titre}</h3>
+            </div>
+            <div className="admin-edit-actions">
+              <button
+                type="button"
+                className="submit-btn"
+                onClick={() => {
+                  setConfirmation(null);
+                  confirmation.action();
+                }}
+              >
+                {confirmation.bouton}
+              </button>
+              <button type="button" className="admin-icon-btn" onClick={() => setConfirmation(null)}>
+                {t("Annuler")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {importModal && (
         <div className="modal-overlay" onClick={() => !importing && setImportModal(null)}>
           <div className="modal-card" style={{ maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
@@ -690,9 +813,6 @@ export default function HoraireSection({ entrepriseId }) {
                 {t("Fermer")}
               </button>
             </div>
-            <p className="section-hint" style={{ marginBottom: "14px" }}>
-              {t("Copie tous les quarts d'une semaine existante vers la semaine affichée (")}{weekLabel}{t("). Les quarts copiés restent en")}{" "}<strong>{t("Brouillon")}</strong>{" "}{t("- tu peux les ajuster avant de publier.")}
-            </p>
             <form onSubmit={handleImporterSemaine}>
               <div className="field">
                 <label>{t("Semaine à copier")}</label>
