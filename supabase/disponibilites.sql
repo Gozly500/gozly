@@ -39,3 +39,8 @@ alter table entreprises add column if not exists horaire_dispos_affichage text n
 -- Non-disponibilités (« pas disponible ») : désactivées par défaut, au choix de l'entreprise (Paramètres > Modules > Horaire).
 alter table disponibilites add column if not exists disponible boolean not null default true;
 alter table entreprises add column if not exists horaire_non_dispo_actif boolean not null default false;
+
+-- Les admins Gozly (soutien) lisent aussi les entreprises dont ils ne sont pas membres, comme pour les employés et les quarts.
+drop policy if exists "Les admins peuvent voir les disponibilités" on disponibilites;
+create policy "Les admins peuvent voir les disponibilités"
+on disponibilites for select to authenticated using (is_admin());
