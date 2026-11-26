@@ -11,6 +11,7 @@ import EmplacementSelect from "@/components/EmplacementSelect";
 import { getEmplacementSelectionne, setEmplacementSelectionne } from "@/lib/entreprise";
 import { commandeDeSuccursale } from "@/lib/commandesSuccursale";
 import { changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes, planifierSynchro } from "@/lib/commandesClient";
+import { motAcceptee } from "@/lib/statutsWix";
 import { estOuvertMaintenant } from "@/lib/horairesOuverture";
 import {
   formatMontant,
@@ -133,6 +134,17 @@ export default function CommandesGestion() {
 
   useEffect(() => {
     impressionActive(entrepriseId).then(setImprimanteActive);
+  }, [entrepriseId]);
+
+  // « Traiter automatiquement à l'acceptation » (colonne de commandes_traitement_copies.sql).
+  const [traiterAuto, setTraiterAuto] = useState(false);
+  useEffect(() => {
+    supabase
+      .from("entreprises")
+      .select("commandes_traiter_auto")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => setTraiterAuto(!!data?.commandes_traiter_auto));
   }, [entrepriseId]);
 
   async function passerEtape(c, etape) {
@@ -284,7 +296,7 @@ export default function CommandesGestion() {
                   <strong>
                     #{c.numero || "—"} · {libelleRamassage(c) ? t("Ramassage {x}", { x: libelleRamassage(c) }) : heureCommande(c.date_commande)}
                   </strong>
-                  <span style={{ color: etat.couleur, fontWeight: 600, fontSize: "12.5px", whiteSpace: "nowrap" }}>{etat.texte}</span>
+                  <span style={{ color: etat.couleur, fontWeight: 600, fontSize: "12.5px", whiteSpace: "nowrap" }}>{etat.id === "traitee" && motAcceptee(c, traiterAuto) ? t("Acceptée") : t(etat.texte)}</span>
                 </div>
                 {(c.client_nom || c.client_telephone) && (
                   <div className="gestion-commande-client">
@@ -316,7 +328,7 @@ export default function CommandesGestion() {
                   <div className="gestion-commande-actions">
                     {etat.id === "en_attente" && (
                       <button className="btn-small" onClick={() => passerEtape(c, "traitee")}>
-                        {t("Traiter")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
+                        {motAcceptee(c, traiterAuto) ? t("Accepter") : t("Traitée")}{" "}<IconFlecheDroite className="gozly-icon-inline" />
                       </button>
                     )}
                     {etat.id === "traitee" && (

@@ -71,27 +71,11 @@ const OPTIONS_SON_COMMANDES = [
 
 const OPTIONS_KIOSQUE_COMMANDES = [
   { id: "liste", label: "Liste (cartes des commandes du jour)" },
-  { id: "sections", label: "3 sections (En attente, Traitées, Terminées)" },
+  { id: "sections", label: "3 sections (En attente, Acceptées, Terminées)" },
   { id: "wix", label: "Statuts Wix (En attente, Acceptée, Prête, Terminée)" },
 ];
 
-// Modèle Gozly (liste ou 3 sections) : le statut Wix que reçoit une commande quand on appuie sur « Traitée ».
-const OPTIONS_TRAITEE_WIX = [
-  { id: "Accepted", label: "Acceptée" },
-  { id: "Ready", label: "Prête" },
-  { id: "In_Delivery", label: "En livraison" },
-  { id: "Fulfilled", label: "Terminée" },
-];
-
-// 3 sections : le statut Wix de la 3e section.
-const OPTIONS_TERMINEE_WIX = [
-  { id: "Ready", label: "Prête" },
-  { id: "In_Delivery", label: "En livraison" },
-  { id: "Fulfilled", label: "Terminée" },
-];
-
-// Liste : « Accepter » passe chaque étape une à la fois, ou saute directement au statut choisi.
-const OPTIONS_LISTE_SAUTER = [
+const OPTIONS_TRAITER_AUTO = [
   { id: "desactive", label: "Désactivé" },
   { id: "active", label: "Activé" },
 ];
@@ -468,9 +452,7 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
   const [terminalNom, setTerminalNom] = useState("");
   const [impressionManuelles, setImpressionManuelles] = useState("desactivee");
   const [kiosqueCommandes, setKiosqueCommandes] = useState("liste");
-  const [traiteeWix, setTraiteeWix] = useState("Accepted");
-  const [termineeWix, setTermineeWix] = useState("Fulfilled");
-  const [listeSauter, setListeSauter] = useState("desactive");
+  const [traiterAuto, setTraiterAuto] = useState("desactive");
   const [sonCommandes, setSonCommandes] = useState("une_fois");
   const [commandesVersTaches, setCommandesVersTaches] = useState("active");
   const [planifDansCommandes, setPlanifDansCommandes] = useState("desactive");
@@ -530,15 +512,9 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
     // Mode d'affichage du kiosque : lu à part (colonne de commandes_kiosque_mode.sql, absente tant que le SQL n'est pas exécuté).
     const { data: kiosqueData, error: kiosqueErreur } = await supabase.from("entreprises").select("commandes_kiosque_mode").eq("id", entrepriseId).maybeSingle();
     if (!kiosqueErreur) setKiosqueCommandes(["sections", "wix"].includes(kiosqueData?.commandes_kiosque_mode) ? kiosqueData.commandes_kiosque_mode : "liste");
-    // Réglage « Traitée = statut Wix » : colonne de commandes_modele_wix.sql (absente tant que le SQL n'est pas exécuté : Acceptée).
-    const { data: traiteeData, error: traiteeErreur } = await supabase.from("entreprises").select("commandes_traitee_wix").eq("id", entrepriseId).maybeSingle();
-    if (!traiteeErreur && traiteeData?.commandes_traitee_wix) setTraiteeWix(traiteeData.commandes_traitee_wix);
-    // Colonnes de commandes_types_wix.sql (absentes tant que le SQL n'est pas exécuté).
-    const { data: typesData, error: typesErreur } = await supabase.from("entreprises").select("commandes_terminee_wix, commandes_liste_sauter").eq("id", entrepriseId).maybeSingle();
-    if (!typesErreur) {
-      if (typesData?.commandes_terminee_wix) setTermineeWix(typesData.commandes_terminee_wix);
-      setListeSauter(typesData?.commandes_liste_sauter ? "active" : "desactive");
-    }
+    // « Traiter automatiquement à l'acceptation » : colonne de commandes_traitement_copies.sql (absente tant que le SQL n'est pas exécuté).
+    const { data: autoData, error: autoErreur } = await supabase.from("entreprises").select("commandes_traiter_auto").eq("id", entrepriseId).maybeSingle();
+    if (!autoErreur) setTraiterAuto(autoData?.commandes_traiter_auto ? "active" : "desactive");
     // Son des nouvelles commandes : colonne de commandes_son_mode.sql (absente tant que le SQL n'est pas exécuté : comportement selon l'affichage).
     const { data: sonData, error: sonErreur } = await supabase.from("entreprises").select("commandes_son_mode").eq("id", entrepriseId).maybeSingle();
     if (!sonErreur && sonData?.commandes_son_mode) setSonCommandes(sonData.commandes_son_mode === "continu" ? "continu" : "une_fois");
@@ -636,47 +612,17 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
     );
   }
 
-  async function handleChangeTraiteeWix(value) {
-    setTraiteeWix(value);
+  async function handleChangeTraiterAuto(value) {
+    setTraiterAuto(value);
     setSaving(true);
     setMsg(null);
 
-    const { error } = await supabase.from("entreprises").update({ commandes_traitee_wix: value }).eq("id", entrepriseId);
+    const { error } = await supabase.from("entreprises").update({ commandes_traiter_auto: value === "active" }).eq("id", entrepriseId);
 
     setSaving(false);
     setMsg(
       error
-        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_modele_wix.sql dans Supabase?") }
-        : { type: "ok", text: t("Préférence enregistrée.") }
-    );
-  }
-
-  async function handleChangeTermineeWix(value) {
-    setTermineeWix(value);
-    setSaving(true);
-    setMsg(null);
-
-    const { error } = await supabase.from("entreprises").update({ commandes_terminee_wix: value }).eq("id", entrepriseId);
-
-    setSaving(false);
-    setMsg(
-      error
-        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_types_wix.sql dans Supabase?") }
-        : { type: "ok", text: t("Préférence enregistrée.") }
-    );
-  }
-
-  async function handleChangeListeSauter(value) {
-    setListeSauter(value);
-    setSaving(true);
-    setMsg(null);
-
-    const { error } = await supabase.from("entreprises").update({ commandes_liste_sauter: value === "active" }).eq("id", entrepriseId);
-
-    setSaving(false);
-    setMsg(
-      error
-        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_types_wix.sql dans Supabase?") }
+        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_traitement_copies.sql dans Supabase?") }
         : { type: "ok", text: t("Préférence enregistrée. Recharge le kiosque pour l'appliquer.") }
     );
   }
@@ -1072,39 +1018,19 @@ export default function PersonnalisationSection({ entrepriseId, module, categori
           <div className="param-liste">
               <ParametreSelect
                 label={t("Affichage du kiosque des commandes")}
-                info={t("Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »), chaque commande suivant les étapes de son type (Wix Restaurants : En attente, Acceptée, Prête, En livraison, Terminée ; Wix Boutique : En attente, Traitée, Terminée). 3 sections : toutes les commandes arrivent dans « En attente », puis passent à « Traitées » et « Terminées », peu importe leur date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées (bouton Vider, et celles d'avant hier disparaissent seules). Statuts Wix : les sections reprennent celles de Wix Restaurants (En attente, Acceptée, Prête, En livraison, Terminée), sans les commandes Wix Boutique, et les deux se suivent : un changement dans Gozly est fait chez Wix, et un changement chez Wix revient dans Gozly. Recharge le kiosque après un changement.")}
+                info={t("Liste : une seule liste de cartes avec les commandes du jour (les précommandes sont dans « Commandes à venir »). 3 sections : En attente, Acceptées et Terminées, peu importe la date ; l'écran ne se vide pas à minuit, seules les terminées sont nettoyées. Statuts Wix : les mêmes sections que Wix Restaurants (En attente, Acceptée, Prête, En livraison, Terminée). Recharge le kiosque après un changement.")}
                 options={OPTIONS_KIOSQUE_COMMANDES}
                 value={kiosqueCommandes}
                 onChange={handleChangeKiosqueCommandes}
                 disabled={saving}
               />
-              {kiosqueCommandes === "liste" && (
+              {kiosqueCommandes !== "wix" && (
                 <ParametreSelect
-                  label={t("« Accepter » saute directement à un statut")}
-                  info={t("Désactivé : chaque étape se fait une à la fois (Wix Restaurants : Accepter, Prête, En livraison, Terminer ; Wix Boutique : Traitée, Terminer). Activé : le bouton « Accepter » met tout de suite la commande au statut choisi juste en dessous.")}
-                  options={OPTIONS_LISTE_SAUTER}
-                  value={listeSauter}
-                  onChange={handleChangeListeSauter}
-                  disabled={saving}
-                />
-              )}
-              {(kiosqueCommandes === "sections" || (kiosqueCommandes === "liste" && listeSauter === "active")) && (
-                <ParametreSelect
-                  label={kiosqueCommandes === "sections" ? t("2e section (Traitées) = statut Wix") : t("Statut Wix après « Accepter »")}
-                  info={t("Le statut Wix Restaurants que reçoit la commande à cette étape. Acceptée arrête la sonnerie de Wix. Sans effet de statut pour une commande Wix Boutique : elle est simplement marquée traitée (préparée) chez Wix.")}
-                  options={OPTIONS_TRAITEE_WIX}
-                  value={traiteeWix}
-                  onChange={handleChangeTraiteeWix}
-                  disabled={saving}
-                />
-              )}
-              {kiosqueCommandes === "sections" && (
-                <ParametreSelect
-                  label={t("3e section (Terminées) = statut Wix")}
-                  info={t("Le statut Wix Restaurants que reçoit la commande quand tu la mets dans « Terminées ». La 1re section (En attente) correspond toujours à En attente chez Wix. Wix Boutique n'a que deux états : traitée = préparée, et Terminées reste dans Gozly.")}
-                  options={OPTIONS_TERMINEE_WIX}
-                  value={termineeWix}
-                  onChange={handleChangeTermineeWix}
+                  label={t("Traiter automatiquement à l'acceptation")}
+                  info={t("Désactivé : « Accepter » met la commande Wix Restaurants dans Acceptée chez Wix, puis « Terminer » la marque traitée. Activé : le bouton « Traitée » marque la commande traitée chez Wix tout de suite, et « Terminer » la met de côté dans Gozly. Une commande Wix Boutique a toujours le bouton « Traitée ». Recharge le kiosque après un changement.")}
+                  options={OPTIONS_TRAITER_AUTO}
+                  value={traiterAuto}
+                  onChange={handleChangeTraiterAuto}
                   disabled={saving}
                 />
               )}

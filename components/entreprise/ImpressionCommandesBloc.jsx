@@ -30,6 +30,26 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
   const [apercuSource, setApercuSource] = useState("exemple");
   const [apercuOuvert, setApercuOuvert] = useState(false);
 
+  const [copies, setCopies] = useState(1);
+  useEffect(() => {
+    supabase
+      .from("entreprises")
+      .select("impression_copies")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => setCopies(data?.impression_copies || 1));
+  }, [entrepriseId]);
+
+  // Enregistré à la fin du geste, pas à chaque cran du curseur.
+  async function enregistrerCopies(n) {
+    const { error } = await supabase.from("entreprises").update({ impression_copies: n }).eq("id", entrepriseId);
+    setMsg(
+      error
+        ? { type: "err", text: t("L'enregistrement a échoué. As-tu exécuté commandes_traitement_copies.sql dans Supabase?") }
+        : { type: "ok", text: t("Préférence enregistrée.") }
+    );
+  }
+
   async function voirApercu() {
     setMsg(null);
     const r = await appelerImpression(entrepriseId, "apercu");
@@ -96,6 +116,27 @@ export default function ImpressionCommandesBloc({ entrepriseId, selecteur }) {
               </button>
             </>
           )}
+        </div>
+      </div>
+
+      <div className="param-ligne">
+        <div className="param-ligne-libelle">
+          {t("Nombre de copies par commande")}
+          <InfoTooltip>{t("Chaque bon de commande sort en autant d'exemplaires, coupés un à un.")}</InfoTooltip>
+        </div>
+        <div className="impression-copies">
+          <input
+            type="range"
+            min="1"
+            max="5"
+            step="1"
+            value={copies}
+            aria-label={t("Nombre de copies par commande")}
+            onChange={(e) => setCopies(Number(e.target.value))}
+            onPointerUp={(e) => enregistrerCopies(Number(e.currentTarget.value))}
+            onKeyUp={(e) => enregistrerCopies(Number(e.currentTarget.value))}
+          />
+          <strong>{copies}</strong>
         </div>
       </div>
 

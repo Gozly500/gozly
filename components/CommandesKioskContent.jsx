@@ -13,7 +13,7 @@ import { LangueProvider, useLangue } from "@/components/moi/LangueContext";
 import { chargerProduitsInventaire, chargerCategoriesInventaire, creerCommandeManuelle, modifierCommandeManuelle, retirerCommandeManuelle } from "@/lib/commandesNouvelle";
 import { synchroniserCommandes, changerEtapeCommande, imprimerCommande, impressionActive, annulerCommande, modifierCommandeEnLigne, planifierSynchro } from "@/lib/commandesClient";
 import { estOuvertMaintenant } from "@/lib/horairesOuverture";
-import { COLONNES_WIX, etapeDuStatutWix, colonneWix, statutSuivantWix, statutPrecedentWix, typeCommande, stadeListe, etapeSuivanteListe } from "@/lib/statutsWix";
+import { COLONNES_WIX, etapeDuStatutWix, colonneWix, statutSuivantWix, statutPrecedentWix, typeCommande, motAcceptee } from "@/lib/statutsWix";
 import { imprimerBonsLocaux } from "@/lib/impressionLocale";
 import { saisieGozlyActive } from "@/lib/saisieGozly";
 import {
@@ -143,9 +143,8 @@ export default function CommandesKioskContent() {
   const modeSections = modeKiosque === "sections" || modeWix;
   // Son des nouvelles commandes en ligne choisi dans Modules : "une_fois" | "continu" (null = selon l'affichage, comme avant).
   const [sonMode, setSonMode] = useState(null);
-  // Mode liste : « Accepter » saute-t-il directement au statut choisi (réglage « Traitée = statut Wix ») au lieu de passer chaque étape ?
-  const [listeSauter, setListeSauter] = useState(false);
-  const [cibleSauter, setCibleSauter] = useState("Accepted");
+  // « Traiter automatiquement à l'acceptation » (Modules) : le premier bouton dit « Traitée » et la commande est traitée chez Wix.
+  const [traiterAuto, setTraiterAuto] = useState(false);
   const [pret, setPret] = useState(false); // premier chargement terminé (pas de son pour les commandes déjà là)
   const [aConfirmer, setAConfirmer] = useState(() => new Set()); // liste + son continu : commandes en ligne pas encore vues
   const [masquees, setMasquees] = useState(() => new Set()); // commandes terminées « vidées » de l'écran (mode sections)
@@ -163,7 +162,6 @@ export default function CommandesKioskContent() {
   const [emplacementId, setEmplacementId] = useState(null);
   const [calendrierPlage, setCalendrierPlage] = useState(false); // calendrier pour choisir un jour ou une plage de dates
   const audioRef = useRef(null);
-  const webhookActifRef = useRef(false); // Wix nous envoie les commandes (webhook) : la tablette vient chercher les bons à l'arrivée d'une commande
   const horairesRef = useRef({ emplacements: [], emplacementId: null });
   horairesRef.current = { emplacements, emplacementId };
 
@@ -193,12 +191,9 @@ export default function CommandesKioskContent() {
         // Colonne ajoutée par commandes_son_mode.sql : tant qu'elle n'existe pas, le son suit l'affichage (continu en 3 sections, une fois en liste).
         const { data: son, error: erreurSon } = await supabase.from("entreprises").select("commandes_son_mode").eq("id", eid).maybeSingle();
         if (!ignore && !erreurSon && son?.commandes_son_mode) setSonMode(son.commandes_son_mode === "continu" ? "continu" : "une_fois");
-        // Colonnes de commandes_types_wix.sql : tant qu'elles n'existent pas, chaque étape se fait une à la fois.
-        const { data: saut, error: erreurSaut } = await supabase.from("entreprises").select("commandes_liste_sauter, commandes_traitee_wix").eq("id", eid).maybeSingle();
-        if (!ignore && !erreurSaut) {
-          setListeSauter(!!saut?.commandes_liste_sauter);
-          if (saut?.commandes_traitee_wix) setCibleSauter(saut.commandes_traitee_wix);
-        }
+        // Colonne de commandes_traitement_copies.sql : tant qu'elle n'existe pas, « Accepter » puis « Terminer ».
+        const { data: auto, error: erreurAuto } = await supabase.from("entreprises").select("commandes_traiter_auto").eq("id", eid).maybeSingle();
+        if (!ignore && !erreurAuto) setTraiterAuto(!!auto?.commandes_traiter_auto);
         // Le son reste voulu d'une fois à l'autre (rechargement, retour au kiosque, tablette qui se rallume) : mémorisé sur cet appareil.
         // Le navigateur exige un toucher pour jouer un son : on essaie tout de suite, sinon le premier toucher sur l'écran le réactive.
         try {
@@ -287,7 +282,6 @@ export default function CommandesKioskContent() {
     let actif = true;
     async function cycle() {
       const resultat = await synchroniserCommandes(entrepriseId); // muet si Wix n'est pas connecté
-      webhookActifRef.current = !!resultat?.webhook_actif;
       // Tablette avec imprimante Bluetooth : les bons que la synchro vient de mettre en file sortent tout de suite.
       imprimerBonsLocaux(entrepriseId, emplacementId).then(({ erreur }) => {
         if (erreur && actif) {
@@ -378,11 +372,9 @@ export default function CommandesKioskContent() {
     const nouvelles = toutes.filter((c) => !dejaVuesRef.current.has(c.id) && c.source !== "manuel");
     dejaVuesRef.current = ids;
     if (nouvelles.length === 0) return;
-    // Commande arrivée par le webhook de Wix : le bon est mis en file par le serveur quelques secondes après la commande,
-    // alors la tablette le cherche tout de suite, puis encore deux fois.
-    if (webhookActifRef.current) {
-      for (const delai of [0, 8000, 20000]) setTimeout(() => imprimerBonsLocaux(entrepriseId, horairesRef.current.emplacementId).catch(() => {}), delai);
-    }
+    // Le bon est mis en file par le serveur quelques secondes après la commande : la tablette le cherche tout de suite,
+    // puis encore deux fois (même la nuit, quand la synchro est espacée).
+    for (const delai of [0, 8000, 20000]) setTimeout(() => imprimerBonsLocaux(entrepriseId, horairesRef.current.emplacementId).catch(() => {}), delai);
     if (sonContinu) return; // la boucle repart toute seule : la commande arrive « En attente »
     if (son) {
       if (!audioRef.current) audioRef.current = obtenirLecteurSon();
@@ -651,16 +643,21 @@ export default function CommandesKioskContent() {
   const terminesListe = visibles.filter(terminesAffichees).sort(parHeure);
   const aAfficherListe = [...aFaireListe, ...terminesListe];
 
-  // Mode liste : le bouton de la prochaine étape de la commande (Restaurants : Accepter, Prête, En livraison, Terminer ;
-  // Boutique et commandes manuelles : Traitée, Terminer).
-  const optionsListe = { sauter: listeSauter, cible: cibleSauter };
-  const libelleEtape = (c, s) => (typeCommande(c) === "restaurant" ? t(`kq.c.wix.${s.statut}`) : t(s.etape === "terminee" ? "kq.c.terminer" : "kq.c.traitee"));
+  // Boutons : « Accepter » (Wix Restaurants) ou « Traitée » (Boutique, saisie à la main, ou traitement automatique), puis « Terminer ».
+  // En affichage « Statuts Wix », les sections suivent les étapes de Wix.
+  const libellePremier = (c) => t(motAcceptee(c, traiterAuto && !modeWix) ? "kq.c.wix.Accepted" : "kq.c.traitee");
+  const cleStade = (c) => (etapeCommande(c) === "traitee" && motAcceptee(c, traiterAuto) ? "acceptee" : etapeCommande(c));
   const boutonSuivantListe = (c) => {
-    const s = etapeSuivanteListe(c, etapeCommande(c), optionsListe);
-    if (!s) return null;
+    const etape = etapeCommande(c);
+    if (etape !== "en_attente" && etape !== "traitee") return null;
+    const suivante = etape === "en_attente" ? "traitee" : "terminee";
     return (
-      <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, s.etape, s.statut)}>
-        {libelleEtape(c, s)} {s.etape === "terminee" ? <IconCrochet className="gozly-icon" /> : <IconFlecheDroite className="gozly-icon-inline" />}
+      <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, suivante)}>
+        {suivante === "traitee" ? (
+          <>{libellePremier(c)} <IconFlecheDroite className="gozly-icon-inline" /></>
+        ) : (
+          <>{t("kq.c.terminer")} <IconCrochet className="gozly-icon" /></>
+        )}
       </button>
     );
   };
@@ -686,7 +683,7 @@ export default function CommandesKioskContent() {
           )}
           {liste && etapeCommande(c) !== "terminee" && (
             <span className="cmd-kiosk-tag" style={{ color: etat.couleur, fontWeight: 700 }}>
-              {t(`kq.c.stade.${stadeListe(c, etapeCommande(c))}`)}
+              {t(`kq.c.stade.${cleStade(c)}`)}
             </span>
           )}
           {modeTexte && <span className="cmd-kiosk-tag">{modeTexte}</span>}
@@ -740,7 +737,7 @@ export default function CommandesKioskContent() {
               {col.suivante && (
                 <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, col.suivante)}>
                   {col.suivante === "traitee" ? (
-                    <>{t("kq.c.traiter")} <IconFlecheDroite className="gozly-icon-inline" /></>
+                    <>{libellePremier(c)} <IconFlecheDroite className="gozly-icon-inline" /></>
                   ) : (
                     <>{t("kq.c.terminer")} <IconCrochet className="gozly-icon" /></>
                   )}
@@ -829,12 +826,12 @@ export default function CommandesKioskContent() {
                               {noteCommande(c) && <div className="cmd-kiosk-note"><IconDocument className="gozly-icon" /> {noteCommande(c)}</div>}
                             </td>
                             <td style={{ whiteSpace: "nowrap", fontWeight: 700 }}>{formatMontant(c.total, locale)}</td>
-                            <td style={{ color: etatTexte.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{t(`kq.c.etat.${etatTexte.id}`)}</td>
+                            <td style={{ color: etatTexte.couleur, fontWeight: 600, whiteSpace: "nowrap" }}>{etatTexte.id === "traitee" && motAcceptee(c, traiterAuto) ? t("kq.c.stade.acceptee") : t(`kq.c.etat.${etatTexte.id}`)}</td>
                             <td>
                               <div className="cmd-kiosk-table-actions">
                                 {modeSections && etat.id === "en_attente" && (
                                   <button className="submit-btn" disabled={enCours === c.id} onClick={() => passer(c, "traitee", modeWix ? "Accepted" : null)}>
-                                    {t("kq.c.traiter")} <IconFlecheDroite className="gozly-icon-inline" />
+                                    {libellePremier(c)} <IconFlecheDroite className="gozly-icon-inline" />
                                   </button>
                                 )}
                                 {modeKiosque === "liste" && estAvenirAConfirmer(c) && boutonSuivantListe(c)}
@@ -960,7 +957,7 @@ export default function CommandesKioskContent() {
           return (
             <section className="cmd-kiosk-col" key={col.id}>
               <div className="cmd-kiosk-col-head" style={{ borderColor: col.couleur }}>
-                <span>{t(`kq.c.col.${col.id}`)}</span>
+                <span>{t(`kq.c.col.${!modeWix && col.id === "traitee" && !traiterAuto ? "acceptee" : col.id}`)}</span>
                 <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   {col.id === "terminee" && liste.length > 0 && (
                     <button className="admin-icon-btn" onClick={() => viderTerminees(liste)}>

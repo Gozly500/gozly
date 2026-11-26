@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { annulerCommande, changerEtapeCommande, imprimerCommande, impressionActive, mettreAJourTachesCommandes, planifierSynchro } from "@/lib/commandesClient";
+import { motAcceptee } from "@/lib/statutsWix";
 import { estOuvertMaintenant } from "@/lib/horairesOuverture";
 import { supabase } from "@/lib/supabaseClient";
 import { IconIntegration, IconTableauDeBord, IconCommandes } from "@/components/icons/GozlyIcons";
@@ -167,6 +168,17 @@ export default function CommandesSection({ entrepriseId }) {
         : { type: "err", text: error || t("L'impression a échoué.") }
     );
   }
+
+  // « Traiter automatiquement à l'acceptation » (colonne de commandes_traitement_copies.sql).
+  const [traiterAuto, setTraiterAuto] = useState(false);
+  useEffect(() => {
+    supabase
+      .from("entreprises")
+      .select("commandes_traiter_auto")
+      .eq("id", entrepriseId)
+      .maybeSingle()
+      .then(({ data }) => setTraiterAuto(!!data?.commandes_traiter_auto));
+  }, [entrepriseId]);
 
   async function passerEtape(c, etape) {
     const { ok, error } = await changerEtapeCommande(entrepriseId, c.id, etape);
@@ -430,7 +442,7 @@ export default function CommandesSection({ entrepriseId }) {
                       {c.client_telephone ? ` · ${c.client_telephone}` : ""}
                     </div>
                     <div className="admin-row-sub" style={{ marginBottom: "6px" }}>
-                      <span style={{ color: etat.couleur, fontWeight: 600 }}>{t(etat.texte)}</span>
+                      <span style={{ color: etat.couleur, fontWeight: 600 }}>{t(etat.id === "traitee" && motAcceptee(c, traiterAuto) ? "Acceptée" : etat.texte)}</span>
                       {mode && ` · ${mode}`}
                       {c.lieu_nom && ` · ${c.lieu_nom}`}
                       {paiement && ` · ${paiement}`}
@@ -452,7 +464,7 @@ export default function CommandesSection({ entrepriseId }) {
                     <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
                       {etat.id === "en_attente" && (
                         <button className="admin-icon-btn" onClick={() => passerEtape(c, "traitee")}>
-                          {t("Traiter")}
+                          {motAcceptee(c, traiterAuto) ? t("Accepter") : t("Traitée")}
                         </button>
                       )}
                       {etat.id === "traitee" && (

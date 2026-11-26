@@ -4839,3 +4839,8 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) :is(.widget-card.drag-o
 /* /marque : texte des boutons pleins bien centré (le bloc de l'icône agrandissait la ligne et remontait le texte) */
 .marque-boutons .submit-btn,.marque-boutons .btn-pill-glass,.marque-page-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.2;padding:13px 26px 12px;}
 .marque-boutons .gozly-icon{width:16px;height:16px;margin:0;vertical-align:baseline;}
+
+/* Curseur du nombre de copies (Modules > Commandes > Impression) */
+.impression-copies{display:flex;align-items:center;gap:12px;}
+.impression-copies input{width:180px;accent-color:#7a3fe0;cursor:pointer;}
+.impression-copies strong{min-width:1ch;font-size:18px;}

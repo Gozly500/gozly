@@ -68,19 +68,28 @@ export async function POST(request) {
 
   // Commande Wix : on met aussi à jour son statut de préparation chez Wix (sinon elle sonne encore sur leur tableau de bord).
   //  - modèle Wix du kiosque : `statutWix` est le statut voulu (Pending, Accepted, Ready, In_Delivery, Fulfilled) ;
-  //  - modèle Gozly : « Traitée » prend le statut choisi dans Modules (par défaut Acceptée), « Terminée » = Fulfilled.
-  // Une commande sans fulfillment (Boutique) est simplement marquée préparée, comme avant.
+  //  - affichages Gozly : « Accepter » = Accepted et « Terminer » = Fulfilled ; avec le réglage « Traiter automatiquement à
+  //    l'acceptation », la commande est Fulfilled dès le premier bouton.
+  // À Fulfilled, la commande est aussi marquée traitée (préparée) chez Wix. Une commande sans fulfillment (Boutique) est
+  // simplement marquée préparée.
   let wix = null;
   let avertissement = null;
   if (commande.source === "wix") {
     const { data: connexion } = await service.from("wix_connexions").select("instance_id, statut").eq("entreprise_id", entreprise.id).maybeSingle();
     if (connexion?.statut === "connecte" && connexion.instance_id) {
       const { data: reglage } = await service.from("entreprises").select("*").eq("id", entreprise.id).maybeSingle();
-      const voulu = STATUTS_WIX_ORDRE.includes(statutWix) ? statutWix : statutWixPourEtape(etape, reglage?.commandes_traitee_wix, reglage?.commandes_terminee_wix);
+      const voulu = STATUTS_WIX_ORDRE.includes(statutWix) ? statutWix : statutWixPourEtape(etape, !!reglage?.commandes_traiter_auto);
       wix = await definirStatutWix(connexion.instance_id, commande.source_id, voulu, commande.wix_fulfillment_id || null);
       if (wix.ok) {
         const maj = { statut_wix: voulu, wix_fulfillment_id: wix.fulfillmentId };
-        if (voulu === "Fulfilled") maj.statut_preparation = "FULFILLED";
+        if (voulu === "Fulfilled" && commande.statut_preparation !== "FULFILLED") {
+          const traitee = await marquerCommandePrepareeWix(connexion.instance_id, commande.source_id, commande.brut?.lineItems || []);
+          if (traitee.ok) maj.statut_preparation = "FULFILLED";
+          else {
+            console.error("Marquer traitée chez Wix:", traitee.status, traitee.detail);
+            avertissement = "Wix n'a pas pu marquer la commande traitée.";
+          }
+        }
         // Colonnes absentes (commandes_modele_wix.sql pas exécuté) : l'erreur est ignorée.
         await service.from("commandes_en_ligne").update(maj).eq("id", commande.id).then(() => {}, () => {});
         if (statutWix && etapeDuStatutWix(voulu) !== etape) {
