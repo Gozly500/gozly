@@ -293,8 +293,8 @@ button:hover{background:rgba(var(--w),0.15);}
     padding:26px 20px;
     position:sticky;top:0;height:100vh;
   }
-.dash-sidebar-logo{display:flex;align-items:center;gap:4px;margin:-16px 0 24px -8px;}
-.dash-sidebar-logo svg,.dash-sidebar-logo img{width:68px;height:68px;flex-shrink:0;}
+.dash-sidebar-logo{display:flex;align-items:center;gap:6px;margin:-11px 0 29px -5px;}
+.dash-sidebar-logo svg,.dash-sidebar-logo img{width:58px;height:58px;flex-shrink:0;}
 .dash-sidebar-logo span{font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px;color:var(--fg);}
 .dash-nav{display:flex;flex-direction:column;gap:4px;flex:1;overflow-y:auto;}
 .dash-nav-item{
