@@ -5009,7 +5009,8 @@ html:not([data-theme="clair"]):not([data-theme="sobre"]) :is(.widget-card.drag-o
 .hpan-employe small.non{color:#ff97a0;}
 .horaire-col-dispos.non{color:#ff97a0;}
 /* Thème clair : colonne des noms blanche (le fond foncé rendait le texte illisible) et verts / jaunes plus soutenus. */
-[data-theme="clair"] :is(.htab-coin,.htab-nom,.hdispo-nom){background:#fff;}
+[data-theme="clair"] :is(.htab-coin,.htab-nom,.hdispo-nom,.hjour-nom,.horaire-copie){background:#fff;}
+[data-theme="clair"] .gestion-tableau .admin-table :is(th,td):first-child{background:#fff;}
 [data-theme="clair"] :is(.htab-dispo,.horaire-col-dispos,.hchr-info .hchr-info-dispo,.hdispo-total){color:#157a4c;}
 [data-theme="clair"] :is(.htab-case.partiel .htab-dispo,.hchr-info .hchr-info-dispo.partiel,.hpan-employe small.partiel){color:#8a5a00;}
 [data-theme="clair"] .hdispo-total.zero{color:var(--text-dim);}
