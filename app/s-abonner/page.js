@@ -5,7 +5,6 @@ import BoutonForfait from "@/components/BoutonForfait";
 import Footer from "@/components/Footer";
 import TiltCard from "@/components/TiltCard";
 import { IconPlanning, IconHoraire, IconInventaire, IconVentes, IconTemperature } from "@/components/icons/GozlyIcons";
-import { IconEcran } from "@/components/icons/Pictogrammes";
 import { getT } from "@/lib/i18n/siteServer";
 
 export function generateMetadata() {
@@ -102,14 +101,6 @@ export default function SubscribePage() {
             <p>{t("abonner.modules.sous")}</p>
           </div>
           <div className="modules-stack">
-            <div className="module-row rv">
-              <div className="badge b-1"><IconEcran className="badge-icone" /></div>
-              <div className="module-row-text">
-                <h3>{t("abonner.vitrine.titre")}</h3>
-                <p>{t("abonner.vitrine.texte")}</p>
-                <span className="wix-tag">{t("abonner.vitrine.wix")}</span>
-              </div>
-            </div>
             <div className="module-row rv">
               <div className="badge b-3"><IconPlanning className="badge-icone" /></div>
               <div className="module-row-text">

@@ -746,13 +746,6 @@ section{padding:80px 0;position:relative;}
 
 .service-card:hover .badge{transform:rotate(10deg);}
 
-.wix-tag{
-    display:inline-flex;align-items:center;gap:6px;
-    margin-top:6px;padding:5px 12px;border-radius:20px;
-    font-size:12px;color:var(--text-dim);
-    background:rgba(var(--w),0.08);border:1px solid rgba(var(--w),0.16);
-  }
-
 .b-1{background:linear-gradient(150deg,var(--violet),var(--indigo));}
 
 .b-2{background:linear-gradient(150deg,var(--cyan),var(--indigo));}

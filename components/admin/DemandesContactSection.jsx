@@ -43,7 +43,6 @@ export default function DemandesContactSection() {
   return (
     <div>
       <h2>Demandes</h2>
-      <p className="panel-hint">Suppressions de compte, sites vitrine, et messages du formulaire de contact.</p>
 
       <div className="settings-nav" style={{ flexDirection: "row", marginBottom: "20px", width: "fit-content" }}>
         {FILTRES.map((f) => (
